@@ -363,7 +363,10 @@ fn parse_switch_jump_table(
     }
     let default_body = default_section_body(f, switch);
     for &section in sections {
-        let Inst::SwitchSection { ref labels, body } = *f.inst(section) else {
+        let Inst::SwitchSection {
+            ref labels, body, ..
+        } = *f.inst(section)
+        else {
             continue;
         };
         if !labels.contains(i64::from(id)) {

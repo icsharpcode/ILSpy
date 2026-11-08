@@ -468,7 +468,18 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		IMethod Method()
 		{
 			var token = Member(out var memberContext);
-			return mainModule.ResolveMethod(token, memberContext);
+			if (!token.IsNil)
+				return mainModule.ResolveMethod(token, memberContext);
+			// A constructor found by type lookup: its type and parameter types.
+			var type = Type();
+			var parameterTypes = new IType[Len()];
+			for (int i = 0; i < parameterTypes.Length; i++)
+				parameterTypes[i] = Type();
+			// shortcut: top-level nullability only, enough for the exception constructors sent so far
+			static IType Oblivious(IType t) => t.ChangeNullability(Nullability.Oblivious);
+			return type.GetConstructors(m => !m.IsStatic && m.Parameters.Count == parameterTypes.Length)
+				.FirstOrDefault(m => m.Parameters.Select(p => Oblivious(p.Type)).SequenceEqual(parameterTypes.Select(Oblivious)))
+				?? throw new InvalidOperationException($"No constructor of {type} matches the sent parameter types");
 		}
 
 		IField Field()
@@ -650,10 +661,16 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 
 		ILInstruction Section()
 		{
+			byte flags = U8();
 			var intervals = new LongInterval[Len()];
 			for (int i = 0; i < intervals.Length; i++)
 				intervals[i] = new LongInterval(IVar(), IVar());
-			return new SwitchSection { Labels = new LongSet((IEnumerable<LongInterval>)intervals), Body = Node() };
+			return new SwitchSection {
+				HasNullLabel = (flags & 1) != 0,
+				IsCompilerGeneratedDefaultSection = (flags & 2) != 0,
+				Labels = new LongSet((IEnumerable<LongInterval>)intervals),
+				Body = Node()
+			};
 		}
 
 		ILInstruction TryCatch()

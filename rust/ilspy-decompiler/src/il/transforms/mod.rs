@@ -29,6 +29,8 @@ pub const SETTING_NAMES: &[&str] = &[
     "AsyncEnumerator",
     "AwaitInCatchFinally",
     "Dynamic",
+    "SparseIntegerSwitch",
+    "RemoveDeadCode",
 ];
 
 /// The values of `SETTING_NAMES`.
@@ -42,6 +44,8 @@ pub struct Settings {
     pub async_enumerator: bool,
     pub await_in_catch_finally: bool,
     pub dynamic: bool,
+    pub sparse_integer_switch: bool,
+    pub remove_dead_code: bool,
 }
 
 impl Settings {
@@ -57,6 +61,8 @@ impl Settings {
             async_enumerator: bit(5),
             await_in_catch_finally: bit(6),
             dynamic: bit(7),
+            sparse_integer_switch: bit(8),
+            remove_dead_code: bit(9),
         }
     }
 }
@@ -89,6 +95,7 @@ const PIPELINE: &[fn(&mut ReadFunction, &mut Context<'_, '_, '_>)] = &[
     remove_dead_variable_init::run,
     |r, ctx| ControlFlowSimplification::default().run(&mut r.function, ctx),
     dynamic_call_site::run,
+    super::control_flow::switch_detection::run,
 ];
 
 /// Runs the first `prefix` leaves of the pipeline.

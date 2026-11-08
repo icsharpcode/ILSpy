@@ -196,7 +196,7 @@ fn is_stack_alloc_span_constructor_argument(
         })
 }
 
-fn known(ctx: &mut Context<'_, '_, '_>, ty: TypeId) -> Option<KnownTypeCode> {
+pub(crate) fn known(ctx: &mut Context<'_, '_, '_>, ty: TypeId) -> Option<KnownTypeCode> {
     ctx.ts
         .definition(ty)
         .and_then(|d| ctx.ts.comp.type_def(d).ok())

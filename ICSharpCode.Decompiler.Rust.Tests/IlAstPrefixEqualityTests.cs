@@ -176,9 +176,9 @@ public class IlAstPrefixEqualityTests
 	[Test]
 	public void EngineSettingsAreDecompilerSettings()
 	{
-		Assert.That(RustSettings.Names, Is.EqualTo(new[] { "RemoveDeadStores", "SortSwitchSections", "PatternBasedFixedStatement", "YieldReturn", "AsyncAwait", "AsyncEnumerator", "AwaitInCatchFinally", "Dynamic" }));
-		var settings = new DecompilerSettings { RemoveDeadStores = false, SortSwitchSections = true, PatternBasedFixedStatement = false, YieldReturn = true, AsyncAwait = false, AsyncEnumerator = true, AwaitInCatchFinally = false, Dynamic = true };
-		Assert.That(RustSettings.Bits(settings), Is.EqualTo(0xAAUL));
+		Assert.That(RustSettings.Names, Is.EqualTo(new[] { "RemoveDeadStores", "SortSwitchSections", "PatternBasedFixedStatement", "YieldReturn", "AsyncAwait", "AsyncEnumerator", "AwaitInCatchFinally", "Dynamic", "SparseIntegerSwitch", "RemoveDeadCode" }));
+		var settings = new DecompilerSettings { RemoveDeadStores = false, SortSwitchSections = true, PatternBasedFixedStatement = false, YieldReturn = true, AsyncAwait = false, AsyncEnumerator = true, AwaitInCatchFinally = false, Dynamic = true, SparseIntegerSwitch = false, RemoveDeadCode = true };
+		Assert.That(RustSettings.Bits(settings), Is.EqualTo(0x2AAUL));
 	}
 
 	static void AssertPrefixEqual(string path, DecompilerSettings settings)

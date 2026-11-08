@@ -2483,13 +2483,20 @@ impl<'r, 'c, 'a> Reader<'r, 'c, 'a> {
             sections.push(self.add(Inst::SwitchSection {
                 labels: LongSet::single(i as i64),
                 body,
+                has_null_label: false,
+                is_compiler_generated_default_section: false,
             }));
         }
         let body = self.add(Inst::Nop {
             kind: NopKind::Normal,
         });
         let labels = LongSet::from_interval(LongInterval::new(0, targets.len() as i64)).invert();
-        sections.push(self.add(Inst::SwitchSection { labels, body }));
+        sections.push(self.add(Inst::SwitchSection {
+            labels,
+            body,
+            has_null_label: false,
+            is_compiler_generated_default_section: false,
+        }));
         Ok(self.add(Inst::Switch {
             value,
             sections,

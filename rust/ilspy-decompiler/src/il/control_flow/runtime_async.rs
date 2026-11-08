@@ -1207,7 +1207,10 @@ fn match_switch_dispatch(
     };
     let mut case_blocks = HashMap::new();
     for &section in sections {
-        let Inst::SwitchSection { ref labels, body } = *f.inst(section) else {
+        let Inst::SwitchSection {
+            ref labels, body, ..
+        } = *f.inst(section)
+        else {
             return None;
         };
         if body == default_body {

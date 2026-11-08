@@ -1235,6 +1235,30 @@ Two shortcuts carry over, each noted in the code:
 
 The no-op red run failed 149 of 3,550 equality cases; the step passed on its first run.
 
+### 3.39 SwitchDetection (item 23, IL prefix 17)
+
+The C# compiler emits a switch with non-contiguous labels as a tree of comparisons, sometimes
+around IL switches. `SwitchAnalysis` walks that tree from the end of each block:
+- It tracks the set of values the tested variable can still have on each edge.
+- Every leaf becomes a section, and sections that branch to the same target merge.
+
+`SwitchDetection` decides whether a switch reads better than the if statements. The heuristics
+need the container's control flow graph and the loops around the block (`LoopContext`, so that
+continue targets are not cases). The `Visited` flags of the managed graph nodes are local bit
+vectors here, and the recursive searches use explicit stacks.
+
+Three additions outside the transform:
+- **Two new settings,** `SparseIntegerSwitch` and `RemoveDeadCode`, become bits 8 and 9 of the
+  settings word.
+- **Two switch-section flags,** `HasNullLabel` and `IsCompilerGeneratedDefaultSection`, travel
+  as one flags byte in the wire.
+- **Constructors without a token.** The switch-expression default case becomes
+  `throw newobj SwitchExpressionException(v)`, and that constructor is found by type lookup,
+  so no metadata token names it. The wire sends token 0 followed by the declaring type and the
+  parameter types, and the host looks the constructor up again.
+
+The no-op red run failed 531 of 3,550 equality cases; the step passed on its first run.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

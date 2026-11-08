@@ -373,6 +373,10 @@ pub enum Inst {
     SwitchSection {
         labels: LongSet,
         body: NodeId,
+        /// `HasNullLabel`: the section serves as `case null` of a lifted switch.
+        has_null_label: bool,
+        /// `IsCompilerGeneratedDefaultSection`: only the throw helper of a switch expression.
+        is_compiler_generated_default_section: bool,
     },
     TryCatch {
         try_block: NodeId,

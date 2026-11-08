@@ -447,6 +447,8 @@ impl<'f> BlockBuilder<'f> {
                 sections.push(self.f.add(Inst::SwitchSection {
                     labels: LongSet::single(i64::from(offset)),
                     body,
+                    has_null_label: false,
+                    is_compiler_generated_default_section: false,
                 }));
             }
             let used = LongSet::from_intervals(
@@ -462,6 +464,8 @@ impl<'f> BlockBuilder<'f> {
             sections.push(self.f.add(Inst::SwitchSection {
                 labels: used.invert(),
                 body,
+                has_null_label: false,
+                is_compiler_generated_default_section: false,
             }));
             let value = self.f.add(Inst::LdLoc {
                 var: dispatch.variable,

@@ -465,8 +465,16 @@ impl FunctionWriter<'_, '_, '_, '_> {
                 self.node(value)?;
                 self.nodes(&sections)?;
             }
-            Inst::SwitchSection { labels, body } => {
+            Inst::SwitchSection {
+                labels,
+                body,
+                has_null_label,
+                is_compiler_generated_default_section,
+            } => {
                 tag(op::SWITCH_SECTION, &mut self.out);
+                self.out
+                    .u8(u8::from(has_null_label)
+                        | u8::from(is_compiler_generated_default_section) << 1);
                 let intervals = labels.intervals();
                 self.out.len(intervals.len());
                 for i in intervals {
@@ -532,6 +540,19 @@ impl FunctionWriter<'_, '_, '_, '_> {
                 };
                 tag(t, &mut self.out);
                 self.member(c.method.token, c.method.state_machine_context);
+                if c.method.token == 0 {
+                    // A constructor found by type lookup: its type and parameter types.
+                    let m = &c.method.method;
+                    if m.name != ".ctor" {
+                        return Err(format!("method {} has no token", m.name));
+                    }
+                    self.ty(m.declaring.ok_or("constructor without a declaring type")?);
+                    let params = m.params().map_err(|e| e.to_string())?;
+                    self.out.len(params.len());
+                    for p in params {
+                        self.ty(p);
+                    }
+                }
                 self.out.u8(u8::from(c.is_tail)
                     | u8::from(c.il_stack_was_empty) << 1
                     | u8::from(c.constrained_to.is_some()) << 2);

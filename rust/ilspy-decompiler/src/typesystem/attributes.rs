@@ -815,19 +815,35 @@ impl TypeSystem<'_, '_> {
             })
     }
 
+    /// Whether the row carries `[CompilerGenerated]`.
+    fn has_compiler_generated(&self, module: ModuleId, table: TableId, row: u32) -> bool {
+        let md = &self.comp.module(module).md;
+        md.custom_attributes(table, row).into_iter().any(|ca| {
+            md.attribute_type(ca).is_ok_and(|t| {
+                is_known_type_name(md, t, COMPILER_GENERATED.0, COMPILER_GENERATED.1, 0)
+            })
+        })
+    }
+
+    /// `IsCompilerGeneratedOrIsInCompilerGeneratedClass` of a method.
+    pub fn method_is_compiler_generated_or_in_compiler_generated_class(
+        &self,
+        m: &ResolvedMethod,
+    ) -> bool {
+        if let super::resolve::MethodOrigin::Def(id) = m.origin
+            && self.has_compiler_generated(id.module, TableId::MethodDef, id.row)
+        {
+            return true;
+        }
+        m.declaring
+            .and_then(|t| self.definition(t))
+            .is_some_and(|d| self.is_compiler_generated_or_in_compiler_generated_class(d))
+    }
+
     fn is_compiler_generated_or_in_compiler_generated_class(&self, def: TypeDefId) -> bool {
         let mut current = Some(def);
         while let Some(d) = current {
-            let md = &self.comp.module(d.module).md;
-            let generated = md
-                .custom_attributes(TableId::TypeDef, d.row)
-                .into_iter()
-                .any(|ca| {
-                    md.attribute_type(ca).is_ok_and(|t| {
-                        is_known_type_name(md, t, COMPILER_GENERATED.0, COMPILER_GENERATED.1, 0)
-                    })
-                });
-            if generated {
+            if self.has_compiler_generated(d.module, TableId::TypeDef, d.row) {
                 return true;
             }
             current = self.declaring_type_def(d);

@@ -201,7 +201,7 @@ impl StateRangeAnalysis {
                 if let SymbolicValue::State(c) = self.eval.eval(f, ts, *value) {
                     let mut exits = Vec::new();
                     for &section in sections {
-                        let Inst::SwitchSection { labels, body } = f.inst(section) else {
+                        let Inst::SwitchSection { labels, body, .. } = f.inst(section) else {
                             unreachable!("switch sections");
                         };
                         // `switch (state + c)` takes `case v` iff `state == v - c`.
