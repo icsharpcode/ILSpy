@@ -108,8 +108,10 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				var mapping = sra.GetBlockStateSetMapping((BlockContainer)noThrowBlock.Parent);
 				var mappingForLeave = sra.GetBlockStateSetMappingForLeave();
 
-				context.StepStartGroup("Inline finally block with await", tryCatch.Handlers[0]);
 				var cfg = new ControlFlowGraph(container, context.CancellationToken);
+				if (WouldMoveBlock(entryPointOfFinally, beforeExceptionCaptureBlock, cfg, (Block)tryCatch.Parent))
+					continue;
+				context.StepStartGroup("Inline finally block with await", tryCatch.Handlers[0]);
 				needsUnreachableCodeCleanup = true;
 
 				var finallyContainer = new BlockContainer().WithILRange(catchBlockContainer);
@@ -296,6 +298,17 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					MoveBlock(block, targetContainer, context);
 				}
 			}
+		}
+
+		internal static bool WouldMoveBlock(Block newEntryPoint, Block endBlock,
+			ControlFlowGraph graph, Block block)
+		{
+			var node = graph.GetNode(newEntryPoint);
+			if (!node.Dominates(graph.GetNode(block)))
+				return false;
+			if (endBlock == null || endBlock == block)
+				return endBlock == null;
+			return !graph.GetNode(endBlock).Dominates(graph.GetNode(block));
 		}
 
 		static void MoveBlock(Block block, BlockContainer target, ILTransformContext context)
