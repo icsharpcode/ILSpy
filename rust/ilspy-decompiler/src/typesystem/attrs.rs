@@ -153,6 +153,34 @@ impl TypeSystem<'_, '_> {
         })
     }
 
+    /// The `ApplyAttributesToType` overload for a local's `PdbExtraTypeInfo`.
+    pub fn apply_pdb_extra_type_info(
+        &mut self,
+        ty: TypeId,
+        options: u32,
+        dynamic_flags: Option<Vec<bool>>,
+        tuple_element_names: Option<Vec<Option<String>>>,
+    ) -> TypeId {
+        if dynamic_flags.is_none() && tuple_element_names.is_none() {
+            return ty;
+        }
+        let mut v = Visitor {
+            has_dynamic: dynamic_flags.is_some(),
+            dynamic_data: dynamic_flags,
+            has_native_integers: false,
+            native_integer_data: None,
+            options,
+            tuple_names: tuple_element_names,
+            default_nullability: Nullability::Oblivious,
+            nullable_data: None,
+            dynamic_index: 0,
+            tuple_index: 0,
+            nullability_index: 0,
+            native_int_index: 0,
+        };
+        self.visit(ty, &mut v)
+    }
+
     fn visit_children(&mut self, t: TypeId, v: &mut Visitor) -> TypeId {
         let data = self.data(t).clone();
         let new = match data {

@@ -14,6 +14,7 @@ use std::ptr;
 use std::sync::Once;
 
 use ilspy_decompiler::Session;
+use ilspy_decompiler::il::debug_info::{DebugInfo, ExtraTypeInfo};
 use ilspy_decompiler::il::reader::ReaderOptions;
 use ilspy_decompiler::typesystem::compilation::{Compilation, ModuleId, ModuleInput};
 use ilspy_decompiler::typesystem::types::TypeSystem;
@@ -295,21 +296,127 @@ pub unsafe extern "C" fn ilspy_debug_type_listing(
     }
 }
 
+/// The host's `IDebugInfoProvider` for the main module. `kind` 0 asks for `TryGetName`
+/// (UTF-8), 1 for `TryGetExtraTypeInfo` (see `decode_extra_type_info`). The host writes up to
+/// `cap` bytes to `buf` and returns the full length, or -1 when it has no answer; a length
+/// above `cap` makes the engine call again with a larger buffer.
+pub type DebugInfoCallback = unsafe extern "C" fn(
+    ctx: *mut c_void,
+    method_token: u32,
+    kind: u32,
+    index: i32,
+    buf: *mut u8,
+    cap: usize,
+) -> isize;
+
+const DEBUG_INFO_NAME: u32 = 0;
+const DEBUG_INFO_EXTRA_TYPE_INFO: u32 = 1;
+
+struct HostDebugInfo {
+    ctx: *mut c_void,
+    callback: DebugInfoCallback,
+}
+
+impl HostDebugInfo {
+    fn fetch(&self, method_token: u32, kind: u32, index: i32) -> Option<Vec<u8>> {
+        let mut buf = vec![0u8; 256];
+        loop {
+            // SAFETY: the host contract above; `buf` is writable for its length.
+            let n = unsafe {
+                (self.callback)(
+                    self.ctx,
+                    method_token,
+                    kind,
+                    index,
+                    buf.as_mut_ptr(),
+                    buf.len(),
+                )
+            };
+            let n = usize::try_from(n).ok()?;
+            if n <= buf.len() {
+                buf.truncate(n);
+                return Some(buf);
+            }
+            buf.resize(n, 0);
+        }
+    }
+}
+
+impl DebugInfo for HostDebugInfo {
+    fn local_name(&self, method_token: u32, index: i32) -> Option<String> {
+        self.fetch(method_token, DEBUG_INFO_NAME, index)
+            .map(|b| String::from_utf8_lossy(&b).into_owned())
+    }
+
+    fn extra_type_info(&self, method_token: u32, index: i32) -> Option<ExtraTypeInfo> {
+        decode_extra_type_info(&self.fetch(method_token, DEBUG_INFO_EXTRA_TYPE_INFO, index)?)
+    }
+}
+
+/// `PdbExtraTypeInfo` as `Interop/RustDebugInfo.cs` writes it, little-endian: the dynamic flag
+/// count (-1 for none) and one byte per flag, then the tuple element name count (-1 for none)
+/// and per name its UTF-8 length (-1 for null) and bytes. Malformed input yields `None`.
+fn decode_extra_type_info(mut b: &[u8]) -> Option<ExtraTypeInfo> {
+    fn count(b: &mut &[u8]) -> Option<Option<usize>> {
+        let (head, rest) = b.split_first_chunk::<4>()?;
+        *b = rest;
+        let n = i32::from_le_bytes(*head);
+        Some(usize::try_from(n).ok())
+    }
+    fn bytes<'a>(b: &mut &'a [u8], n: usize) -> Option<&'a [u8]> {
+        let (head, rest) = b.split_at_checked(n)?;
+        *b = rest;
+        Some(head)
+    }
+    let dynamic_flags = match count(&mut b)? {
+        Some(n) => Some(bytes(&mut b, n)?.iter().map(|&x| x != 0).collect()),
+        None => None,
+    };
+    let tuple_element_names = match count(&mut b)? {
+        Some(n) => Some(
+            (0..n)
+                .map(|_| {
+                    Some(match count(&mut b)? {
+                        Some(len) => {
+                            Some(String::from_utf8_lossy(bytes(&mut b, len)?).into_owned())
+                        }
+                        None => None,
+                    })
+                })
+                .collect::<Option<Vec<_>>>()?,
+        ),
+        None => None,
+    };
+    b.is_empty().then_some(ExtraTypeInfo {
+        tuple_element_names,
+        dynamic_flags,
+    })
+}
+
 /// Debug export for the shim's `IlAstReadEquality` test: the IL reader's function for every
-/// method body of module 0, as wire v1 (`wire::ilast`). Bit 0 of `reader_flags` is `UseRefLocalsForAccurateOrderOfEvaluation`.
+/// method body of module 0, as wire v1 (`wire::ilast`). Bit 0 of `reader_flags` is
+/// `UseRefLocalsForAccurateOrderOfEvaluation`; a non-null `debug_info` is called with
+/// `debug_ctx` as the reader's debug symbols.
 ///
 /// # Safety
-/// As `ilspy_debug_type_listing`.
+/// As `ilspy_debug_type_listing`; `debug_info` must honor the `DebugInfoCallback` contract.
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn ilspy_debug_read_il(
     modules: *const FfiModule,
     count: usize,
     options: u32,
     reader_flags: u32,
+    debug_ctx: *mut c_void,
+    debug_info: Option<DebugInfoCallback>,
     out: *mut Buf,
 ) -> Status {
+    let host = debug_info.map(|callback| HostDebugInfo {
+        ctx: debug_ctx,
+        callback,
+    });
     let reader = ReaderOptions {
         use_ref_locals_for_accurate_order_of_evaluation: reader_flags & 1 != 0,
+        debug_info: host.as_ref().map(|h| h as &dyn DebugInfo),
     };
     // SAFETY: forwarded from the caller.
     unsafe {
@@ -382,5 +489,76 @@ mod buffer_tests {
         assert_eq!(text, b"BAD IMAGE\n");
         // SAFETY: freed once.
         unsafe { ilspy_buf_free(buf) };
+    }
+}
+
+#[cfg(test)]
+mod debug_info_tests {
+    use super::*;
+
+    fn le(n: i32) -> [u8; 4] {
+        n.to_le_bytes()
+    }
+
+    #[test]
+    fn extra_type_info_decodes_flags_and_names() {
+        let mut b = Vec::new();
+        b.extend(le(2));
+        b.extend([0, 1]);
+        b.extend(le(2));
+        b.extend(le(-1));
+        b.extend(le(1));
+        b.push(b'a');
+        assert_eq!(
+            decode_extra_type_info(&b),
+            Some(ExtraTypeInfo {
+                dynamic_flags: Some(vec![false, true]),
+                tuple_element_names: Some(vec![None, Some("a".to_owned())]),
+            })
+        );
+        let mut none = Vec::new();
+        none.extend(le(-1));
+        none.extend(le(-1));
+        assert_eq!(
+            decode_extra_type_info(&none),
+            Some(ExtraTypeInfo::default())
+        );
+        assert_eq!(decode_extra_type_info(&b[..b.len() - 1]), None);
+        b.push(0);
+        assert_eq!(decode_extra_type_info(&b), None);
+    }
+
+    /// Answers names longer than the first buffer, so the engine has to call again.
+    unsafe extern "C" fn long_names(
+        _: *mut c_void,
+        method_token: u32,
+        kind: u32,
+        index: i32,
+        buf: *mut u8,
+        cap: usize,
+    ) -> isize {
+        if kind != DEBUG_INFO_NAME || index < 0 {
+            return -1;
+        }
+        let name = format!("{method_token:x}").repeat(100) + &index.to_string();
+        if name.len() <= cap {
+            // SAFETY: `buf` is writable for `cap` bytes.
+            unsafe { ptr::copy_nonoverlapping(name.as_ptr(), buf, name.len()) };
+        }
+        name.len() as isize
+    }
+
+    #[test]
+    fn host_debug_info_grows_the_buffer() {
+        let host = HostDebugInfo {
+            ctx: ptr::null_mut(),
+            callback: long_names,
+        };
+        assert_eq!(
+            host.local_name(0x0600_0001, 3),
+            Some("6000001".repeat(100) + "3")
+        );
+        assert_eq!(host.local_name(0x0600_0001, -1), None);
+        assert_eq!(host.extra_type_info(0x0600_0001, 0), None);
     }
 }

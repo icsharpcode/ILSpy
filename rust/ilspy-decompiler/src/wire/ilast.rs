@@ -711,7 +711,7 @@ impl FunctionWriter<'_, '_, '_, '_> {
 pub fn read_module(
     ts: &mut TypeSystem<'_, '_>,
     module: crate::typesystem::compilation::ModuleId,
-    options: crate::il::reader::ReaderOptions,
+    options: crate::il::reader::ReaderOptions<'_>,
 ) -> Vec<u8> {
     use crate::metadata::tables::{TableId, rows};
     use crate::typesystem::members::MethodDefId;

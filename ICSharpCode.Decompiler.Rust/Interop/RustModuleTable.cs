@@ -106,16 +106,20 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 
 		/// <summary>
 		/// The engine's IL reader output for every method body of the main module, as wire v1 for
-		/// <see cref="IlAstMaterializer"/>. Test support only.
+		/// <see cref="IlAstMaterializer"/>. <paramref name="debugInfo"/> plays the role of
+		/// <see cref="IL.ILReader.DebugInfo"/> with <c>UseDebugSymbols</c> set. Test support only.
 		/// </summary>
-		public unsafe byte[] DebugReadIL(bool useRefLocalsForAccurateOrderOfEvaluation)
+		public unsafe byte[] DebugReadIL(bool useRefLocalsForAccurateOrderOfEvaluation, DebugInfo.IDebugInfoProvider? debugInfo = null)
 		{
 			RustStatus status;
 			RustBuffer buffer;
 			uint flags = useRefLocalsForAccurateOrderOfEvaluation ? 1u : 0u;
+			var bridge = debugInfo == null ? null : new RustDebugInfo(debugInfo);
 			fixed (RustModule* p = modules)
-				status = NativeMethods.ilspy_debug_read_il(p, (UIntPtr)modules.Length, options, flags, out buffer);
+				status = NativeMethods.ilspy_debug_read_il(p, (UIntPtr)modules.Length, options, flags, IntPtr.Zero, bridge?.Delegate, out buffer);
+			GC.KeepAlive(bridge);
 			byte[] bytes = NativeMethods.TakeBuffer(buffer);
+			bridge?.ThrowIfFailed();
 			if (status != RustStatus.Ok)
 				throw new InvalidOperationException($"ilspy_debug_read_il: {status}: {NativeMethods.LastError}");
 			return bytes;

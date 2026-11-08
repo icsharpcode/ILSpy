@@ -113,17 +113,52 @@
           "System.Reflection.Metadata": "[9.0.0, )"
         }
       },
+      "icsharpcode.ilspyx": {
+        "type": "Project",
+        "dependencies": {
+          "ICSharpCode.Decompiler.Rust": "[8.0.0-noversion, )",
+          "K4os.Compression.LZ4": "[1.3.8, )",
+          "Mono.Cecil": "[0.11.6, )",
+          "System.Composition.AttributedModel": "[10.0.14, )",
+          "System.Reflection.Metadata": "[10.0.14, )",
+          "System.Runtime.CompilerServices.Unsafe": "[6.1.2, )"
+        }
+      },
+      "K4os.Compression.LZ4": {
+        "type": "CentralTransitive",
+        "requested": "[1.3.8, )",
+        "resolved": "1.3.8",
+        "contentHash": "LhwlPa7c1zs1OV2XadMtAWdImjLIsqFJPoRcIWAadSRn0Ri1DepK65UbWLPmt4riLqx2d40xjXRk0ogpqNtK7g=="
+      },
+      "Mono.Cecil": {
+        "type": "CentralTransitive",
+        "requested": "[0.11.6, )",
+        "resolved": "0.11.6",
+        "contentHash": "f33RkDtZO8VlGXCtmQIviOtxgnUdym9xx/b1p9h91CRGOsJFxCFOFK1FDbVt1OCf1aWwYejUFa2MOQyFWTFjbA=="
+      },
       "System.Collections.Immutable": {
         "type": "CentralTransitive",
         "requested": "[10.0.14, )",
         "resolved": "10.0.14",
         "contentHash": "7kqcjP+kmcr4zaPDi+VjaImd8ESFGGPYbr9wJo5ddRrtX9JQ9p2DJlUBBvdjJmeC0KBZxYi6L5UIKcXlaq/FDw=="
       },
+      "System.Composition.AttributedModel": {
+        "type": "CentralTransitive",
+        "requested": "[10.0.14, )",
+        "resolved": "10.0.14",
+        "contentHash": "4Ncs1bXuDV7LCCN0Vpy6zgltYnxleYbaB4LpfPjAT3WJZhle84nUlEW/bhNYtH03ZyULEaOY4s7B+oySLMkj+Q=="
+      },
       "System.Reflection.Metadata": {
         "type": "CentralTransitive",
         "requested": "[10.0.14, )",
         "resolved": "10.0.14",
         "contentHash": "FdxZ2h1tgX+np5HKupjYCdiq+OqEwX9EV9Qm6ajY0VQ0EOCuRHQAlx6OOitoRRNQncieWUjWDyi193tfl/7xGA=="
+      },
+      "System.Runtime.CompilerServices.Unsafe": {
+        "type": "CentralTransitive",
+        "requested": "[6.1.2, )",
+        "resolved": "6.1.2",
+        "contentHash": "2hBr6zdbIBTDE3EhK7NSVNdX58uTK6iHW/P/Axmm9sl1xoGSLqDvMtpecn226TNwHByFokYwJmt/aQQNlO5CRw=="
       }
     }
   }

@@ -26,6 +26,7 @@ use crate::util::long_set::LongSet;
 
 use super::ast::*;
 use super::block_builder::{BlockBuilder, topological_sort};
+use super::debug_info::DebugInfo;
 use super::opcodes::{Code, set_branch_targets};
 use super::types::{PrimitiveType, Sign, StackType};
 
@@ -33,9 +34,11 @@ use super::types::{PrimitiveType, Sign, StackType};
 const METHOD_IMPL_ASYNC: u16 = 0x2000;
 
 /// Reader settings that change the output (`ILReader` properties).
-#[derive(Clone, Copy, Debug, Default)]
-pub struct ReaderOptions {
+#[derive(Clone, Copy, Default)]
+pub struct ReaderOptions<'d> {
     pub use_ref_locals_for_accurate_order_of_evaluation: bool,
+    /// `DebugInfo` when `UseDebugSymbols` is set: local names and types from the PDB.
+    pub debug_info: Option<&'d dyn DebugInfo>,
 }
 
 struct ImportedBlock {
@@ -81,7 +84,7 @@ pub(super) struct Reader<'r, 'c, 'a> {
     method: ResolvedMethod,
     method_id: MethodDefId,
     ctx: GenericContext,
-    options: ReaderOptions,
+    options: ReaderOptions<'r>,
     body: MethodBody<'a>,
     code: Code<'a>,
     pub(super) f: Function,
@@ -306,7 +309,7 @@ impl<'r, 'c, 'a> Reader<'r, 'c, 'a> {
         ts: &'r mut TypeSystem<'c, 'a>,
         method_id: MethodDefId,
         body: MethodBody<'a>,
-        options: ReaderOptions,
+        options: ReaderOptions<'r>,
     ) -> Result<Self> {
         let module = method_id.module;
         let method = ts.method_definition(method_id)?;
@@ -459,16 +462,32 @@ impl<'r, 'c, 'a> Reader<'r, 'c, 'a> {
                 Vec::new()
             }
         };
+        let token = 0x0600_0000 | self.method_id.row;
+        let debug_info = self.options.debug_info;
         for (index, ty) in types.into_iter().enumerate() {
-            let (kind, ty) = match *self.ts.data(self.skip_modifiers(ty)) {
+            let index = index as i32;
+            let (kind, mut ty) = match *self.ts.data(self.skip_modifiers(ty)) {
                 TypeData::Pinned(elem) => (VariableKind::PinnedLocal, elem),
                 _ => (VariableKind::Local, ty),
             };
+            if let Some(extra) = debug_info.and_then(|d| d.extra_type_info(token, index)) {
+                let options = self.ts.options(self.module);
+                ty = self.ts.apply_pdb_extra_type_info(
+                    ty,
+                    options,
+                    extra.dynamic_flags,
+                    extra.tuple_element_names,
+                );
+            }
             let stack_type = self.ts.stack_type(ty);
-            let v = self.new_variable(kind, ty, stack_type, Some(index as i32));
+            let v = self.new_variable(kind, ty, stack_type, Some(index));
+            // `string.IsNullOrWhiteSpace` names count as missing.
+            let name = debug_info
+                .and_then(|d| d.local_name(token, index))
+                .filter(|n| !n.chars().all(char::is_whitespace));
             let var = self.f.var_mut(v);
-            var.name = format!("V_{index}");
-            var.has_generated_name = true;
+            var.has_generated_name = name.is_none();
+            var.name = name.unwrap_or_else(|| format!("V_{index}"));
             self.local_variables.push(v);
         }
         Ok(())
@@ -2603,7 +2622,7 @@ pub fn read_il<'c, 'a>(
     ts: &mut TypeSystem<'c, 'a>,
     method: MethodDefId,
     body: MethodBody<'a>,
-    options: ReaderOptions,
+    options: ReaderOptions<'_>,
 ) -> Result<ReadFunction> {
     let mut reader = Reader::new(ts, method, body, options)?;
     reader.read_instructions()?;

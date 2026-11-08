@@ -26,6 +26,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\ICSharpCode.Decompiler.Rust\ICSharpCode.Decompiler.Rust.csproj" />
+    <!-- DebugInfoUtils.LoadSymbols: the PDB providers the UI uses, for the debug-symbol gates. -->
+    <ProjectReference Include="..\ICSharpCode.ILSpyX\ICSharpCode.ILSpyX.csproj" />
   </ItemGroup>
 
 </Project>

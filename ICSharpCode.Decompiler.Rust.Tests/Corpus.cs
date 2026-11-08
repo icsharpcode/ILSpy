@@ -59,6 +59,26 @@ static class Corpus
 	public static IEnumerable<TestCaseData> ManagedImages()
 		=> AllImages().Where(c => HasMetadata((string)c.Arguments[0]!));
 
+	/// <summary>
+	/// The managed images with a PDB next to them or embedded, plus this test assembly and
+	/// ICSharpCode.ILSpyX, whose PDBs are built with them.
+	/// </summary>
+	public static IEnumerable<TestCaseData> ImagesWithSymbols()
+	{
+		foreach (var type in new[] { typeof(Corpus), typeof(ICSharpCode.ILSpyX.PdbProvider.DebugInfoUtils) })
+			yield return new TestCaseData(type.Assembly.Location).SetArgDisplayNames(Path.GetFileName(type.Assembly.Location));
+		foreach (var c in ManagedImages().Where(c => HasSymbols((string)c.Arguments[0]!)))
+			yield return c;
+	}
+
+	static bool HasSymbols(string path)
+	{
+		if (File.Exists(Path.ChangeExtension(path, ".pdb")))
+			return true;
+		using var pe = new PEReader(File.OpenRead(path));
+		return pe.ReadDebugDirectory().Any(e => e.Type == DebugDirectoryEntryType.EmbeddedPortablePdb);
+	}
+
 	static bool HasMetadata(string path)
 	{
 		try

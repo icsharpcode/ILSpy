@@ -23,10 +23,12 @@ using System.Linq;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 
+using ICSharpCode.Decompiler.DebugInfo;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.Rust.Interop;
 using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.ILSpyX.PdbProvider;
 
 using NUnit.Framework;
 
@@ -45,19 +47,22 @@ public class IlAstReadEqualityTests
 
 	/// <summary>
 	/// <see cref="ILFunction.WriteTo"/> with IL ranges, plus what the printout leaves out: the
-	/// local signature length and the sequence point candidates.
+	/// full variable types (with tuple element names and <c>dynamic</c>), the local signature
+	/// length and the sequence point candidates.
 	/// </summary>
 	internal static string Print(ILFunction function)
 	{
 		var output = new PlainTextOutput();
 		function.WriteTo(output, new ILAstWritingOptions { ShowILRanges = true });
 		output.WriteLine();
+		foreach (var v in function.Variables)
+			output.WriteLine($"variable {v.Name} : {v.Type}");
 		output.WriteLine("locals: " + function.LocalVariableSignatureLength);
 		output.WriteLine("sequence points: " + string.Join(",", function.SequencePointCandidates ?? []));
 		return output.ToString().Replace("\r\n", "\n");
 	}
 
-	static string? Managed(MetadataModule module, MethodDefinitionHandle handle, out string? error)
+	static string? Managed(MetadataModule module, MethodDefinitionHandle handle, IDebugInfoProvider? debugInfo, out string? error)
 	{
 		error = null;
 		try
@@ -65,7 +70,8 @@ public class IlAstReadEqualityTests
 			var file = (PEFile)module.MetadataFile;
 			var body = file.GetMethodBody(file.Metadata.GetMethodDefinition(handle).RelativeVirtualAddress);
 			var reader = new ILReader(module) {
-				UseDebugSymbols = false,
+				UseDebugSymbols = debugInfo != null,
+				DebugInfo = debugInfo,
 				UseRefLocalsForAccurateOrderOfEvaluation = UseRefLocals,
 			};
 			return Print(reader.ReadIL(handle, body));
@@ -77,12 +83,19 @@ public class IlAstReadEqualityTests
 		}
 	}
 
-	internal static void AssertEqual(string path, TypeSystemOptions options)
+	internal static void AssertEqual(string path, TypeSystemOptions options, bool withSymbols = false)
 	{
 		var ts = TypeSystemListingEqualityTests.Load(path, options);
 		var module = (MetadataModule)ts.MainModule;
+		IDebugInfoProvider? debugInfo = null;
+		if (withSymbols)
+		{
+			debugInfo = DebugInfoUtils.LoadSymbols((PEFile)module.MetadataFile);
+			Assert.That(debugInfo, Is.Not.Null, "no debug symbols found");
+		}
+		using var disposeDebugInfo = debugInfo as IDisposable;
 		using var table = new RustModuleTable(ts);
-		var engine = IlAstMaterializer.ReadModule(table.DebugReadIL(UseRefLocals), ts, table.Modules);
+		var engine = IlAstMaterializer.ReadModule(table.DebugReadIL(UseRefLocals, debugInfo), ts, table.Modules);
 		var metadata = module.MetadataFile.Metadata;
 		int compared = 0;
 		foreach (var handle in metadata.MethodDefinitions)
@@ -92,7 +105,7 @@ public class IlAstReadEqualityTests
 			int row = MetadataTokens.GetRowNumber(handle);
 			string name = $"method 0x{MetadataTokens.GetToken(handle):x8}";
 			Assert.That(engine.TryGetValue(row, out var rust), Is.True, name + " is missing from the engine output");
-			string? expected = Managed(module, handle, out string? managedError);
+			string? expected = Managed(module, handle, debugInfo, out string? managedError);
 			if (expected == null || rust.Function == null)
 			{
 				Assert.That(rust.Error != null, Is.EqualTo(managedError != null),
@@ -109,6 +122,26 @@ public class IlAstReadEqualityTests
 
 	[TestCaseSource(typeof(Corpus), nameof(Corpus.ManagedImages))]
 	public void IlAstReadEquality(string path) => AssertEqual(path, TypeSystemOptions.Default);
+
+	[TestCaseSource(typeof(Corpus), nameof(Corpus.ImagesWithSymbols))]
+	public void IlAstReadEqualityWithDebugSymbols(string path) => AssertEqual(path, TypeSystemOptions.Default, withSymbols: true);
+
+	/// <summary>
+	/// Local names from this assembly's PDB reach the engine's variables and the printout.
+	/// </summary>
+	[Test]
+	public void DebugSymbolsNameLocals()
+	{
+		var ts = TypeSystemListingEqualityTests.Load(typeof(Corpus).Assembly.Location, TypeSystemOptions.Default);
+		var debugInfo = DebugInfoUtils.LoadSymbols((PEFile)((MetadataModule)ts.MainModule).MetadataFile);
+		Assert.That(debugInfo, Is.Not.Null);
+		using var table = new RustModuleTable(ts);
+		var engine = IlAstMaterializer.ReadModule(table.DebugReadIL(UseRefLocals, debugInfo), ts, table.Modules);
+		var functions = engine.Values.Where(f => f.Function != null).Select(f => f.Function!).ToList();
+		Assert.That(functions.SelectMany(f => f.Variables)
+			.Any(v => v.Kind == VariableKind.Local && v.Name == "disposeDebugInfo" && !v.HasGeneratedName), Is.True);
+		Assert.That(string.Join("\n", functions.Select(Print)), Does.Contain("variable disposeDebugInfo : System.IDisposable"));
+	}
 
 	/// <summary>The printout carries the details the equality relies on.</summary>
 	[Test]

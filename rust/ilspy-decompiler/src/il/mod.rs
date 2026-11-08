@@ -2,6 +2,7 @@
 
 pub mod ast;
 mod block_builder;
+pub mod debug_info;
 pub mod opcodes;
 pub mod reader;
 pub mod types;

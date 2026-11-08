@@ -251,7 +251,8 @@ host passes the whole module table, each image as the `PEReader.GetEntireImage()
 length (zero copy, the `MetadataFile` keeps the image alive, the engine never frees inputs)
 plus per-reference target indices. `get_debug_info(ctx, module_id, method_token, kind,
 out Buf)` bridges the five-member `IDebugInfoProvider`, so the engine needs no PDB reader and
-ILSpyX's Mono.Cecil provider for Windows PDBs keeps working.
+ILSpyX's Mono.Cecil provider for Windows PDBs keeps working. As built in item 5d (section
+3.21) the callback has no module id and writes into an engine-owned buffer.
 
 Threading and cancellation: `Session: Send + Sync`, immutable module data behind a read lock,
 per-request arenas, an `Arc<AtomicBool>` per request polled where the managed code calls
@@ -756,6 +757,37 @@ every method body of every corpus image. A method that fails must fail on both s
 slots, try blocks, handlers, incoming counts and sequence points. The first corpus run also
 caught a performance bug: appending to a block relinked all its children, which made reading
 quadratic.
+
+### 3.21 Debug symbols (item 5d)
+
+The engine still has no PDB reader. The IL reader asks a `DebugInfo` trait
+(`il/debug_info.rs`) for the two things `ILReader` takes from `IDebugInfoProvider`: a
+local's name (`TryGetName`) and its `PdbExtraTypeInfo` (dynamic flags and tuple element
+names, `TryGetExtraTypeInfo`). The other provider members (sequence points, variables,
+source file name) serve the disassembler and the PDB writer, which stay managed. As built,
+the callback is `DebugInfoCallback(ctx, method_token, kind, index, buf, cap) -> len` and
+carries no module id: a decompiler has one provider, for its main module. The host writes
+into an engine-owned buffer and returns the full length (-1 for no answer); a longer answer
+makes the engine grow the buffer and ask again. Nothing has to stay pinned across the call,
+and a provider exception is captured in `Interop/RustDebugInfo.cs` and rethrown after the
+native call returns, because it cannot unwind through Rust frames. Extra type info travels
+as little-endian counts (-1 for null) followed by flag bytes and UTF-8 names.
+
+`IlAstReadEqualityWithDebugSymbols` runs over every corpus image with a PDB next to it or
+embedded, plus the shim test assembly and ICSharpCode.ILSpyX. Their PDBs are built with them
+and cover real-world locals. The provider is ILSpyX's `DebugInfoUtils.LoadSymbols`, the one
+the UI uses, so the Mono.Cecil path for Windows PDBs (the net40 VariableNaming fixtures) is
+covered too. The shim test project references ILSpyX for this. Measured at this step: 59
+images with symbols, all equal; the whole shim suite has 13,853 tests and takes about 3.6
+minutes.
+
+A managed quirk this step keeps: PDB tuple element names never reach a local, because
+`DecodeLocalSignature` already turns a `ValueTuple` into a `TupleType` and
+`ApplyAttributeTypeVisitor` has no `VisitTupleType`, so it only visits the elements. The
+`(ILFunction? Function, string? Error)` local in the test assembly prints without names on
+both sides. `WriteTo` does not print tuple names, so the gate's printout now adds one line per
+variable with its full type. That makes tuple names and `dynamic` part of the comparison in
+both `IlAstReadEquality` variants.
 
 ## 4. Alternatives evaluated
 

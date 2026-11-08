@@ -274,7 +274,7 @@ the reasons. This file holds only the ordered steps, their gates and their rules
 
 ### Phase 2: ILAst in Rust, seam 1
 
-- [ ] **5. IL reader, ILAst arena, wire format v1, ILAst materializer.** Size L. Subject: `Add the Rust IL reader and the ILAst materializer`.
+- [x] **5. IL reader, ILAst arena, wire format v1, ILAst materializer.** Size L. Subject: `Add the Rust IL reader and the ILAst materializer`.
   - `il/ast.rs`: one arena per top-level method, `NodeId`, `Node { inst, parent, slot, index,
     il_range, flags }`, the 108-variant `Inst` enum produced by a declarative macro from one
     table (the Rust counterpart of `IL/Instructions.tt`), `Variable`, `replace`, `set_child`,
@@ -302,8 +302,12 @@ the reasons. This file holds only the ordered steps, their gates and their rules
       which moved here from 5d because the .NET 11 runtime libraries use it); the wire writer
       and `IlAstMaterializer.cs`; `IlAstReadEquality` without debug symbols over every method
       body of every corpus image under `TypeSystemOptions.Default`.
-    - [ ] **5d. Debug symbols.** The `get_debug_info` callback and `IlAstReadEquality` with
-      debug symbols.
+    - [x] **5d. Debug symbols.** Subject: `Pass debug symbols to the Rust IL reader`. The
+      `DebugInfo` trait (`il/debug_info.rs`), the `DebugInfoCallback` FFI bridge
+      (`Interop/RustDebugInfo.cs`) and `IlAstReadEqualityWithDebugSymbols` over every corpus
+      image with a PDB, the shim test assembly and ICSharpCode.ILSpyX, loaded with ILSpyX's
+      `DebugInfoUtils.LoadSymbols` (the UI's provider, Windows PDBs included). The printout
+      now also lists every variable's full type, so tuple names and `dynamic` are compared.
   - The `Inst` enum covers the opcodes the reader produces; each later step adds the opcodes
     its transform creates, with their materializer cases, so no opcode exists in Rust before
     a gate exercises it.
