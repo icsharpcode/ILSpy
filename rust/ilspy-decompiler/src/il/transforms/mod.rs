@@ -87,6 +87,7 @@ const PIPELINE: &[fn(&mut ReadFunction, &mut Context<'_, '_, '_>)] = &[
     early_expression_transforms::run,
     split_variables::run,
     remove_dead_variable_init::run,
+    |r, ctx| ControlFlowSimplification::default().run(&mut r.function, ctx),
 ];
 
 /// Runs the first `prefix` leaves of the pipeline.

@@ -1213,6 +1213,13 @@ step adds it to the pipeline:
 The no-op red run failed 853 of 3,550 equality cases; the pipeline step passed on its first
 run.
 
+### 3.37 ControlFlowSimplification again (item 21, IL prefix 15)
+
+A ratchet-only step: the second `ControlFlowSimplification`, without aggressive duplication
+of return blocks, is the ported transform. It cleans up after `SplitVariables` and
+`RemoveDeadVariableInit` (for example, branch-to-leave chains they make possible). The no-op
+red run failed 1,597 of 3,550 equality cases; the step passed on its first run.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |
