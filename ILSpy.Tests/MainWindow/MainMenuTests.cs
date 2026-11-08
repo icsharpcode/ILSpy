@@ -36,7 +36,7 @@ using NUnit.Framework;
 
 namespace ICSharpCode.ILSpy.Tests;
 
-// MainMenu's top-level structure (File / View / Window with mnemonic underscores) is the
+// MainMenu's top-level structure (File / View / Navigate / Window with mnemonic underscores) is the
 // scaffolding every later commit hangs items onto via MEF. If a future commit accidentally
 // drops one of these top-levels or shuffles the order, the [ExportMainMenuCommand] entries
 // that target them by header would silently land in the wrong menu.
@@ -44,7 +44,7 @@ namespace ICSharpCode.ILSpy.Tests;
 public class MainMenuTests
 {
 	[AvaloniaTest]
-	public void MainMenu_top_level_items_are_File_View_Window_in_order()
+	public void MainMenu_top_level_items_are_File_View_Navigate_Window_in_order()
 	{
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
@@ -58,7 +58,7 @@ public class MainMenuTests
 			// PromoteHelpToMacAppMenu relocates the Help items into the application menu
 			// (macOS convention: About lives under the bold app-named menu), so _Help is
 			// not a window-menu top-level there.
-			headers.Should().Equal("_File", "_View", "_Window");
+			headers.Should().Equal("_File", "_View", "_Navigate", "_Window");
 
 			var appMenu = NativeMenu.GetMenu(Application.Current!);
 			appMenu.Should().NotBeNull("App.axaml declares the NativeMenu the Help items move into");
@@ -67,7 +67,7 @@ public class MainMenuTests
 		}
 		else
 		{
-			headers.Should().Equal("_File", "_View", "_Window", "_Help");
+			headers.Should().Equal("_File", "_View", "_Navigate", "_Window", "_Help");
 		}
 	}
 
@@ -156,7 +156,7 @@ public class MainMenuTests
 
 	// The app menu is declared on Application and outlives every test, so a test that promotes
 	// placeholder items into it has to take them back out; otherwise a later test reading it
-	// (see MainMenu_top_level_items_are_File_View_Window_in_order) sees this test's leftovers.
+	// (see MainMenu_top_level_items_are_File_View_Navigate_Window_in_order) sees this test's leftovers.
 	static void RestoreAppMenu(NativeMenu appMenu, List<NativeMenuItemBase> promoted)
 	{
 		foreach (var item in promoted)

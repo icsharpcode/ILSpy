@@ -279,6 +279,12 @@ namespace ICSharpCode.ILSpy.TextView
 		public System.Action<bool>? NavigateBookmarkInFile { get; set; }
 
 		/// <summary>
+		/// Moves the caret to a document offset, scrolls it into view, flashes the caret highlight and
+		/// focuses the editor. Set by the text view; null while no view is attached.
+		/// </summary>
+		public System.Action<int>? NavigateToOffset { get; set; }
+
+		/// <summary>
 		/// Fired when the user clicks a cross-document reference. The host (DockWorkspace)
 		/// resolves the target on the assembly tree side.
 		/// </summary>
