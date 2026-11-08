@@ -28,13 +28,13 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 	sealed class MetadataNamespace : INamespace
 	{
 		readonly MetadataModule module;
-		readonly NamespaceDefinition ns;
+		readonly NamespaceDefinition? ns;
 
 		public INamespace ParentNamespace { get; }
 		public string FullName { get; }
 		public string Name { get; }
 
-		public MetadataNamespace(MetadataModule module, INamespace parent, string fullName, NamespaceDefinition ns)
+		public MetadataNamespace(MetadataModule module, INamespace parent, string fullName, NamespaceDefinition? ns)
 		{
 			Debug.Assert(module != null);
 			Debug.Assert(fullName != null);
@@ -42,7 +42,21 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			this.ParentNamespace = parent;
 			this.ns = ns;
 			this.FullName = fullName;
-			this.Name = module.GetString(ns.Name);
+			if (ns is { } namespaceDefinition)
+			{
+				try
+				{
+					this.Name = module.GetString(namespaceDefinition.Name);
+				}
+				catch (Exception ex) when (ex is BadImageFormatException or ArgumentOutOfRangeException)
+				{
+					this.Name = string.Empty;
+				}
+			}
+			else
+			{
+				this.Name = string.Empty;
+			}
 		}
 
 		string INamespace.ExternAlias => string.Empty;
@@ -56,7 +70,9 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				{
 					return children;
 				}
-				var nsDefs = ns.NamespaceDefinitions;
+				if (ns is not { } namespaceDefinition)
+					return Array.Empty<INamespace>();
+				var nsDefs = namespaceDefinition.NamespaceDefinitions;
 				children = new INamespace[nsDefs.Length];
 				for (int i = 0; i < children.Length; i++)
 				{
@@ -71,7 +87,9 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		IEnumerable<ITypeDefinition> INamespace.Types {
 			get {
-				foreach (var typeHandle in ns.TypeDefinitions)
+				if (ns is not { } namespaceDefinition)
+					yield break;
+				foreach (var typeHandle in namespaceDefinition.TypeDefinitions)
 				{
 					var def = module.GetDefinition(typeHandle);
 					if (def != null)
