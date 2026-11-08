@@ -303,6 +303,11 @@ namespace ICSharpCode.Decompiler.Metadata
 
 		public override bool IsSharedAssembly(IAssemblyReference reference, [NotNullWhen(true)] out string? runtimePack)
 		{
+			if (reference.Name.IndexOfAny(invalidAssemblyNameCharacters) >= 0)
+			{
+				runtimePack = null;
+				return false;
+			}
 			return dotNetCorePathFinder.Value.TryResolveDotNetCoreShared(reference, out runtimePack) != null;
 		}
 
@@ -328,6 +333,9 @@ namespace ICSharpCode.Decompiler.Metadata
 
 		string? FindAssemblyFileCore(IAssemblyReference name)
 		{
+			if (name.Name.IndexOfAny(invalidAssemblyNameCharacters) >= 0)
+				return null;
+
 			if (name.IsWindowsRuntime)
 			{
 				return FindWindowsMetadataFile(name);
@@ -599,9 +607,15 @@ namespace ICSharpCode.Decompiler.Metadata
 
 		static readonly string[] assemblyExtensions = { ".dll", ".exe" };
 		static readonly string[] windowsMetadataExtensions = { ".winmd", ".dll" };
+		static readonly char[] invalidAssemblyNameCharacters = { '/', '\\', ':' };
 
 		string? SearchDirectory(IAssemblyReference name, string directory)
 		{
+			// Assembly reference names are identifiers, not paths. Rejecting separators prevents a
+			// malformed reference from escaping the configured search directory during Path.Combine.
+			if (name.Name.IndexOfAny(invalidAssemblyNameCharacters) >= 0)
+				return null;
+
 			var extensions = name.IsWindowsRuntime ? windowsMetadataExtensions : assemblyExtensions;
 			foreach (var extension in extensions)
 			{

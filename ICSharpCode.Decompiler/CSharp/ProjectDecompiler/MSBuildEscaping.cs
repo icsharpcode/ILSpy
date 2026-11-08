@@ -68,5 +68,63 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			}
 			return b.ToString();
 		}
+
+		/// <summary>
+		/// Cleans path-like assembly names before escaping them for a project file. Assembly names
+		/// cannot contain directory or volume separators; leaving one in Reference Include would make
+		/// MSBuild probe a file outside the exported project.
+		/// </summary>
+		public static string EscapeAssemblyName(string name)
+		{
+			if (name.IndexOfAny(new[] { '/', '\\', ':' }) >= 0)
+				name = WholeProjectDecompiler.CleanUpFileName(name, extension: null);
+			return Escape(name);
+		}
+
+		public static string Unescape(string value)
+		{
+			if (value.IndexOf('%') < 0)
+				return value;
+
+			StringBuilder b = new StringBuilder(value.Length);
+			for (int i = 0; i < value.Length; i++)
+			{
+				if (value[i] == '%' && i + 2 < value.Length
+					&& TryParseHexByte(value[i + 1], value[i + 2], out int c))
+				{
+					b.Append((char)c);
+					i += 2;
+				}
+				else
+				{
+					b.Append(value[i]);
+				}
+			}
+			return b.ToString();
+		}
+
+		static bool TryParseHexByte(char high, char low, out int value)
+		{
+			int highValue = HexValue(high);
+			int lowValue = HexValue(low);
+			if (highValue < 0 || lowValue < 0)
+			{
+				value = 0;
+				return false;
+			}
+			value = (highValue << 4) | lowValue;
+			return true;
+		}
+
+		static int HexValue(char c)
+		{
+			if (c is >= '0' and <= '9')
+				return c - '0';
+			if (c is >= 'A' and <= 'F')
+				return c - 'A' + 10;
+			if (c is >= 'a' and <= 'f')
+				return c - 'a' + 10;
+			return -1;
+		}
 	}
 }
