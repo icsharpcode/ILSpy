@@ -174,7 +174,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				if (nestedTypes != null)
 					return nestedTypes;
 				var metadata = module.metadata;
-				var nestedTypeCollection = metadata.GetTypeDefinition(handle).GetNestedTypes();
+				var nestedTypeCollection = metadata.GetTypeDefinition(handle).GetNestedTypes(metadata, handle);
 				var nestedTypeList = new List<ITypeDefinition>(nestedTypeCollection.Length);
 				foreach (TypeDefinitionHandle h in nestedTypeCollection)
 				{

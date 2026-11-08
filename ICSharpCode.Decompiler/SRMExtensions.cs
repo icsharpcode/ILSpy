@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.IO;
 using System.IO.MemoryMappedFiles;
@@ -35,6 +36,17 @@ namespace ICSharpCode.Decompiler
 {
 	public static partial class SRMExtensions
 	{
+		internal static ImmutableArray<TypeDefinitionHandle> GetNestedTypes(this TypeDefinition type,
+			MetadataReader metadata, TypeDefinitionHandle declaringType)
+		{
+			var result = ImmutableArray.CreateBuilder<TypeDefinitionHandle>();
+			foreach (var nestedType in type.GetNestedTypes())
+			{
+				if (metadata.GetTypeDefinition(nestedType).GetDeclaringType() == declaringType)
+					result.Add(nestedType);
+			}
+			return result.ToImmutable();
+		}
 		internal const GenericParameterAttributes AllowByRefLike = (GenericParameterAttributes)0x0020;
 		internal const MethodImplAttributes MethodImplAsync = (MethodImplAttributes)0x2000;
 
