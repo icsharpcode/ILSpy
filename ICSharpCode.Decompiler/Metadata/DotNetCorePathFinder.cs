@@ -129,7 +129,10 @@ namespace ICSharpCode.Decompiler.Metadata
 						foreach (var item in p.RuntimeComponents)
 						{
 							var itemPath = Path.GetDirectoryName(item);
-							var fullPath = Path.Combine(path, p.Name, p.Version, itemPath).ToLowerInvariant();
+							var fullPath = Path.Combine(path, p.Name, p.Version, itemPath);
+							if (!IsWithinDirectory(path, fullPath))
+								continue;
+							fullPath = fullPath.ToLowerInvariant();
 							if (knownPackageBasePaths.Add(fullPath) && Directory.Exists(fullPath))
 								packageBasePaths.Add(fullPath);
 						}
@@ -154,6 +157,9 @@ namespace ICSharpCode.Decompiler.Metadata
 
 		public string TryResolveDotNetCore(IAssemblyReference name)
 		{
+			if (!UniversalAssemblyResolver.IsSimpleFileName(name.Name))
+				return null;
+
 			foreach (var basePath in searchPaths.Concat(packageBasePaths))
 			{
 				var file = Path.Combine(basePath, name.Name + ".dll");
@@ -221,6 +227,18 @@ namespace ICSharpCode.Decompiler.Metadata
 				}
 				yield return new DotNetCorePackageInfo(library.Key, type, path, components);
 			}
+		}
+
+		static bool IsWithinDirectory(string directory, string path)
+		{
+			string fullDirectory = Path.GetFullPath(directory);
+			if (!fullDirectory.EndsWith(Path.DirectorySeparatorChar.ToString(), StringComparison.Ordinal))
+				fullDirectory += Path.DirectorySeparatorChar;
+			string fullPath = Path.GetFullPath(path);
+			var comparison = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+				? StringComparison.OrdinalIgnoreCase
+				: StringComparison.Ordinal;
+			return fullPath.StartsWith(fullDirectory, comparison);
 		}
 
 		public string TryResolveDotNetCoreShared(IAssemblyReference name, out string runtimePack)

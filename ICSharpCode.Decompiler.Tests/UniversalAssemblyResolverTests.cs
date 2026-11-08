@@ -184,6 +184,22 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
+		public void PathLikeModuleNamesAreNotProbed()
+		{
+			string mainDirectory = Path.Combine(gacDirectory, "main");
+			Directory.CreateDirectory(mainDirectory);
+			string mainFile = Path.Combine(mainDirectory, "main.dll");
+			File.Copy(typeof(UniversalAssemblyResolverTests).Assembly.Location, mainFile);
+			string outsideFile = Path.Combine(gacDirectory, "Canary.netmodule");
+			File.Copy(typeof(UniversalAssemblyResolverTests).Assembly.Location, outsideFile);
+
+			using var mainModule = new PEFile(mainFile);
+			var resolver = new UniversalAssemblyResolver(null, throwOnError: false, targetFramework: null);
+
+			Assert.That(resolver.ResolveModule(mainModule, "../Canary.netmodule"), Is.Null);
+		}
+
+		[Test]
 		public void HigherReferenceVersionResolvesToTheVersionInstalledInTheGac()
 		{
 			// The 4.8 reference assembly of System.IO.Compression is 4.2.0.0, but the GAC only
