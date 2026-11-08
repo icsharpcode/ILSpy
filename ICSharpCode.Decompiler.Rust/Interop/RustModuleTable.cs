@@ -41,12 +41,16 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		readonly List<GCHandle> pins = new();
 		readonly RustModule[] modules;
 		readonly uint options;
+		readonly List<MetadataModule> metadataModules;
+
+		/// <summary>The metadata modules in engine order (<c>ModuleId</c> is the index).</summary>
+		public IReadOnlyList<MetadataModule> Modules => metadataModules;
 
 		public RustModuleTable(ICompilation compilation)
 		{
 			// Modules without metadata (the synthetic MinimalCorlib) have nothing to pass; names
 			// that resolve only to them stay unknown in the engine.
-			var metadataModules = compilation.Modules.OfType<MetadataModule>()
+			metadataModules = compilation.Modules.OfType<MetadataModule>()
 				.Where(m => m.MetadataFile is PEFile).ToList();
 			int IndexOf(IModule? m) => m is MetadataModule mm ? metadataModules.IndexOf(mm) : -1;
 			options = (uint)((MetadataModule)compilation.MainModule).TypeSystemOptions;
@@ -98,6 +102,23 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 			if (status != RustStatus.Ok)
 				throw new InvalidOperationException($"ilspy_debug_type_listing: {status}: {NativeMethods.LastError}");
 			return Encoding.UTF8.GetString(bytes);
+		}
+
+		/// <summary>
+		/// The engine's IL reader output for every method body of the main module, as wire v1 for
+		/// <see cref="IlAstMaterializer"/>. Test support only.
+		/// </summary>
+		public unsafe byte[] DebugReadIL(bool useRefLocalsForAccurateOrderOfEvaluation)
+		{
+			RustStatus status;
+			RustBuffer buffer;
+			uint flags = useRefLocalsForAccurateOrderOfEvaluation ? 1u : 0u;
+			fixed (RustModule* p = modules)
+				status = NativeMethods.ilspy_debug_read_il(p, (UIntPtr)modules.Length, options, flags, out buffer);
+			byte[] bytes = NativeMethods.TakeBuffer(buffer);
+			if (status != RustStatus.Ok)
+				throw new InvalidOperationException($"ilspy_debug_read_il: {status}: {NativeMethods.LastError}");
+			return bytes;
 		}
 
 		public void Dispose()

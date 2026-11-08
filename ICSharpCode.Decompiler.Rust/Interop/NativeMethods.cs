@@ -85,6 +85,9 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		[DllImport(Library, CallingConvention = CallingConvention.Cdecl)]
 		internal static extern unsafe RustStatus ilspy_debug_type_listing(RustModule* modules, UIntPtr count, uint options, out RustBuffer listing);
 
+		[DllImport(Library, CallingConvention = CallingConvention.Cdecl)]
+		internal static extern unsafe RustStatus ilspy_debug_read_il(RustModule* modules, UIntPtr count, uint options, uint readerFlags, out RustBuffer wire);
+
 		/// <summary>Copies an engine buffer into managed memory and frees it.</summary>
 		internal static unsafe byte[] TakeBuffer(RustBuffer buffer)
 		{

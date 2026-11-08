@@ -70,13 +70,34 @@ impl TypeSystem<'_, '_> {
         sig: &MethodSig,
         ctx: GenericContext,
     ) -> Result<TypeId> {
+        self.function_pointer_with(module, sig, ctx, true)
+    }
+
+    /// `FunctionPointerType.FromSignature`, used for `calli` signatures: unlike nested
+    /// function pointer types, instance method pointers keep their signature.
+    pub fn function_pointer_from_sig(
+        &mut self,
+        module: ModuleId,
+        sig: &MethodSig,
+        ctx: GenericContext,
+    ) -> Result<TypeId> {
+        self.function_pointer_with(module, sig, ctx, false)
+    }
+
+    fn function_pointer_with(
+        &mut self,
+        module: ModuleId,
+        sig: &MethodSig,
+        ctx: GenericContext,
+        instance_as_intptr: bool,
+    ) -> Result<TypeId> {
         let mut ret = self.from_sig_raw(module, &sig.ret, ctx)?;
         let raw_params = sig
             .params
             .iter()
             .map(|p| self.from_sig_raw(module, p, ctx))
             .collect::<Result<Vec<_>>>()?;
-        if sig.header & 0x20 != 0 {
+        if instance_as_intptr && sig.header & 0x20 != 0 {
             // Pointers to instance methods are typed as IntPtr.
             return Ok(self.known_type(KnownTypeCode::IntPtr));
         }

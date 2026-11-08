@@ -710,6 +710,53 @@ can resolve them again in the function's generic context and get the managed obj
 directly. These are checked by Rust unit tests here and, from 5c on, against the managed
 reader through the materializer.
 
+### 3.20 The IL reader, wire v1 and the ILAst materializer (item 5c)
+
+`il/reader.rs` ports `ILReader` almost line by line: blocks are imported from a queue, each
+with an input stack, and re-imported when a merge widens a stack slot's type. Values wait
+on an expression stack until a branch, a side effect or the end of a block flushes them into
+stack slot variables. At the end, the slots that meet on an edge are unified, stack
+adjustments are inserted where their types differ, and the representatives are named `S_n`
+in visiting order. `il/block_builder.rs` ports `BlockBuilder` (try, catch, filter, finally
+and fault containers, branch connection, VB "on error" dispatchers), and `finish` ports the
+rest of `ReadIL`: the variable order and the topological sort that drops unreachable blocks.
+Runtime async (`MethodImplAsync` under `TypeSystemOptions.RuntimeAsync`) is part of this
+step and not of 5d, because the .NET 11 runtime libraries in the corpus are compiled with
+it. It unpacks the return type with a port of `TaskType.UnpackAnyTask`.
+
+The port keeps the managed quirks that the output shows, rather than fixing them:
+- `BlockBuilder` never empties its container stack after placing the blocks, so branch
+  lookup also searches the containers left over from that pass.
+- `IsTask` does not recognize a `Task<T>` that is wrapped in a nullability annotation.
+- `Warn` and the `InvalidBranch` messages reuse the managed text, because they are printed.
+
+A condition where the managed reader throws, such as an index outside the branch-target
+bitset, becomes an error for that method only. A panic is also caught per method, so one bad
+body does not hide the others.
+
+Wire v1 (`wire/`) begins with `ILSW` and a version, followed by a string table and a type
+table. Types are structural trees: Def, Inst, Array, Pointer, ByRef, Pinned, TypeParam,
+Unknown, the special types, FnPtr, Modified, Tuple and Annotated. Each entry refers only to
+earlier ones, so the C# reader (`WireReader`) builds the link-compiled `IType`s in one pass.
+Methods and fields travel as their metadata tokens, and the materializer resolves them again
+in the function's generic context. A function carries its header, its variables in
+`ILFunction.Variables` order, its warnings and sequence point candidates, a block table, and
+then the body in pre-order. The block table exists because `Block.Kind` is readonly: the
+materializer creates every block up front, so branches can point at blocks that come later.
+The table also lists blocks that are only reachable as branch targets: the topological sort
+can drop an outer block that only an inner container branches to, and the managed printout
+still names it. `Interop/IlAstMaterializer.cs` rebuilds each node through the same
+constructors the reader uses, adds the variables, and connects the function with `AddRef`,
+which also produces the load, store and incoming-edge counts.
+
+The gate, `IlAstReadEquality`, prints both functions with `WriteTo` (IL ranges on), plus the
+local signature length and the sequence point candidates, and compares the printouts for
+every method body of every corpus image. A method that fails must fail on both sides.
+`PrintoutCoversReaderOutput` checks that the printout really contains stack slots, exception
+slots, try blocks, handlers, incoming counts and sequence points. The first corpus run also
+caught a performance bug: appending to a block relinked all its children, which made reading
+quadratic.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

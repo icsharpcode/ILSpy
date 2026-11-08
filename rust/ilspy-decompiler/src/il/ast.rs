@@ -980,7 +980,21 @@ impl Function {
     /// Inserts `item` at `index` of the list of `owner` (`InstructionCollection.Insert`).
     pub fn insert(&mut self, owner: NodeId, index: usize, item: NodeId) {
         self.list_mut(owner).insert(index, item);
-        self.relink(owner);
+        // Only the children from `index` on move; relinking all of them would make filling a
+        // block quadratic.
+        let (offset, trailing) = match self.inst(owner) {
+            Inst::Block { final_inst, .. } => (0, Some(*final_inst)),
+            Inst::Switch { .. } | Inst::TryCatch { .. } | Inst::LdElema { .. } => (1, None),
+            _ => (0, None),
+        };
+        let len = self.list(owner).len();
+        for i in index..len {
+            let child = self.list(owner)[i];
+            self.adopt(owner, child, offset + i);
+        }
+        if let Some(t) = trailing {
+            self.adopt(owner, t, offset + len);
+        }
     }
 
     /// Appends `item` to the list of `owner` (`InstructionCollection.Add`).

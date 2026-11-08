@@ -42,6 +42,10 @@ fn merge_overlapping(input: impl IntoIterator<Item = LongInterval>) -> Vec<LongI
 }
 
 impl LongSet {
+    pub fn intervals(&self) -> &[LongInterval] {
+        &self.intervals
+    }
+
     pub fn empty() -> Self {
         LongSet {
             intervals: Vec::new(),

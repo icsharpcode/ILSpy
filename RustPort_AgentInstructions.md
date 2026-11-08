@@ -297,11 +297,13 @@ the reasons. This file holds only the ordered steps, their gates and their rules
       type listing), `Interval`, `LongInterval` and `LongSet` with their managed unit tests.
     - [x] **5b. ILAst arena.** Subject: `Add the ILAst arena to the Rust engine`. The instruction kinds the IL reader produces, with result
       types, flags and `InferType`; the editing operations; Rust unit tests.
-    - [ ] **5c. IL reader, wire v1, materializer.** `ILReader`, `BlockBuilder`, topological
-      block order; the wire writer and `IlAstMaterializer.cs`; `IlAstReadEquality` without
-      debug symbols, every method body.
-    - [ ] **5d. Debug symbols and runtime async.** The `get_debug_info` callback and
-      `IlAstReadEquality` with debug symbols; runtime async in the reader.
+    - [x] **5c. IL reader, wire v1, materializer.** Subject: `Add the Rust IL reader and the ILAst materializer`.
+      `ILReader`, `BlockBuilder`, topological block order and runtime async (`UnpackAnyTask`,
+      which moved here from 5d because the .NET 11 runtime libraries use it); the wire writer
+      and `IlAstMaterializer.cs`; `IlAstReadEquality` without debug symbols over every method
+      body of every corpus image under `TypeSystemOptions.Default`.
+    - [ ] **5d. Debug symbols.** The `get_debug_info` callback and `IlAstReadEquality` with
+      debug symbols.
   - The `Inst` enum covers the opcodes the reader produces; each later step adds the opcodes
     its transform creates, with their materializer cases, so no opcode exists in Rust before
     a gate exercises it.

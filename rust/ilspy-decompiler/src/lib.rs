@@ -7,6 +7,7 @@ pub mod il;
 pub mod metadata;
 pub mod typesystem;
 pub mod util;
+pub mod wire;
 
 /// The engine version, as declared in the workspace manifest.
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");

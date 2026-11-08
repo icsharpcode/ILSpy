@@ -14,7 +14,9 @@ use std::ptr;
 use std::sync::Once;
 
 use ilspy_decompiler::Session;
+use ilspy_decompiler::il::reader::ReaderOptions;
 use ilspy_decompiler::typesystem::compilation::{Compilation, ModuleId, ModuleInput};
+use ilspy_decompiler::typesystem::types::TypeSystem;
 
 static VERSION_C: &str = concat!(env!("CARGO_PKG_VERSION"), "\0");
 
@@ -218,6 +220,59 @@ fn targets(raw: &[i32]) -> Vec<Option<ModuleId>> {
         .collect()
 }
 
+/// The `ModuleInput`s an export receives as an `FfiModule` array.
+///
+/// # Safety
+/// `modules` must point to `count` valid `FfiModule`s whose pointers outlive the result.
+unsafe fn module_inputs<'a>(
+    modules: *const FfiModule,
+    count: usize,
+    options: u32,
+) -> Vec<ModuleInput<'a>> {
+    // SAFETY: the caller guarantees the module array and everything it points to.
+    unsafe { slice(modules, count) }
+        .iter()
+        .map(|m| unsafe {
+            ModuleInput {
+                image: slice(m.image, m.image_len),
+                assembly_name: String::from_utf8_lossy(slice(m.assembly_name, m.assembly_name_len))
+                    .into_owned(),
+                assembly_refs: targets(slice(m.assembly_refs, m.assembly_ref_count)),
+                module_refs: targets(slice(m.module_refs, m.module_ref_count)),
+                options,
+            }
+        })
+        .collect()
+}
+
+/// Runs `f` on the compilation of `modules` and writes its bytes to `out`.
+///
+/// # Safety
+/// As `module_inputs`; `out` must be writable.
+unsafe fn with_compilation(
+    modules: *const FfiModule,
+    count: usize,
+    options: u32,
+    out: *mut Buf,
+    f: impl FnOnce(&Compilation<'_>) -> Vec<u8>,
+) -> Status {
+    // SAFETY: the caller guarantees `out` is writable.
+    unsafe { out.write(Buf::EMPTY) };
+    match run(|| {
+        // SAFETY: the caller guarantees the module array.
+        let inputs = unsafe { module_inputs(modules, count, options) };
+        let comp = Compilation::new(inputs).map_err(|e| e.to_string())?;
+        Ok(f(&comp))
+    }) {
+        Ok(bytes) => {
+            // SAFETY: as above.
+            unsafe { out.write(Buf::from_vec(bytes)) };
+            Status::Ok
+        }
+        Err(status) => status,
+    }
+}
+
 /// Debug export for the shim's `TypeSystemListingEquality` test: the type-system listing
 /// (`typesystem::listing`) of module 0 of the given compilation under `TypeSystemOptions`
 /// `options`, as UTF-8 in `*out`.
@@ -232,35 +287,36 @@ pub unsafe extern "C" fn ilspy_debug_type_listing(
     options: u32,
     out: *mut Buf,
 ) -> Status {
-    // SAFETY: the caller guarantees `out` is writable.
-    unsafe { out.write(Buf::EMPTY) };
-    match run(|| {
-        // SAFETY: the caller guarantees the module array and everything it points to.
-        let inputs = unsafe { slice(modules, count) }
-            .iter()
-            .map(|m| unsafe {
-                ModuleInput {
-                    image: slice(m.image, m.image_len),
-                    assembly_name: String::from_utf8_lossy(slice(
-                        m.assembly_name,
-                        m.assembly_name_len,
-                    ))
-                    .into_owned(),
-                    assembly_refs: targets(slice(m.assembly_refs, m.assembly_ref_count)),
-                    module_refs: targets(slice(m.module_refs, m.module_ref_count)),
-                    options,
-                }
-            })
-            .collect();
-        let comp = Compilation::new(inputs).map_err(|e| e.to_string())?;
-        Ok(ilspy_decompiler::typesystem::listing::listing(&comp).into_bytes())
-    }) {
-        Ok(bytes) => {
-            // SAFETY: as above.
-            unsafe { out.write(Buf::from_vec(bytes)) };
-            Status::Ok
-        }
-        Err(status) => status,
+    // SAFETY: forwarded from the caller.
+    unsafe {
+        with_compilation(modules, count, options, out, |comp| {
+            ilspy_decompiler::typesystem::listing::listing(comp).into_bytes()
+        })
+    }
+}
+
+/// Debug export for the shim's `IlAstReadEquality` test: the IL reader's function for every
+/// method body of module 0, as wire v1 (`wire::ilast`). Bit 0 of `reader_flags` is `UseRefLocalsForAccurateOrderOfEvaluation`.
+///
+/// # Safety
+/// As `ilspy_debug_type_listing`.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn ilspy_debug_read_il(
+    modules: *const FfiModule,
+    count: usize,
+    options: u32,
+    reader_flags: u32,
+    out: *mut Buf,
+) -> Status {
+    let reader = ReaderOptions {
+        use_ref_locals_for_accurate_order_of_evaluation: reader_flags & 1 != 0,
+    };
+    // SAFETY: forwarded from the caller.
+    unsafe {
+        with_compilation(modules, count, options, out, |comp| {
+            let mut ts = TypeSystem::new(comp);
+            ilspy_decompiler::wire::ilast::read_module(&mut ts, ModuleId(0), reader)
+        })
     }
 }
 

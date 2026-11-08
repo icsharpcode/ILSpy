@@ -120,6 +120,36 @@ impl<'a> UserStringHeap<'a> {
         Self(data)
     }
 
+    /// `UserStringHeap.GetString`: empty when the length prefix is not a valid compressed
+    /// integer, an error when the offset or the text lies outside the heap.
+    pub fn get(&self, offset: usize) -> Result<Vec<u16>> {
+        let out_of_bounds = Error::Malformed("Out of bounds");
+        if offset > self.0.len() {
+            return Err(out_of_bounds);
+        }
+        let rest = &self.0[offset..];
+        let (size, read) = match rest {
+            [] => return Ok(Vec::new()),
+            [b, ..] if b & 0x80 == 0 => (usize::from(*b), 1),
+            [b, c, ..] if b & 0x40 == 0 => ((usize::from(b & 0x3F) << 8) | usize::from(*c), 2),
+            [b, c, d, e, ..] if b & 0x20 == 0 => (
+                (usize::from(b & 0x1F) << 24)
+                    | (usize::from(*c) << 16)
+                    | (usize::from(*d) << 8)
+                    | usize::from(*e),
+                4,
+            ),
+            _ => return Ok(Vec::new()),
+        };
+        let bytes = rest.get(read..read + (size & !1)).ok_or(out_of_bounds)?;
+        Ok(bytes
+            .as_chunks::<2>()
+            .0
+            .iter()
+            .map(|c| u16::from_le_bytes(*c))
+            .collect())
+    }
+
     pub fn len(&self) -> usize {
         self.0.len()
     }

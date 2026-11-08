@@ -17,5 +17,6 @@ pub mod options;
 pub mod reflection;
 pub mod resolve;
 pub mod specialize;
+pub mod task;
 pub mod typename;
 pub mod types;

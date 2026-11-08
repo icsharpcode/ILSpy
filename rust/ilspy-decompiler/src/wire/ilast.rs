@@ -1,0 +1,756 @@
+//! Wire v1: the ILAst functions of the IL reader (`Interop/IlAstMaterializer.cs` reads it).
+//!
+//! Payload: a function count, then per method `row`, a status byte (0 read, 1 failed with a
+//! message) and for a read function its header, variables, warnings, sequence point
+//! candidates, the block table and the body. Blocks and containers are numbered in pre-order
+//! of the body; branches name blocks by number, so the table also lists blocks that are no
+//! longer in the tree but still targeted.
+
+use std::collections::HashMap;
+
+use crate::il::ast::*;
+use crate::il::reader::ReadFunction;
+use crate::il::types::StackType;
+use crate::typesystem::types::{TypeId, TypeSystem};
+
+use super::{Bytes, Tables};
+
+pub const VERSION: u32 = 1;
+
+/// Node tags; `IlAstMaterializer.cs` mirrors them.
+mod op {
+    pub const INVALID_BRANCH: u8 = 0;
+    pub const INVALID_EXPRESSION: u8 = 1;
+    pub const NOP: u8 = 2;
+    pub const BLOCK_CONTAINER: u8 = 3;
+    pub const BLOCK: u8 = 4;
+    pub const BINARY_NUMERIC: u8 = 5;
+    pub const BIT_NOT: u8 = 6;
+    pub const ARGLIST: u8 = 7;
+    pub const BRANCH: u8 = 8;
+    pub const LEAVE: u8 = 9;
+    pub const IF: u8 = 10;
+    pub const SWITCH: u8 = 11;
+    pub const SWITCH_SECTION: u8 = 12;
+    pub const TRY_CATCH: u8 = 13;
+    pub const TRY_CATCH_HANDLER: u8 = 14;
+    pub const TRY_FINALLY: u8 = 15;
+    pub const TRY_FAULT: u8 = 16;
+    pub const DEBUG_BREAK: u8 = 17;
+    pub const COMP: u8 = 18;
+    pub const CALL: u8 = 19;
+    pub const CALL_VIRT: u8 = 20;
+    pub const NEW_OBJ: u8 = 21;
+    pub const CALL_INDIRECT: u8 = 22;
+    pub const CKFINITE: u8 = 23;
+    pub const CONV: u8 = 24;
+    pub const LD_LOC: u8 = 25;
+    pub const LD_LOCA: u8 = 26;
+    pub const ST_LOC: u8 = 27;
+    pub const ADDRESS_OF: u8 = 28;
+    pub const LD_STR: u8 = 29;
+    pub const LDC_I4: u8 = 30;
+    pub const LDC_I8: u8 = 31;
+    pub const LDC_F4: u8 = 32;
+    pub const LDC_F8: u8 = 33;
+    pub const LD_NULL: u8 = 34;
+    pub const LD_FTN: u8 = 35;
+    pub const LD_VIRT_FTN: u8 = 36;
+    pub const LD_TYPE_TOKEN: u8 = 37;
+    pub const LD_MEMBER_TOKEN: u8 = 38;
+    pub const LOC_ALLOC: u8 = 39;
+    pub const CPBLK: u8 = 40;
+    pub const INITBLK: u8 = 41;
+    pub const LD_FLDA: u8 = 42;
+    pub const LDS_FLDA: u8 = 43;
+    pub const CAST_CLASS: u8 = 44;
+    pub const IS_INST: u8 = 45;
+    pub const LD_OBJ: u8 = 46;
+    pub const LD_OBJ_IF_REF: u8 = 47;
+    pub const ST_OBJ: u8 = 48;
+    pub const BOX: u8 = 49;
+    pub const UNBOX: u8 = 50;
+    pub const UNBOX_ANY: u8 = 51;
+    pub const NEW_ARR: u8 = 52;
+    pub const DEFAULT_VALUE: u8 = 53;
+    pub const THROW: u8 = 54;
+    pub const RETHROW: u8 = 55;
+    pub const SIZE_OF: u8 = 56;
+    pub const LD_LEN: u8 = 57;
+    pub const LD_ELEMA: u8 = 58;
+    pub const MAKE_REF_ANY: u8 = 59;
+    pub const REF_ANY_TYPE: u8 = 60;
+    pub const REF_ANY_VALUE: u8 = 61;
+}
+
+/// Writes every function of one module.
+pub struct ModuleWriter<'t, 'c, 'a> {
+    ts: &'t TypeSystem<'c, 'a>,
+    tables: Tables,
+    payload: Bytes,
+    count: usize,
+    functions: Bytes,
+}
+
+impl<'t, 'c, 'a> ModuleWriter<'t, 'c, 'a> {
+    pub fn new(ts: &'t TypeSystem<'c, 'a>) -> Self {
+        ModuleWriter {
+            ts,
+            tables: Tables::default(),
+            payload: Bytes::default(),
+            count: 0,
+            functions: Bytes::default(),
+        }
+    }
+
+    pub fn failed(&mut self, row: u32, message: &str) {
+        self.count += 1;
+        self.functions.uvar(u64::from(row));
+        self.functions.u8(1);
+        let s = self.tables.string(message);
+        self.functions.uvar(u64::from(s));
+    }
+
+    pub fn function(&mut self, row: u32, r: &ReadFunction) -> Result<(), String> {
+        let mut w = FunctionWriter {
+            ts: self.ts,
+            tables: &mut self.tables,
+            f: &r.function,
+            out: Bytes::default(),
+            vars: r
+                .variables
+                .iter()
+                .enumerate()
+                .map(|(i, &v)| (v, i))
+                .collect(),
+            blocks: HashMap::new(),
+            block_order: Vec::new(),
+            containers: HashMap::new(),
+        };
+        w.write(r)?;
+        self.count += 1;
+        self.functions.uvar(u64::from(row));
+        self.functions.u8(0);
+        self.functions.raw(&w.out.0);
+        Ok(())
+    }
+
+    pub fn finish(mut self) -> Vec<u8> {
+        self.payload.len(self.count);
+        self.payload.raw(&self.functions.0);
+        self.tables.finish(VERSION, self.payload)
+    }
+}
+
+struct FunctionWriter<'w, 't, 'c, 'a> {
+    ts: &'t TypeSystem<'c, 'a>,
+    tables: &'w mut Tables,
+    f: &'w Function,
+    out: Bytes,
+    vars: HashMap<VarId, usize>,
+    blocks: HashMap<NodeId, usize>,
+    block_order: Vec<NodeId>,
+    containers: HashMap<NodeId, usize>,
+}
+
+impl FunctionWriter<'_, '_, '_, '_> {
+    fn ty(&mut self, t: TypeId) {
+        let i = self.tables.ty(self.ts, t);
+        self.out.uvar(u64::from(i));
+    }
+
+    fn string(&mut self, s: &str) {
+        let i = self.tables.string(s);
+        self.out.uvar(u64::from(i));
+    }
+
+    fn var(&mut self, v: VarId) -> Result<(), String> {
+        let i = *self
+            .vars
+            .get(&v)
+            .ok_or("instruction uses a variable outside the function")?;
+        self.out.len(i);
+        Ok(())
+    }
+
+    fn stack_type(&mut self, st: StackType) {
+        self.out.u8(st as u8);
+    }
+
+    fn block_number(&mut self, b: NodeId) -> usize {
+        let next = self.blocks.len();
+        *self.blocks.entry(b).or_insert_with(|| {
+            self.block_order.push(b);
+            next
+        })
+    }
+
+    /// Numbers the blocks and containers of the tree in pre-order, then the blocks that are
+    /// only reachable as branch targets.
+    fn number(&mut self, root: NodeId) {
+        let mut stack = vec![root];
+        let mut targets = Vec::new();
+        while let Some(id) = stack.pop() {
+            match self.f.inst(id) {
+                Inst::Block { .. } => {
+                    self.block_number(id);
+                }
+                Inst::BlockContainer { .. } => {
+                    let next = self.containers.len();
+                    self.containers.insert(id, next);
+                }
+                Inst::Branch {
+                    target: BranchTarget::Block(t),
+                } => targets.push(*t),
+                _ => {}
+            }
+            stack.extend(self.f.inst(id).children().into_iter().rev());
+        }
+        for t in targets {
+            self.block_number(t);
+        }
+    }
+
+    fn write(&mut self, r: &ReadFunction) -> Result<(), String> {
+        let body = r.function.body.ok_or("function without body")?;
+        self.out.len(r.code_size as usize);
+        self.out.len(r.local_signature_length);
+        match r.async_return_type {
+            Some(t) => {
+                let i = self.tables.ty(self.ts, t);
+                self.out.uvar(u64::from(i) + 1);
+            }
+            None => self.out.u8(0),
+        }
+        self.out.len(r.variables.len());
+        for &v in &r.variables {
+            let var = self.f.var(v);
+            self.out.u8(var.kind as u8);
+            self.ty(var.ty);
+            self.stack_type(var.stack_type);
+            match var.index {
+                Some(i) => {
+                    self.out.u8(1);
+                    self.out.ivar(i64::from(i));
+                }
+                None => self.out.u8(0),
+            }
+            self.string(&var.name);
+            self.out.u8(u8::from(var.has_generated_name)
+                | u8::from(var.initial_value_is_initialized) << 1
+                | u8::from(var.uses_initial_value) << 2
+                | u8::from(var.is_ref_read_only) << 3);
+        }
+        self.out.len(r.warnings.len());
+        for w in &r.warnings {
+            self.string(w);
+        }
+        self.out.len(r.sequence_point_candidates.len());
+        for &s in &r.sequence_point_candidates {
+            self.out.ivar(i64::from(s));
+        }
+        self.number(body);
+        self.out.len(self.block_order.len());
+        for &b in &self.block_order.clone() {
+            let Inst::Block { kind, .. } = self.f.inst(b) else {
+                return Err("branch target is not a block".to_owned());
+            };
+            self.out.u8(*kind as u8);
+            let range = self.f.il_range(b);
+            self.out.ivar(i64::from(range.start));
+            self.out.ivar(i64::from(range.end));
+        }
+        self.out.len(self.containers.len());
+        self.node(body)
+    }
+
+    fn nodes(&mut self, ids: &[NodeId]) -> Result<(), String> {
+        self.out.len(ids.len());
+        for &id in ids {
+            self.node(id)?;
+        }
+        Ok(())
+    }
+
+    fn node(&mut self, id: NodeId) -> Result<(), String> {
+        let range = self.f.il_range(id);
+        let inst = self.f.inst(id).clone();
+        let tag = |t: u8, out: &mut Bytes| {
+            out.u8(t);
+            out.ivar(i64::from(range.start));
+            out.ivar(i64::from(range.end));
+        };
+        match inst {
+            Inst::InvalidBranch { message, expected } => {
+                tag(op::INVALID_BRANCH, &mut self.out);
+                self.string(&message);
+                self.stack_type(expected);
+            }
+            Inst::InvalidExpression {
+                message,
+                expected,
+                severity,
+            } => {
+                tag(op::INVALID_EXPRESSION, &mut self.out);
+                self.string(&message);
+                self.stack_type(expected);
+                self.string(&severity);
+            }
+            Inst::Nop { kind } => {
+                tag(op::NOP, &mut self.out);
+                self.out.u8(kind as u8);
+            }
+            Inst::BlockContainer {
+                kind,
+                expected,
+                blocks,
+            } => {
+                tag(op::BLOCK_CONTAINER, &mut self.out);
+                self.out.len(self.containers[&id]);
+                self.out.u8(kind as u8);
+                match expected {
+                    Some(t) => {
+                        let i = self.tables.ty(self.ts, t);
+                        self.out.uvar(u64::from(i) + 1);
+                    }
+                    None => self.out.u8(0),
+                }
+                self.nodes(&blocks)?;
+            }
+            Inst::Block {
+                instructions,
+                final_inst,
+                ..
+            } => {
+                tag(op::BLOCK, &mut self.out);
+                self.out.len(self.blocks[&id]);
+                self.nodes(&instructions)?;
+                self.node(final_inst)?;
+            }
+            Inst::BinaryNumeric {
+                op: o,
+                check_overflow,
+                sign,
+                left_input,
+                right_input,
+                left,
+                right,
+            } => {
+                tag(op::BINARY_NUMERIC, &mut self.out);
+                self.out.u8(o as u8);
+                self.out.bool(check_overflow);
+                self.out.u8(sign as u8);
+                self.stack_type(left_input);
+                self.stack_type(right_input);
+                self.node(left)?;
+                self.node(right)?;
+            }
+            Inst::BitNot { arg } => {
+                tag(op::BIT_NOT, &mut self.out);
+                self.node(arg)?;
+            }
+            Inst::Arglist => tag(op::ARGLIST, &mut self.out),
+            Inst::Branch { target } => {
+                tag(op::BRANCH, &mut self.out);
+                let BranchTarget::Block(b) = target else {
+                    return Err("unconnected branch".to_owned());
+                };
+                let n = self.blocks[&b];
+                self.out.len(n);
+            }
+            Inst::Leave { target, value } => {
+                tag(op::LEAVE, &mut self.out);
+                let c = target
+                    .and_then(|t| self.containers.get(&t).copied())
+                    .ok_or("leave without a container in the tree")?;
+                self.out.len(c);
+                self.node(value)?;
+            }
+            Inst::If {
+                condition,
+                true_inst,
+                false_inst,
+            } => {
+                tag(op::IF, &mut self.out);
+                self.node(condition)?;
+                self.node(true_inst)?;
+                self.node(false_inst)?;
+            }
+            Inst::Switch { value, sections } => {
+                tag(op::SWITCH, &mut self.out);
+                self.node(value)?;
+                self.nodes(&sections)?;
+            }
+            Inst::SwitchSection { labels, body } => {
+                tag(op::SWITCH_SECTION, &mut self.out);
+                let intervals = labels.intervals();
+                self.out.len(intervals.len());
+                for i in intervals {
+                    self.out.ivar(i.start);
+                    self.out.ivar(i.end);
+                }
+                self.node(body)?;
+            }
+            Inst::TryCatch {
+                try_block,
+                handlers,
+            } => {
+                tag(op::TRY_CATCH, &mut self.out);
+                self.node(try_block)?;
+                self.nodes(&handlers)?;
+            }
+            Inst::TryCatchHandler {
+                filter,
+                body,
+                variable,
+            } => {
+                tag(op::TRY_CATCH_HANDLER, &mut self.out);
+                self.var(variable)?;
+                self.node(filter)?;
+                self.node(body)?;
+            }
+            Inst::TryFinally {
+                try_block,
+                finally_block,
+            } => {
+                tag(op::TRY_FINALLY, &mut self.out);
+                self.node(try_block)?;
+                self.node(finally_block)?;
+            }
+            Inst::TryFault {
+                try_block,
+                fault_block,
+            } => {
+                tag(op::TRY_FAULT, &mut self.out);
+                self.node(try_block)?;
+                self.node(fault_block)?;
+            }
+            Inst::DebugBreak => tag(op::DEBUG_BREAK, &mut self.out),
+            Inst::Comp {
+                kind,
+                sign,
+                input,
+                left,
+                right,
+            } => {
+                tag(op::COMP, &mut self.out);
+                self.out.u8(kind as u8);
+                self.out.u8(sign as u8);
+                self.stack_type(input);
+                self.node(left)?;
+                self.node(right)?;
+            }
+            Inst::Call(c) | Inst::CallVirt(c) | Inst::NewObj(c) => {
+                let t = match self.f.inst(id) {
+                    Inst::Call(_) => op::CALL,
+                    Inst::CallVirt(_) => op::CALL_VIRT,
+                    _ => op::NEW_OBJ,
+                };
+                tag(t, &mut self.out);
+                self.out.uvar(u64::from(c.method.token));
+                self.out.u8(u8::from(c.is_tail)
+                    | u8::from(c.il_stack_was_empty) << 1
+                    | u8::from(c.constrained_to.is_some()) << 2);
+                if let Some(t) = c.constrained_to {
+                    self.ty(t.ty);
+                }
+                self.nodes(&c.args)?;
+            }
+            Inst::CallIndirect {
+                is_instance,
+                has_explicit_this,
+                signature,
+                function_pointer,
+                args,
+                ..
+            } => {
+                tag(op::CALL_INDIRECT, &mut self.out);
+                self.out.bool(is_instance);
+                self.out.bool(has_explicit_this);
+                self.ty(signature);
+                self.nodes(&args)?;
+                self.node(function_pointer)?;
+            }
+            Inst::Ckfinite { arg } => {
+                tag(op::CKFINITE, &mut self.out);
+                self.node(arg)?;
+            }
+            Inst::Conv {
+                arg,
+                input,
+                input_sign,
+                target,
+                check_overflow,
+            } => {
+                tag(op::CONV, &mut self.out);
+                self.stack_type(input);
+                self.out.u8(input_sign as u8);
+                self.out.u8(target as u8);
+                self.out.bool(check_overflow);
+                self.node(arg)?;
+            }
+            Inst::LdLoc { var } => {
+                tag(op::LD_LOC, &mut self.out);
+                self.var(var)?;
+            }
+            Inst::LdLoca { var } => {
+                tag(op::LD_LOCA, &mut self.out);
+                self.var(var)?;
+            }
+            Inst::StLoc {
+                var,
+                value,
+                il_stack_was_empty,
+                is_stack_adjustment,
+            } => {
+                tag(op::ST_LOC, &mut self.out);
+                self.var(var)?;
+                self.out
+                    .u8(u8::from(il_stack_was_empty) | u8::from(is_stack_adjustment) << 1);
+                self.node(value)?;
+            }
+            Inst::AddressOf { value, ty } => {
+                tag(op::ADDRESS_OF, &mut self.out);
+                self.ty(ty.ty);
+                self.node(value)?;
+            }
+            Inst::LdStr { value } => {
+                tag(op::LD_STR, &mut self.out);
+                self.out.len(value.len());
+                for u in value {
+                    self.out.raw(&u.to_le_bytes());
+                }
+            }
+            Inst::LdcI4 { value } => {
+                tag(op::LDC_I4, &mut self.out);
+                self.out.ivar(i64::from(value));
+            }
+            Inst::LdcI8 { value } => {
+                tag(op::LDC_I8, &mut self.out);
+                self.out.ivar(value);
+            }
+            Inst::LdcF4 { bits } => {
+                tag(op::LDC_F4, &mut self.out);
+                self.out.raw(&bits.to_le_bytes());
+            }
+            Inst::LdcF8 { bits } => {
+                tag(op::LDC_F8, &mut self.out);
+                self.out.raw(&bits.to_le_bytes());
+            }
+            Inst::LdNull => tag(op::LD_NULL, &mut self.out),
+            Inst::LdFtn { method } => {
+                tag(op::LD_FTN, &mut self.out);
+                self.out.uvar(u64::from(method.token));
+            }
+            Inst::LdVirtFtn { arg, method } => {
+                tag(op::LD_VIRT_FTN, &mut self.out);
+                self.out.uvar(u64::from(method.token));
+                self.node(arg)?;
+            }
+            Inst::LdTypeToken { ty } => {
+                tag(op::LD_TYPE_TOKEN, &mut self.out);
+                self.ty(ty.ty);
+            }
+            Inst::LdMemberToken { member } => {
+                tag(op::LD_MEMBER_TOKEN, &mut self.out);
+                let token = match member {
+                    MemberOperand::Method(m) => m.token,
+                    MemberOperand::Field(f) => f.token,
+                };
+                self.out.uvar(u64::from(token));
+            }
+            Inst::LocAlloc { arg } => {
+                tag(op::LOC_ALLOC, &mut self.out);
+                self.node(arg)?;
+            }
+            Inst::Cpblk {
+                dest,
+                source,
+                size,
+                is_volatile,
+                unaligned,
+            } => {
+                tag(op::CPBLK, &mut self.out);
+                self.out.bool(is_volatile);
+                self.out.u8(unaligned);
+                self.node(dest)?;
+                self.node(source)?;
+                self.node(size)?;
+            }
+            Inst::Initblk {
+                address,
+                value,
+                size,
+                is_volatile,
+                unaligned,
+            } => {
+                tag(op::INITBLK, &mut self.out);
+                self.out.bool(is_volatile);
+                self.out.u8(unaligned);
+                self.node(address)?;
+                self.node(value)?;
+                self.node(size)?;
+            }
+            Inst::LdFlda {
+                target,
+                field,
+                delay_exceptions,
+            } => {
+                tag(op::LD_FLDA, &mut self.out);
+                self.out.uvar(u64::from(field.token));
+                self.out.bool(delay_exceptions);
+                self.node(target)?;
+            }
+            Inst::LdsFlda { field } => {
+                tag(op::LDS_FLDA, &mut self.out);
+                self.out.uvar(u64::from(field.token));
+            }
+            Inst::CastClass { arg, ty }
+            | Inst::IsInst { arg, ty }
+            | Inst::Box { arg, ty }
+            | Inst::Unbox { arg, ty }
+            | Inst::UnboxAny { arg, ty }
+            | Inst::MakeRefAny { arg, ty }
+            | Inst::RefAnyValue { arg, ty } => {
+                let t = match self.f.inst(id) {
+                    Inst::CastClass { .. } => op::CAST_CLASS,
+                    Inst::IsInst { .. } => op::IS_INST,
+                    Inst::Box { .. } => op::BOX,
+                    Inst::Unbox { .. } => op::UNBOX,
+                    Inst::UnboxAny { .. } => op::UNBOX_ANY,
+                    Inst::MakeRefAny { .. } => op::MAKE_REF_ANY,
+                    _ => op::REF_ANY_VALUE,
+                };
+                tag(t, &mut self.out);
+                self.ty(ty.ty);
+                self.node(arg)?;
+            }
+            Inst::LdObj {
+                target,
+                ty,
+                is_volatile,
+                unaligned,
+            } => {
+                tag(op::LD_OBJ, &mut self.out);
+                self.ty(ty.ty);
+                self.out.bool(is_volatile);
+                self.out.u8(unaligned);
+                self.node(target)?;
+            }
+            Inst::LdObjIfRef { target, ty } => {
+                tag(op::LD_OBJ_IF_REF, &mut self.out);
+                self.ty(ty.ty);
+                self.node(target)?;
+            }
+            Inst::StObj {
+                target,
+                value,
+                ty,
+                is_volatile,
+                unaligned,
+            } => {
+                tag(op::ST_OBJ, &mut self.out);
+                self.ty(ty.ty);
+                self.out.bool(is_volatile);
+                self.out.u8(unaligned);
+                self.node(target)?;
+                self.node(value)?;
+            }
+            Inst::NewArr { ty, indices } => {
+                tag(op::NEW_ARR, &mut self.out);
+                self.ty(ty.ty);
+                self.nodes(&indices)?;
+            }
+            Inst::DefaultValue {
+                ty,
+                il_stack_was_empty,
+            } => {
+                tag(op::DEFAULT_VALUE, &mut self.out);
+                self.ty(ty.ty);
+                self.out.bool(il_stack_was_empty);
+            }
+            Inst::Throw { arg } => {
+                tag(op::THROW, &mut self.out);
+                self.node(arg)?;
+            }
+            Inst::Rethrow => tag(op::RETHROW, &mut self.out),
+            Inst::SizeOf { ty } => {
+                tag(op::SIZE_OF, &mut self.out);
+                self.ty(ty.ty);
+            }
+            Inst::LdLen { array, result } => {
+                tag(op::LD_LEN, &mut self.out);
+                self.stack_type(result);
+                self.node(array)?;
+            }
+            Inst::LdElema {
+                ty,
+                array,
+                indices,
+                delay_exceptions,
+                is_read_only,
+            } => {
+                tag(op::LD_ELEMA, &mut self.out);
+                self.ty(ty.ty);
+                self.out.bool(delay_exceptions);
+                self.out.bool(is_read_only);
+                self.node(array)?;
+                self.nodes(&indices)?;
+            }
+            Inst::RefAnyType { arg } => {
+                tag(op::REF_ANY_TYPE, &mut self.out);
+                self.node(arg)?;
+            }
+        }
+        Ok(())
+    }
+}
+
+/// Reads every method body of `module` and encodes the results: a failed read (or a panic,
+/// caught per method) is recorded with its message instead of the function.
+pub fn read_module(
+    ts: &mut TypeSystem<'_, '_>,
+    module: crate::typesystem::compilation::ModuleId,
+    options: crate::il::reader::ReaderOptions,
+) -> Vec<u8> {
+    use crate::metadata::tables::{TableId, rows};
+    use crate::typesystem::members::MethodDefId;
+    let md = &ts.comp.module(module).md;
+    let count = md.tables.rows(TableId::MethodDef);
+    let mut results = Vec::new();
+    for row in 1..=count {
+        let outcome = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+            let md = &ts.comp.module(module).md;
+            let rva = md.get::<rows::MethodDef>(row)?.rva;
+            if rva == 0 {
+                return Ok(None);
+            }
+            let body = md.method_body(rva)?;
+            crate::il::reader::read_il(ts, MethodDefId { module, row }, body, options).map(Some)
+        }));
+        match outcome {
+            Ok(Ok(None)) => {}
+            Ok(Ok(Some(f))) => results.push((row, Ok(f))),
+            Ok(Err(e)) => results.push((row, Err(e.to_string()))),
+            Err(panic) => {
+                let message = panic
+                    .downcast_ref::<&str>()
+                    .map(|s| (*s).to_owned())
+                    .or_else(|| panic.downcast_ref::<String>().cloned())
+                    .unwrap_or_default();
+                results.push((row, Err(format!("panic: {message}"))));
+            }
+        }
+    }
+    let mut w = ModuleWriter::new(ts);
+    for (row, r) in &results {
+        let written = match r {
+            Ok(f) => w.function(*row, f),
+            Err(e) => Err(e.clone()),
+        };
+        if let Err(e) = written {
+            w.failed(*row, &e);
+        }
+    }
+    w.finish()
+}

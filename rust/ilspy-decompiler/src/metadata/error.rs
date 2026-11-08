@@ -13,6 +13,9 @@ pub enum Error {
     Malformed(&'static str),
     /// Valid, but not handled by this reader.
     Unsupported(&'static str),
+    /// A condition where the managed implementation throws a runtime exception, such as an
+    /// index out of range.
+    Internal(&'static str),
 }
 
 pub type Result<T> = std::result::Result<T, Error>;
@@ -25,6 +28,7 @@ impl fmt::Display for Error {
             Error::Truncated => f.write_str("unexpected end of data"),
             Error::Malformed(why) => write!(f, "malformed metadata: {why}"),
             Error::Unsupported(why) => write!(f, "unsupported metadata: {why}"),
+            Error::Internal(why) => f.write_str(why),
         }
     }
 }
