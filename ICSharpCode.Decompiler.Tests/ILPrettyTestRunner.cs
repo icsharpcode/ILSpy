@@ -322,6 +322,12 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
+		public async Task NegativeReadOnlySpanLength()
+		{
+			await Run();
+		}
+
+		[Test]
 		public async Task SpanConversionOperatorMismatch()
 		{
 			await Run(settings: new DecompilerSettings { FileScopedNamespaces = false, FirstClassSpanTypes = true });
