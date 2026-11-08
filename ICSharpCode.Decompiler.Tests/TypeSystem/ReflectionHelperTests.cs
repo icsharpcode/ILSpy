@@ -161,6 +161,43 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 			Assert.That(converter2.ReflectionName, Is.EqualTo("System.Converter`2[[`0],[``0]]"));
 		}
 
+		[TestCase(64)]
+		[TestCase(65)]
+		[TestCase(40000)]
+		[TestCase(65535)]
+		public void ParseReflectionNamePreservesArityWithinMetadataLimit(int arity)
+		{
+			var type = ReflectionHelper.ParseReflectionName("Unknown`" + arity, new SimpleTypeResolveContext(compilation.MainModule));
+
+			Assert.That(type.TypeParameterCount, Is.EqualTo(arity));
+			Assert.That(type.TypeParameters.Count, Is.EqualTo(arity));
+			Assert.That(type.TypeParameters[arity - 1], Is.SameAs(DummyTypeParameter.GetClassTypeParameter(arity - 1)));
+		}
+
+		[Test]
+		public void ParseReflectionNameRejectsArityAboveMetadataLimit()
+		{
+			var type = ReflectionHelper.ParseReflectionName("Unknown`65536", new SimpleTypeResolveContext(compilation.MainModule));
+
+			Assert.That(type.TypeParameterCount, Is.EqualTo(0));
+		}
+
+		[TestCase(SymbolKind.TypeDefinition, 64)]
+		[TestCase(SymbolKind.Method, 64)]
+		[TestCase(SymbolKind.TypeDefinition, 65534)]
+		[TestCase(SymbolKind.Method, 65534)]
+		public void DummyTypeParameterIsCachedUpToMetadataLimit(SymbolKind ownerType, int index)
+		{
+			ITypeParameter first = ownerType == SymbolKind.Method
+				? DummyTypeParameter.GetMethodTypeParameter(index)
+				: DummyTypeParameter.GetClassTypeParameter(index);
+			ITypeParameter second = ownerType == SymbolKind.Method
+				? DummyTypeParameter.GetMethodTypeParameter(index)
+				: DummyTypeParameter.GetClassTypeParameter(index);
+
+			Assert.That(second, Is.SameAs(first));
+		}
+
 		[Test]
 		public void ArrayOfTypeParameter()
 		{
@@ -315,6 +352,17 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 			Assert.That(t.Namespace, Is.EqualTo("System.Collections.Generic"));
 			Assert.That(t.Name, Is.EqualTo("List"));
 			Assert.That(t.TypeParameterCount, Is.EqualTo(1));
+		}
+
+		[TestCase(64)]
+		[TestCase(65)]
+		[TestCase(65535)]
+		public void TopLevelTypeNamePreservesMetadataArity(int arity)
+		{
+			var t = new TopLevelTypeName("Wide`" + arity);
+
+			Assert.That(t.Name, Is.EqualTo("Wide"));
+			Assert.That(t.TypeParameterCount, Is.EqualTo(arity));
 		}
 
 		[Test]
