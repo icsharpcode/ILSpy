@@ -114,7 +114,18 @@ namespace ICSharpCode.Decompiler
 				if (blob.ReadSignatureHeader().Kind != SignatureKind.Field)
 					return false;
 				underlyingType = (PrimitiveTypeCode)blob.ReadByte();
-				return true;
+				return underlyingType is PrimitiveTypeCode.Boolean
+					or PrimitiveTypeCode.Char
+					or PrimitiveTypeCode.SByte
+					or PrimitiveTypeCode.Byte
+					or PrimitiveTypeCode.Int16
+					or PrimitiveTypeCode.UInt16
+					or PrimitiveTypeCode.Int32
+					or PrimitiveTypeCode.UInt32
+					or PrimitiveTypeCode.Int64
+					or PrimitiveTypeCode.UInt64
+					or PrimitiveTypeCode.IntPtr
+					or PrimitiveTypeCode.UIntPtr;
 			}
 			return false;
 		}
