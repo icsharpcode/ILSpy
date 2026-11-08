@@ -166,6 +166,20 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		private static int DefaultInt = 0;
 
+		public void Issue4312(bool flagA, bool flagB, out string value)
+		{
+			string text;
+			if (flagA)
+			{
+				text = "A";
+			}
+			else
+			{
+				text = (flagB ? "B" : "C");
+			}
+			value = text;
+		}
+
 		public static Issue3827Node RefLocalUsedAfterForLoop(Issue3827Node[] buckets, int hash, Issue3827Node newNode)
 		{
 			// The ref local is used after the loop, so its declaration is hoisted in front of the loop.
