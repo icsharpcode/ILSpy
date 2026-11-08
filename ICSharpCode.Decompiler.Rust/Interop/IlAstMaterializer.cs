@@ -575,6 +575,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				64 => new YieldReturn(Node()),
 				65 => Await(),
 				66 => Dynamic(),
+				67 => new LdcDecimal(new decimal(new[] { BitConverter.ToInt32(Raw(4), 0), BitConverter.ToInt32(Raw(4), 0), BitConverter.ToInt32(Raw(4), 0), BitConverter.ToInt32(Raw(4), 0) })),
 				_ => throw new InvalidOperationException($"Unknown wire opcode {op}"),
 			};
 			inst.SetILRange(range);

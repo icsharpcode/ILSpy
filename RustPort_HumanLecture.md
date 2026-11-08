@@ -1163,6 +1163,26 @@ becomes legacy csc's order (`stloc v(default.value T); stloc s(ldloca v)`), so l
 assignment connects the new item before it releases the old one. `Function::replace` has the
 same order, so the moved `stloc` disconnects and reconnects as in the managed code.
 
+### 3.34 EarlyExpressionTransforms (item 18, IL prefix 12)
+
+**What it does.** A post-order visitor (pre-order for `newobj`):
+- Ordered comparisons with null become (in)equalities, and `box T(x) ==/!= null` of a type
+  parameter compares `x`.
+- `stobj` and `ldobj` through `ldloca v` become `stloc v` and `ldloc v`.
+- `ldobj(ldflda*(addressof(ldloc v)))` reads through `ldloca v`.
+- `AsyncHelpers.Await(value)` in a runtime-async method becomes `await`.
+- `new decimal(...)` with constant arguments becomes `ldc.decimal`.
+
+`StObjToStLoc` was already ported for item 14, into this module; the visitor now calls it
+too.
+
+**New instruction.** `LdcDecimal`, carried as the four words of `decimal.GetBits` (wire opcode
+67). The materializer rebuilds the value with `new decimal(int[])`, so the scale and sign bits
+survive as written in the IL.
+
+The no-op red run failed 2,082 of 3,550 equality cases, the most of any step so far, because
+nearly every method has some `ldloca` access. The port passed on its first run.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

@@ -452,6 +452,10 @@ pub enum Inst {
     LdcF8 {
         bits: u64,
     },
+    /// `ldc.decimal`: the value as `decimal.GetBits`.
+    LdcDecimal {
+        bits: [u32; 4],
+    },
     LdNull,
     LdFtn {
         method: MethodOperand,
@@ -716,6 +720,7 @@ impl Inst {
             | LdcI8 { .. }
             | LdcF4 { .. }
             | LdcF8 { .. }
+            | LdcDecimal { .. }
             | LdNull
             | LdFtn { .. }
             | LdTypeToken { .. }
@@ -1490,6 +1495,7 @@ impl Function {
             LdcI8 { .. } => StackType::I8,
             LdcF4 { .. } => StackType::F4,
             LdcF8 { .. } => StackType::F8,
+            LdcDecimal { .. } => StackType::VT,
             LdFtn { .. } | LdVirtFtn { .. } | LocAlloc { .. } => StackType::I,
             LdFlda { target, .. } => {
                 if self.result_type(ts, *target).is_integer() {
@@ -1612,6 +1618,7 @@ impl Function {
             LdcI8 { .. } => known(ts, KnownTypeCode::Int64),
             LdcF4 { .. } => known(ts, KnownTypeCode::Single),
             LdcF8 { .. } => known(ts, KnownTypeCode::Double),
+            LdcDecimal { .. } => known(ts, KnownTypeCode::Decimal),
             LdNull | IsInst { .. } | Box { .. } => known(ts, KnownTypeCode::Object),
             LdFtn { .. } | LdVirtFtn { .. } => known(ts, KnownTypeCode::IntPtr),
             LdTypeToken { .. } | RefAnyType { .. } => known(ts, KnownTypeCode::RuntimeTypeHandle),

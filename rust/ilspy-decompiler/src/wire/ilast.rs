@@ -86,6 +86,7 @@ mod op {
     pub const YIELD_RETURN: u8 = 64;
     pub const AWAIT: u8 = 65;
     pub const DYNAMIC: u8 = 66;
+    pub const LDC_DECIMAL: u8 = 67;
     /// A node already written (it has two parents).
     pub const NODE_REFERENCE: u8 = 255;
 }
@@ -619,6 +620,12 @@ impl FunctionWriter<'_, '_, '_, '_> {
             Inst::LdcF8 { bits } => {
                 tag(op::LDC_F8, &mut self.out);
                 self.out.raw(&bits.to_le_bytes());
+            }
+            Inst::LdcDecimal { bits } => {
+                tag(op::LDC_DECIMAL, &mut self.out);
+                for b in bits {
+                    self.out.raw(&b.to_le_bytes());
+                }
             }
             Inst::LdNull => tag(op::LD_NULL, &mut self.out),
             Inst::LdFtn { method } => {

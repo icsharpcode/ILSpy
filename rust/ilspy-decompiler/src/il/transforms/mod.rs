@@ -84,6 +84,7 @@ const PIPELINE: &[fn(&mut ReadFunction, &mut Context<'_, '_, '_>)] = &[
     detect_catch_when_condition_blocks::run,
     super::control_flow::exit_points::run,
     ldloca_dup_init_obj_transform::run,
+    early_expression_transforms::run,
 ];
 
 /// Runs the first `prefix` leaves of the pipeline.
