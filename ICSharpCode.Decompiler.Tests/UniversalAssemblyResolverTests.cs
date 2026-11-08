@@ -173,6 +173,17 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
+		public void PathLikeAssemblyReferenceNamesAreNotProbed()
+		{
+			string outsideSearchDirectory = Path.Combine(gacDirectory, "..", "Canary.dll");
+			File.WriteAllBytes(outsideSearchDirectory, Array.Empty<byte>());
+			var resolver = new UniversalAssemblyResolver(null, throwOnError: false, targetFramework: null);
+			resolver.AddSearchDirectory(gacDirectory);
+
+			Assert.That(resolver.FindAssemblyFile(Reference("../Canary", "1.0.0.0", "b77a5c561934e089")), Is.Null);
+		}
+
+		[Test]
 		public void HigherReferenceVersionResolvesToTheVersionInstalledInTheGac()
 		{
 			// The 4.8 reference assembly of System.IO.Compression is 4.2.0.0, but the GAC only
