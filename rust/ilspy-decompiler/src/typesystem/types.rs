@@ -24,6 +24,12 @@ use super::options;
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct TypeId(u32);
 
+impl TypeId {
+    /// A type id for unit tests that never look the type up.
+    #[cfg(test)]
+    pub(crate) const PLACEHOLDER: TypeId = TypeId(0);
+}
+
 /// Who declares a type parameter. Dummy parameters stand in for indices outside the generic
 /// context, like the managed `DummyTypeParameter`.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]

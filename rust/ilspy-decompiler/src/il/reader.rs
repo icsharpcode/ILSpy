@@ -301,6 +301,9 @@ impl<'r, 'c, 'a> Reader<'r, 'c, 'a> {
             initial_value_is_initialized: parameter,
             uses_initial_value: parameter,
             is_ref_read_only: false,
+            load_count: 0,
+            store_instruction_count: 0,
+            address_count: 0,
         })
     }
 
@@ -2574,6 +2577,8 @@ impl<'r, 'c, 'a> Reader<'r, 'c, 'a> {
         variables.extend(&self.stack_variables);
         variables.extend(self.variable_by_handler.iter().flatten());
         variables.extend(on_error_variables);
+        // `function.AddRef()`: from here on the use counts are live.
+        self.f.connect_root(main);
         let mut removed = Vec::new();
         for c in self.f.descendants_post(main) {
             if !matches!(self.f.inst(c), Inst::BlockContainer { .. }) {

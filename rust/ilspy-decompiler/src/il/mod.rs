@@ -2,7 +2,11 @@
 
 pub mod ast;
 mod block_builder;
+pub mod control_flow;
 pub mod debug_info;
 pub mod opcodes;
+mod patterns;
 pub mod reader;
+mod refs;
+pub mod transforms;
 pub mod types;

@@ -145,10 +145,38 @@ public class IlAstPrefixEqualityTests
 	}
 
 	[TestCaseSource(typeof(Corpus), nameof(Corpus.ManagedImages))]
-	public void IlAstPrefixEquality(string path)
+	public void IlAstPrefixEquality(string path) => AssertPrefixEqual(path, new DecompilerSettings());
+
+	/// <summary>
+	/// Every setting the engine reads (<see cref="RustSettings"/>) flipped from its default,
+	/// over the fixtures whose names suggest they exercise them and the decompiler itself.
+	/// </summary>
+	[TestCaseSource(nameof(SettingsImages))]
+	public void IlAstPrefixEqualityWithFlippedSettings(string path)
+	{
+		var settings = new DecompilerSettings();
+		foreach (string setting in RustSettings.Names)
+		{
+			var property = typeof(DecompilerSettings).GetProperty(setting)!;
+			property.SetValue(settings, !(bool)property.GetValue(settings)!);
+		}
+		AssertPrefixEqual(path, settings);
+	}
+
+	static IEnumerable<TestCaseData> SettingsImages() => Corpus.ManagedImages().Where(c => Path.GetFileName((string)c.Arguments[0]!) is var name
+		&& (name.StartsWith("Switch", StringComparison.Ordinal) || name.StartsWith("ICSharpCode.Decompiler", StringComparison.Ordinal)));
+
+	[Test]
+	public void EngineSettingsAreDecompilerSettings()
+	{
+		Assert.That(RustSettings.Names, Is.EqualTo(new[] { "RemoveDeadStores", "SortSwitchSections" }));
+		var settings = new DecompilerSettings { RemoveDeadStores = false, SortSwitchSections = true };
+		Assert.That(RustSettings.Bits(settings), Is.EqualTo(2UL));
+	}
+
+	static void AssertPrefixEqual(string path, DecompilerSettings settings)
 	{
 		int prefix = RustEngine.ILPrefix;
-		var settings = new DecompilerSettings();
 		var ts = TypeSystemListingEqualityTests.Load(path, DecompilerTypeSystem.GetOptions(settings));
 		var engine = RustEngine.For(ts, out string? unsupported);
 		Assert.That(engine, Is.Not.Null, unsupported);
@@ -167,7 +195,7 @@ public class IlAstPrefixEqualityTests
 			ILFunction? function = null;
 			try
 			{
-				var status = engine!.ReadFunction(handle, prefix, settings.UseRefLocalsForAccurateOrderOfEvaluation, null, out function, out string? reason);
+				var status = engine!.ReadFunction(handle, prefix, settings, null, out function, out string? reason);
 				Assert.That(status, Is.EqualTo(RustStatus.Ok), $"{name}: {reason}");
 			}
 			catch (RustEngineException ex)

@@ -227,6 +227,29 @@ pub struct Variable {
     pub initial_value_is_initialized: bool,
     pub uses_initial_value: bool,
     pub is_ref_read_only: bool,
+    /// Connected `ldloc` instructions (`LoadCount`); maintained by the arena.
+    pub load_count: u32,
+    /// Connected store instructions, without the initial value (`StoreInstructions.Count`).
+    pub store_instruction_count: u32,
+    /// Connected `ldloca` instructions (`AddressCount`).
+    pub address_count: u32,
+}
+
+impl Variable {
+    /// `StoreCount`: the stores plus the initial value when it is used.
+    pub fn store_count(&self) -> u32 {
+        self.store_instruction_count + u32::from(self.uses_initial_value)
+    }
+
+    /// `IsSingleDefinition`.
+    pub fn is_single_definition(&self) -> bool {
+        self.store_count() == 1 && self.address_count == 0
+    }
+
+    /// `IsDead`.
+    pub fn is_dead(&self) -> bool {
+        self.store_instruction_count == 0 && self.load_count == 0 && self.address_count == 0
+    }
 }
 
 /// A method operand: the metadata token it was read from (resolved again by the
@@ -534,6 +557,14 @@ pub struct Node {
     /// `ChildIndex`: the position among the parent's children.
     pub child_index: u32,
     pub il_range: Interval,
+    /// How often the node is reachable from the function root (`refCount`); a node is
+    /// connected while this is positive. Moving a subtree briefly counts it twice.
+    pub ref_count: u32,
+    /// For a block: the connected branches to it, plus one when it is a connected
+    /// container's entry point (`IncomingEdgeCount`).
+    pub incoming_edge_count: u32,
+    /// For a container: the connected `leave` instructions targeting it (`LeaveCount`).
+    pub leave_count: u32,
 }
 
 /// `Interval` merging of `ILInstruction.CombineILRange`.
@@ -918,6 +949,9 @@ impl Function {
             parent: None,
             child_index: 0,
             il_range: Interval::default(),
+            ref_count: 0,
+            incoming_edge_count: 0,
+            leave_count: 0,
         });
         for (i, child) in children.into_iter().enumerate() {
             self.adopt(id, child, i);
@@ -959,9 +993,16 @@ impl Function {
         let node = self.node(old);
         let parent = node.parent.expect("replaced node has a parent");
         let index = node.child_index as usize;
+        let entry = self.entry_point(parent);
         self.inst_mut(parent).set_child(index, new);
         self.adopt(parent, new, index);
         self.nodes[old.0 as usize].parent = None;
+        if self.is_connected(parent) {
+            // `new` may be a child of `old`: count it before `old` releases its children.
+            self.add_ref(new);
+            self.release_ref(old);
+        }
+        self.entry_point_changed(parent, entry);
     }
 
     /// The instruction list of a block or the block list of a container.
@@ -979,7 +1020,11 @@ impl Function {
 
     /// Inserts `item` at `index` of the list of `owner` (`InstructionCollection.Insert`).
     pub fn insert(&mut self, owner: NodeId, index: usize, item: NodeId) {
+        let entry = self.entry_point(owner);
         self.list_mut(owner).insert(index, item);
+        if self.is_connected(owner) {
+            self.add_ref(item);
+        }
         // Only the children from `index` on move; relinking all of them would make filling a
         // block quadratic.
         let (offset, trailing) = match self.inst(owner) {
@@ -995,6 +1040,7 @@ impl Function {
         if let Some(t) = trailing {
             self.adopt(owner, t, offset + len);
         }
+        self.entry_point_changed(owner, entry);
     }
 
     /// Appends `item` to the list of `owner` (`InstructionCollection.Add`).
@@ -1005,21 +1051,84 @@ impl Function {
 
     /// Removes and returns the items from `index` on (`RemoveRange` to the end).
     pub fn truncate(&mut self, owner: NodeId, index: usize) -> Vec<NodeId> {
+        let entry = self.entry_point(owner);
         let removed = self.list_mut(owner).split_off(index);
         for &r in &removed {
             self.nodes[r.0 as usize].parent = None;
         }
         self.relink(owner);
+        if self.is_connected(owner) {
+            for &r in &removed {
+                self.release_ref(r);
+            }
+        }
+        self.entry_point_changed(owner, entry);
         removed
     }
 
-    /// Replaces the whole list of `owner` (`ReplaceList`).
+    /// Replaces the whole list of `owner` (`ReplaceList`). Items may already be in the list.
     pub fn set_list(&mut self, owner: NodeId, items: Vec<NodeId>) {
+        let entry = self.entry_point(owner);
+        let connected = self.is_connected(owner);
+        if connected {
+            for &item in &items {
+                self.add_ref(item);
+            }
+        }
         let old = std::mem::replace(self.list_mut(owner), items);
-        for r in old {
+        for &r in &old {
             self.nodes[r.0 as usize].parent = None;
         }
         self.relink(owner);
+        if connected {
+            for &r in &old {
+                self.release_ref(r);
+            }
+        }
+        self.entry_point_changed(owner, entry);
+    }
+
+    /// Removes the item at `index` of the list of `owner` (`RemoveAt`).
+    pub fn remove_at(&mut self, owner: NodeId, index: usize) -> NodeId {
+        let mut items = self.list(owner).to_vec();
+        let removed = items.remove(index);
+        self.set_list(owner, items);
+        removed
+    }
+
+    /// Keeps the items of the list of `owner` that `keep` accepts (`RemoveAll` inverted).
+    pub fn retain(&mut self, owner: NodeId, mut keep: impl FnMut(&Function, NodeId) -> bool) {
+        let items: Vec<NodeId> = self
+            .list(owner)
+            .iter()
+            .copied()
+            .filter(|&i| keep(self, i))
+            .collect();
+        if items.len() != self.list(owner).len() {
+            self.set_list(owner, items);
+        }
+    }
+
+    /// `Block.Remove`: takes a block that is not the entry point out of its container by
+    /// moving the container's last block into its place (`SwapRemoveAt`).
+    pub fn remove_block(&mut self, block: NodeId) {
+        let container = self.node(block).parent.expect("block in a container");
+        let index = self.node(block).child_index as usize;
+        assert!(index > 0, "the entry point cannot be removed");
+        let mut blocks = self.list(container).to_vec();
+        blocks.swap_remove(index);
+        self.set_list(container, blocks);
+    }
+
+    /// `Remove`: takes `id` out of its parent's list.
+    pub fn remove(&mut self, id: NodeId) {
+        let node = self.node(id);
+        let parent = node.parent.expect("removed node has a parent");
+        let offset = match self.inst(parent) {
+            Inst::Switch { .. } | Inst::TryCatch { .. } | Inst::LdElema { .. } => 1,
+            _ => 0,
+        };
+        self.remove_at(parent, node.child_index as usize - offset);
     }
 
     /// The instruction list of a block or the block list of a container.
@@ -1052,22 +1161,10 @@ impl Function {
         out
     }
 
-    /// The number of `leave` instructions under `root` that target `container`
-    /// (`BlockContainer.LeaveCount`).
-    pub fn leave_count(&self, root: NodeId, container: NodeId) -> usize {
-        let mut count = 0;
-        let mut stack = vec![root];
-        while let Some(id) = stack.pop() {
-            if let Inst::Leave {
-                target: Some(t), ..
-            } = self.inst(id)
-                && *t == container
-            {
-                count += 1;
-            }
-            stack.extend(self.inst(id).children());
-        }
-        count
+    /// `BlockContainer.LeaveCount`: the connected `leave` instructions targeting `container`.
+    /// A container outside the function tree has none, as in the managed arena.
+    pub fn leave_count(&self, container: NodeId) -> u32 {
+        self.node(container).leave_count
     }
 
     /// The root of the tree `id` belongs to.
@@ -1117,7 +1214,7 @@ impl Function {
             }
             BlockContainer { blocks, .. } => {
                 let mut flags = Flags::CONTROL_FLOW | union(blocks);
-                if self.leave_count(self.root_of(id), id) == 0 {
+                if self.leave_count(id) == 0 {
                     flags |= Flags::END_POINT_UNREACHABLE;
                 } else {
                     flags = Flags(flags.0 & !Flags::END_POINT_UNREACHABLE.0);
@@ -1435,6 +1532,7 @@ mod tests {
             expected: None,
             blocks: vec![block],
         });
+        f.connect_root(container);
         assert!(f.has_flag(container, Flags::END_POINT_UNREACHABLE));
 
         let value = nop(&mut f);
@@ -1443,7 +1541,7 @@ mod tests {
             value,
         });
         f.replace(throw, leave);
-        assert_eq!(f.leave_count(container, container), 1);
+        assert_eq!(f.leave_count(container), 1);
         assert!(!f.has_flag(container, Flags::END_POINT_UNREACHABLE));
     }
 

@@ -335,7 +335,7 @@ the reasons. This file holds only the ordered steps, their gates and their rules
   commits (size S) that verify the prefix. The nested groups keep their driver shape: a
   post-order block driver over a CFG for `BlockILTransform`, a statement driver with rerun
   for `StatementTransform`.
-  - [ ] 7. ControlFlowSimplification (M)
+  - [x] 7. ControlFlowSimplification (M)
   - [ ] 8. SplitVariables (M)
   - [ ] 9. ILInlining (L)
   - [ ] 10. InlineReturnTransform (S)

@@ -854,6 +854,47 @@ while the compiler holds the file. One UI test,
 `SwitchListAndDeleteAllTests.Ctrl_A_Then_Delete_Drops_The_Selection_History_And_Tab`, hangs on
 this machine on `master` as well, in Avalonia font fallback. The gate run excludes it.
 
+### 3.23 Use counts and ControlFlowSimplification (item 7, IL prefix 1)
+
+**Use counts.** The first transform needs what the managed arena maintains implicitly:
+`LoadCount`, `StoreCount` and `AddressCount` per variable, `IncomingEdgeCount` per block and
+`LeaveCount` per container. `il/refs.rs` ports the managed reference counting. Each node has a
+`ref_count`, the reader connects the body where `ReadIL` calls `function.AddRef()`, and every
+editing operation adjusts the counts:
+- `replace`, `insert`, `truncate` and `set_list` (with `remove_at`, `retain`, `remove` and
+  `remove_block` built on them) connect what they add before they disconnect what they drop.
+  That way `stloc.ReplaceWith(stloc.Value)` keeps the value counted.
+- Changing an operand goes through `set_branch_target` and `set_variable`.
+- A container's entry point carries the implicit incoming edge, which moves when its block
+  list changes.
+
+`leave_count` is now the counter rather than a tree scan. A container outside the function
+tree therefore counts no leaves, exactly as in the managed code. The reader equality still
+holds with this change.
+
+**The managed details the port keeps, because the output shows them.**
+- `Block.Remove()` is `SwapRemoveAt`: the container's last block takes the place of a return
+  block moved into a try container. A plain `remove` changed the block order in 83 images.
+- The managed transforms iterate `Descendants` lazily while they edit the tree. The port takes
+  a post-order snapshot and skips nodes that the edits disconnected, which visits the same
+  nodes for the edits this transform makes. Later transforms that insert nodes ahead of the
+  cursor need a closer look.
+- `RemoveAt(i++)` visits the same index again after a removal.
+- The ordering in `SortSwitchSections` is stable, and sections that neither branch nor leave
+  sort first.
+
+**Settings.** The engine names the `DecompilerSettings` it reads
+(`il::transforms::SETTING_NAMES`, exported as `ilspy_setting_names`). The shim looks each name
+up by reflection, fails on a name without a boolean property, and sends the values as a bit
+set (`Interop/RustSettings.cs`). This version of the "reject unknown names" rule is checked
+when the code is written: an engine setting the shim cannot map is an exception. Item 7 needs
+`RemoveDeadStores` and `SortSwitchSections`. `IlAstPrefixEqualityWithFlippedSettings` runs the
+gate with every engine setting flipped, over the `Switch*` fixtures and ICSharpCode.Decompiler.
+
+**The pipeline.** `il::transforms::PIPELINE` lists the ported leaves in run order, and a unit
+test pins its length to `IL_PREFIX`. `wire::ilast::read_function` runs the prefix the host
+asks for.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

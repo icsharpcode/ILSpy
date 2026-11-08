@@ -755,12 +755,15 @@ pub fn read_module(
     w.finish()
 }
 
-/// Reads one method body of `module` and encodes it as a one-entry message in the
+/// Reads one method body of `module`, runs the first `il_prefix` IL transforms and encodes
+/// the function as a one-entry message in the
 /// `read_module` format; a failed read is an error for the caller, not an entry.
 pub fn read_function(
     ts: &mut TypeSystem<'_, '_>,
     method: crate::typesystem::members::MethodDefId,
     options: crate::il::reader::ReaderOptions<'_>,
+    il_prefix: u32,
+    settings: crate::il::transforms::Settings,
 ) -> Result<Vec<u8>, String> {
     use crate::metadata::tables::rows;
     let md = &ts.comp.module(method.module).md;
@@ -772,7 +775,9 @@ pub fn read_function(
         return Err(format!("MethodDef row {} has no body", method.row));
     }
     let body = md.method_body(rva).map_err(|e| e.to_string())?;
-    let f = crate::il::reader::read_il(ts, method, body, options).map_err(|e| e.to_string())?;
+    let mut f = crate::il::reader::read_il(ts, method, body, options).map_err(|e| e.to_string())?;
+    let mut ctx = crate::il::transforms::Context { ts, settings };
+    crate::il::transforms::run_prefix(&mut f.function, &mut ctx, il_prefix);
     let mut w = ModuleWriter::new(ts);
     w.function(method.row, &f)?;
     Ok(w.finish())

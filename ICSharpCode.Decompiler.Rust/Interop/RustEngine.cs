@@ -94,15 +94,15 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		/// IL transforms. <see cref="RustStatus.Unsupported"/> leaves <paramref name="function"/>
 		/// null; an engine error or panic throws <see cref="RustEngineException"/>.
 		/// </summary>
-		public RustStatus ReadFunction(MethodDefinitionHandle method, int ilPrefix, bool useRefLocalsForAccurateOrderOfEvaluation,
+		public RustStatus ReadFunction(MethodDefinitionHandle method, int ilPrefix, DecompilerSettings settings,
 			IDebugInfoProvider? debugInfo, out ILFunction? function, out string? unsupportedReason)
 		{
 			function = null;
 			unsupportedReason = null;
-			uint flags = useRefLocalsForAccurateOrderOfEvaluation ? 1u : 0u;
+			uint flags = settings.UseRefLocalsForAccurateOrderOfEvaluation ? 1u : 0u;
 			var bridge = debugInfo == null ? null : new RustDebugInfo(debugInfo);
 			var status = NativeMethods.ilspy_session_read_function(session, (uint)MetadataTokens.GetToken(method), (uint)ilPrefix,
-				flags, IntPtr.Zero, bridge?.Delegate, out var buffer);
+				flags, RustSettings.Bits(settings), IntPtr.Zero, bridge?.Delegate, out var buffer);
 			GC.KeepAlive(bridge);
 			byte[] bytes = NativeMethods.TakeBuffer(buffer);
 			bridge?.ThrowIfFailed();

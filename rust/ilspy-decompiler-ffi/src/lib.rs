@@ -16,6 +16,7 @@ use std::sync::{Once, OnceLock};
 use ilspy_decompiler::Session;
 use ilspy_decompiler::il::debug_info::{DebugInfo, ExtraTypeInfo};
 use ilspy_decompiler::il::reader::ReaderOptions;
+use ilspy_decompiler::il::transforms::{SETTING_NAMES, Settings};
 use ilspy_decompiler::typesystem::compilation::{Compilation, ModuleId, ModuleInput};
 use ilspy_decompiler::typesystem::members::MethodDefId;
 use ilspy_decompiler::typesystem::types::TypeSystem;
@@ -444,6 +445,17 @@ pub extern "C" fn ilspy_il_prefix() -> u32 {
     ilspy_decompiler::IL_PREFIX
 }
 
+/// The `DecompilerSettings` property names behind the bits of the `settings` argument of
+/// `ilspy_session_read_function`, in bit order, separated by `\n`, as a static NUL-terminated
+/// UTF-8 string. Never free it.
+#[unsafe(no_mangle)]
+pub extern "C" fn ilspy_setting_names() -> *const c_char {
+    static NAMES: OnceLock<CString> = OnceLock::new();
+    NAMES
+        .get_or_init(|| CString::new(SETTING_NAMES.join("\n")).expect("no NUL in names"))
+        .as_ptr()
+}
+
 /// Gives the session its compilation: the modules as for `ilspy_debug_type_listing`, main
 /// module first, under `TypeSystemOptions` `options`. Only the images must stay valid after
 /// the call, until the session is freed. A session is loaded at most once.
@@ -476,8 +488,9 @@ pub unsafe extern "C" fn ilspy_session_load(
 
 /// Seam 1: the function of the main module's method `method_token` after the first
 /// `il_prefix` IL transforms, as a one-entry wire v1 message (`wire::ilast::read_function`).
-/// `Unsupported` when `il_prefix` exceeds `ilspy_il_prefix()`. `reader_flags`, `debug_ctx`
-/// and `debug_info` as for `ilspy_debug_read_il`. Safe to call from several threads at once.
+/// `Unsupported` when `il_prefix` exceeds `ilspy_il_prefix()`. `settings` has bit `i` set when
+/// the setting `ilspy_setting_names()` lists at `i` is on. `reader_flags`, `debug_ctx` and
+/// `debug_info` as for `ilspy_debug_read_il`. Safe to call from several threads at once.
 ///
 /// # Safety
 /// `session` must be a live, loaded session; `out` must be writable; `debug_info` must honor
@@ -488,6 +501,7 @@ pub unsafe extern "C" fn ilspy_session_read_function(
     method_token: u32,
     il_prefix: u32,
     reader_flags: u32,
+    settings: u64,
     debug_ctx: *mut c_void,
     debug_info: Option<DebugInfoCallback>,
     out: *mut Buf,
@@ -524,7 +538,13 @@ pub unsafe extern "C" fn ilspy_session_read_function(
             row: method_token & 0x00FF_FFFF,
         };
         let mut ts = TypeSystem::new(comp);
-        ilspy_decompiler::wire::ilast::read_function(&mut ts, method, reader)
+        ilspy_decompiler::wire::ilast::read_function(
+            &mut ts,
+            method,
+            reader,
+            il_prefix,
+            Settings::from_bits(settings),
+        )
     }) {
         Ok(bytes) => {
             // SAFETY: as above.
