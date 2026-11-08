@@ -74,7 +74,9 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			if (!string.IsNullOrEmpty(targetFramework))
 			{
 				string[] frameworkParts = targetFramework.Split(',');
-				targetFrameworkIdentifier = frameworkParts.FirstOrDefault(a => !a.StartsWith(VersionToken, StringComparison.OrdinalIgnoreCase) && !a.StartsWith(ProfileToken, StringComparison.OrdinalIgnoreCase));
+				string frameworkIdentifier = frameworkParts.FirstOrDefault(a => !a.StartsWith(VersionToken, StringComparison.OrdinalIgnoreCase) && !a.StartsWith(ProfileToken, StringComparison.OrdinalIgnoreCase));
+				if (IsSafeFrameworkName(frameworkIdentifier))
+					targetFrameworkIdentifier = frameworkIdentifier;
 				string frameworkVersion = frameworkParts.FirstOrDefault(a => a.StartsWith(VersionToken, StringComparison.OrdinalIgnoreCase));
 
 				if (frameworkVersion != null && Version.TryParse(frameworkVersion.Substring(VersionToken.Length).Replace("v", ""), out var version))
@@ -86,10 +88,19 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 
 				string frameworkProfile = frameworkParts.FirstOrDefault(a => a.StartsWith(ProfileToken, StringComparison.OrdinalIgnoreCase));
 				if (frameworkProfile != null)
-					targetFrameworkProfile = frameworkProfile.Substring(ProfileToken.Length);
+				{
+					string profile = frameworkProfile.Substring(ProfileToken.Length);
+					if (IsSafeFrameworkName(profile))
+						targetFrameworkProfile = profile;
+				}
 			}
 
 			return new TargetFramework(targetFrameworkIdentifier, versionNumber, targetFrameworkProfile);
+		}
+
+		internal static bool IsSafeFrameworkName(string value)
+		{
+			return !string.IsNullOrEmpty(value) && value.All(c => char.IsLetterOrDigit(c) || c is '.' or '-' or '_');
 		}
 
 		/// <summary>
