@@ -154,10 +154,10 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			{
 				using (new Group(xml, "PropertyGroup"))
 				{
-								foreach (var (name, value) in customProperties)
-								{
-									xml.WriteElementString(name, MSBuildEscaping.Escape(value));
-								}
+					foreach (var (name, value) in customProperties)
+					{
+						xml.WriteElementString(name, MSBuildEscaping.Escape(value));
+					}
 				}
 			}
 			using (new Group(xml, "ItemGroup"))
@@ -174,7 +174,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 
 		void WriteAssemblyInfo(XmlTextWriter xml, MetadataFile module, IProjectInfoProvider project, ProjectType projectType)
 		{
-			xml.WriteElementString("AssemblyName", MSBuildEscaping.Escape(module.Name));
+			xml.WriteElementString("AssemblyName", MSBuildEscaping.EscapeAssemblyName(module.Name));
 
 			// Since we create AssemblyInfo.cs manually, we need to disable the auto-generation
 			xml.WriteElementString("GenerateAssemblyInfo", FalseString);
@@ -200,7 +200,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			string? platform = GetTargetPlatform(module, projectType);
 			if (platform != null)
 			{
-				moniker += "-" + MSBuildEscaping.Escape(platform);
+				moniker += "-" + platform;
 			}
 			xml.WriteElementString("TargetFramework", MSBuildEscaping.Escape(moniker));
 
@@ -429,7 +429,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 				foreach (var item in items)
 				{
 					xml.WriteStartElement(group.Key);
-					xml.WriteAttributeString("Remove", item.FileName);
+					xml.WriteAttributeString("Remove", MSBuildEscaping.Escape(item.FileName));
 					xml.WriteEndElement();
 				}
 
@@ -437,11 +437,11 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 				foreach (var item in items)
 				{
 					xml.WriteStartElement(group.Key);
-					xml.WriteAttributeString("Include", item.FileName);
+					xml.WriteAttributeString("Include", MSBuildEscaping.Escape(item.FileName));
 					if (item.AdditionalProperties != null)
 					{
 						foreach (var (key, value) in item.AdditionalProperties)
-							xml.WriteAttributeString(key, value);
+							xml.WriteAttributeString(key, MSBuildEscaping.Escape(value));
 					}
 					xml.WriteEndElement();
 				}
@@ -528,7 +528,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		protected virtual void WriteReference(XmlTextWriter xml, IAssemblyReference reference, IProjectInfoProvider project)
 		{
 			xml.WriteStartElement("Reference");
-			xml.WriteAttributeString("Include", MSBuildEscaping.Escape(reference.Name));
+			xml.WriteAttributeString("Include", MSBuildEscaping.EscapeAssemblyName(reference.Name));
 
 			var assembly = project.AssemblyResolver.Resolve(reference);
 			if (assembly != null && !project.AssemblyReferenceClassifier.IsGacAssembly(reference))

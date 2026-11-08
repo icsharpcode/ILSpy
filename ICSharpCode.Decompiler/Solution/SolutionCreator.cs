@@ -22,6 +22,8 @@ using System.IO;
 using System.Linq;
 using System.Xml.Linq;
 
+using ICSharpCode.Decompiler.CSharp.ProjectDecompiler;
+
 namespace ICSharpCode.Decompiler.Solution
 {
 	/// <summary>
@@ -201,7 +203,9 @@ namespace ICSharpCode.Decompiler.Solution
 
 			foreach (var item in itemGroup.Elements(referenceTagName).ToList())
 			{
-				var assemblyName = item.Attribute("Include")?.Value;
+				var assemblyName = item.Attribute("Include") is XAttribute include
+					? MSBuildEscaping.Unescape(include.Value)
+					: null;
 				if (assemblyName != null && projects.TryGetValue(assemblyName, out var referencedProject))
 				{
 					item.Remove();

@@ -22,6 +22,7 @@ using System.IO;
 using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.CSharp.ProjectDecompiler;
 using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.Decompiler.TypeSystem;
 
 using NUnit.Framework;
 
@@ -47,7 +48,8 @@ public sealed class MSBuildEscapingTests
 		IProjectFileWriter writer = sdkStyleProject ? ProjectFileWriterSdkStyle.Default : ProjectFileWriterDefault.Instance;
 		StringWriter output = new();
 		writer.Write(output, new ProjectInfo(), new[] {
-			new ProjectItemInfo("EmbeddedResource", "logo.png").With("LogicalName", hostile)
+			new ProjectItemInfo("EmbeddedResource", "logo.png").With("LogicalName", hostile),
+			new ProjectItemInfo("Page", "view.xaml").With("LogicalName", hostile)
 		}, new PEFile("ICSharpCode.Decompiler.dll"));
 
 		using (Assert.EnterMultipleScope())
@@ -72,10 +74,24 @@ public sealed class MSBuildEscapingTests
 		return MSBuildEscaping.Escape(value);
 	}
 
+	[Test]
+	public void PathLikeAssemblyNamesBecomeSingleProjectName()
+	{
+		Assert.That(MSBuildEscaping.EscapeAssemblyName("../../tmp/evil"), Is.EqualTo("-.-.--tmp-evil"));
+	}
+
+	[Test]
+	public void EscapedValuesRoundTripThroughMSBuildEncoding()
+	{
+		const string value = "literal%$(HOME);@(Items)*?";
+		Assert.That(MSBuildEscaping.Unescape(MSBuildEscaping.Escape(value)), Is.EqualTo(value));
+	}
+
 	sealed class ProjectInfo : IProjectInfoProvider
 	{
 		public IAssemblyResolver AssemblyResolver => new UniversalAssemblyResolver(null, false, null);
 		public IAssemblyReferenceClassifier AssemblyReferenceClassifier => new AssemblyReferenceClassifier();
+		public IDecompilerTypeSystem TypeSystem => null;
 		public LanguageVersion LanguageVersion => LanguageVersion.CSharp1;
 		public bool CheckForOverflowUnderflow => false;
 		public Guid ProjectGuid { get; } = Guid.NewGuid();

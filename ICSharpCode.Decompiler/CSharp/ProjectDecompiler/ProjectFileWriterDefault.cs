@@ -103,7 +103,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 				w.WriteElementString("LangVersion", project.LanguageVersion.ToString().Replace("CSharp", "").Replace('_', '.'));
 				w.WriteElementString("CheckForOverflowUnderflow", project.CheckForOverflowUnderflow ? "true" : "false");
 
-				w.WriteElementString("AssemblyName", MSBuildEscaping.Escape(module.Name));
+				w.WriteElementString("AssemblyName", MSBuildEscaping.EscapeAssemblyName(module.Name));
 				if (targetFramework.Identifier != null)
 					w.WriteElementString("TargetFrameworkIdentifier", MSBuildEscaping.Escape(targetFramework.Identifier));
 				if (targetFramework.VersionString != null)
@@ -157,7 +157,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 					if (r.Name != "mscorlib")
 					{
 						w.WriteStartElement("Reference");
-						w.WriteAttributeString("Include", MSBuildEscaping.Escape(r.Name));
+						w.WriteAttributeString("Include", MSBuildEscaping.EscapeAssemblyName(r.Name));
 						var asm = project.AssemblyResolver.Resolve(r);
 						if (asm != null && !project.AssemblyReferenceClassifier.IsGacAssembly(r))
 						{
