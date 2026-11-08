@@ -26,6 +26,7 @@ using Avalonia.Platform.Storage;
 using ICSharpCode.Decompiler.CSharp.ProjectDecompiler;
 using ICSharpCode.Decompiler.DebugInfo;
 using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.Decompiler.Util;
 using ICSharpCode.ILSpyX;
 
 using ICSharpCode.ILSpy.AppEnv;
@@ -132,7 +133,7 @@ namespace ICSharpCode.ILSpy.Views
 
 		/// <summary>
 		/// Computes one preview row per assembly: the project name + target subdirectory (solution
-		/// mode places each project in a <c>ShortName</c> subfolder; project mode writes into the
+		/// mode places each project in a subfolder named after it; project mode writes into the
 		/// chosen folder directly) and the invalid / duplicate-name / PDB-eligible badges. Pure and
 		/// side-effect free so it can be unit-tested without the window.
 		/// </summary>
@@ -140,10 +141,10 @@ namespace ICSharpCode.ILSpy.Views
 			IReadOnlyList<LoadedAssembly> assemblies, bool solutionMode)
 		{
 			var duplicates = assemblies
-				.GroupBy(a => a.ShortName)
+				.GroupBy(SolutionWriter.GetProjectDirectoryName, Platform.FileNameComparer)
 				.Where(g => g.Count() > 1)
 				.Select(g => g.Key)
-				.ToHashSet();
+				.ToHashSet(Platform.FileNameComparer);
 
 			var rows = new List<ProjectPreviewRow>(assemblies.Count);
 			foreach (var assembly in assemblies)
@@ -159,11 +160,12 @@ namespace ICSharpCode.ILSpy.Views
 					pdbEligible = false;
 				}
 
+				string directoryName = SolutionWriter.GetProjectDirectoryName(assembly);
 				rows.Add(new ProjectPreviewRow(
 					ProjectName: assembly.ShortName + ".csproj",
-					TargetSubdirectory: solutionMode ? assembly.ShortName : ".",
+					TargetSubdirectory: solutionMode ? directoryName : ".",
 					IsValidAssembly: assembly.IsLoadedAsValidAssembly,
-					HasDuplicateShortName: duplicates.Contains(assembly.ShortName),
+					HasDuplicateShortName: duplicates.Contains(directoryName),
 					IsPdbEligible: pdbEligible));
 			}
 			return rows;

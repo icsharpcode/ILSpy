@@ -26,7 +26,9 @@ using System.Threading;
 using System.Threading.Tasks;
 
 using ICSharpCode.Decompiler;
+using ICSharpCode.Decompiler.CSharp.ProjectDecompiler;
 using ICSharpCode.Decompiler.Solution;
+using ICSharpCode.Decompiler.Util;
 using ICSharpCode.ILSpyX;
 
 using ICSharpCode.ILSpy.Languages;
@@ -143,12 +145,14 @@ namespace ICSharpCode.ILSpy
 		{
 			var report = new StringBuilder();
 
-			// Two assemblies that share a short name would decompile into the same project directory;
-			// refuse rather than have one clobber the other.
-			var assembliesByShortName = allAssemblies.GroupBy(a => a.ShortName).ToDictionary(g => g.Key, g => g.ToList());
+			// Two assemblies whose short names yield the same directory name would decompile into the same
+			// project directory; refuse rather than have one clobber the other.
+			var assembliesByDirectoryName = allAssemblies
+				.GroupBy(GetProjectDirectoryName, Platform.FileNameComparer)
+				.ToDictionary(g => g.Key, g => g.ToList());
 			bool first = true;
 			bool abort = false;
-			foreach (var (_, assemblies) in assembliesByShortName)
+			foreach (var (_, assemblies) in assembliesByDirectoryName)
 			{
 				if (assemblies.Count == 1)
 					continue;
@@ -286,10 +290,19 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 
+		/// <summary>
+		/// Returns the safe directory name used for a project in a solution export. The short name
+		/// comes from a file or package entry name, so it is untrusted just like the assembly itself.
+		/// </summary>
+		internal static string GetProjectDirectoryName(LoadedAssembly loadedAssembly)
+		{
+			return WholeProjectDecompiler.CleanUpDirectoryName(loadedAssembly.ShortName);
+		}
+
 		void WriteProjectCore(LoadedAssembly loadedAssembly, Language language, string targetDirectory,
 			ProjectProgress project, CancellationToken ct)
 		{
-			targetDirectory = Path.Combine(targetDirectory, loadedAssembly.ShortName);
+			targetDirectory = Path.Combine(targetDirectory, GetProjectDirectoryName(loadedAssembly));
 
 			if (language.ProjectFileExtension == null)
 			{
