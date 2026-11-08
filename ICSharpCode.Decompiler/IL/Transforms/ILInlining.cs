@@ -668,10 +668,15 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				case OpCode.SwitchInstruction:
 					return true;
 				case OpCode.LdLoc:
-					if (v.StateMachineField == null && ((LdLoc)inlinedExpression).Variable.StateMachineField != null)
+					var copiedVariable = ((LdLoc)inlinedExpression).Variable;
+					if (v.StateMachineField == null && copiedVariable.StateMachineField != null)
 					{
 						// Roslyn likes to put the result of fetching a state machine field into a temporary variable,
 						// so inline more aggressively in such cases.
+						return true;
+					}
+					if (IsHoistedCompilerTemporary(v) && IsHoistedCompilerTemporary(copiedVariable))
+					{
 						return true;
 					}
 					break;
@@ -771,6 +776,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				default:
 					return false;
 			}
+		}
+
+		static bool IsHoistedCompilerTemporary(ILVariable v)
+		{
+			string name = v.StateMachineField?.Name;
+			return name != null
+				&& (name.StartsWith("<>7__wrap", StringComparison.Ordinal) || name.StartsWith("<>s__", StringComparison.Ordinal));
 		}
 
 		/// <summary>

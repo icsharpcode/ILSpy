@@ -3,6 +3,7 @@ using System;
 using System.Runtime.InteropServices;
 using System.Text;
 #endif
+using System.Threading.Tasks;
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 {
@@ -129,10 +130,23 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 					}
 				};
 			}
-
 			public Fields EmptyWith(Fields input)
 			{
 				return input with { };
+			}
+
+			public async Task<PrimaryCtor> WithAwait(PrimaryCtor input)
+			{
+				return input with {
+					A = await Task.FromResult(42)
+				};
+			}
+			public async Task<Fields> WithAwaitAfterConstant(Fields input)
+			{
+				return input with {
+					A = 42,
+					B = await Task.FromResult(3.141)
+				};
 			}
 		}
 

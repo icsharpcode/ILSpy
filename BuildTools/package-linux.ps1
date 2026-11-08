@@ -58,7 +58,7 @@ $toolDir = Join-Path ([IO.Path]::GetTempPath()) 'ilspy-appimagetool'
 New-Item -ItemType Directory -Force $toolDir | Out-Null
 $appImageTool = Join-Path $toolDir 'appimagetool'
 if (-not (Test-Path $appImageTool)) {
-    curl -fsSL -o $appImageTool "https://github.com/AppImage/appimagetool/releases/download/$appImageToolVersion/appimagetool-$(uname -m).AppImage"
+    curl --retry 5 --retry-delay 2 -fsSL -o $appImageTool "https://github.com/AppImage/appimagetool/releases/download/$appImageToolVersion/appimagetool-$(uname -m).AppImage"
     chmod +x $appImageTool
 }
 
@@ -153,7 +153,7 @@ foreach ($rid in $arches.Keys | Sort-Object) {
     # and the desktop file plus icon at the root.
     $runtime = Join-Path $toolDir "runtime-$($arch.appimage)"
     if (-not (Test-Path $runtime)) {
-        curl -fsSL -o $runtime "https://github.com/AppImage/type2-runtime/releases/download/$appImageRuntimeVersion/runtime-$($arch.appimage)"
+        curl --retry 5 --retry-delay 2 -fsSL -o $runtime "https://github.com/AppImage/type2-runtime/releases/download/$appImageRuntimeVersion/runtime-$($arch.appimage)"
     }
     $appDir = Join-Path ([IO.Path]::GetTempPath()) "ilspy-appdir-$rid"
     Remove-Item -Recurse -Force $appDir -ErrorAction Ignore
