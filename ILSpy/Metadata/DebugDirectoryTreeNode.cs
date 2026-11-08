@@ -22,6 +22,7 @@ using System.Linq;
 using System.Reflection.PortableExecutable;
 
 using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.ILSpyX.PdbProvider;
 
 using ICSharpCode.ILSpy.TreeNodes;
 using ICSharpCode.ILSpy.ViewModels;
@@ -104,6 +105,8 @@ namespace ICSharpCode.ILSpy.Metadata
 					case DebugDirectoryEntryType.EmbeddedPortablePdb:
 						try
 						{
+							if (DebugInfoUtils.IsEmbeddedPortablePdbTooLarge(module.Reader, entry))
+								break;
 							var provider = module.Reader.ReadEmbeddedPortablePdbDebugDirectoryData(entry);
 							var pdbMetadata = new MetadataFile(
 								MetadataFile.MetadataFileKind.ProgramDebugDatabase,
