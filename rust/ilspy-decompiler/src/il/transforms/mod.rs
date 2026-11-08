@@ -86,6 +86,7 @@ const PIPELINE: &[fn(&mut ReadFunction, &mut Context<'_, '_, '_>)] = &[
     ldloca_dup_init_obj_transform::run,
     early_expression_transforms::run,
     split_variables::run,
+    remove_dead_variable_init::run,
 ];
 
 /// Runs the first `prefix` leaves of the pipeline.

@@ -1202,6 +1202,17 @@ The arena now keeps the stale parent, as the managed one does:
   membership instead.
 - The data flow visitor treats a missing work list as the managed code does.
 
+### 3.36 RemoveDeadVariableInit (item 20, IL prefix 14)
+
+The transform was ported with item 14, which calls it from the async/await cleanup. This
+step adds it to the pipeline:
+- It resets `UsesInitialValue` from the definite assignment analysis.
+- It removes stores to variables that are never read, keeping a side-effecting value. Dead
+  stores are removed in iterators and async methods, or when `RemoveDeadStores` is set.
+
+The no-op red run failed 853 of 3,550 equality cases; the pipeline step passed on its first
+run.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |
