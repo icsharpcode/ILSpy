@@ -354,6 +354,8 @@ pub enum Inst {
         condition: NodeId,
         true_inst: NodeId,
         false_inst: NodeId,
+        /// `CSharpType`: the type of the value, None for a statement.
+        csharp_type: Option<TypeId>,
     },
     Switch {
         value: NodeId,
@@ -556,6 +558,19 @@ pub enum Inst {
         arg: NodeId,
         ty: TypeOperand,
     },
+    /// `pinned.region V(init, body)`: a C# `fixed` statement.
+    PinnedRegion {
+        variable: VarId,
+        init: NodeId,
+        body: NodeId,
+    },
+    /// `get.pinnable.reference`: a reference to the first element of an array or string,
+    /// or the result of a `GetPinnableReference` method (null for a null input).
+    GetPinnableReference {
+        arg: NodeId,
+        ty: TypeId,
+        method: Option<MethodOperand>,
+    },
 }
 
 /// The shared state of `call`, `callvirt` and `newobj`.
@@ -658,13 +673,16 @@ impl Inst {
             | MakeRefAny { arg, .. }
             | RefAnyType { arg }
             | RefAnyValue { arg, .. }
+            | GetPinnableReference { arg, .. }
             | LdVirtFtn { arg, .. }
             | Conv { arg, .. } => vec![*arg],
+            PinnedRegion { init, body, .. } => vec![*init, *body],
             Leave { value, .. } => vec![*value],
             If {
                 condition,
                 true_inst,
                 false_inst,
+                ..
             } => vec![*condition, *true_inst, *false_inst],
             Switch {
                 value, sections, ..
@@ -761,10 +779,14 @@ impl Inst {
             | MakeRefAny { arg, .. }
             | RefAnyType { arg }
             | RefAnyValue { arg, .. }
+            | GetPinnableReference { arg, .. }
             | LdVirtFtn { arg, .. }
             | Conv { arg, .. } => {
                 assert_eq!(index, 0, "child index out of range");
                 arg
+            }
+            PinnedRegion { init, body, .. } => {
+                [init, body].into_iter().nth(index).expect("child index")
             }
             Leave { value, .. } | StLoc { value, .. } | AddressOf { value, .. } => {
                 assert_eq!(index, 0, "child index out of range");
@@ -774,6 +796,7 @@ impl Inst {
                 condition,
                 true_inst,
                 false_inst,
+                ..
             } => [condition, true_inst, false_inst]
                 .into_iter()
                 .nth(index)
@@ -885,6 +908,7 @@ impl Inst {
             | TryFinally { .. }
             | TryFault { .. } => Flags::CONTROL_FLOW,
             TryCatchHandler { .. } => Flags::CONTROL_FLOW | Flags::MAY_WRITE_LOCALS,
+            PinnedRegion { .. } => Flags::MAY_WRITE_LOCALS,
             DebugBreak => Flags::SIDE_EFFECT,
             Call(_) | CallVirt(_) | NewObj(_) | CallIndirect { .. } => throws | Flags::SIDE_EFFECT,
             Ckfinite { .. }
@@ -1109,17 +1133,25 @@ impl Function {
         removed
     }
 
-    /// Keeps the items of the list of `owner` that `keep` accepts (`RemoveAll` inverted),
-    /// releasing the others in list order.
+    /// Keeps the items of the list of `owner` that `keep` accepts (`RemoveAll` inverted).
+    /// As in the managed loop, each rejected item is released before the next one is tested,
+    /// so the predicate sees the counts that earlier removals changed.
     pub fn retain(&mut self, owner: NodeId, mut keep: impl FnMut(&Function, NodeId) -> bool) {
-        let (items, removed): (Vec<NodeId>, Vec<NodeId>) = self
-            .list(owner)
-            .iter()
-            .copied()
-            .partition(|&i| keep(self, i));
-        if !removed.is_empty() {
-            let ops = removed.iter().map(|&r| (r, false)).collect();
-            self.replace_items(owner, items, ops);
+        let connected = self.is_connected(owner);
+        let mut items = Vec::new();
+        let mut removed = false;
+        for item in self.list(owner).to_vec() {
+            if keep(self, item) {
+                items.push(item);
+            } else {
+                removed = true;
+                if connected {
+                    self.release_ref(item);
+                }
+            }
+        }
+        if removed {
+            self.replace_items(owner, items, Vec::new());
         }
     }
 
@@ -1223,6 +1255,7 @@ impl Function {
                 condition,
                 true_inst,
                 false_inst,
+                ..
             } => {
                 Flags::CONTROL_FLOW
                     | self.flags(*condition)
@@ -1290,7 +1323,10 @@ impl Function {
     pub fn result_type(&self, ts: &mut TypeSystem<'_, '_>, id: NodeId) -> StackType {
         use Inst::*;
         match self.inst(id) {
+            If { csharp_type, .. } => csharp_type.map_or(StackType::Void, |t| ts.stack_type(t)),
+            GetPinnableReference { .. } => StackType::Ref,
             Nop { .. }
+            | PinnedRegion { .. }
             | Branch { .. }
             | Leave { .. }
             | SwitchSection { .. }
@@ -1304,7 +1340,6 @@ impl Function {
             | TryCatch { .. }
             | TryFinally { .. }
             | TryFault { .. }
-            | If { .. }
             | Switch { .. } => StackType::Void,
             InvalidBranch { expected, .. } | InvalidExpression { expected, .. } => *expected,
             BlockContainer { expected, .. } => {
@@ -1381,6 +1416,11 @@ impl Function {
             InvalidBranch { expected, .. } | InvalidExpression { expected, .. } => {
                 find_stack_type(ts, *expected)
             }
+            If {
+                csharp_type: Some(t),
+                ..
+            } => *t,
+            GetPinnableReference { ty, .. } => by_ref(ts, *ty),
             Nop { .. }
             | Branch { .. }
             | Leave { .. }
@@ -1389,6 +1429,7 @@ impl Function {
             | SwitchSection { .. }
             | TryCatchHandler { .. }
             | If { .. }
+            | PinnedRegion { .. }
             | Switch { .. }
             | TryCatch { .. }
             | TryFinally { .. }
@@ -1551,6 +1592,7 @@ mod tests {
             condition: cond,
             true_inst: br,
             false_inst: other,
+            csharp_type: None,
         });
         assert!(!f.has_flag(iff, Flags::END_POINT_UNREACHABLE));
         assert!(f.has_flag(iff, Flags::MAY_BRANCH));

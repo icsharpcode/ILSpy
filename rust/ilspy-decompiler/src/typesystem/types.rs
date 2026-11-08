@@ -568,7 +568,8 @@ impl<'c, 'a> TypeSystem<'c, 'a> {
             TypeData::Tuple { .. } | TypeData::NInt | TypeData::NUInt | TypeData::FnPtr(_) => {
                 Some(false)
             }
-            TypeData::Pointer(_) | TypeData::ByRef(_) => Some(false),
+            // `PointerType` and `ByReferenceType` answer null.
+            TypeData::Pointer(_) | TypeData::ByRef(_) => None,
             TypeData::TypeParam { owner, index } => {
                 self.type_parameter_is_reference_type(owner, index)
             }

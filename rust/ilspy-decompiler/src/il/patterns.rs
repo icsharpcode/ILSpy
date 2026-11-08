@@ -37,11 +37,25 @@ impl Function {
         }
     }
 
-    /// `MatchLdcI`: an `ldc.i4` or `ldc.i8` value.
+    /// `MatchLdcI`: an `ldc.i4` or `ldc.i8` value, also through a sign extension or a zero
+    /// extension of an `I4` (which clears the top 32 bits).
     pub fn match_ldc_i(&self, id: NodeId) -> Option<i64> {
         match *self.inst(id) {
             Inst::LdcI4 { value } => Some(i64::from(value)),
             Inst::LdcI8 { value } => Some(value),
+            Inst::Conv {
+                arg,
+                input,
+                input_sign,
+                target,
+                ..
+            } => match super::ast::conversion_kind(target, input, input_sign) {
+                super::ast::ConversionKind::SignExtend => self.match_ldc_i(arg),
+                super::ast::ConversionKind::ZeroExtend if input == super::types::StackType::I4 => {
+                    self.match_ldc_i(arg).map(|v| v & i64::from(u32::MAX))
+                }
+                _ => None,
+            },
             _ => None,
         }
     }
@@ -131,6 +145,7 @@ impl Function {
                 condition,
                 true_inst,
                 false_inst,
+                ..
             } if self.match_nop(false_inst) => Some((condition, true_inst)),
             _ => None,
         }
@@ -150,5 +165,42 @@ impl Function {
             std::mem::swap(&mut true_inst, &mut false_inst);
         }
         Some((condition, true_inst, false_inst))
+    }
+}
+
+impl Function {
+    /// The variable of an instruction with a variable operand
+    /// (`IInstructionWithVariableOperand.Variable`).
+    pub fn variable_of(&self, id: NodeId) -> Option<VarId> {
+        match *self.inst(id) {
+            Inst::LdLoc { var } | Inst::LdLoca { var } | Inst::StLoc { var, .. } => Some(var),
+            Inst::TryCatchHandler { variable, .. } | Inst::PinnedRegion { variable, .. } => {
+                Some(variable)
+            }
+            _ => None,
+        }
+    }
+
+    /// `ILInstruction.Match(other).Success` for instructions without pattern nodes: the same
+    /// kind with the same operands, and structurally equal children.
+    pub fn structurally_equal(&self, a: NodeId, b: NodeId) -> bool {
+        let (ia, ib) = (self.inst(a), self.inst(b));
+        let (ca, cb) = (ia.children(), ib.children());
+        if ca.len() != cb.len() {
+            return false;
+        }
+        // Compare everything but the child ids.
+        let blank = |inst: &Inst, children: &[NodeId]| {
+            let mut inst = inst.clone();
+            for i in 0..children.len() {
+                inst.set_child(i, NodeId(0));
+            }
+            format!("{inst:?}")
+        };
+        blank(ia, &ca) == blank(ib, &cb)
+            && ca
+                .iter()
+                .zip(&cb)
+                .all(|(&x, &y)| self.structurally_equal(x, y))
     }
 }

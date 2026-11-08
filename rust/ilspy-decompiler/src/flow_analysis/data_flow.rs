@@ -165,6 +165,7 @@ impl<S: State> Flow<S> {
                 condition,
                 true_inst,
                 false_inst,
+                ..
             } => {
                 let (before_then, before_else) = self.evaluate_condition(a, f, condition);
                 self.state = before_then;
@@ -190,6 +191,16 @@ impl<S: State> Flow<S> {
             &Inst::StLoc { var, value, .. } => {
                 self.visit(a, f, value);
                 a.handle_store(self, f, id, var);
+            }
+            // `ReachingDefinitionsVisitor.VisitPinnedRegion`.
+            &Inst::PinnedRegion {
+                variable,
+                init,
+                body,
+            } => {
+                self.visit(a, f, init);
+                a.handle_store(self, f, id, variable);
+                self.visit(a, f, body);
             }
             Inst::LdLoc { .. } | Inst::LdLoca { .. } => a.handle_load(self, f, id),
             inst => {
@@ -322,6 +333,7 @@ impl<S: State> Flow<S> {
                 condition,
                 true_inst,
                 false_inst,
+                ..
             } => {
                 let (before_then, before_else) = self.evaluate_condition(a, f, condition);
                 self.state = before_then;

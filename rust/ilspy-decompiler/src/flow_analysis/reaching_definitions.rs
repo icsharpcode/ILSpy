@@ -4,7 +4,7 @@
 
 use std::collections::HashMap;
 
-use crate::il::ast::{Flags, Function, Inst, NodeId, VarId};
+use crate::il::ast::{Flags, Function, NodeId, VarId};
 use crate::util::bitset::BitSet;
 
 use super::data_flow::{self, Flow};
@@ -80,10 +80,9 @@ impl ReachingDefinitions {
             if !f.has_direct_flag(inst, Flags::MAY_WRITE_LOCALS) {
                 continue;
             }
-            let var = match *f.inst(inst) {
-                Inst::StLoc { var, .. } | Inst::TryCatchHandler { variable: var, .. } => var,
-                ref other => panic!("{other:?} writes no known variable"),
-            };
+            let var = f
+                .variable_of(inst)
+                .unwrap_or_else(|| panic!("{:?} writes no known variable", f.inst(inst)));
             if let Some(&vi) = var_index.get(&var)
                 && let Some(stores) = &mut stores_by_var[vi]
             {

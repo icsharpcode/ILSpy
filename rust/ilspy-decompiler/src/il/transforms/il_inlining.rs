@@ -347,7 +347,7 @@ fn can_inline_into_slot(
     moved: NodeId,
 ) -> bool {
     match f.inst(parent) {
-        Inst::If { .. } | Inst::Switch { .. } => index == 0,
+        Inst::If { .. } | Inst::Switch { .. } | Inst::PinnedRegion { .. } => index == 0,
         Inst::SwitchSection { .. }
         | Inst::TryCatch { .. }
         | Inst::TryFinally { .. }

@@ -104,7 +104,9 @@ impl Function {
         match *self.inst(id) {
             Inst::LdLoc { var } => self.update_var_list(id, var, VarList::Load, connect),
             Inst::LdLoca { var } => self.update_var_list(id, var, VarList::Address, connect),
-            Inst::StLoc { var, .. } | Inst::TryCatchHandler { variable: var, .. } => {
+            Inst::StLoc { var, .. }
+            | Inst::TryCatchHandler { variable: var, .. }
+            | Inst::PinnedRegion { variable: var, .. } => {
                 self.update_var_list(id, var, VarList::Store, connect)
             }
             Inst::Branch {
@@ -183,7 +185,8 @@ impl Function {
             Inst::LdLoc { var: v }
             | Inst::LdLoca { var: v }
             | Inst::StLoc { var: v, .. }
-            | Inst::TryCatchHandler { variable: v, .. } => *v = var,
+            | Inst::TryCatchHandler { variable: v, .. }
+            | Inst::PinnedRegion { variable: v, .. } => *v = var,
             other => panic!("{other:?} has no variable"),
         }
         if connected {
@@ -239,7 +242,8 @@ impl Function {
                 Inst::LdLoc { var: v }
                 | Inst::LdLoca { var: v }
                 | Inst::StLoc { var: v, .. }
-                | Inst::TryCatchHandler { variable: v, .. } => v == var,
+                | Inst::TryCatchHandler { variable: v, .. }
+                | Inst::PinnedRegion { variable: v, .. } => v == var,
                 _ => false,
             })
     }

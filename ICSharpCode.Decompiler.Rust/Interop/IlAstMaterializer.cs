@@ -263,6 +263,27 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 			return result;
 		}
 
+		/// <summary><c>ILFunction.helperVariableCount</c>, which <see cref="ILFunction.RegisterVariable"/> continues.</summary>
+		static readonly System.Reflection.FieldInfo helperVariableCountField =
+			typeof(ILFunction).GetField("helperVariableCount", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!;
+
+		ILInstruction If()
+		{
+			int type = Len();
+			var condition = Node();
+			var trueInst = Node();
+			var falseInst = Node();
+			return new IfInstruction(condition, trueInst, falseInst, type != 0 ? TypeAt(type - 1) : null);
+		}
+
+		ILInstruction GetPinnableReference()
+		{
+			var type = Type();
+			int token = (int)UVar();
+			var method = token == 0 ? null : mainModule.ResolveMethod(MetadataTokens.EntityHandle(token), context);
+			return new GetPinnableReference(Node(), type, method);
+		}
+
 		ILFunction ReadFunction(int row)
 		{
 			var method = mainModule.GetDefinition(MetadataTokens.MethodDefinitionHandle(row));
@@ -270,6 +291,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 			int codeSize = Len();
 			int localSignatureLength = Len();
 			int asyncReturnType = Len();
+			int helperVariableCount = Len();
 			variables = new ILVariable[Len()];
 			for (int i = 0; i < variables.Length; i++)
 				variables[i] = ReadVariable();
@@ -293,6 +315,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 			if (asyncReturnType != 0)
 				function.AsyncReturnType = TypeAt(asyncReturnType - 1);
 			function.AddRef();
+			helperVariableCountField.SetValue(function, helperVariableCount);
 			function.SequencePointCandidates = sequencePoints;
 			function.Warnings.AddRange(warnings);
 			return function;
@@ -359,7 +382,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				7 => new Arglist(),
 				8 => new Branch(blocks[Len()]),
 				9 => new Leave(containers[Len()], Node()),
-				10 => new IfInstruction(Node(), Node(), Node()),
+				10 => If(),
 				11 => Switch(),
 				12 => Section(),
 				13 => TryCatch(),
@@ -412,6 +435,8 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				59 => WithType((a, t) => new MakeRefAny(a, t)),
 				60 => new RefAnyType(Node()),
 				61 => WithType((a, t) => new RefAnyValue(a, t)),
+				62 => new PinnedRegion(Variable(), Node(), Node()),
+				63 => GetPinnableReference(),
 				_ => throw new InvalidOperationException($"Unknown wire opcode {op}"),
 			};
 			inst.SetILRange(range);

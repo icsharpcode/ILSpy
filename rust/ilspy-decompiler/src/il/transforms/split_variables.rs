@@ -32,9 +32,9 @@ impl Uses {
             let (map, var) = match *f.inst(n) {
                 Inst::LdLoc { var } => (&mut uses.loads, var),
                 Inst::LdLoca { var } => (&mut uses.addresses, var),
-                Inst::StLoc { var, .. } | Inst::TryCatchHandler { variable: var, .. } => {
-                    (&mut uses.stores, var)
-                }
+                Inst::StLoc { var, .. }
+                | Inst::TryCatchHandler { variable: var, .. }
+                | Inst::PinnedRegion { variable: var, .. } => (&mut uses.stores, var),
                 _ => continue,
             };
             map.entry(var).or_default().push(n);
@@ -44,15 +44,6 @@ impl Uses {
 
     fn of(map: &HashMap<VarId, Vec<NodeId>>, var: VarId) -> &[NodeId] {
         map.get(&var).map_or(&[], Vec::as_slice)
-    }
-}
-
-/// The variable of an instruction with a variable operand (`IInstructionWithVariableOperand`).
-fn variable_of(f: &Function, id: NodeId) -> Option<VarId> {
-    match *f.inst(id) {
-        Inst::LdLoc { var } | Inst::LdLoca { var } | Inst::StLoc { var, .. } => Some(var),
-        Inst::TryCatchHandler { variable, .. } => Some(variable),
-        _ => None,
     }
 }
 
@@ -79,10 +70,10 @@ pub fn run(r: &mut ReadFunction, ctx: &mut Context<'_, '_, '_>) {
     let instructions: Vec<NodeId> = f
         .descendants_post(root)
         .into_iter()
-        .filter(|&n| variable_of(f, n).is_some())
+        .filter(|&n| f.variable_of(n).is_some())
         .collect();
     for inst in instructions {
-        let var = variable_of(&r.function, inst).expect("variable operand");
+        let var = r.function.variable_of(inst).expect("variable operand");
         if groups.rd.is_analyzed_variable(var) {
             let new = groups.new_variable(r, inst, var);
             r.function.set_variable(inst, new);
@@ -339,7 +330,7 @@ struct GroupStores {
 
 impl GroupStores {
     fn handle_variable_load(&mut self, flow: &Flow<State>, f: &Function, inst: NodeId) {
-        let var = variable_of(f, inst).expect("load");
+        let var = f.variable_of(inst).expect("load");
         if !self.rd.is_analyzed_variable(var) {
             return;
         }

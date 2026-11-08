@@ -131,8 +131,8 @@ fn debug_info_names_and_types_the_locals() {
     assert!(named > 0 && generated > 0 && dynamic > 0);
 }
 
-/// The served IL transform prefix over every body: no
-/// panic, and no dead non-parameter variable survives `RemoveDead`.
+/// The served IL transform prefix over every body: no panic, and every variable a connected
+/// instruction uses is in the function's variable list (which the wire writer indexes).
 #[test]
 fn early_transforms_run_on_every_body() {
     use ilspy_decompiler::il::transforms::{Context, Settings, run_prefix};
@@ -158,13 +158,16 @@ fn early_transforms_run_on_every_body() {
             settings: Settings::default(),
         };
         run_prefix(&mut r, &mut ctx, ilspy_decompiler::IL_PREFIX);
-        for &v in &r.variables {
-            let var = r.function.var(v);
-            assert!(
-                !var.is_dead() || var.kind == VariableKind::Parameter,
-                "row {row}: dead {}",
-                var.name
-            );
+        let listed: std::collections::HashSet<_> = r.variables.iter().copied().collect();
+        let root = r.function.body.expect("body");
+        for n in r.function.descendants_post(root) {
+            if let Some(v) = r.function.variable_of(n) {
+                assert!(
+                    listed.contains(&v),
+                    "row {row}: {} is used but not listed",
+                    r.function.var(v).name
+                );
+            }
         }
         split += usize::from(r.variables.len() != before);
     }

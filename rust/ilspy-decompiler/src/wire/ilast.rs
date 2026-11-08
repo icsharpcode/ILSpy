@@ -81,6 +81,8 @@ mod op {
     pub const MAKE_REF_ANY: u8 = 59;
     pub const REF_ANY_TYPE: u8 = 60;
     pub const REF_ANY_VALUE: u8 = 61;
+    pub const PINNED_REGION: u8 = 62;
+    pub const GET_PINNABLE_REFERENCE: u8 = 63;
 }
 
 /// Writes every function of one module.
@@ -159,6 +161,17 @@ impl FunctionWriter<'_, '_, '_, '_> {
         self.out.uvar(u64::from(i));
     }
 
+    /// An optional type as its index + 1, 0 for none.
+    fn opt_ty(&mut self, t: Option<TypeId>) {
+        match t {
+            Some(t) => {
+                let i = self.tables.ty(self.ts, t);
+                self.out.uvar(u64::from(i) + 1);
+            }
+            None => self.out.uvar(0),
+        }
+    }
+
     fn string(&mut self, s: &str) {
         let i = self.tables.string(s);
         self.out.uvar(u64::from(i));
@@ -222,6 +235,7 @@ impl FunctionWriter<'_, '_, '_, '_> {
             }
             None => self.out.u8(0),
         }
+        self.out.uvar(u64::from(r.helper_variable_count));
         self.out.len(r.variables.len());
         for &v in &r.variables {
             let var = self.f.var(v);
@@ -371,8 +385,10 @@ impl FunctionWriter<'_, '_, '_, '_> {
                 condition,
                 true_inst,
                 false_inst,
+                csharp_type,
             } => {
                 tag(op::IF, &mut self.out);
+                self.opt_ty(csharp_type);
                 self.node(condition)?;
                 self.node(true_inst)?;
                 self.node(false_inst)?;
@@ -636,6 +652,23 @@ impl FunctionWriter<'_, '_, '_, '_> {
                 };
                 tag(t, &mut self.out);
                 self.ty(ty.ty);
+                self.node(arg)?;
+            }
+            Inst::PinnedRegion {
+                variable,
+                init,
+                body,
+            } => {
+                tag(op::PINNED_REGION, &mut self.out);
+                self.var(variable)?;
+                self.node(init)?;
+                self.node(body)?;
+            }
+            Inst::GetPinnableReference { arg, ty, method } => {
+                tag(op::GET_PINNABLE_REFERENCE, &mut self.out);
+                self.ty(ty);
+                // The method token, 0 for none.
+                self.out.uvar(u64::from(method.map_or(0, |m| m.token)));
                 self.node(arg)?;
             }
             Inst::LdObj {

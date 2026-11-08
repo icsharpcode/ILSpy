@@ -340,7 +340,7 @@ the reasons. This file holds only the ordered steps, their gates and their rules
   - [x] 9. ILInlining (L)
   - [x] 10. InlineReturnTransform (S)
   - [x] 11. RemoveInfeasiblePathTransform (S)
-  - [ ] 12. DetectPinnedRegions (M)
+  - [x] 12. DetectPinnedRegions (M)
   - [ ] 13. YieldReturnDecompiler (L)
   - [ ] 14. AsyncAwaitDecompiler (L)
   - [ ] 15. DetectCatchWhenConditionBlocks (S)

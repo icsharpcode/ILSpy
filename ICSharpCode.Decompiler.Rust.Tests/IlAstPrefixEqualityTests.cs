@@ -149,7 +149,8 @@ public class IlAstPrefixEqualityTests
 
 	/// <summary>
 	/// Every setting the engine reads (<see cref="RustSettings"/>) flipped from its default,
-	/// over the fixtures whose names suggest they exercise them and the decompiler itself.
+	/// over the fixtures whose names suggest they exercise them (Switch*, UnsafeCode*) and the
+	/// decompiler itself.
 	/// </summary>
 	[TestCaseSource(nameof(SettingsImages))]
 	public void IlAstPrefixEqualityWithFlippedSettings(string path)
@@ -164,13 +165,14 @@ public class IlAstPrefixEqualityTests
 	}
 
 	static IEnumerable<TestCaseData> SettingsImages() => Corpus.ManagedImages().Where(c => Path.GetFileName((string)c.Arguments[0]!) is var name
-		&& (name.StartsWith("Switch", StringComparison.Ordinal) || name.StartsWith("ICSharpCode.Decompiler", StringComparison.Ordinal)));
+		&& (name.StartsWith("Switch", StringComparison.Ordinal) || name.StartsWith("UnsafeCode", StringComparison.Ordinal)
+			|| name.StartsWith("ICSharpCode.Decompiler", StringComparison.Ordinal)));
 
 	[Test]
 	public void EngineSettingsAreDecompilerSettings()
 	{
-		Assert.That(RustSettings.Names, Is.EqualTo(new[] { "RemoveDeadStores", "SortSwitchSections" }));
-		var settings = new DecompilerSettings { RemoveDeadStores = false, SortSwitchSections = true };
+		Assert.That(RustSettings.Names, Is.EqualTo(new[] { "RemoveDeadStores", "SortSwitchSections", "PatternBasedFixedStatement" }));
+		var settings = new DecompilerSettings { RemoveDeadStores = false, SortSwitchSections = true, PatternBasedFixedStatement = false };
 		Assert.That(RustSettings.Bits(settings), Is.EqualTo(2UL));
 	}
 

@@ -977,6 +977,36 @@ handover read it. So it travels as variable flag bit 16 in wire v1, and the gate
 marks it on each variable line. `BlockContainer.SortBlocks(deleteUnreachableBlocks: true)`
 reuses the reader's topological sort.
 
+### 3.28 DetectPinnedRegions (item 12, IL prefix 6)
+
+**New instructions and fields.**
+- The Rust ILAst gains `PinnedRegion` (a store instruction: use lists, data flow and
+  reaching definitions treat it like `stloc`, around its body) and `GetPinnableReference`
+  (with an optional method).
+- `If` gets its `CSharpType`. That drives its result type, as in the managed code, where a
+  typed `if` is an expression.
+- `ReadFunction` counts `RegisterVariable`'s `I_n` names. The private
+  `ILFunction.helperVariableCount` travels in the function header, and the materializer sets
+  it by reflection, so managed transforms after the handover continue the numbering.
+
+**Wire v1 additions.** Opcodes 62 and 63, the `if` type, and the helper counter.
+
+**New engine setting.** `PatternBasedFixedStatement`. The flipped-settings gate now also
+covers the `UnsafeCode*` fixtures.
+
+**Managed semantics the gate exposed in shared code.**
+- `ByReferenceType` and `PointerType` answer null to `IsReferenceType`, not false. The pinned
+  `char&` locals of the runtime were skipped as value types.
+- `InstructionCollection.RemoveAll` releases each rejected item before it tests the next one.
+  So a block reachable only from a block removed earlier in the same pass has lost that edge
+  by the time it is tested, and goes too. `Function::retain` now does the same.
+- `MatchLdcI` looks through sign extensions, and through zero extensions of an `I4`.
+  `SwitchDetection.AdjustLabels` uses the same matcher.
+
+Instruction equality (`ILInstruction.Match(...).Success` without pattern nodes) is
+`Function::structurally_equal`. It compares the kind and the operands, then the children
+recursively.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

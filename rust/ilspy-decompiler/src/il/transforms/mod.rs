@@ -14,13 +14,18 @@ pub mod split_variables;
 /// The `DecompilerSettings` the ported transforms read, by property name. The host sends
 /// them as a bit set in this order (`Interop/RustSettings.cs` looks the names up by
 /// reflection, so a renamed setting fails loudly instead of being ignored).
-pub const SETTING_NAMES: &[&str] = &["RemoveDeadStores", "SortSwitchSections"];
+pub const SETTING_NAMES: &[&str] = &[
+    "RemoveDeadStores",
+    "SortSwitchSections",
+    "PatternBasedFixedStatement",
+];
 
 /// The values of `SETTING_NAMES`.
 #[derive(Clone, Copy, Debug, Default)]
 pub struct Settings {
     pub remove_dead_stores: bool,
     pub sort_switch_sections: bool,
+    pub pattern_based_fixed_statement: bool,
 }
 
 impl Settings {
@@ -30,6 +35,7 @@ impl Settings {
         Settings {
             remove_dead_stores: bit(0),
             sort_switch_sections: bit(1),
+            pattern_based_fixed_statement: bit(2),
         }
     }
 }
@@ -48,6 +54,7 @@ const PIPELINE: &[fn(&mut ReadFunction, &mut Context<'_, '_, '_>)] = &[
     |r, ctx| il_inlining::ILInlining::default().run(r, ctx),
     |r, _| inline_return_transform::run(&mut r.function),
     |r, _| remove_infeasible_path_transform::run(&mut r.function),
+    super::control_flow::detect_pinned_regions::run,
 ];
 
 /// Runs the first `prefix` leaves of the pipeline.
@@ -57,6 +64,38 @@ const PIPELINE: &[fn(&mut ReadFunction, &mut Context<'_, '_, '_>)] = &[
 pub fn run_prefix(r: &mut ReadFunction, ctx: &mut Context<'_, '_, '_>, prefix: u32) {
     for transform in &PIPELINE[..prefix as usize] {
         transform(r, ctx);
+    }
+}
+
+impl ReadFunction {
+    /// `ILFunction.RegisterVariable`: a new variable named `I_n` from the function's helper
+    /// counter, appended to the variable list.
+    pub fn register_variable(
+        &mut self,
+        ctx: &mut Context<'_, '_, '_>,
+        kind: super::ast::VariableKind,
+        ty: crate::typesystem::types::TypeId,
+    ) -> super::ast::VarId {
+        let name = format!("I_{}", self.helper_variable_count);
+        self.helper_variable_count += 1;
+        let stack_type = ctx.ts.stack_type(ty);
+        let v = self.function.add_var(super::ast::Variable {
+            kind,
+            ty,
+            stack_type,
+            index: None,
+            name,
+            has_generated_name: true,
+            initial_value_is_initialized: false,
+            uses_initial_value: false,
+            is_ref_read_only: false,
+            remove_if_redundant: false,
+            load_instructions: Vec::new(),
+            store_instructions: Vec::new(),
+            address_instructions: Vec::new(),
+        });
+        self.variables.push(v);
+        v
     }
 }
 
