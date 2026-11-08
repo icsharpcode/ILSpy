@@ -96,6 +96,7 @@ impl Detection<'_> {
                 value,
                 sections,
                 ty: None,
+                is_lifted: false,
             });
             let last = *f.list(block).last().expect("analyzed block");
             if !matches!(f.inst(last), Inst::Switch { .. }) {

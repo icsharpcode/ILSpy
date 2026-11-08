@@ -369,6 +369,8 @@ pub enum Inst {
         sections: Vec<NodeId>,
         /// `SwitchInstruction.Type`: the type of the switch value, when known.
         ty: Option<TypeId>,
+        /// `IsLifted`: a switch on a nullable value, with a `case null` section.
+        is_lifted: bool,
     },
     SwitchSection {
         labels: LongSet,

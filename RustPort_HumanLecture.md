@@ -1290,6 +1290,20 @@ loop ends, and wrapping reproduces that end of the loop.
 
 The no-op red run failed 185 of 3,550 equality cases; the step passed on its first run.
 
+### 3.41 SwitchOnNullableTransform (item 25, IL prefix 19)
+
+A switch on a nullable value compiles to a `HasValue` check that branches to the null case,
+and a switch on `GetValueOrDefault()`. The transform folds both into one lifted switch: the
+old switch's sections plus a section with `HasNullLabel`. It matches two shapes:
+- the legacy one, with temporaries for the address and the value;
+- Roslyn's, where the `GetValueOrDefault` call may be inlined into the switch.
+
+Switch instructions gained their `IsLifted` flag in the arena and the wire, and
+`LiftNullables` became bit 12 of the settings word. The section flags came over the wire
+in item 23 already, in anticipation of this step.
+
+The no-op red run failed 68 of 3,550 equality cases; the step passed on its first run.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

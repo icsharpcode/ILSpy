@@ -660,8 +660,9 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 
 		ILInstruction Switch()
 		{
+			bool isLifted = Bool();
 			int type = Len();
-			var switchInst = new SwitchInstruction(Node());
+			var switchInst = new SwitchInstruction(Node()) { IsLifted = isLifted };
 			if (type != 0)
 				switchInst.Type = TypeAt(type - 1);
 			foreach (var section in Nodes())

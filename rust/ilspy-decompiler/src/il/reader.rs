@@ -2501,6 +2501,7 @@ impl<'r, 'c, 'a> Reader<'r, 'c, 'a> {
             value,
             sections,
             ty: None,
+            is_lifted: false,
         }))
     }
 

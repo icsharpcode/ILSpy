@@ -16,6 +16,7 @@ pub mod ldloca_dup_init_obj_transform;
 pub mod remove_dead_variable_init;
 pub mod remove_infeasible_path_transform;
 pub mod split_variables;
+pub mod switch_on_nullable_transform;
 pub mod switch_on_string_transform;
 
 /// The `DecompilerSettings` the ported transforms read, by property name. The host sends
@@ -34,6 +35,7 @@ pub const SETTING_NAMES: &[&str] = &[
     "RemoveDeadCode",
     "SwitchStatementOnString",
     "SwitchOnReadOnlySpanChar",
+    "LiftNullables",
 ];
 
 /// The values of `SETTING_NAMES`.
@@ -51,6 +53,7 @@ pub struct Settings {
     pub remove_dead_code: bool,
     pub switch_statement_on_string: bool,
     pub switch_on_read_only_span_char: bool,
+    pub lift_nullables: bool,
 }
 
 impl Settings {
@@ -70,6 +73,7 @@ impl Settings {
             remove_dead_code: bit(9),
             switch_statement_on_string: bit(10),
             switch_on_read_only_span_char: bit(11),
+            lift_nullables: bit(12),
         }
     }
 }
@@ -104,6 +108,7 @@ const PIPELINE: &[fn(&mut ReadFunction, &mut Context<'_, '_, '_>)] = &[
     dynamic_call_site::run,
     super::control_flow::switch_detection::run,
     switch_on_string_transform::run,
+    switch_on_nullable_transform::run,
 ];
 
 /// Runs the first `prefix` leaves of the pipeline.

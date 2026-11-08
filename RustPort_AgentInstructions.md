@@ -353,7 +353,7 @@ the reasons. This file holds only the ordered steps, their gates and their rules
   - [x] 22. DynamicCallSiteTransform (M)
   - [x] 23. SwitchDetection (L)
   - [x] 24. SwitchOnStringTransform (M)
-  - [ ] 25. SwitchOnNullableTransform (M)
+  - [x] 25. SwitchOnNullableTransform (M)
   - [ ] 26. SplitVariables, third occurrence (S, ratchet only)
   - [ ] 27. IntroduceRefReadOnlyModifierOnLocals (S)
   - [ ] 28. BlockILTransform driver and LoopDetection (L)

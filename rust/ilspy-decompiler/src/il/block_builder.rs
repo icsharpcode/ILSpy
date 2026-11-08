@@ -474,6 +474,7 @@ impl<'f> BlockBuilder<'f> {
                 value,
                 sections,
                 ty: None,
+                is_lifted: false,
             });
             self.f.add_il_range(switch, Interval::new(start, start + 1));
             let note = self.f.add(Inst::InvalidExpression {

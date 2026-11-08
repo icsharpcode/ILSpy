@@ -178,6 +178,7 @@ fn switch_of(f: &mut Function, value: NodeId, sections: Vec<NodeId>) -> NodeId {
         value,
         sections,
         ty: None,
+        is_lifted: false,
     })
 }
 

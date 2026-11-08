@@ -453,8 +453,10 @@ impl FunctionWriter<'_, '_, '_, '_> {
                 value,
                 sections,
                 ty,
+                is_lifted,
             } => {
                 tag(op::SWITCH, &mut self.out);
+                self.out.bool(is_lifted);
                 // The type as its index + 1, 0 when unknown.
                 match ty {
                     Some(t) => {
