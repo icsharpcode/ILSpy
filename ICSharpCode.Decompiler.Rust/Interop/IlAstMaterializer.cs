@@ -473,7 +473,10 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 
 		ILInstruction Switch()
 		{
+			int type = Len();
 			var switchInst = new SwitchInstruction(Node());
+			if (type != 0)
+				switchInst.Type = TypeAt(type - 1);
 			foreach (var section in Nodes())
 				switchInst.Sections.Add((SwitchSection)section);
 			return switchInst;

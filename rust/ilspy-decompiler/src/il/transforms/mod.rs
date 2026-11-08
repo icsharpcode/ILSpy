@@ -6,6 +6,7 @@ use crate::typesystem::types::TypeSystem;
 use super::control_flow::control_flow_simplification::ControlFlowSimplification;
 use super::reader::ReadFunction;
 
+pub mod il_inlining;
 pub mod split_variables;
 
 /// The `DecompilerSettings` the ported transforms read, by property name. The host sends
@@ -42,6 +43,7 @@ pub struct Context<'t, 'c, 'a> {
 const PIPELINE: &[fn(&mut ReadFunction, &mut Context<'_, '_, '_>)] = &[
     |r, ctx| ControlFlowSimplification::default().run(&mut r.function, ctx),
     split_variables::run,
+    |r, ctx| il_inlining::ILInlining::default().run(r, ctx),
 ];
 
 /// Runs the first `prefix` leaves of the pipeline.

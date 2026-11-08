@@ -923,6 +923,32 @@ The first G-ilast(2) run differed in 25 images, all on ref struct locals:
 - `accessor_owner` returns the owner's metadata token, not its row. The `Span<T>` indexer
   exemption therefore needs the table check and the row mask.
 
+### 3.25 ILInlining (item 9, IL prefix 3)
+
+`il/transforms/il_inlining.rs` ports the part of `ILInlining` that the top-level pipeline
+step reaches, which runs with `InliningOptions.None`:
+- `InlineAllInBlock`, `InlineOne` and `FindLoadInNext`;
+- the slot rules `CanInlineIntoSlot` (with the overrides of `Block`, `BlockContainer`,
+  `Comp` and `IsInst`) and `SatisfiesSlotRestrictionForInlining` (`StObj`);
+- `NonAggressiveInlineInto`, and `SemanticHelper.MayReorder` in `il/semantic_helper.rs`.
+
+Inlining an `ldloca` (`IsGeneratedTemporaryForAddressOf`) is only reachable with
+`AllowInliningOfLdloca`. The statement transform sets that option, so the port returns
+"cannot inline" without it and panics with it, which marks the gap. Named arguments and
+deconstruction need options that this step never sets.
+
+Three fixes came out of the gate:
+- `SwitchInstruction.Type` is printed, and non-aggressive inlining into a switch value sets
+  it. The Rust `Switch` now carries `ty`, and wire v1 sends it as a type index + 1 (0 for
+  none) before the value.
+- The managed `CallIndirect` has the function pointer as child 0, before the arguments. The
+  Rust arena had it last, which changed the inlining search order and the slot check.
+  `children` and `set_child` now follow the managed order. The wire format was unaffected
+  because it encodes the operands explicitly.
+- `IsInst.CanInlineIntoSlot` also accepts a parent `unbox.any` (`as T?`), a parent
+  comparison with null (`is T`) and a parent control-flow block. The first port stopped
+  reading the override before those cases.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

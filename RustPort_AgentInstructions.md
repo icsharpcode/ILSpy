@@ -337,7 +337,7 @@ the reasons. This file holds only the ordered steps, their gates and their rules
   for `StatementTransform`.
   - [x] 7. ControlFlowSimplification (M)
   - [x] 8. SplitVariables (M)
-  - [ ] 9. ILInlining (L)
+  - [x] 9. ILInlining (L)
   - [ ] 10. InlineReturnTransform (S)
   - [ ] 11. RemoveInfeasiblePathTransform (S)
   - [ ] 12. DetectPinnedRegions (M)

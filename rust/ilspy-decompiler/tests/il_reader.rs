@@ -131,7 +131,7 @@ fn debug_info_names_and_types_the_locals() {
     assert!(named > 0 && generated > 0 && dynamic > 0);
 }
 
-/// The first transforms (ControlFlowSimplification, SplitVariables) over every body: no
+/// The served IL transform prefix over every body: no
 /// panic, and no dead non-parameter variable survives `RemoveDead`.
 #[test]
 fn early_transforms_run_on_every_body() {
@@ -157,7 +157,7 @@ fn early_transforms_run_on_every_body() {
             ts: &mut ts,
             settings: Settings::default(),
         };
-        run_prefix(&mut r, &mut ctx, ilspy_decompiler::IL_PREFIX.min(2));
+        run_prefix(&mut r, &mut ctx, ilspy_decompiler::IL_PREFIX);
         for &v in &r.variables {
             let var = r.function.var(v);
             assert!(

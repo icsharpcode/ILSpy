@@ -8,5 +8,6 @@ pub mod opcodes;
 mod patterns;
 pub mod reader;
 mod refs;
+pub mod semantic_helper;
 pub mod transforms;
 pub mod types;

@@ -5,6 +5,7 @@
 use std::collections::HashSet;
 
 use crate::il::ast::{Flags, Function, Inst, NodeId, NopKind, VariableKind};
+use crate::il::semantic_helper::is_pure;
 use crate::il::transforms::Context;
 use crate::typesystem::known::KnownTypeCode;
 
@@ -14,11 +15,6 @@ use super::switch_detection;
 pub struct ControlFlowSimplification {
     /// Replace every branch to a return block with the return (`EarlyILTransforms`).
     pub aggressively_duplicate_return_blocks: bool,
-}
-
-/// `SemanticHelper.IsPure`: reading locals and internal control flow are pure.
-pub fn is_pure(flags: Flags) -> bool {
-    flags.0 & !(Flags::MAY_READ_LOCALS.0 | Flags::CONTROL_FLOW.0) == 0
 }
 
 fn is_kind(f: &Function, id: NodeId, block: bool) -> bool {

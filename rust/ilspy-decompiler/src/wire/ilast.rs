@@ -376,8 +376,20 @@ impl FunctionWriter<'_, '_, '_, '_> {
                 self.node(true_inst)?;
                 self.node(false_inst)?;
             }
-            Inst::Switch { value, sections } => {
+            Inst::Switch {
+                value,
+                sections,
+                ty,
+            } => {
                 tag(op::SWITCH, &mut self.out);
+                // The type as its index + 1, 0 when unknown.
+                match ty {
+                    Some(t) => {
+                        let i = self.tables.ty(self.ts, t);
+                        self.out.uvar(u64::from(i) + 1);
+                    }
+                    None => self.out.uvar(0),
+                }
                 self.node(value)?;
                 self.nodes(&sections)?;
             }

@@ -173,7 +173,9 @@ impl<S: State> Flow<S> {
                 self.visit(a, f, false_inst);
                 self.state.join_with(&after_true);
             }
-            Inst::Switch { value, sections } => {
+            Inst::Switch {
+                value, sections, ..
+            } => {
                 self.visit(a, f, *value);
                 let before_sections = self.state.clone();
                 self.visit(a, f, sections[0]);

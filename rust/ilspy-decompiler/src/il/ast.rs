@@ -342,6 +342,8 @@ pub enum Inst {
     Switch {
         value: NodeId,
         sections: Vec<NodeId>,
+        /// `SwitchInstruction.Type`: the type of the switch value, when known.
+        ty: Option<TypeId>,
     },
     SwitchSection {
         labels: LongSet,
@@ -645,7 +647,9 @@ impl Inst {
                 true_inst,
                 false_inst,
             } => vec![*condition, *true_inst, *false_inst],
-            Switch { value, sections } => {
+            Switch {
+                value, sections, ..
+            } => {
                 let mut c = vec![*value];
                 c.extend(sections);
                 c
@@ -674,8 +678,9 @@ impl Inst {
                 args,
                 ..
             } => {
-                let mut c = args.clone();
-                c.push(*function_pointer);
+                // The function pointer is child 0, as in the managed `CallIndirect`.
+                let mut c = vec![*function_pointer];
+                c.extend(args);
                 c
             }
             StLoc { value, .. } | AddressOf { value, .. } => vec![*value],
@@ -754,7 +759,9 @@ impl Inst {
                 .into_iter()
                 .nth(index)
                 .expect("child index"),
-            Switch { value, sections } => {
+            Switch {
+                value, sections, ..
+            } => {
                 if index == 0 {
                     value
                 } else {
@@ -798,10 +805,10 @@ impl Inst {
                 args,
                 ..
             } => {
-                if index < args.len() {
-                    &mut args[index]
-                } else {
+                if index == 0 {
                     function_pointer
+                } else {
+                    &mut args[index - 1]
                 }
             }
             Cpblk {
@@ -1190,7 +1197,9 @@ impl Function {
                     | self.flags(*condition)
                     | Flags::combine_branches(self.flags(*true_inst), self.flags(*false_inst))
             }
-            Switch { value, sections } => {
+            Switch {
+                value, sections, ..
+            } => {
                 let combined = sections.iter().fold(Flags::END_POINT_UNREACHABLE, |f, &s| {
                     Flags::combine_branches(f, self.flags(s))
                 });

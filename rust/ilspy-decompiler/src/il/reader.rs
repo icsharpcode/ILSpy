@@ -2442,7 +2442,11 @@ impl<'r, 'c, 'a> Reader<'r, 'c, 'a> {
         });
         let labels = LongSet::from_interval(LongInterval::new(0, targets.len() as i64)).invert();
         sections.push(self.add(Inst::SwitchSection { labels, body }));
-        Ok(self.add(Inst::Switch { value, sections }))
+        Ok(self.add(Inst::Switch {
+            value,
+            sections,
+            ty: None,
+        }))
     }
 
     fn binary(&mut self, op: BinaryNumericOperator, check: bool, sign: Sign) -> Decoded {

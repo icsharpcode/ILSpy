@@ -464,7 +464,11 @@ impl<'f> BlockBuilder<'f> {
             let value = self.f.add(Inst::LdLoc {
                 var: dispatch.variable,
             });
-            let switch = self.f.add(Inst::Switch { value, sections });
+            let switch = self.f.add(Inst::Switch {
+                value,
+                sections,
+                ty: None,
+            });
             self.f.add_il_range(switch, Interval::new(start, start + 1));
             let note = self.f.add(Inst::InvalidExpression {
                 message: "ILSpy has introduced the following switch to emulate a goto from catch-block to try-block".to_owned(),
