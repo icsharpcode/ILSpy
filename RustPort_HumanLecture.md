@@ -1118,6 +1118,25 @@ code. `set_body` also clears the body's parent link, because the function is not
 - An assertion listener reports failed `Debug.Assert`s and continues. The default listener
   terminates the test host.
 
+### 3.31 DetectCatchWhenConditionBlocks (item 15, IL prefix 9)
+
+**What it does.** A catch filter that tests the exception type becomes
+`catch (T ex) when (...)`:
+- The handler variable takes the tested type. As in `ILVariable.Type`, the stack type cannot
+  change, and both matchers check it first.
+- The type test leaves the filter.
+- Copies of the exception variable inside the handler (`stloc b(ldloc ex)` and
+  `stloc b(castclass T(ldloc ex))`) are replaced by the variable itself.
+
+**Supporting ports.**
+- The Visual Basic `On Error` filter shape.
+- `EarlyExpressionTransforms.FixComparisonKindLdNull`.
+- `MatchCompUnsignedZero` and `Block.GetContainingStatement`.
+
+The transform needed nothing new from the arena, the wire or the materializer, and the gate
+passed on the first run.
+
+## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |
 |---|---|---|---|

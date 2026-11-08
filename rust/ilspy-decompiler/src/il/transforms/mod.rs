@@ -7,6 +7,7 @@ use super::control_flow::control_flow_simplification::ControlFlowSimplification;
 use super::reader::ReadFunction;
 
 pub mod copy_propagation;
+pub mod detect_catch_when_condition_blocks;
 pub mod dynamic_call_site;
 pub mod early_expression_transforms;
 pub mod il_inlining;
@@ -79,6 +80,7 @@ const PIPELINE: &[fn(&mut ReadFunction, &mut Context<'_, '_, '_>)] = &[
     super::control_flow::detect_pinned_regions::run,
     super::control_flow::yield_return_decompiler::run,
     super::control_flow::async_await_decompiler::run,
+    detect_catch_when_condition_blocks::run,
 ];
 
 /// Runs the first `prefix` leaves of the pipeline.
