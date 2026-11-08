@@ -338,7 +338,7 @@ the reasons. This file holds only the ordered steps, their gates and their rules
   - [x] 7. ControlFlowSimplification (M)
   - [x] 8. SplitVariables (M)
   - [x] 9. ILInlining (L)
-  - [ ] 10. InlineReturnTransform (S)
+  - [x] 10. InlineReturnTransform (S)
   - [ ] 11. RemoveInfeasiblePathTransform (S)
   - [ ] 12. DetectPinnedRegions (M)
   - [ ] 13. YieldReturnDecompiler (L)

@@ -148,7 +148,7 @@ fn remove_dead_stack_stores(f: &mut Function, block: NodeId, ctx: &Context<'_, '
             continue;
         };
         let v = f.var(var);
-        if !(v.is_single_definition() && v.load_count == 0 && v.kind == VariableKind::StackSlot) {
+        if !(v.is_single_definition() && v.load_count() == 0 && v.kind == VariableKind::StackSlot) {
             continue;
         }
         let removable = if aggressive {
@@ -183,7 +183,7 @@ fn inline_variable_in_return_block(f: &mut Function, block: NodeId) {
         return;
     };
     let var = f.var(v);
-    if !(var.is_single_definition() && var.load_count == 1) {
+    if !(var.is_single_definition() && var.load_count() == 1) {
         return;
     }
     let Some((stored, inst)) = f.match_stloc(store) else {
@@ -286,9 +286,11 @@ pub fn combine_block_with_next_block(
         f.add_il_range(block, f.il_range(target));
     }
     f.remove(br);
-    for inst in f.truncate(target, 0) {
+    // `AddRange` before `Clear`: the moved instructions stay connected throughout.
+    for inst in f.list(target).to_vec() {
         f.push(block, inst);
     }
+    f.truncate(target, 0);
     true
 }
 
@@ -303,7 +305,7 @@ fn is_dead_true_store(f: &Function, block: NodeId, ctx: &Context<'_, '_, '_>) ->
         return false;
     };
     let v = f.var(var);
-    if !(v.load_count == 0 && v.address_count == 0) {
+    if !(v.load_count() == 0 && v.address_count() == 0) {
         return false;
     }
     f.match_ldc_i4(value) == Some(1) && is_known(ctx, v.ty, KnownTypeCode::Boolean)

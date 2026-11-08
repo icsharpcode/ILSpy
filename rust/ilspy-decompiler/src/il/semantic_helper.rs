@@ -29,7 +29,7 @@ fn inst2_might_write_to_variable_read_by_inst1(f: &Function, inst1: NodeId, inst
         .filter_map(|n| f.match_ldloc(n))
         .collect();
     if f.has_flag(inst2, Flags::SIDE_EFFECT)
-        && variables.iter().any(|&v| f.var(v).address_count > 0)
+        && variables.iter().any(|&v| f.var(v).address_count() > 0)
     {
         // Indirect writes may hit any variable whose address is taken.
         return true;

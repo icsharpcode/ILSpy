@@ -50,9 +50,9 @@ pub fn simplify_switch_instruction(f: &mut Function, block: NodeId, ctx: &Contex
         }
         kept.push(section);
     }
-    if kept.len() != f.list(sw).len() {
-        f.set_list(sw, kept);
-    }
+    // `RemoveAll`.
+    let kept: std::collections::HashSet<NodeId> = kept.into_iter().collect();
+    f.retain(sw, |_, s| kept.contains(&s));
     adjust_labels(f, sw);
     sort_switch_sections(f, sw, ctx);
 }

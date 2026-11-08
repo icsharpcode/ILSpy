@@ -227,28 +227,41 @@ pub struct Variable {
     pub initial_value_is_initialized: bool,
     pub uses_initial_value: bool,
     pub is_ref_read_only: bool,
-    /// Connected `ldloc` instructions (`LoadCount`); maintained by the arena.
-    pub load_count: u32,
-    /// Connected store instructions, without the initial value (`StoreInstructions.Count`).
-    pub store_instruction_count: u32,
-    /// Connected `ldloca` instructions (`AddressCount`).
-    pub address_count: u32,
+    /// The connected `ldloc` instructions (`LoadInstructions`), maintained by the arena in the
+    /// managed order: appended on connect, swap-removed on disconnect.
+    pub load_instructions: Vec<NodeId>,
+    /// The connected store instructions (`StoreInstructions`), without the initial value.
+    pub store_instructions: Vec<NodeId>,
+    /// The connected `ldloca` instructions (`AddressInstructions`).
+    pub address_instructions: Vec<NodeId>,
 }
 
 impl Variable {
+    /// `LoadCount`.
+    pub fn load_count(&self) -> u32 {
+        self.load_instructions.len() as u32
+    }
+
+    /// `AddressCount`.
+    pub fn address_count(&self) -> u32 {
+        self.address_instructions.len() as u32
+    }
+
     /// `StoreCount`: the stores plus the initial value when it is used.
     pub fn store_count(&self) -> u32 {
-        self.store_instruction_count + u32::from(self.uses_initial_value)
+        self.store_instructions.len() as u32 + u32::from(self.uses_initial_value)
     }
 
     /// `IsSingleDefinition`.
     pub fn is_single_definition(&self) -> bool {
-        self.store_count() == 1 && self.address_count == 0
+        self.store_count() == 1 && self.address_count() == 0
     }
 
     /// `IsDead`.
     pub fn is_dead(&self) -> bool {
-        self.store_instruction_count == 0 && self.load_count == 0 && self.address_count == 0
+        self.store_instructions.is_empty()
+            && self.load_instructions.is_empty()
+            && self.address_instructions.is_empty()
     }
 }
 
@@ -567,6 +580,9 @@ pub struct Node {
     pub incoming_edge_count: u32,
     /// For a container: the connected `leave` instructions targeting it (`LeaveCount`).
     pub leave_count: u32,
+    /// For a load, address load or store: its position in the variable's instruction list
+    /// (`IndexInVariableInstructionMapping`).
+    pub var_list_index: u32,
 }
 
 /// `Interval` merging of `ILInstruction.CombineILRange`.
@@ -959,6 +975,7 @@ impl Function {
             ref_count: 0,
             incoming_edge_count: 0,
             leave_count: 0,
+            var_list_index: 0,
         });
         for (i, child) in children.into_iter().enumerate() {
             self.adopt(id, child, i);
@@ -1058,62 +1075,73 @@ impl Function {
 
     /// Removes and returns the items from `index` on (`RemoveRange` to the end).
     pub fn truncate(&mut self, owner: NodeId, index: usize) -> Vec<NodeId> {
-        let entry = self.entry_point(owner);
-        let removed = self.list_mut(owner).split_off(index);
-        for &r in &removed {
-            self.nodes[r.0 as usize].parent = None;
-        }
-        self.relink(owner);
-        if self.is_connected(owner) {
-            for &r in &removed {
-                self.release_ref(r);
-            }
-        }
-        self.entry_point_changed(owner, entry);
+        let mut items = self.list(owner).to_vec();
+        let removed = items.split_off(index);
+        let ops = removed.iter().map(|&r| (r, false)).collect();
+        self.replace_items(owner, items, ops);
         removed
     }
 
-    /// Replaces the whole list of `owner` (`ReplaceList`). Items may already be in the list.
+    /// Replaces the whole list of `owner` (`ReplaceList`). Items may already be in the list;
+    /// as in the managed collection, each position adds its new item before it releases the
+    /// old one.
     pub fn set_list(&mut self, owner: NodeId, items: Vec<NodeId>) {
-        let entry = self.entry_point(owner);
-        let connected = self.is_connected(owner);
-        if connected {
-            for &item in &items {
-                self.add_ref(item);
+        let old = self.list(owner).to_vec();
+        let mut ops = Vec::with_capacity(items.len() + old.len());
+        for (i, &item) in items.iter().enumerate() {
+            ops.push((item, true));
+            if let Some(&o) = old.get(i) {
+                ops.push((o, false));
             }
         }
-        let old = std::mem::replace(self.list_mut(owner), items);
-        for &r in &old {
-            self.nodes[r.0 as usize].parent = None;
-        }
-        self.relink(owner);
-        if connected {
-            for &r in &old {
-                self.release_ref(r);
-            }
-        }
-        self.entry_point_changed(owner, entry);
+        ops.extend(old.iter().skip(items.len()).map(|&o| (o, false)));
+        self.replace_items(owner, items, ops);
     }
 
     /// Removes the item at `index` of the list of `owner` (`RemoveAt`).
     pub fn remove_at(&mut self, owner: NodeId, index: usize) -> NodeId {
         let mut items = self.list(owner).to_vec();
         let removed = items.remove(index);
-        self.set_list(owner, items);
+        self.replace_items(owner, items, vec![(removed, false)]);
         removed
     }
 
-    /// Keeps the items of the list of `owner` that `keep` accepts (`RemoveAll` inverted).
+    /// Keeps the items of the list of `owner` that `keep` accepts (`RemoveAll` inverted),
+    /// releasing the others in list order.
     pub fn retain(&mut self, owner: NodeId, mut keep: impl FnMut(&Function, NodeId) -> bool) {
-        let items: Vec<NodeId> = self
+        let (items, removed): (Vec<NodeId>, Vec<NodeId>) = self
             .list(owner)
             .iter()
             .copied()
-            .filter(|&i| keep(self, i))
-            .collect();
-        if items.len() != self.list(owner).len() {
-            self.set_list(owner, items);
+            .partition(|&i| keep(self, i));
+        if !removed.is_empty() {
+            let ops = removed.iter().map(|&r| (r, false)).collect();
+            self.replace_items(owner, items, ops);
         }
+    }
+
+    /// Installs `items` as the list of `owner`, then connects (`true`) and releases (`false`)
+    /// the given nodes in order when `owner` is connected, and moves the entry point's edge.
+    fn replace_items(&mut self, owner: NodeId, items: Vec<NodeId>, ops: Vec<(NodeId, bool)>) {
+        let entry = self.entry_point(owner);
+        let old = std::mem::replace(self.list_mut(owner), items);
+        // An item that already moved into another list keeps its new parent.
+        for &r in &old {
+            if self.nodes[r.0 as usize].parent == Some(owner) {
+                self.nodes[r.0 as usize].parent = None;
+            }
+        }
+        self.relink(owner);
+        if self.is_connected(owner) {
+            for (node, connect) in ops {
+                if connect {
+                    self.add_ref(node);
+                } else {
+                    self.release_ref(node);
+                }
+            }
+        }
+        self.entry_point_changed(owner, entry);
     }
 
     /// `Block.Remove`: takes a block that is not the entry point out of its container by
@@ -1124,7 +1152,7 @@ impl Function {
         assert!(index > 0, "the entry point cannot be removed");
         let mut blocks = self.list(container).to_vec();
         blocks.swap_remove(index);
-        self.set_list(container, blocks);
+        self.replace_items(container, blocks, vec![(block, false)]);
     }
 
     /// `Remove`: takes `id` out of its parent's list.

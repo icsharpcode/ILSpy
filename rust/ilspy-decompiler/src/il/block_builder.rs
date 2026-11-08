@@ -336,9 +336,9 @@ impl<'f> BlockBuilder<'f> {
                     initial_value_is_initialized: false,
                     uses_initial_value: false,
                     is_ref_read_only: false,
-                    load_count: 0,
-                    store_instruction_count: 0,
-                    address_count: 0,
+                    load_instructions: Vec::new(),
+                    store_instructions: Vec::new(),
+                    address_instructions: Vec::new(),
                 });
                 self.on_error_dispatchers.push((
                     try_catch,

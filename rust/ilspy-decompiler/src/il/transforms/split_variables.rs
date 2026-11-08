@@ -374,9 +374,9 @@ impl GroupStores {
                     // Set below when an uninitialized load is part of the group.
                     uses_initial_value: false,
                     is_ref_read_only: false,
-                    load_count: 0,
-                    store_instruction_count: 0,
-                    address_count: 0,
+                    load_instructions: Vec::new(),
+                    store_instructions: Vec::new(),
+                    address_instructions: Vec::new(),
                 });
                 self.new_variables.insert(representative, v);
                 r.variables.push(v);

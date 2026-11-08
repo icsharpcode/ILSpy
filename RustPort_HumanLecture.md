@@ -949,6 +949,26 @@ Three fixes came out of the gate:
   comparison with null (`is T`) and a parent control-flow block. The first port stopped
   reading the override before those cases.
 
+### 3.26 Variable instruction lists and InlineReturnTransform (item 10, IL prefix 4)
+
+`InlineReturnTransform` walks `returnVar.StoreInstructions` and appends a moved or copied
+return block per store, so the order of that list reaches the output. The arena now keeps
+the managed lists, `LoadInstructions`, `StoreInstructions` and `AddressInstructions`, in
+place of the counters. The order follows the managed rules:
+- `Connected` runs the base (the children) before the node's own registration, so a subtree
+  connects in post-order.
+- `Disconnected` unregisters the node before its children.
+- A removal swaps the last entry into the gap, tracked per node in `var_list_index`.
+
+The collection operations keep their managed sequencing:
+- `ReplaceList` adds each new item before it releases the old item at the same position.
+- `RemoveAll`, `RemoveAt`, `Clear` and `SwapRemoveAt` release only what they remove.
+- `CombineBlockWithNextBlock` adds the moved instructions before it clears the old block
+  (`AddRange` and then `Clear`).
+
+A unit test pins post-order connection and swap-removal. The transforms ported so far did not
+depend on these orders; the reader and prefix equalities still hold with them.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

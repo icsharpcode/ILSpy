@@ -1,11 +1,23 @@
 //! Use counts of the ILAst (`ILInstruction.AddRef` / `ReleaseRef` and the `Connected` /
 //! `Disconnected` overrides): a node is connected while it is reachable from the function
-//! root, and only connected instructions count as loads, stores, address uses, branches into
-//! a block and leaves of a container. Every editing operation of `Function` keeps the counts.
+//! root, and only connected instructions are loads, stores and address uses of their
+//! variable, branches into a block or leaves of a container. Every editing operation of
+//! `Function` keeps this up to date in the managed order, because transforms iterate the
+//! variables' instruction lists: connecting visits the children before the node,
+//! disconnecting the node before its children, and a list removal moves the last entry into
+//! the gap.
 
 use std::collections::HashMap;
 
 use super::ast::{BranchTarget, Function, Inst, NodeId, VarId};
+
+/// Which instruction list of a variable an instruction belongs to.
+#[derive(Clone, Copy)]
+enum VarList {
+    Load,
+    Store,
+    Address,
+}
 
 impl Function {
     pub fn is_connected(&self, id: NodeId) -> bool {
@@ -17,18 +29,27 @@ impl Function {
         self.add_ref(body);
     }
 
+    /// `AddRef`: on the first reference, the children connect first, then the node
+    /// (`Connected` calls the base, which visits the children, before its own work).
     pub(super) fn add_ref(&mut self, id: NodeId) {
-        let mut stack = vec![id];
-        while let Some(n) = stack.pop() {
+        let mut stack = vec![(id, false)];
+        while let Some((n, expanded)) = stack.pop() {
+            if expanded {
+                self.count(n, true);
+                continue;
+            }
             let node = &mut self.nodes[n.0 as usize];
             node.ref_count += 1;
             if node.ref_count == 1 {
-                self.count(n, 1);
-                stack.extend(self.inst(n).children());
+                stack.push((n, true));
+                for child in self.inst(n).children().into_iter().rev() {
+                    stack.push((child, false));
+                }
             }
         }
     }
 
+    /// `ReleaseRef`: on the last release, the node disconnects first, then its children.
     pub(super) fn release_ref(&mut self, id: NodeId) {
         let mut stack = vec![id];
         while let Some(n) = stack.pop() {
@@ -36,32 +57,68 @@ impl Function {
             assert!(node.ref_count > 0, "released a disconnected node");
             node.ref_count -= 1;
             if node.ref_count == 0 {
-                self.count(n, -1);
-                stack.extend(self.inst(n).children());
+                self.count(n, false);
+                for child in self.inst(n).children().into_iter().rev() {
+                    stack.push(child);
+                }
             }
         }
     }
 
-    /// What connecting (`delta` 1) or disconnecting (-1) `id` itself changes.
-    fn count(&mut self, id: NodeId, delta: i32) {
-        fn bump(c: &mut u32, delta: i32) {
-            *c = c.checked_add_signed(delta).expect("use count underflow");
+    fn var_list(&mut self, var: VarId, list: VarList) -> &mut Vec<NodeId> {
+        let v = self.var_mut(var);
+        match list {
+            VarList::Load => &mut v.load_instructions,
+            VarList::Store => &mut v.store_instructions,
+            VarList::Address => &mut v.address_instructions,
+        }
+    }
+
+    /// `AddXInstruction` / `RemoveXInstruction` (a swap-remove).
+    fn update_var_list(&mut self, id: NodeId, var: VarId, list: VarList, connect: bool) {
+        if connect {
+            let entries = self.var_list(var, list);
+            entries.push(id);
+            let index = entries.len() as u32 - 1;
+            self.nodes[id.0 as usize].var_list_index = index;
+        } else {
+            let index = self.node(id).var_list_index as usize;
+            let entries = self.var_list(var, list);
+            assert_eq!(entries[index], id, "variable instruction list out of sync");
+            entries.swap_remove(index);
+            if let Some(&moved) = entries.get(index) {
+                self.nodes[moved.0 as usize].var_list_index = index as u32;
+            }
+        }
+    }
+
+    /// What connecting or disconnecting `id` itself changes.
+    fn count(&mut self, id: NodeId, connect: bool) {
+        fn bump(c: &mut u32, connect: bool) {
+            if connect {
+                *c += 1;
+            } else {
+                *c = c.checked_sub(1).expect("use count underflow");
+            }
         }
         match *self.inst(id) {
-            Inst::LdLoc { var } => bump(&mut self.var_mut(var).load_count, delta),
-            Inst::LdLoca { var } => bump(&mut self.var_mut(var).address_count, delta),
+            Inst::LdLoc { var } => self.update_var_list(id, var, VarList::Load, connect),
+            Inst::LdLoca { var } => self.update_var_list(id, var, VarList::Address, connect),
             Inst::StLoc { var, .. } | Inst::TryCatchHandler { variable: var, .. } => {
-                bump(&mut self.var_mut(var).store_instruction_count, delta)
+                self.update_var_list(id, var, VarList::Store, connect)
             }
             Inst::Branch {
                 target: BranchTarget::Block(b),
-            } => bump(&mut self.nodes[b.0 as usize].incoming_edge_count, delta),
+            } => bump(&mut self.nodes[b.0 as usize].incoming_edge_count, connect),
             Inst::Leave {
                 target: Some(c), ..
-            } => bump(&mut self.nodes[c.0 as usize].leave_count, delta),
+            } => bump(&mut self.nodes[c.0 as usize].leave_count, connect),
             Inst::BlockContainer { .. } => {
                 if let Some(entry) = self.entry_point(id) {
-                    bump(&mut self.nodes[entry.0 as usize].incoming_edge_count, delta);
+                    bump(
+                        &mut self.nodes[entry.0 as usize].incoming_edge_count,
+                        connect,
+                    );
                 }
             }
             _ => {}
@@ -95,14 +152,14 @@ impl Function {
     pub fn set_branch_target(&mut self, branch: NodeId, block: NodeId) {
         let connected = self.is_connected(branch);
         if connected {
-            self.count(branch, -1);
+            self.count(branch, false);
         }
         match self.inst_mut(branch) {
             Inst::Branch { target } => *target = BranchTarget::Block(block),
             other => panic!("{other:?} is not a branch"),
         }
         if connected {
-            self.count(branch, 1);
+            self.count(branch, true);
         }
     }
 
@@ -120,7 +177,7 @@ impl Function {
     pub fn set_variable(&mut self, id: NodeId, var: VarId) {
         let connected = self.is_connected(id);
         if connected {
-            self.count(id, -1);
+            self.count(id, false);
         }
         match self.inst_mut(id) {
             Inst::LdLoc { var: v }
@@ -130,7 +187,7 @@ impl Function {
             other => panic!("{other:?} has no variable"),
         }
         if connected {
-            self.count(id, 1);
+            self.count(id, true);
         }
     }
 
@@ -205,9 +262,9 @@ mod tests {
             initial_value_is_initialized: false,
             uses_initial_value: false,
             is_ref_read_only: false,
-            load_count: 0,
-            store_instruction_count: 0,
-            address_count: 0,
+            load_instructions: Vec::new(),
+            store_instructions: Vec::new(),
+            address_instructions: Vec::new(),
         })
     }
 
@@ -260,10 +317,10 @@ mod tests {
     fn counts_start_when_the_root_is_connected() {
         let mut f = Function::default();
         let (container, entry, exit, _, v) = sample(&mut f);
-        assert_eq!(f.var(v).load_count, 0);
+        assert_eq!(f.var(v).load_count(), 0);
         f.connect_root(container);
         assert_eq!(
-            (f.var(v).load_count, f.var(v).store_count()),
+            (f.var(v).load_count(), f.var(v).store_count()),
             (1, 1),
             "one load, one store"
         );
@@ -284,7 +341,7 @@ mod tests {
         let value = f.inst(store).children()[0];
         f.replace(store, value);
         assert_eq!(f.var(v).store_count(), 0);
-        assert_eq!(f.var(v).load_count, 1);
+        assert_eq!(f.var(v).load_count(), 1);
         assert!(f.is_connected(value) && !f.is_connected(store));
     }
 
@@ -297,7 +354,7 @@ mod tests {
         assert_eq!(f.node(exit).incoming_edge_count, 1, "now the entry point");
         assert_eq!(f.node(entry).incoming_edge_count, 0);
         assert_eq!(
-            f.var(v).load_count,
+            f.var(v).load_count(),
             0,
             "the removed entry block took its load"
         );
@@ -326,5 +383,33 @@ mod tests {
             2,
             "a disconnected copy counts nothing"
         );
+    }
+
+    #[test]
+    fn variable_lists_follow_the_managed_order() {
+        let mut f = Function::default();
+        let v = var(&mut f);
+        let loads: Vec<NodeId> = (0..3).map(|_| f.add(Inst::LdLoc { var: v })).collect();
+        // `throw(ldloc)` statements in one block, so each load is its own statement's child.
+        let throws: Vec<NodeId> = loads
+            .iter()
+            .map(|&l| f.add(Inst::Throw { arg: l }))
+            .collect();
+        let b = block(&mut f, throws.clone());
+        let container = f.add(Inst::BlockContainer {
+            kind: ContainerKind::Normal,
+            expected: None,
+            blocks: vec![b],
+        });
+        f.connect_root(container);
+        assert_eq!(f.var(v).load_instructions, loads, "connected in tree order");
+        f.remove_at(b, 0);
+        assert_eq!(
+            f.var(v).load_instructions,
+            [loads[2], loads[1]],
+            "the last entry moves into the gap"
+        );
+        f.push(b, throws[0]);
+        assert_eq!(f.var(v).load_instructions, [loads[2], loads[1], loads[0]]);
     }
 }

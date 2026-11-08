@@ -88,7 +88,7 @@ pub fn variable_can_be_used_for_inlining(f: &Function, v: VarId) -> bool {
     let var = f.var(v);
     var.kind != VariableKind::PinnedLocal
         && var.store_count() == 1
-        && var.load_count + var.address_count == 1
+        && var.load_count() + var.address_count() == 1
 }
 
 /// `InlineOne`: inlines the `stloc` into the next instruction, or drops it when the variable
@@ -109,7 +109,7 @@ pub fn inline_one(
         return true;
     }
     let var = f.var(v);
-    if var.load_count == 0 && var.address_count == 0 {
+    if var.load_count() == 0 && var.address_count() == 0 {
         if is_pure(f.flags(value)) {
             // No effects except reading locals: drop the whole store.
             f.remove_at(block, pos);
