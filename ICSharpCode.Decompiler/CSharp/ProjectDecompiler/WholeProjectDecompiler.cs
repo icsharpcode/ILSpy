@@ -848,10 +848,13 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		const int RT_ICON = 3;
 		const int RT_GROUP_ICON = 14;
 
-		unsafe static byte[]? CreateApplicationIcon(Win32ResourceDirectory resources)
+		internal unsafe static byte[]? CreateApplicationIcon(Win32ResourceDirectory resources)
 		{
+			// idReserved, idType and idCount; sizeof(GRPICONDIR) also counts the entries placeholder.
+			const int headerSize = 3 * sizeof(ushort);
+
 			var iconGroup = resources.Find(new Win32ResourceName(RT_GROUP_ICON))?.FirstDirectory()?.FirstData()?.Data;
-			if (iconGroup == null)
+			if (iconGroup == null || iconGroup.Length < headerSize)
 				return null;
 
 			var iconDir = resources.Find(new Win32ResourceName(RT_ICON));
@@ -863,11 +866,16 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			fixed (byte* pIconGroupData = iconGroup)
 			{
 				var pIconGroup = (GRPICONDIR*)pIconGroupData;
+				int iconCount = pIconGroup->idCount;
+				// idCount is file-controlled; a group that announces more entries than its data holds
+				// would have the loops below read past the end of the array.
+				if (iconCount > (iconGroup.Length - headerSize) / sizeof(GRPICONDIRENTRY))
+					return null;
+
 				writer.Write(pIconGroup->idReserved);
 				writer.Write(pIconGroup->idType);
 				writer.Write(pIconGroup->idCount);
 
-				int iconCount = pIconGroup->idCount;
 				uint offset = (2 * 3) + ((uint)iconCount * 0x10);
 				for (int i = 0; i < iconCount; i++)
 				{

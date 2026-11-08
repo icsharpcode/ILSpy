@@ -19,6 +19,7 @@
 using System;
 using System.Runtime.InteropServices;
 
+using ICSharpCode.Decompiler.CSharp.ProjectDecompiler;
 using ICSharpCode.Decompiler.Util;
 
 using NUnit.Framework;
@@ -250,6 +251,71 @@ namespace ICSharpCode.Decompiler.Tests.Util
 				var manifest = root.Find(new Win32ResourceName(RT_MANIFEST))?.FirstDirectory()?.FirstData()?.Data;
 				Assert.That(manifest, Is.Not.Null);
 				Assert.That(manifest, Is.EqualTo(payload));
+			});
+		}
+
+		// Lays out RT_ICON #0 and RT_GROUP_ICON #1, each as a Type -> Name -> (language data leaf) branch.
+		static byte[] BuildIconResources(byte[] iconImage, byte[] iconGroup)
+		{
+			const int RT_ICON = 3;
+			const int RT_GROUP_ICON = 14;
+			const int branchSize = 2 * (DirectorySize + EntrySize) + DataEntrySize;
+			int branches = DirectorySize + 2 * EntrySize;
+			byte[] buffer = new byte[branches + 2 * branchSize + iconImage.Length + iconGroup.Length];
+
+			WriteDirectory(buffer, 0, namedEntries: 0, idEntries: 2);
+			WriteBranch(0, RT_ICON, name: 0, iconImage, branches + 2 * branchSize);
+			WriteBranch(1, RT_GROUP_ICON, name: 1, iconGroup, branches + 2 * branchSize + iconImage.Length);
+			return buffer;
+
+			void WriteBranch(int index, uint type, uint name, byte[] payload, int dataOffset)
+			{
+				int nameDir = branches + index * branchSize;
+				int leafDir = nameDir + DirectorySize + EntrySize;
+				int dataEntry = leafDir + DirectorySize + EntrySize;
+				WriteEntry(buffer, DirectorySize + index * EntrySize, type, offsetToData: SubdirectoryFlag | (uint)nameDir);
+				WriteDirectory(buffer, nameDir, namedEntries: 0, idEntries: 1);
+				WriteEntry(buffer, nameDir + DirectorySize, name, offsetToData: SubdirectoryFlag | (uint)leafDir);
+				WriteDirectory(buffer, leafDir, namedEntries: 0, idEntries: 1);
+				WriteEntry(buffer, leafDir + DirectorySize, name: 1033, offsetToData: (uint)dataEntry /* data leaf */);
+				WriteDataEntry(buffer, dataEntry, rva: (uint)dataOffset, size: (uint)payload.Length);
+				payload.CopyTo(buffer, dataOffset);
+			}
+		}
+
+		static readonly byte[] IconImage = { 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA };
+
+		// GRPICONDIR with the given idCount, followed by one GRPICONDIRENTRY for IconImage (nID = 0).
+		static byte[] BuildIconGroup(ushort idCount, int length)
+		{
+			byte[] group = { 0, 0, 1, 0, 0, 0, /* entry: */ 16, 16, 0, 0, 1, 0, 32, 0, 8, 0, 0, 0, 0, 0 };
+			BitConverter.GetBytes(idCount).CopyTo(group, 4);
+			Array.Resize(ref group, length);
+			return group;
+		}
+
+		[Test]
+		public void ValidIconGroup_IsConvertedToIconFile()
+		{
+			Parse(BuildIconResources(IconImage, BuildIconGroup(idCount: 1, length: 20)), root => {
+				byte[] expected = { 0, 0, 1, 0, 1, 0, /* entry: */ 16, 16, 0, 0, 1, 0, 32, 0, 8, 0, 0, 0, 22, 0, 0, 0,
+					/* image: */ 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA };
+				Assert.That(WholeProjectDecompiler.CreateApplicationIcon(root), Is.EqualTo(expected));
+			});
+		}
+
+		// 32 bytes put the nID of each missing entry on bytes behind the array that happen to be zero
+		// (object headers, the top of a pointer, padding), so that the unfixed code finds an image for
+		// every one of them and returns an icon file containing the memory it walked over.
+		[TestCase(5, 32)]
+		[TestCase(0xFFFF, 20)]
+		[TestCase(1, 19)]
+		[TestCase(0, 5)]
+		[TestCase(0, 0)]
+		public void IconGroupShorterThanDeclared_YieldsNoIcon(int idCount, int length)
+		{
+			Parse(BuildIconResources(IconImage, BuildIconGroup((ushort)idCount, length)), root => {
+				Assert.That(WholeProjectDecompiler.CreateApplicationIcon(root), Is.Null);
 			});
 		}
 	}
