@@ -25,6 +25,7 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection.Metadata;
+using System.Reflection.Metadata.Ecma335;
 using System.Reflection.PortableExecutable;
 
 using ICSharpCode.Decompiler.TypeSystem;
@@ -178,13 +179,36 @@ namespace ICSharpCode.Decompiler.Metadata
 				foreach (var handle in Metadata.TypeDefinitions)
 				{
 					var td = Metadata.GetTypeDefinition(handle);
-					if (!td.GetDeclaringType().IsNil)
+					try
 					{
-						continue; // nested type
+						if (!td.GetDeclaringType().IsNil)
+						{
+							continue; // nested type
+						}
 					}
-					var nsHandle = td.Namespace;
-					string ns = nsHandle.IsNil ? string.Empty : Metadata.GetString(nsHandle);
-					string name = ReflectionHelper.SplitTypeParameterCountFromReflectionName(Metadata.GetString(td.Name), out int typeParameterCount);
+					catch (Exception ex) when (ex is BadImageFormatException or ArgumentOutOfRangeException)
+					{
+					}
+					string ns;
+					try
+					{
+						var nsHandle = td.Namespace;
+						ns = nsHandle.IsNil ? string.Empty : Metadata.GetString(nsHandle);
+					}
+					catch (Exception ex) when (ex is BadImageFormatException or ArgumentOutOfRangeException)
+					{
+						ns = string.Empty;
+					}
+					string name;
+					try
+					{
+						name = Metadata.GetString(td.Name);
+					}
+					catch (Exception ex) when (ex is BadImageFormatException or ArgumentOutOfRangeException)
+					{
+						name = $"TD{Metadata.GetToken(handle):x8}";
+					}
+					name = ReflectionHelper.SplitTypeParameterCountFromReflectionName(name, out int typeParameterCount);
 					lookup[new TopLevelTypeName(ns, name, typeParameterCount)] = handle;
 				}
 				lookup = LazyInit.GetOrSet(ref typeLookup, lookup);

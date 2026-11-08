@@ -206,9 +206,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return null;
 		}
 
-		private static unsafe bool DecodeUTF8String(BlobReader blob, int size, out string text)
+		internal static unsafe bool DecodeUTF8String(BlobReader blob, int size, out string text)
 		{
-			if (size > blob.RemainingBytes)
+			if (size < 0 || size > blob.RemainingBytes)
 			{
 				text = null;
 				return false;

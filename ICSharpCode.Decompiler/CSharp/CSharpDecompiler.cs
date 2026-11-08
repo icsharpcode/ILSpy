@@ -164,6 +164,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				},
 				new ProxyCallReplacer(),
 				new FixRemainingIncrements(),
+				new ExpandNestedConditionals(),
 				new CopyPropagation(),
 				new DelegateConstruction(),
 				new LocalFunctionDecompiler(),
@@ -174,7 +175,6 @@ namespace ICSharpCode.Decompiler.CSharp
 				new IntroduceDynamicTypeOnLocals(),
 				new IntroduceNativeIntTypeOnLocals(),
 				new IntroduceScopedModifierOnLocals(),
-				new ExpandNestedConditionals(),
 				new AssignVariableNames(),
 			};
 		}

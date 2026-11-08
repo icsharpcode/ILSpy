@@ -134,7 +134,8 @@ namespace ICSharpCode.Decompiler.Metadata
 			ptr = sectionData.Pointer + offset;
 			// get actual length of resource blob.
 			length = ptr[0] + (ptr[1] << 8) + (ptr[2] << 16) + (ptr[3] << 24);
-			return length >= 0 && length <= sectionData.Length;
+			// The resource data starts after the length prefix and must remain inside the section.
+			return length >= 0 && length <= sectionData.Length - offset - sizeof(int);
 		}
 
 		public override unsafe Stream? TryOpenStream()

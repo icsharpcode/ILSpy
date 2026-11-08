@@ -346,7 +346,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return null;
 			if (!(TransformDisplayClassUsage.IsPotentialClosure(context, field.Type.GetDefinition()) || context.Function.Method.DeclaringType.Equals(field.Type)))
 				return null;
-			return FindClosureVariableOfType(field.Type);
+			return FindClosureVariableOfType(field.Type.GetDefinition());
 		}
 
 		/// <summary>
@@ -843,7 +843,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			foreach (var h in visitor.RefStructTypes)
 			{
 				var td = metadata.GetTypeDefinition(h);
-				if (td.IsCompilerGenerated(metadata) && td.IsValueType(metadata) && td.HasGeneratedName(metadata))
+				if (td.IsCompilerGenerated(metadata) && h.IsValueType(metadata) && td.HasGeneratedName(metadata))
 					return true;
 			}
 			return false;

@@ -22,6 +22,9 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Threading;
+#if ROSLYN2
+using System.Threading.Tasks;
+#endif
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 {
@@ -1233,6 +1236,23 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 				Property = 42
 			};
 		}
+
+#if ROSLYN2
+		public static async Task<C> ObjectInitializerWithAwait(Task<int> task)
+		{
+			return new C {
+				Z = await task
+			};
+		}
+
+		public static async Task<C> ObjectInitializerWithAwaitAfterConstant(Task<S> task)
+		{
+			return new C {
+				Z = 42,
+				Y = await task
+			};
+		}
+#endif
 		#endregion
 
 		#region Collection initializer

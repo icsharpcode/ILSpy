@@ -86,8 +86,9 @@ namespace ICSharpCode.Decompiler.IL
 			{
 				case HandleKind.TypeDefinition:
 				{
-					var td = metadata.GetTypeDefinition((TypeDefinitionHandle)entity);
-					output.WriteReference(module, entity, td.GetFullTypeName(metadata).ToILNameString());
+					var handle = (TypeDefinitionHandle)entity;
+					var td = metadata.GetTypeDefinition(handle);
+					output.WriteReference(module, entity, handle.GetFullTypeName(metadata).ToILNameString());
 					break;
 				}
 				case HandleKind.TypeReference:
