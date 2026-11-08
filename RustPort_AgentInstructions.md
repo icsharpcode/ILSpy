@@ -345,7 +345,7 @@ the reasons. This file holds only the ordered steps, their gates and their rules
   - [x] 14. AsyncAwaitDecompiler (L)
   - [x] 15. DetectCatchWhenConditionBlocks (S)
   - [x] 16. DetectExitPoints (M)
-  - [ ] 17. LdLocaDupInitObjTransform (S)
+  - [x] 17. LdLocaDupInitObjTransform (S)
   - [ ] 18. EarlyExpressionTransforms (M)
   - [ ] 19. SplitVariables, second occurrence (S, ratchet only)
   - [ ] 20. RemoveDeadVariableInit (S)

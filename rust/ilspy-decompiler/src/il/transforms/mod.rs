@@ -12,6 +12,7 @@ pub mod dynamic_call_site;
 pub mod early_expression_transforms;
 pub mod il_inlining;
 pub mod inline_return_transform;
+pub mod ldloca_dup_init_obj_transform;
 pub mod remove_dead_variable_init;
 pub mod remove_infeasible_path_transform;
 pub mod split_variables;
@@ -82,6 +83,7 @@ const PIPELINE: &[fn(&mut ReadFunction, &mut Context<'_, '_, '_>)] = &[
     super::control_flow::async_await_decompiler::run,
     detect_catch_when_condition_blocks::run,
     super::control_flow::exit_points::run,
+    ldloca_dup_init_obj_transform::run,
 ];
 
 /// Runs the first `prefix` leaves of the pipeline.

@@ -1155,6 +1155,14 @@ container.
 The no-op red run failed 1,069 of 3,550 equality cases; the port passed all of them on its
 first run.
 
+### 3.33 LdLocaDupInitObjTransform (item 17, IL prefix 11)
+
+Roslyn's `ldloca; dup; initobj` (`stloc s(ldloca v); stobj T(ldloc s, default.value T)`)
+becomes legacy csc's order (`stloc v(default.value T); stloc s(ldloca v)`), so later uses of
+`s` can inline. The managed code assigns two list slots through the indexer, and each
+assignment connects the new item before it releases the old one. `Function::replace` has the
+same order, so the moved `stloc` disconnects and reconnects as in the managed code.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |
