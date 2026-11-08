@@ -87,6 +87,7 @@ mod op {
     pub const AWAIT: u8 = 65;
     pub const DYNAMIC: u8 = 66;
     pub const LDC_DECIMAL: u8 = 67;
+    pub const STRING_TO_INT: u8 = 68;
     /// A node already written (it has two parents).
     pub const NODE_REFERENCE: u8 = 255;
 }
@@ -672,6 +673,22 @@ impl FunctionWriter<'_, '_, '_, '_> {
             }
             Inst::LocAlloc { arg } => {
                 tag(op::LOC_ALLOC, &mut self.out);
+                self.node(arg)?;
+            }
+            Inst::StringToInt { arg, map, ty } => {
+                tag(op::STRING_TO_INT, &mut self.out);
+                self.ty(ty);
+                self.out.len(map.len());
+                for (key, value) in &map {
+                    self.out.bool(key.is_some());
+                    if let Some(k) = key {
+                        self.out.len(k.len());
+                        for u in k {
+                            self.out.raw(&u.to_le_bytes());
+                        }
+                    }
+                    self.out.ivar(i64::from(*value));
+                }
                 self.node(arg)?;
             }
             Inst::Cpblk {

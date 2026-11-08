@@ -558,7 +558,7 @@ fn match_do_while_condition_block(
 /// `call ThrowInvalidOperationException(); leave` or `call ThrowSwitchExpressionException(v);
 /// leave`, becomes `throw newobj ...Exception(v)`, and a section with such a throw is marked
 /// compiler-generated.
-fn inline_switch_expression_default_case_throw_helper(
+pub(crate) fn inline_switch_expression_default_case_throw_helper(
     f: &mut Function,
     ctx: &mut Context<'_, '_, '_>,
     block: NodeId,
@@ -641,7 +641,34 @@ fn inline_switch_expression_default_case_throw_helper(
 }
 
 /// `SwitchInstruction.GetDefaultSection`: the first section with the most labels.
-fn default_section(f: &Function, sw: NodeId) -> NodeId {
+/// `IsSwitchExpressionThrowHelperBlock`: the compiler-generated default case of a switch
+/// expression, as a throw-helper call before the unreachable exit, or (older Roslyn) an
+/// inlined `throw new SwitchExpressionException(...)`.
+pub(crate) fn is_switch_expression_throw_helper_block(
+    f: &Function,
+    ctx: &Context<'_, '_, '_>,
+    block: NodeId,
+) -> bool {
+    match *f.list(block) {
+        [call, exit] if matches!(f.inst(exit), Inst::Branch { .. } | Inst::Leave { .. }) => {
+            match_switch_expression_throw_helper_call(ctx, f, call).is_some()
+        }
+        [throw] => {
+            let Inst::Throw { arg } = *f.inst(throw) else {
+                return false;
+            };
+            let Inst::NewObj(c) = f.inst(arg) else {
+                return false;
+            };
+            c.method.method.declaring.is_some_and(|d| {
+                ctx.ts.full_name(d) == "System.Runtime.CompilerServices.SwitchExpressionException"
+            })
+        }
+        _ => false,
+    }
+}
+
+pub(crate) fn default_section(f: &Function, sw: NodeId) -> NodeId {
     let mut best = f.list(sw)[0];
     for &s in f.list(sw) {
         if labels(f, s).count() > labels(f, best).count() {

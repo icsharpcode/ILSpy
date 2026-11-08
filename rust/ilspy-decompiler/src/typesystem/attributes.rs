@@ -840,6 +840,49 @@ impl TypeSystem<'_, '_> {
             .is_some_and(|d| self.is_compiler_generated_or_in_compiler_generated_class(d))
     }
 
+    /// `IsCompilerGeneratedOrIsInCompilerGeneratedClass` of a field.
+    pub fn field_is_compiler_generated_or_in_compiler_generated_class(
+        &self,
+        field: &super::resolve::ResolvedField,
+    ) -> bool {
+        if let super::resolve::FieldOrigin::Def { module, row } = field.origin
+            && self.has_compiler_generated(module, TableId::Field, row)
+        {
+            return true;
+        }
+        field
+            .declaring
+            .and_then(|t| self.definition(t))
+            .is_some_and(|d| self.is_compiler_generated_or_in_compiler_generated_class(d))
+    }
+
+    /// `IMethod.IsOperator`.
+    pub fn method_is_operator(&mut self, m: &ResolvedMethod) -> bool {
+        let super::resolve::MethodOrigin::Def(id) = m.origin else {
+            return false;
+        };
+        let accessor = self.accessor_owner(id);
+        self.method_symbol_kind(id, accessor).ok() == Some(SymbolKind::Operator)
+    }
+
+    /// The name of the property of a getter (`IsAccessor`, `AccessorKind == Getter` and
+    /// `AccessorOwner.Name`).
+    pub fn getter_property_name(&mut self, m: &ResolvedMethod) -> Option<String> {
+        let super::resolve::MethodOrigin::Def(id) = m.origin else {
+            return None;
+        };
+        let (owner, semantics) = self.accessor_owner(id)?;
+        // Table 0x17 is Property; semantics 0x02 is Getter.
+        if owner >> 24 != 0x17 || semantics != 0x02 {
+            return None;
+        }
+        self.member_name(super::inheritance::MemberDef::Property(
+            id.module,
+            owner & 0x00FF_FFFF,
+        ))
+        .ok()
+    }
+
     fn is_compiler_generated_or_in_compiler_generated_class(&self, def: TypeDefId) -> bool {
         let mut current = Some(def);
         while let Some(d) = current {

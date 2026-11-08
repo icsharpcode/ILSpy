@@ -1259,6 +1259,37 @@ Three additions outside the transform:
 
 The no-op red run failed 531 of 3,550 equality cases; the step passed on its first run.
 
+### 3.40 SwitchOnStringTransform (item 24, IL prefix 18)
+
+Every C# compiler generation lowers `switch (string)` differently, and the transform
+recognizes six shapes:
+- cascading `op_Equality` ifs (also VB's `CompareString` and span `SequenceEqual`);
+- the C# 1 `string.IsInterned` chain;
+- the legacy `Hashtable` lookup, whose initializers at the method start are removed once
+  every switch that uses them is transformed;
+- the legacy `Dictionary<string, int>` lookup;
+- Roslyn's switch over `ComputeStringHash`;
+- Roslyn's switch on the length, then on one distinguishing char.
+
+Each becomes a switch over a new instruction, `string.to.int`, which maps the string values to
+section labels. The instruction joined the arena and the wire (opcode 68). Its keys travel as
+UTF-16 code units, like `ldstr`, so lone surrogates survive. Two more settings,
+`SwitchStatementOnString` and `SwitchOnReadOnlySpanChar`, become bits 10 and 11.
+
+The managed code mutates several things through shared references, and the port keeps each
+of them visible:
+- the hashtable label lists that `AddNullSection` extends;
+- the sections of an old switch that the new one adopts;
+- the default branch whose target moves past a null check.
+
+The local functions of the length-and-char matcher share their captured state through a small
+struct.
+
+Index decrements use wrapping arithmetic. The managed loop index can go to -1 just before the
+loop ends, and wrapping reproduces that end of the loop.
+
+The no-op red run failed 185 of 3,550 equality cases; the step passed on its first run.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

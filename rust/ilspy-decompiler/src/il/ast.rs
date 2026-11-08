@@ -477,6 +477,14 @@ pub enum Inst {
     LocAlloc {
         arg: NodeId,
     },
+    /// `StringToInt`: the index of the string value in `map`, for a switch on strings.
+    StringToInt {
+        arg: NodeId,
+        /// The values (`None` is null) and the labels they map to.
+        map: Vec<(Option<Vec<u16>>, i32)>,
+        /// `ExpectedType`: string or a span of char.
+        ty: TypeId,
+    },
     Cpblk {
         dest: NodeId,
         source: NodeId,
@@ -747,6 +755,7 @@ impl Inst {
             BitNot { arg }
             | Ckfinite { arg }
             | LocAlloc { arg }
+            | StringToInt { arg, .. }
             | CastClass { arg, .. }
             | IsInst { arg, .. }
             | Box { arg, .. }
@@ -855,6 +864,7 @@ impl Inst {
             BitNot { arg }
             | Ckfinite { arg }
             | LocAlloc { arg }
+            | StringToInt { arg, .. }
             | CastClass { arg, .. }
             | IsInst { arg, .. }
             | Box { arg, .. }
@@ -1468,7 +1478,7 @@ impl Function {
             | LdMemberToken { .. }
             | MakeRefAny { .. }
             | RefAnyType { .. } => StackType::VT,
-            Comp { .. } | SizeOf { .. } | LdcI4 { .. } => StackType::I4,
+            Comp { .. } | SizeOf { .. } | LdcI4 { .. } | StringToInt { .. } => StackType::I4,
             Call(c) | CallVirt(c) => ts.stack_type(c.method.method.ret),
             NewObj(c) => match c.method.method.declaring {
                 Some(d) => ts.stack_type(d),
@@ -1613,7 +1623,7 @@ impl Function {
             | LdElema { ty, .. }
             | RefAnyValue { ty, .. } => by_ref(ts, ty.ty),
             LdStr { .. } => known(ts, KnownTypeCode::String),
-            LdcI4 { .. } | SizeOf { .. } => known(ts, KnownTypeCode::Int32),
+            LdcI4 { .. } | SizeOf { .. } | StringToInt { .. } => known(ts, KnownTypeCode::Int32),
             LdcI8 { .. } => known(ts, KnownTypeCode::Int64),
             LdcF4 { .. } => known(ts, KnownTypeCode::Single),
             LdcF8 { .. } => known(ts, KnownTypeCode::Double),

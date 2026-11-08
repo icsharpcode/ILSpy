@@ -587,11 +587,21 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				65 => Await(),
 				66 => Dynamic(),
 				67 => new LdcDecimal(new decimal(new[] { BitConverter.ToInt32(Raw(4), 0), BitConverter.ToInt32(Raw(4), 0), BitConverter.ToInt32(Raw(4), 0), BitConverter.ToInt32(Raw(4), 0) })),
+				68 => StringToInt(),
 				_ => throw new InvalidOperationException($"Unknown wire opcode {op}"),
 			};
 			inst.SetILRange(range);
 			materialized.Add(inst);
 			return inst;
+		}
+
+		ILInstruction StringToInt()
+		{
+			var type = Type();
+			var map = new List<(string?, int)>();
+			for (int n = Len(); n > 0; n--)
+				map.Add((Bool() ? String() : null, (int)IVar()));
+			return new StringToInt(Node(), map, type);
 		}
 
 		ILInstruction Comp()
