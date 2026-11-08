@@ -20,8 +20,10 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Reflection.Metadata;
+using System.Reflection.Metadata.Ecma335;
 using System.Text;
 
+using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
@@ -193,45 +195,51 @@ namespace ICSharpCode.Decompiler.Documentation
 		/// </summary>
 		static void AppendTypeDefinitionName(StringBuilder b, MetadataReader metadata, TypeDefinitionHandle handle)
 		{
-			var typeDef = metadata.GetTypeDefinition(handle);
-			var declaringType = typeDef.GetDeclaringType();
-
-			if (declaringType.IsNil)
+			var names = new List<string>();
+			var current = handle;
+			TypeDefinitionHandle declaringType = default;
+			int remaining = metadata.GetTableRowCount(TableIndex.TypeDef);
+			while (remaining-- > 0)
 			{
-				var ns = metadata.GetString(typeDef.Namespace);
-				if (!string.IsNullOrEmpty(ns))
-				{
-					b.Append(ns);
-					b.Append('.');
-				}
-				b.Append(metadata.GetString(typeDef.Name));
+				var typeDef = metadata.GetTypeDefinition(current);
+				names.Add(metadata.GetString(typeDef.Name));
+				declaringType = typeDef.GetDeclaringType();
+				if (declaringType.IsNil)
+					break;
+				current = declaringType;
 			}
-			else
+			if (!declaringType.IsNil)
+				throw new BadImageFormatException("Type definition nesting chain contains a cycle.");
+			var topLevelType = metadata.GetTypeDefinition(current);
+			var ns = metadata.GetString(topLevelType.Namespace);
+			if (!string.IsNullOrEmpty(ns))
 			{
-				AppendTypeDefinitionName(b, metadata, declaringType);
+				b.Append(ns);
 				b.Append('.');
-				b.Append(metadata.GetString(typeDef.Name));
+			}
+			for (int i = names.Count - 1; i >= 0; i--)
+			{
+				if (i < names.Count - 1)
+					b.Append('.');
+				b.Append(names[i]);
 			}
 		}
 
-		static void AppendTypeReferenceName(StringBuilder b, MetadataReader metadata, TypeReference typeRef)
+		static void AppendTypeReferenceName(StringBuilder b, MetadataReader metadata, TypeReferenceHandle handle)
 		{
-			if (typeRef.ResolutionScope.Kind == HandleKind.TypeReference)
+			var chain = handle.GetResolutionScopeChain(metadata);
+			var outerTypeReference = metadata.GetTypeReference(chain[^1]);
+			var ns = metadata.GetString(outerTypeReference.Namespace);
+			if (!string.IsNullOrEmpty(ns))
 			{
-				var outerRef = metadata.GetTypeReference((TypeReferenceHandle)typeRef.ResolutionScope);
-				AppendTypeReferenceName(b, metadata, outerRef);
+				b.Append(ns);
 				b.Append('.');
-				b.Append(metadata.GetString(typeRef.Name));
 			}
-			else
+			for (int i = chain.Count - 1; i >= 0; i--)
 			{
-				var ns = metadata.GetString(typeRef.Namespace);
-				if (!string.IsNullOrEmpty(ns))
-				{
-					b.Append(ns);
+				if (i < chain.Count - 1)
 					b.Append('.');
-				}
-				b.Append(metadata.GetString(typeRef.Name));
+				b.Append(metadata.GetString(metadata.GetTypeReference(chain[i]).Name));
 			}
 		}
 
@@ -446,8 +454,7 @@ namespace ICSharpCode.Decompiler.Documentation
 			public string GetTypeFromReference(MetadataReader reader, TypeReferenceHandle handle, byte rawTypeKind)
 			{
 				var sb = new StringBuilder();
-				var typeRef = reader.GetTypeReference(handle);
-				AppendTypeReferenceName(sb, reader, typeRef);
+				AppendTypeReferenceName(sb, reader, handle);
 				return sb.ToString();
 			}
 

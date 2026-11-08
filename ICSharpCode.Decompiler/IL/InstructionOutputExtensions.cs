@@ -93,11 +93,12 @@ namespace ICSharpCode.Decompiler.IL
 				}
 				case HandleKind.TypeReference:
 				{
-					var tr = metadata.GetTypeReference((TypeReferenceHandle)entity);
+					var chain = ((TypeReferenceHandle)entity).GetResolutionScopeChain(metadata);
+					var outerTypeReference = metadata.GetTypeReference(chain[^1]);
 					EntityHandle resolutionScope;
 					try
 					{
-						resolutionScope = tr.ResolutionScope;
+						resolutionScope = outerTypeReference.ResolutionScope;
 					}
 					catch (BadImageFormatException)
 					{
@@ -106,12 +107,7 @@ namespace ICSharpCode.Decompiler.IL
 					if (!resolutionScope.IsNil)
 					{
 						output.Write("[");
-						var currentTypeRef = tr;
-						while (currentTypeRef.ResolutionScope.Kind == HandleKind.TypeReference)
-						{
-							currentTypeRef = metadata.GetTypeReference((TypeReferenceHandle)currentTypeRef.ResolutionScope);
-						}
-						switch (currentTypeRef.ResolutionScope.Kind)
+						switch (resolutionScope.Kind)
 						{
 							case HandleKind.ModuleDefinition:
 								var modDef = metadata.GetModuleDefinition();
@@ -120,7 +116,7 @@ namespace ICSharpCode.Decompiler.IL
 							case HandleKind.ModuleReference:
 								break;
 							case HandleKind.AssemblyReference:
-								var asmRef = metadata.GetAssemblyReference((AssemblyReferenceHandle)currentTypeRef.ResolutionScope);
+								var asmRef = metadata.GetAssemblyReference((AssemblyReferenceHandle)resolutionScope);
 								output.Write(DisassemblerHelpers.Escape(metadata.GetString(asmRef.Name)));
 								break;
 						}

@@ -363,7 +363,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 						baseType = module.ResolveType(baseTypeHandle, context, metadata.GetCustomAttributes(this.handle), Nullability.Oblivious);
 					}
 				}
-				catch (BadImageFormatException)
+				catch (Exception ex) when (ex is BadImageFormatException or ArgumentOutOfRangeException or IndexOutOfRangeException)
 				{
 					baseType = SpecialType.UnknownType;
 				}
@@ -379,8 +379,15 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				}
 				foreach (var h in interfaceImplCollection)
 				{
-					var iface = metadata.GetInterfaceImplementation(h);
-					baseTypes.Add(module.ResolveType(iface.Interface, context, iface.GetCustomAttributes(), Nullability.Oblivious));
+					try
+					{
+						var iface = metadata.GetInterfaceImplementation(h);
+						baseTypes.Add(module.ResolveType(iface.Interface, context, iface.GetCustomAttributes(), Nullability.Oblivious));
+					}
+					catch (Exception ex) when (ex is BadImageFormatException or ArgumentOutOfRangeException or IndexOutOfRangeException)
+					{
+						baseTypes.Add(SpecialType.UnknownType);
+					}
 				}
 				return LazyInit.GetOrSet(ref this.directBaseTypes, baseTypes);
 			}
