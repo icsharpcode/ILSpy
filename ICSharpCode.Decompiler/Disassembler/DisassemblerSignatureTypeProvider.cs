@@ -22,6 +22,7 @@ using System.Reflection.Metadata;
 
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.Disassembler
 {
@@ -40,11 +41,14 @@ namespace ICSharpCode.Decompiler.Disassembler
 
 		public Action<ILNameSyntax> GetArrayType(Action<ILNameSyntax> elementType, ArrayShape shape)
 		{
+			int rank = Math.Min(Math.Max(shape.Rank, 1), ArrayType.MaxArrayRank);
 			return syntax => {
 				var syntaxForElementTypes = syntax == ILNameSyntax.SignatureNoNamedTypeParameters ? syntax : ILNameSyntax.Signature;
 				elementType(syntaxForElementTypes);
 				output.Write('[');
-				for (int i = 0; i < shape.Rank; i++)
+				if (shape.Rank != rank)
+					output.Write($"/* invalid rank: {shape.Rank}, clamped to {rank} */");
+				for (int i = 0; i < rank; i++)
 				{
 					if (i > 0)
 						output.Write(", ");

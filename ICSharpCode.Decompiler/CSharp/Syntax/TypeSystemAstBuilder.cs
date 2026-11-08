@@ -318,11 +318,19 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				}
 				else if (typeWithElementType is ArrayType)
 				{
-					var astType = ConvertType(typeWithElementType.ElementType).MakeArrayType(((ArrayType)type).Dimensions);
+					var arrayType = (ArrayType)type;
+					var astType = ConvertType(typeWithElementType.ElementType).MakeArrayType(arrayType.Dimensions);
 					if (type.Nullability == Nullability.Nullable)
-						return astType.MakeNullableType();
-					else
-						return astType;
+						astType = astType.MakeNullableType();
+					if (arrayType.OriginalDimensions != arrayType.Dimensions)
+					{
+						var warning = new Comment($"invalid array rank: {arrayType.OriginalDimensions}, clamped to {arrayType.Dimensions}", CommentType.MultiLine);
+						if (astType is ComposedType composedType)
+							composedType.ArraySpecifiers.FirstOrNull()?.AddTrailingTrivia(warning);
+						else
+							astType.AddTrailingTrivia(warning);
+					}
+					return astType;
 				}
 				else if (typeWithElementType is ByReferenceType)
 				{

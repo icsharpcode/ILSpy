@@ -532,15 +532,16 @@ namespace ICSharpCode.Decompiler.Documentation
 
 			public string GetArrayType(string elementType, ArrayShape shape)
 			{
+				int rank = Math.Min(Math.Max(shape.Rank, 1), ArrayType.MaxArrayRank);
 				// C# 4.0 spec, section A.3.1: each dimension is rendered as
 				// "lowerbound:size", omitting either part when it is unspecified.
 				// Compilers emit neither bound for single-dimensional arrays and
 				// a zero lower bound with unspecified size ("0:") otherwise.
 				var sb = new StringBuilder(elementType);
 				sb.Append('[');
-				if (shape.Rank > 1 || shape.LowerBounds.Length > 0 || shape.Sizes.Length > 0)
+				if (rank > 1 || shape.LowerBounds.Length > 0 || shape.Sizes.Length > 0)
 				{
-					for (int i = 0; i < shape.Rank; i++)
+					for (int i = 0; i < rank; i++)
 					{
 						if (i > 0)
 							sb.Append(',');
