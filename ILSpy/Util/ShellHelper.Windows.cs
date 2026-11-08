@@ -26,6 +26,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.IO;
 using System.Runtime.InteropServices;
 
 #pragma warning disable CA1060 // Move pinvokes to native methods class
@@ -112,7 +113,10 @@ namespace ICSharpCode.ILSpy.Util
 			try
 			{
 				if (files.Count > 0)
-					Process.Start(new ProcessStartInfo("explorer.exe", $"/select,\"{files[0]}\"") { UseShellExecute = false });
+				{
+					if (LocateWindowsSystemProgram("explorer.exe") is string executable)
+						Process.Start(new ProcessStartInfo(executable, $"/select,\"{files[0]}\"") { UseShellExecute = false });
+				}
 				else
 					OpenFolder(folder);
 			}

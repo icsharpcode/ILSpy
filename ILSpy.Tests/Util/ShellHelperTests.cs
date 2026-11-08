@@ -16,8 +16,10 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System;
 using System.IO;
 using System.Linq;
+using System.Runtime.Versioning;
 
 using AwesomeAssertions;
 
@@ -98,5 +100,82 @@ public class ShellHelperTests
 	{
 		ShellHelper.GroupByFolder(System.Array.Empty<string>()).Should().BeEmpty();
 		ShellHelper.GroupByFolder(null!).Should().BeEmpty();
+	}
+
+	[Test]
+	[NonParallelizable]
+	public void LocateProgram_Does_Not_Search_Current_Directory()
+	{
+		string originalDirectory = Environment.CurrentDirectory;
+		string root = Path.Combine(Path.GetTempPath(), "ilspy-shell-helper-tests", Guid.NewGuid().ToString());
+		string workingDirectory = Path.Combine(root, "working");
+		string pathDirectory = Path.Combine(root, "path");
+		Directory.CreateDirectory(workingDirectory);
+		Directory.CreateDirectory(pathDirectory);
+		try
+		{
+			const string program = "xdg-open";
+			string planted = Path.Combine(workingDirectory, program);
+			string pathProgram = Path.Combine(pathDirectory, program);
+			File.WriteAllText(planted, string.Empty);
+			File.WriteAllText(pathProgram, string.Empty);
+			if (!OperatingSystem.IsWindows())
+			{
+				const UnixFileMode executableMode = UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute;
+				File.SetUnixFileMode(planted, executableMode);
+				File.SetUnixFileMode(pathProgram, executableMode);
+			}
+			Environment.CurrentDirectory = workingDirectory;
+
+			foreach (string searchPath in new[] {
+				string.Empty,
+				Path.PathSeparator.ToString(),
+				".",
+				"." + Path.PathSeparator,
+				"." + Path.PathSeparator + "relative",
+				"relative" + Path.PathSeparator + pathDirectory,
+			})
+			{
+				var resolved = ShellHelper.LocateProgram(program, searchPath);
+				if (searchPath.Contains(pathDirectory, StringComparison.Ordinal))
+					resolved.Should().Be(Path.GetFullPath(Path.Combine(pathDirectory, program)));
+				else
+					resolved.Should().BeNull();
+			}
+		}
+		finally
+		{
+			Environment.CurrentDirectory = originalDirectory;
+			Directory.Delete(root, recursive: true);
+		}
+	}
+
+	[Test]
+	[Platform(Exclude = "Win", Reason = "Unix executable permission bits are required.")]
+	[UnsupportedOSPlatform("windows")]
+	public void LocateProgram_Skips_NonExecutable_Path_Entries()
+	{
+		string root = Path.Combine(Path.GetTempPath(), "ilspy-shell-helper-tests", Guid.NewGuid().ToString());
+		string nonExecutableDirectory = Path.Combine(root, "non-executable");
+		string executableDirectory = Path.Combine(root, "executable");
+		Directory.CreateDirectory(nonExecutableDirectory);
+		Directory.CreateDirectory(executableDirectory);
+		try
+		{
+			const string program = "test-program";
+			string nonExecutable = Path.Combine(nonExecutableDirectory, program);
+			string executable = Path.Combine(executableDirectory, program);
+			File.WriteAllText(nonExecutable, string.Empty);
+			File.WriteAllText(executable, string.Empty);
+			File.SetUnixFileMode(nonExecutable, UnixFileMode.UserRead | UnixFileMode.UserWrite);
+			File.SetUnixFileMode(executable, UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute);
+
+			ShellHelper.LocateProgram(program, nonExecutableDirectory + Path.PathSeparator + executableDirectory)
+				.Should().Be(Path.GetFullPath(executable));
+		}
+		finally
+		{
+			Directory.Delete(root, recursive: true);
+		}
 	}
 }
