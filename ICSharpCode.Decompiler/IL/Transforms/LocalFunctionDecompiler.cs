@@ -346,7 +346,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return null;
 			if (!(TransformDisplayClassUsage.IsPotentialClosure(context, field.Type.GetDefinition()) || context.Function.Method.DeclaringType.Equals(field.Type)))
 				return null;
-			return FindClosureVariableOfType(field.Type);
+			return FindClosureVariableOfType(field.Type.GetDefinition());
 		}
 
 		/// <summary>
