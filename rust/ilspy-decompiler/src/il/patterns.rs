@@ -277,3 +277,87 @@ impl Function {
         }
     }
 }
+
+impl Function {
+    /// `MatchLdLocRef`: `ldloc` of a reference-type variable, or `ldloca` of any other (or of
+    /// a type parameter).
+    pub fn match_ld_loc_ref(
+        &self,
+        ts: &mut crate::typesystem::types::TypeSystem<'_, '_>,
+        id: NodeId,
+    ) -> Option<VarId> {
+        match *self.inst(id) {
+            Inst::LdLoc { var } => {
+                (ts.is_reference_type(self.var(var).ty) == Some(true)).then_some(var)
+            }
+            Inst::LdLoca { var } => {
+                let ty = self.var(var).ty;
+                let is_type_param = matches!(
+                    ts.data(ty),
+                    crate::typesystem::types::TypeData::TypeParam { .. }
+                );
+                (ts.is_reference_type(ty) != Some(true) || is_type_param).then_some(var)
+            }
+            _ => None,
+        }
+    }
+
+    /// `MatchLdFlda`.
+    pub fn match_ldflda(&self, id: NodeId) -> Option<(NodeId, &super::ast::FieldOperand)> {
+        match self.inst(id) {
+            Inst::LdFlda { target, field, .. } => Some((*target, field)),
+            _ => None,
+        }
+    }
+
+    /// `MatchLdsFld`: `ldobj(ldsflda F)`, neither volatile nor unaligned.
+    pub fn match_ldsfld(&self, id: NodeId) -> Option<&super::ast::FieldOperand> {
+        let Inst::LdObj {
+            target,
+            is_volatile: false,
+            unaligned: 0,
+            ..
+        } = *self.inst(id)
+        else {
+            return None;
+        };
+        match self.inst(target) {
+            Inst::LdsFlda { field } => Some(field),
+            _ => None,
+        }
+    }
+
+    /// `SlotInfo.CanInlineInto` of child slot `index`: false for the slots holding statements
+    /// or blocks.
+    pub fn slot_can_inline_into(&self, parent: NodeId, index: usize) -> bool {
+        match self.inst(parent) {
+            Inst::If { .. } | Inst::Switch { .. } | Inst::PinnedRegion { .. } => index == 0,
+            Inst::SwitchSection { .. }
+            | Inst::TryCatchHandler { .. }
+            | Inst::Block { .. }
+            | Inst::BlockContainer { .. }
+            | Inst::TryCatch { .. }
+            | Inst::TryFinally { .. }
+            | Inst::TryFault { .. } => false,
+            _ => true,
+        }
+    }
+
+    /// `ILInlining.FindFirstInlinedCall`: the first call evaluated in `inst`, following only
+    /// inlinable slots.
+    pub fn find_first_inlined_call(&self, inst: NodeId) -> Option<NodeId> {
+        for (i, child) in self.inst(inst).children().into_iter().enumerate() {
+            if !self.slot_can_inline_into(inst, i) {
+                break;
+            }
+            if let Some(call) = self.find_first_inlined_call(child) {
+                return Some(call);
+            }
+        }
+        matches!(
+            self.inst(inst),
+            Inst::Call(_) | Inst::CallVirt(_) | Inst::NewObj(_)
+        )
+        .then_some(inst)
+    }
+}

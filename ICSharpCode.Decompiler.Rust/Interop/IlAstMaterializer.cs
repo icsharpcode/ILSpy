@@ -26,6 +26,7 @@ using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 using System.Text;
 
+using ICSharpCode.Decompiler.DebugInfo;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
@@ -290,6 +291,88 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 			return new GetPinnableReference(Node(), type, method);
 		}
 
+		const byte NodeReference = 255;
+
+		Await Await()
+		{
+			var getAwaiter = AwaiterMethod();
+			var getResult = AwaiterMethod();
+			var opCode = Bool() ? OpCode.CallVirt : OpCode.Call;
+			return new Await(Node()) { GetAwaiterMethod = getAwaiter, GetResultMethod = getResult, GetAwaiterCallOpCode = opCode };
+		}
+
+		/// <summary>None, a method, or the method of a dynamic await (a <c>FakeMethod</c> on and
+		/// returning <c>dynamic</c>, as <c>AsyncAwaitDecompiler.CreateDynamicAwaiterMethod</c>).</summary>
+		IMethod? AwaiterMethod()
+		{
+			switch (U8())
+			{
+				case 0:
+					return null;
+				case 1:
+					return Method();
+				default:
+					string name = Str();
+					var fakeMethod = typeof(IMethod).Assembly.GetType("ICSharpCode.Decompiler.TypeSystem.Implementation.FakeMethod", throwOnError: true)!;
+					var method = (IMethod)Activator.CreateInstance(fakeMethod, mainModule.Compilation, SymbolKind.Method)!;
+					fakeMethod.GetProperty("Name")!.SetValue(method, name);
+					fakeMethod.GetProperty("DeclaringType")!.SetValue(method, SpecialType.Dynamic);
+					fakeMethod.GetProperty("ReturnType")!.SetValue(method, SpecialType.Dynamic);
+					return method;
+			}
+		}
+
+		CSharpArgumentInfo[] ArgumentInfos()
+		{
+			var infos = new CSharpArgumentInfo[Len()];
+			for (int i = 0; i < infos.Length; i++)
+			{
+				var flags = (CSharpArgumentInfoFlags)(int)IVar();
+				string? name = Bool() ? Str() : null;
+				infos[i] = new CSharpArgumentInfo { Flags = flags, Name = name, CompileTimeType = Type() };
+			}
+			return infos;
+		}
+
+		IType? OptionalType()
+		{
+			int t = Len();
+			return t == 0 ? null : TypeAt(t - 1);
+		}
+
+		ILInstruction Dynamic()
+		{
+			byte kind = U8();
+			var binderFlags = (CSharpBinderFlags)(int)IVar();
+			var context = OptionalType();
+			string? name = Bool() ? Str() : null;
+			var operation = (System.Linq.Expressions.ExpressionType)(int)IVar();
+			var type = OptionalType();
+			IType[]? typeArguments = null;
+			if (Bool())
+			{
+				typeArguments = new IType[Len()];
+				for (int i = 0; i < typeArguments.Length; i++)
+					typeArguments[i] = Type();
+			}
+			var infos = ArgumentInfos();
+			var args = Nodes();
+			return kind switch {
+				0 => new DynamicBinaryOperatorInstruction(binderFlags, operation, context, infos[0], args[0], infos[1], args[1]),
+				1 => new DynamicUnaryOperatorInstruction(binderFlags, operation, context, infos[0], args[0]),
+				2 => new DynamicConvertInstruction(binderFlags, type!, context, args[0]),
+				3 => new DynamicGetMemberInstruction(binderFlags, name, context, infos[0], args[0]),
+				4 => new DynamicSetMemberInstruction(binderFlags, name, context, infos[0], args[0], infos[1], args[1]),
+				5 => new DynamicGetIndexInstruction(binderFlags, context, infos, args),
+				6 => new DynamicSetIndexInstruction(binderFlags, context, infos, args),
+				7 => new DynamicInvokeMemberInstruction(binderFlags, name!, typeArguments, context, type, infos, args),
+				8 => new DynamicInvokeConstructorInstruction(binderFlags, type!, context, infos, args),
+				9 => new DynamicInvokeInstruction(binderFlags, context, infos, args),
+				10 => new DynamicIsEventInstruction(binderFlags, name, context, args[0]),
+				_ => throw new InvalidOperationException($"Unknown dynamic instruction kind {kind}"),
+			};
+		}
+
 		ILFunction ReadFunction(int row)
 		{
 			var method = mainModule.GetDefinition(MetadataTokens.MethodDefinitionHandle(row));
@@ -300,6 +383,15 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 			int helperVariableCount = Len();
 			byte stateMachineFlags = U8();
 			var moveNextMethod = Bool() ? Method() : null;
+			AsyncDebugInfo? asyncDebugInfo = null;
+			if (Bool())
+			{
+				int catchHandlerOffset = Int();
+				var awaits = new AsyncDebugInfo.Await[Len()];
+				for (int i = 0; i < awaits.Length; i++)
+					awaits[i] = new AsyncDebugInfo.Await(Int(), Int());
+				asyncDebugInfo = new AsyncDebugInfo(catchHandlerOffset, ImmutableArray.Create(awaits));
+			}
 			variables = new ILVariable[Len()];
 			for (int i = 0; i < variables.Length; i++)
 				variables[i] = ReadVariable();
@@ -316,6 +408,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				blocks[i].SetILRange(new Interval(Int(), Int()));
 			}
 			containers = new BlockContainer[Len()];
+			materialized = new List<ILInstruction>();
 			var body = Node();
 			var function = new ILFunction(method, codeSize, context, body, ILFunctionKind.TopLevelFunction);
 			function.Variables.AddRange(variables);
@@ -328,6 +421,8 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 			function.StateMachineCompiledWithMono = (stateMachineFlags & 2) != 0;
 			function.StateMachineCompiledWithLegacyVisualBasic = (stateMachineFlags & 4) != 0;
 			function.MoveNextMethod = moveNextMethod;
+			if (asyncDebugInfo is { } info)
+				function.AsyncDebugInfo = info;
 			function.SequencePointCandidates = sequencePoints;
 			function.Warnings.AddRange(warnings);
 			return function;
@@ -402,9 +497,15 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 			return call;
 		}
 
+		/// <summary>The nodes read so far, in completion order, for <c>NodeReference</c>.</summary>
+		List<ILInstruction> materialized = new List<ILInstruction>();
+
 		ILInstruction Node()
 		{
 			byte op = U8();
+			// A node with two parents (an instruction the managed transforms share) is sent once.
+			if (op == NodeReference)
+				return materialized[Len()];
 			var range = new Interval(Int(), Int());
 			ILInstruction inst = op switch {
 				0 => new InvalidBranch(Str()) { ExpectedResultType = (StackType)U8() },
@@ -472,9 +573,12 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				62 => new PinnedRegion(Variable(), Node(), Node()),
 				63 => GetPinnableReference(),
 				64 => new YieldReturn(Node()),
+				65 => Await(),
+				66 => Dynamic(),
 				_ => throw new InvalidOperationException($"Unknown wire opcode {op}"),
 			};
 			inst.SetILRange(range);
+			materialized.Add(inst);
 			return inst;
 		}
 

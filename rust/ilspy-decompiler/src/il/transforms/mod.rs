@@ -7,8 +7,11 @@ use super::control_flow::control_flow_simplification::ControlFlowSimplification;
 use super::reader::ReadFunction;
 
 pub mod copy_propagation;
+pub mod dynamic_call_site;
+pub mod early_expression_transforms;
 pub mod il_inlining;
 pub mod inline_return_transform;
+pub mod remove_dead_variable_init;
 pub mod remove_infeasible_path_transform;
 pub mod split_variables;
 
@@ -20,6 +23,10 @@ pub const SETTING_NAMES: &[&str] = &[
     "SortSwitchSections",
     "PatternBasedFixedStatement",
     "YieldReturn",
+    "AsyncAwait",
+    "AsyncEnumerator",
+    "AwaitInCatchFinally",
+    "Dynamic",
 ];
 
 /// The values of `SETTING_NAMES`.
@@ -29,6 +36,10 @@ pub struct Settings {
     pub sort_switch_sections: bool,
     pub pattern_based_fixed_statement: bool,
     pub yield_return: bool,
+    pub async_await: bool,
+    pub async_enumerator: bool,
+    pub await_in_catch_finally: bool,
+    pub dynamic: bool,
 }
 
 impl Settings {
@@ -40,6 +51,10 @@ impl Settings {
             sort_switch_sections: bit(1),
             pattern_based_fixed_statement: bit(2),
             yield_return: bit(3),
+            async_await: bit(4),
+            async_enumerator: bit(5),
+            await_in_catch_finally: bit(6),
+            dynamic: bit(7),
         }
     }
 }
@@ -63,6 +78,7 @@ const PIPELINE: &[fn(&mut ReadFunction, &mut Context<'_, '_, '_>)] = &[
     |r, _| remove_infeasible_path_transform::run(&mut r.function),
     super::control_flow::detect_pinned_regions::run,
     super::control_flow::yield_return_decompiler::run,
+    super::control_flow::async_await_decompiler::run,
 ];
 
 /// Runs the first `prefix` leaves of the pipeline.

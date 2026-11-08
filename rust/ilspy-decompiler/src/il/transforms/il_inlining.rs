@@ -216,7 +216,7 @@ fn non_aggressive_inline_into(
     // By the expression being inlined.
     if matches!(
         f.inst(inlined),
-        Inst::DefaultValue { .. } | Inst::StObj { .. } | Inst::Switch { .. }
+        Inst::DefaultValue { .. } | Inst::StObj { .. } | Inst::Switch { .. } | Inst::Await { .. }
     ) {
         return true;
     }

@@ -84,6 +84,10 @@ mod op {
     pub const PINNED_REGION: u8 = 62;
     pub const GET_PINNABLE_REFERENCE: u8 = 63;
     pub const YIELD_RETURN: u8 = 64;
+    pub const AWAIT: u8 = 65;
+    pub const DYNAMIC: u8 = 66;
+    /// A node already written (it has two parents).
+    pub const NODE_REFERENCE: u8 = 255;
 }
 
 /// Writes every function of one module.
@@ -129,6 +133,7 @@ impl<'t, 'c, 'a> ModuleWriter<'t, 'c, 'a> {
             blocks: HashMap::new(),
             block_order: Vec::new(),
             containers: HashMap::new(),
+            written: HashMap::new(),
         };
         w.write(r)?;
         self.count += 1;
@@ -154,6 +159,9 @@ struct FunctionWriter<'w, 't, 'c, 'a> {
     blocks: HashMap<NodeId, usize>,
     block_order: Vec<NodeId>,
     containers: HashMap<NodeId, usize>,
+    /// The nodes written so far, numbered in completion order; a node with two parents is
+    /// written once and then referenced (`op::NODE_REFERENCE`).
+    written: HashMap<NodeId, usize>,
 }
 
 impl FunctionWriter<'_, '_, '_, '_> {
@@ -211,7 +219,12 @@ impl FunctionWriter<'_, '_, '_, '_> {
     fn number(&mut self, root: NodeId) {
         let mut stack = vec![root];
         let mut targets = Vec::new();
+        // A node with two parents is written once.
+        let mut seen = std::collections::HashSet::new();
         while let Some(id) = stack.pop() {
+            if !seen.insert(id) {
+                continue;
+            }
             match self.f.inst(id) {
                 Inst::Block { .. } => {
                     self.block_number(id);
@@ -250,6 +263,15 @@ impl FunctionWriter<'_, '_, '_, '_> {
         self.out.bool(r.move_next_method.is_some());
         if let Some(m) = &r.move_next_method {
             self.member(m.token, m.state_machine_context);
+        }
+        self.out.bool(r.async_debug_info.is_some());
+        if let Some((catch_handler, awaits)) = &r.async_debug_info {
+            self.out.ivar(i64::from(*catch_handler));
+            self.out.len(awaits.len());
+            for &(yield_offset, resume_offset) in awaits {
+                self.out.ivar(i64::from(yield_offset));
+                self.out.ivar(i64::from(resume_offset));
+            }
         }
         self.out.len(r.variables.len());
         for &v in &r.variables {
@@ -308,6 +330,18 @@ impl FunctionWriter<'_, '_, '_, '_> {
     }
 
     fn node(&mut self, id: NodeId) -> Result<(), String> {
+        if let Some(&index) = self.written.get(&id) {
+            self.out.u8(op::NODE_REFERENCE);
+            self.out.len(index);
+            return Ok(());
+        }
+        self.node_once(id)?;
+        let index = self.written.len();
+        self.written.insert(id, index);
+        Ok(())
+    }
+
+    fn node_once(&mut self, id: NodeId) -> Result<(), String> {
         let range = self.f.il_range(id);
         let inst = self.f.inst(id).clone();
         let tag = |t: u8, out: &mut Bytes| {
@@ -687,6 +721,68 @@ impl FunctionWriter<'_, '_, '_, '_> {
             Inst::YieldReturn { value } => {
                 tag(op::YIELD_RETURN, &mut self.out);
                 self.node(value)?;
+            }
+            Inst::Await {
+                value,
+                ref get_awaiter,
+                ref get_result,
+                get_awaiter_callvirt,
+            } => {
+                tag(op::AWAIT, &mut self.out);
+                for m in [get_awaiter, get_result] {
+                    match m {
+                        None => self.out.u8(0),
+                        Some(AwaiterMethod::Method(m)) => {
+                            self.out.u8(1);
+                            self.member(m.token, m.state_machine_context);
+                        }
+                        Some(AwaiterMethod::Dynamic(name)) => {
+                            self.out.u8(2);
+                            self.string(name);
+                        }
+                    }
+                }
+                self.out.bool(get_awaiter_callvirt);
+                self.node(value)?;
+            }
+            Inst::Dynamic {
+                kind,
+                binder_flags,
+                context,
+                ref name,
+                operation,
+                ty,
+                ref type_arguments,
+                ref arg_infos,
+                ref args,
+            } => {
+                tag(op::DYNAMIC, &mut self.out);
+                self.out.u8(kind as u8);
+                self.out.ivar(i64::from(binder_flags));
+                self.opt_ty(context);
+                self.out.bool(name.is_some());
+                if let Some(n) = name {
+                    self.string(n);
+                }
+                self.out.ivar(i64::from(operation));
+                self.opt_ty(ty);
+                self.out.bool(type_arguments.is_some());
+                if let Some(ts) = type_arguments {
+                    self.out.len(ts.len());
+                    for &t in ts {
+                        self.ty(t);
+                    }
+                }
+                self.out.len(arg_infos.len());
+                for info in arg_infos {
+                    self.out.ivar(i64::from(info.flags));
+                    self.out.bool(info.name.is_some());
+                    if let Some(n) = &info.name {
+                        self.string(n);
+                    }
+                    self.ty(info.compile_time_type);
+                }
+                self.nodes(args)?;
             }
             Inst::GetPinnableReference { arg, ty, method } => {
                 tag(op::GET_PINNABLE_REFERENCE, &mut self.out);

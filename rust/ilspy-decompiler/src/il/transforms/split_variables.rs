@@ -144,6 +144,8 @@ fn determine_address_use(
         Inst::LdObjIfRef { .. } | Inst::LdFlda { .. } => {
             determine_address_use(f, ts, uses, parent, target)
         }
+        // GetAwaiter() may write to the struct, but does not keep the address.
+        Inst::Await { .. } => AddressUse::Immediate,
         Inst::Call(call) | Inst::CallVirt(call) => handle_call(
             f,
             ts,

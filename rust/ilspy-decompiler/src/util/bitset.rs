@@ -43,6 +43,17 @@ impl BitSet {
         }
     }
 
+    pub fn intersect_with(&mut self, other: &BitSet) {
+        for (a, b) in self.words.iter_mut().zip(&other.words) {
+            *a &= b;
+        }
+    }
+
+    /// Whether any bit is set.
+    pub fn any(&self) -> bool {
+        self.words.iter().any(|&w| w != 0)
+    }
+
     pub fn replace_with(&mut self, other: &BitSet) {
         self.words.copy_from_slice(&other.words);
     }

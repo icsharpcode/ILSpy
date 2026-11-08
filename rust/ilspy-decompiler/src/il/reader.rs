@@ -79,6 +79,9 @@ pub struct ReadFunction {
     pub state_machine_compiled_with_legacy_visual_basic: bool,
     /// `MoveNextMethod`.
     pub move_next_method: Option<MethodOperand>,
+    /// `AsyncDebugInfo`: the catch handler offset (-1 for none) and the `(yield, resume)`
+    /// offsets of each await.
+    pub async_debug_info: Option<(i32, Vec<(i32, i32)>)>,
 }
 
 /// The kind of a type as the reader distinguishes it (`IType.Kind`).
@@ -2686,6 +2689,7 @@ impl<'r, 'c, 'a> Reader<'r, 'c, 'a> {
             state_machine_compiled_with_mono: false,
             state_machine_compiled_with_legacy_visual_basic: false,
             move_next_method: None,
+            async_debug_info: None,
         })
     }
 }

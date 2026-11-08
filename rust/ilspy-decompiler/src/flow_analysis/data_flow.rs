@@ -28,6 +28,11 @@ pub trait Analysis {
     fn handle_store(&mut self, flow: &mut Flow<Self::S>, f: &Function, inst: NodeId, var: VarId);
     /// An `ldloc` or `ldloca`.
     fn handle_load(&mut self, flow: &mut Flow<Self::S>, f: &Function, inst: NodeId);
+    /// Visits `inst` in place of the default case (an override like `VisitCall`); false lets
+    /// the visitor handle it.
+    fn visit_override(&mut self, _flow: &mut Flow<Self::S>, _f: &Function, _inst: NodeId) -> bool {
+        false
+    }
 }
 
 /// The visitor's state (`DataFlowVisitor<State>` fields).
@@ -81,6 +86,9 @@ impl<S: State> Flow<S> {
 
     /// Visits `id`. Recursion follows the tree, as the managed visitor does.
     pub fn visit<A: Analysis<S = S>>(&mut self, a: &mut A, f: &Function, id: NodeId) {
+        if a.visit_override(self, f, id) {
+            return;
+        }
         match f.inst(id) {
             Inst::BlockContainer { blocks, .. } => self.visit_block_container(a, f, id, blocks),
             Inst::Branch { target } => {

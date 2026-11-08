@@ -1064,7 +1064,60 @@ throws on the duplicate.
 ranges, `state == N`). The early transforms at the end of the step delete them, so the port
 leaves them out.
 
-## 4. Alternatives evaluated
+### 3.30 AsyncAwaitDecompiler (item 14, IL prefix 8)
+
+**One step, many managed classes.** The transform calls into code that later pipeline items
+own. Those pieces are ported here, and their own items then add only the pipeline step:
+- `RemoveDeadVariableInit` (item 20), with `DefiniteAssignmentVisitor` for
+  `ResetUsesInitialValueFlag`.
+- `EarlyExpressionTransforms.StObjToStLoc` (item 18) and
+  `TypeUtils.IsCompatibleTypeForMemoryAccess`.
+- `DynamicCallSiteTransform.RunOnBasicBlock` (item 22), with
+  `TransformArrayInitializers.HandleSimpleArrayInitializer` (one dimension) and
+  `TransformExpressionTrees.MatchGetTypeFromHandle`.
+
+New infrastructure:
+- `ControlFlowGraph` with dominance (Cooper, Harvey and Kennedy) and the reachable-exit sets,
+  which `AwaitInCatchTransform`, `AwaitInFinallyTransform` and later `LoopDetection` use.
+- The runtime-async path: `TranslateThisCopyAccess`, `RuntimeAsyncManualAwaitTransform` and
+  `RuntimeAsyncExceptionRewriteTransform`. The runtime images of .NET 11 compile many methods
+  as runtime-async, so this path is not optional.
+- `TaskType.IsNonGenericTaskType` / `IsGenericTaskType`, which return the builder's name.
+
+**The `MoveNext()` arena.** As for iterators, `MoveNext()` is read and analyzed in an arena of
+its own and then imported. The main try block becomes the function body while it is still
+connected in the imported tree. Releasing that tree's root afterwards leaves the try block
+connected, so the variable lists keep the order `MoveNext()` gave them, as in the managed
+code. `set_body` also clears the body's parent link, because the function is not a node.
+
+**New instructions.**
+- `Await`. Its `GetAwaiter` and `GetResult` methods are either methods or the `dynamic` fake
+  methods of a dynamic await, which the materializer builds by reflection (`FakeMethod` is
+  internal).
+- The eleven `DynamicInstruction` kinds, as one `Inst::Dynamic` with a kind. The operands
+  differ only in which of the name, operation, type and argument infos a kind uses.
+
+**Wire v1 additions.**
+- Opcode 65 `Await`, and opcode 66 `Dynamic`.
+- The `AsyncDebugInfo` in the function header.
+- Opcode 255, a reference to a node already written. The managed runtime-async try-finally
+  rewrite leaves one `leave` instruction in two blocks. Sent twice, the instruction would
+  become two instances in the materializer, and the returned variable's load count would be
+  one higher than the managed one. With the reference, both trees share it.
+
+**New engine settings.** `AsyncAwait`, `AsyncEnumerator`, `AwaitInCatchFinally`, `Dynamic`.
+
+**Managed semantics the gate exposed in shared code.**
+- ILInlining always inlines an `await`.
+- `SplitVariables` counts `await(ldloca V)` as an immediate address use.
+
+**Changes to the gate harness.**
+- The managed reference runs the transforms one by one instead of calling `RunTransforms`,
+  so it gets what a Release pipeline produces. The Debug-only invariant checks reject the
+  shared instruction above and throw out of the reference.
+- An assertion listener reports failed `Debug.Assert`s and continues. The default listener
+  terminates the test host.
+
 
 | Option | Pros | Cons | Outcome |
 |---|---|---|---|

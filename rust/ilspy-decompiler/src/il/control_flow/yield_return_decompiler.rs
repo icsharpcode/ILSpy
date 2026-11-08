@@ -34,36 +34,36 @@ use crate::util::long_set::LongSet;
 use super::state_range_analysis::{MethodKey, Mode, OrderedMap, StateRangeAnalysis};
 use super::symbolic_execution::{FieldDef, SymbolicAnalysisFailed, field_definition};
 
-type Result<T> = std::result::Result<T, SymbolicAnalysisFailed>;
+pub(crate) type Result<T> = std::result::Result<T, SymbolicAnalysisFailed>;
 
-fn fail<T>(message: impl Into<String>) -> Result<T> {
+pub(crate) fn fail<T>(message: impl Into<String>) -> Result<T> {
     Err(SymbolicAnalysisFailed(message.into()))
 }
 
-fn def_of(field: &FieldOperand) -> Option<FieldDef> {
+pub(crate) fn def_of(field: &FieldOperand) -> Option<FieldDef> {
     field_definition(&field.field.origin)
 }
 
 /// `field.MemberDefinition.Equals(other)` against an optional definition.
-fn is_field(field: Option<FieldDef>, other: Option<FieldDef>) -> bool {
+pub(crate) fn is_field(field: Option<FieldDef>, other: Option<FieldDef>) -> bool {
     field.is_some() && field == other
 }
 
 /// The MethodDef row a method's `MetadataToken` names, 0 for a method without one.
-fn def_row(m: &MethodOperand) -> u32 {
+pub(crate) fn def_row(m: &MethodOperand) -> u32 {
     match m.method.origin {
         MethodOrigin::Def(d) => d.row,
         _ => 0,
     }
 }
 
-fn is_known(ts: &TypeSystem<'_, '_>, ty: TypeId, code: KnownTypeCode) -> bool {
+pub(crate) fn is_known(ts: &TypeSystem<'_, '_>, ty: TypeId, code: KnownTypeCode) -> bool {
     ts.definition(ty)
         .and_then(|d| ts.comp.type_def(d).ok())
         .is_some_and(|i| i.known == code)
 }
 
-fn new_block(f: &mut Function) -> NodeId {
+pub(crate) fn new_block(f: &mut Function) -> NodeId {
     let final_inst = f.add(Inst::Nop {
         kind: NopKind::Normal,
     });
@@ -74,7 +74,7 @@ fn new_block(f: &mut Function) -> NodeId {
     })
 }
 
-fn new_container(f: &mut Function) -> NodeId {
+pub(crate) fn new_container(f: &mut Function) -> NodeId {
     f.add(Inst::BlockContainer {
         kind: ContainerKind::Normal,
         expected: None,
@@ -82,13 +82,13 @@ fn new_container(f: &mut Function) -> NodeId {
     })
 }
 
-fn branch(f: &mut Function, target: NodeId) -> NodeId {
+pub(crate) fn branch(f: &mut Function, target: NodeId) -> NodeId {
     f.add(Inst::Branch {
         target: BranchTarget::Block(target),
     })
 }
 
-fn invalid_branch(f: &mut Function, message: String) -> NodeId {
+pub(crate) fn invalid_branch(f: &mut Function, message: String) -> NodeId {
     f.add(Inst::InvalidBranch {
         message,
         expected: StackType::Void,
@@ -96,7 +96,7 @@ fn invalid_branch(f: &mut Function, message: String) -> NodeId {
 }
 
 /// `SingleBlock`: the body as one basic block.
-fn single_block(f: &Function, body: NodeId) -> Option<NodeId> {
+pub(crate) fn single_block(f: &Function, body: NodeId) -> Option<NodeId> {
     match f.inst(body) {
         Inst::Block { .. } => Some(body),
         Inst::BlockContainer { blocks, .. } if blocks.len() == 1 => Some(blocks[0]),
@@ -119,7 +119,7 @@ pub fn get_body_entry_point(f: &Function, body: NodeId) -> NodeId {
 }
 
 /// `Block.GetPredecessor`: the instruction before `inst` in its block.
-fn predecessor(f: &Function, inst: NodeId) -> Option<NodeId> {
+pub(crate) fn predecessor(f: &Function, inst: NodeId) -> Option<NodeId> {
     let parent = f.node(inst).parent?;
     let index = f.node(inst).child_index as usize;
     match f.inst(parent) {
@@ -128,7 +128,7 @@ fn predecessor(f: &Function, inst: NodeId) -> Option<NodeId> {
     }
 }
 
-fn try_finallys(f: &Function, root: NodeId) -> Vec<NodeId> {
+pub(crate) fn try_finallys(f: &Function, root: NodeId) -> Vec<NodeId> {
     f.descendants_post(root)
         .into_iter()
         .filter(|&n| matches!(f.inst(n), Inst::TryFinally { .. }))
@@ -170,7 +170,7 @@ fn is_method(md: &Metadata<'_>, row: u32, name: &str) -> bool {
 }
 
 /// The first method of `type_def` that `is_method` accepts, 0 if none.
-fn find_method(md: &Metadata<'_>, type_def: u32, name: &str) -> u32 {
+pub(crate) fn find_method(md: &Metadata<'_>, type_def: u32, name: &str) -> u32 {
     md.type_methods(type_def)
         .unwrap_or_default()
         .into_iter()
@@ -178,7 +178,7 @@ fn find_method(md: &Metadata<'_>, type_def: u32, name: &str) -> u32 {
         .unwrap_or(0)
 }
 
-fn is_compiler_generated(md: &Metadata<'_>, type_def: u32) -> bool {
+pub(crate) fn is_compiler_generated(md: &Metadata<'_>, type_def: u32) -> bool {
     md.custom_attributes(TableId::TypeDef, type_def)
         .into_iter()
         .any(|ca| {
@@ -277,6 +277,86 @@ impl IlCursor<'_> {
 
 const OP_CALL: u16 = 0x28;
 const OP_RET: u16 = 0x2A;
+
+/// `CreateILAst`: reads a method of a compiler-generated class of the iterator's or async
+/// method's type, in its generic context, and runs the early transforms over it.
+pub fn create_il_ast(
+    ctx: &mut Context<'_, '_, '_>,
+    outer: MethodDefId,
+    row: u32,
+) -> Result<ReadFunction> {
+    if row == 0 {
+        return fail("Method not found");
+    }
+    let comp = ctx.ts.comp;
+    let md = &comp.module(outer.module).md;
+    let def = md
+        .get::<rows::MethodDef>(row)
+        .map_err(|e| SymbolicAnalysisFailed(e.to_string()))?;
+    if !has_body(&def) {
+        let name = md.string(def.name).unwrap_or_default();
+        return fail(format!("Method {name} has no body"));
+    }
+    let body = md
+        .method_body(def.rva)
+        .map_err(|e| SymbolicAnalysisFailed(e.to_string()))?;
+    let outer_context = ctx
+        .ts
+        .method_context(outer)
+        .map_err(|e| SymbolicAnalysisFailed(e.to_string()))?;
+    let generic_context = GenericContext {
+        class: outer_context.class,
+        method: None,
+        class_tail: outer_context.method,
+    };
+    let method = MethodDefId {
+        module: outer.module,
+        row,
+    };
+    let mut read = read_il_in_context(ctx.ts, method, body, ctx.reader, Some(generic_context))
+        .map_err(|e| SymbolicAnalysisFailed(e.to_string()))?;
+    let mut inner = Context {
+        ts: &mut *ctx.ts,
+        settings: ctx.settings,
+        reader: ctx.reader,
+    };
+    run_early_il_transforms(&mut read, &mut inner, true);
+    Ok(read)
+}
+
+/// `ResolveIEnumerableIEnumeratorFieldMapping`: `GetEnumerator()` copies the parameter
+/// fields into the fields the enumerator reads.
+pub fn resolve_ienumerable_ienumerator_field_mapping(
+    ctx: &mut Context<'_, '_, '_>,
+    outer: MethodDefId,
+    row: u32,
+    field_to_parameter: &mut OrderedMap<FieldDef, VarId>,
+) -> Result<()> {
+    if row == 0 {
+        // Maybe only an IEnumerator implementation.
+        return Ok(());
+    }
+    let get_enumerator = create_il_ast(ctx, outer, row)?;
+    let f = &get_enumerator.function;
+    for block in f.descendants_post(f.body.expect("body")) {
+        if !matches!(f.inst(block), Inst::Block { .. }) {
+            continue;
+        }
+        for &inst in f.list(block) {
+            // storeTarget.storeField = this.loadField;
+            if let Some((_, store_field, value)) = f.match_stfld(inst)
+                && let Some((load_target, load_field)) = f.match_ldfld(ctx.ts, value)
+                && f.match_ld_this(load_target)
+                && let Some(load) = def_of(load_field)
+                && let Some(&p) = field_to_parameter.get(&load)
+                && let Some(store) = def_of(store_field)
+            {
+                field_to_parameter.insert(store, p);
+            }
+        }
+    }
+    Ok(())
+}
 
 pub fn run(r: &mut ReadFunction, ctx: &mut Context<'_, '_, '_>) {
     if !ctx.settings.yield_return {
@@ -467,45 +547,8 @@ impl YieldReturnDecompiler {
         self.analyze_move_next(r, ctx)
     }
 
-    /// `CreateILAst`: reads a method of the enumerator class in the iterator's generic
-    /// context and runs the early transforms over it.
     fn create_il_ast(&self, ctx: &mut Context<'_, '_, '_>, row: u32) -> Result<ReadFunction> {
-        if row == 0 {
-            return fail("Method not found");
-        }
-        let md = self.md(ctx.ts);
-        let def = md
-            .get::<rows::MethodDef>(row)
-            .map_err(|e| SymbolicAnalysisFailed(e.to_string()))?;
-        if !has_body(&def) {
-            let name = md.string(def.name).unwrap_or_default();
-            return fail(format!("Method {name} has no body"));
-        }
-        let body = md
-            .method_body(def.rva)
-            .map_err(|e| SymbolicAnalysisFailed(e.to_string()))?;
-        let outer = ctx
-            .ts
-            .method_context(self.outer)
-            .map_err(|e| SymbolicAnalysisFailed(e.to_string()))?;
-        let generic_context = GenericContext {
-            class: outer.class,
-            method: None,
-            class_tail: outer.method,
-        };
-        let method = MethodDefId {
-            module: self.module,
-            row,
-        };
-        let mut read = read_il_in_context(ctx.ts, method, body, ctx.reader, Some(generic_context))
-            .map_err(|e| SymbolicAnalysisFailed(e.to_string()))?;
-        let mut inner = Context {
-            ts: &mut *ctx.ts,
-            settings: ctx.settings,
-            reader: ctx.reader,
-        };
-        run_early_il_transforms(&mut read, &mut inner, true);
-        Ok(read)
+        create_il_ast(ctx, self.outer, row)
     }
 
     fn match_enumerator_creation_pattern(
@@ -766,37 +809,17 @@ impl YieldReturnDecompiler {
         Ok(())
     }
 
-    /// `ResolveIEnumerableIEnumeratorFieldMapping`: `GetEnumerator()` copies the parameter
-    /// fields into the fields the enumerator reads.
     fn resolve_ienumerable_ienumerator_field_mapping(
         &mut self,
         ctx: &mut Context<'_, '_, '_>,
     ) -> Result<()> {
         let row = find_method(self.md(ctx.ts), self.enumerator_type, "GetEnumerator");
-        if row == 0 {
-            // Maybe only an IEnumerator implementation.
-            return Ok(());
-        }
-        let get_enumerator = self.create_il_ast(ctx, row)?;
-        let f = &get_enumerator.function;
-        for block in f.descendants_post(f.body.expect("body")) {
-            if !matches!(f.inst(block), Inst::Block { .. }) {
-                continue;
-            }
-            for &inst in f.list(block) {
-                // storeTarget.storeField = this.loadField;
-                if let Some((_, store_field, value)) = f.match_stfld(inst)
-                    && let Some((load_target, load_field)) = f.match_ldfld(ctx.ts, value)
-                    && f.match_ld_this(load_target)
-                    && let Some(load) = def_of(load_field)
-                    && let Some(&p) = self.field_to_parameter.get(&load)
-                    && let Some(store) = def_of(store_field)
-                {
-                    self.field_to_parameter.insert(store, p);
-                }
-            }
-        }
-        Ok(())
+        resolve_ienumerable_ienumerator_field_mapping(
+            ctx,
+            self.outer,
+            row,
+            &mut self.field_to_parameter,
+        )
     }
 
     /// `ConstructExceptionTable`: from `Dispose()`, the states each finally method runs for
@@ -1466,9 +1489,11 @@ impl YieldReturnDecompiler {
     }
 }
 
-/// `ILFunction.Body = body`: the new body connects before the old one is released.
-fn set_body(f: &mut Function, body: NodeId) {
+/// `ILFunction.Body = body`: the new body connects before the old one is released, and its
+/// parent is the function (no node).
+pub(crate) fn set_body(f: &mut Function, body: NodeId) {
     let old = f.body.replace(body);
+    f.nodes[body.0 as usize].parent = None;
     f.add_ref(body);
     if let Some(old) = old {
         f.release_ref(old);
@@ -1476,7 +1501,7 @@ fn set_body(f: &mut Function, body: NodeId) {
 }
 
 /// A field definition as an operand (`IField.MemberDefinition`).
-fn field_operand(ts: &mut TypeSystem<'_, '_>, (module, row): FieldDef) -> FieldOperand {
+pub(crate) fn field_operand(ts: &mut TypeSystem<'_, '_>, (module, row): FieldDef) -> FieldOperand {
     let md = &ts.comp.module(module).md;
     let name = md
         .get::<rows::Field>(row)

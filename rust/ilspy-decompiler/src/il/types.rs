@@ -237,7 +237,7 @@ impl TypeSystem<'_, '_> {
 
     /// `IType.Kind == TypeKind.Unknown`: unknown types, and parameterized or annotated types
     /// of them (which take their definition's kind).
-    fn is_unknown_kind(&self, t: TypeId) -> bool {
+    pub fn is_unknown_kind(&self, t: TypeId) -> bool {
         match self.data(t) {
             TypeData::Unknown { .. } | TypeData::UnknownSpecial => true,
             TypeData::Inst { generic, .. } => self.is_unknown_kind(*generic),
@@ -314,5 +314,61 @@ impl TypeSystem<'_, '_> {
             Some(code) => PrimitiveType::from_known(code),
             None => PrimitiveType::None,
         }
+    }
+}
+
+/// `TypeUtils.NativeIntSize`: between 4 (`Int32`) and 8 (`Int64`).
+pub const NATIVE_INT_SIZE: i32 = 6;
+
+impl TypeSystem<'_, '_> {
+    /// `TypeUtils.GetSize`: the size in bytes, `NATIVE_INT_SIZE` for pointer-sized types and
+    /// 0 for structs and other types of unknown size.
+    pub fn type_size(&mut self, t: TypeId) -> i32 {
+        let t = self.skip_modifiers(t);
+        if matches!(
+            self.data(t),
+            TypeData::ByRef(_) | TypeData::Pointer(_) | TypeData::NInt | TypeData::NUInt
+        ) {
+            return NATIVE_INT_SIZE;
+        }
+        if let Some(def) = self.definition(t)
+            && self
+                .comp
+                .type_def(def)
+                .is_ok_and(|i| i.kind == TypeKind::Class)
+        {
+            return NATIVE_INT_SIZE;
+        }
+        match self.enum_underlying_known(t) {
+            Some(KnownTypeCode::Boolean | KnownTypeCode::SByte | KnownTypeCode::Byte) => 1,
+            Some(KnownTypeCode::Char | KnownTypeCode::Int16 | KnownTypeCode::UInt16) => 2,
+            Some(KnownTypeCode::Int32 | KnownTypeCode::UInt32 | KnownTypeCode::Single) => 4,
+            Some(KnownTypeCode::IntPtr | KnownTypeCode::UIntPtr) => NATIVE_INT_SIZE,
+            Some(KnownTypeCode::Int64 | KnownTypeCode::UInt64 | KnownTypeCode::Double) => 8,
+            _ => 0,
+        }
+    }
+
+    /// `TypeUtils.IsCompatibleTypeForMemoryAccess`: accessing memory of `memory_type` as
+    /// `access_type` gives the same result.
+    pub fn is_compatible_type_for_memory_access(
+        &mut self,
+        memory_type: TypeId,
+        access_type: TypeId,
+    ) -> bool {
+        // `NormalizeTypeVisitor.TypeErasure`: both sides normalize alike within one function.
+        let m = self.normalize_parameter(memory_type);
+        let a = self.normalize_parameter(access_type);
+        if m == a {
+            return true;
+        }
+        if self.is_reference_type(m) == Some(true) && self.is_reference_type(a) == Some(true) {
+            return true;
+        }
+        let (ms, as_) = (self.stack_type(m), self.stack_type(a));
+        if ms == as_ && ms.is_integer() && self.type_size(m) == self.type_size(a) {
+            return true;
+        }
+        self.is_unknown_kind(m) || self.is_unknown_kind(a)
     }
 }

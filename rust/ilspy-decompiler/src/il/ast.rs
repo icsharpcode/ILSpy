@@ -582,6 +582,69 @@ pub enum Inst {
     YieldReturn {
         value: NodeId,
     },
+    /// `await value`.
+    Await {
+        value: NodeId,
+        get_awaiter: Option<AwaiterMethod>,
+        get_result: Option<AwaiterMethod>,
+        /// `GetAwaiterCallOpCode`: the `GetAwaiter` call was a `callvirt`.
+        get_awaiter_callvirt: bool,
+    },
+    /// The `DynamicInstruction`s: a C# `dynamic` operation (a call site of the C# runtime
+    /// binder). `args` are the children in slot order.
+    Dynamic {
+        kind: DynamicKind,
+        /// `CSharpBinderFlags`.
+        binder_flags: i32,
+        /// `CallingContext`.
+        context: Option<TypeId>,
+        /// The member name (`GetMember`, `SetMember`, `InvokeMember`, `IsEvent`).
+        name: Option<String>,
+        /// `ExpressionType` of an operator.
+        operation: i32,
+        /// The target type of `Convert`, the type of `InvokeConstructor`, the static target
+        /// type of `InvokeMember`.
+        ty: Option<TypeId>,
+        /// The type arguments of `InvokeMember`.
+        type_arguments: Option<Vec<TypeId>>,
+        /// `CSharpArgumentInfo`s: one per argument, or the whole binder list for the kinds
+        /// that take one (`InvokeConstructor` keeps the type's).
+        arg_infos: Vec<DynamicArgInfo>,
+        args: Vec<NodeId>,
+    },
+}
+
+/// The `GetAwaiter` / `GetResult` method of an await.
+#[derive(Clone, Debug)]
+pub enum AwaiterMethod {
+    Method(MethodOperand),
+    /// The method of a dynamic await, on and returning `dynamic` (`CreateDynamicAwaiterMethod`).
+    Dynamic(String),
+}
+
+/// The `DynamicInstruction` subclasses.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum DynamicKind {
+    BinaryOperator,
+    UnaryOperator,
+    Convert,
+    GetMember,
+    SetMember,
+    GetIndex,
+    SetIndex,
+    InvokeMember,
+    InvokeConstructor,
+    Invoke,
+    IsEvent,
+}
+
+/// `CSharpArgumentInfo`.
+#[derive(Clone, Debug)]
+pub struct DynamicArgInfo {
+    /// `CSharpArgumentInfoFlags`.
+    pub flags: i32,
+    pub name: Option<String>,
+    pub compile_time_type: TypeId,
 }
 
 /// The shared state of `call`, `callvirt` and `newobj`.
@@ -687,7 +750,7 @@ impl Inst {
             | GetPinnableReference { arg, .. }
             | LdVirtFtn { arg, .. }
             | Conv { arg, .. } => vec![*arg],
-            YieldReturn { value } => vec![*value],
+            YieldReturn { value } | Await { value, .. } => vec![*value],
             PinnedRegion { init, body, .. } => vec![*init, *body],
             Leave { value, .. } => vec![*value],
             If {
@@ -747,6 +810,7 @@ impl Inst {
             }
             StObj { target, value, .. } => vec![*target, *value],
             NewArr { indices, .. } => indices.clone(),
+            Dynamic { args, .. } => args.clone(),
             LdLen { array, .. } => vec![*array],
             LdElema { array, indices, .. } => {
                 let mut c = vec![*array];
@@ -803,7 +867,8 @@ impl Inst {
             Leave { value, .. }
             | StLoc { value, .. }
             | AddressOf { value, .. }
-            | YieldReturn { value } => {
+            | YieldReturn { value }
+            | Await { value, .. } => {
                 assert_eq!(index, 0, "child index out of range");
                 value
             }
@@ -891,6 +956,7 @@ impl Inst {
                 [target, value].into_iter().nth(index).expect("child index")
             }
             NewArr { indices, .. } => &mut indices[index],
+            Dynamic { args, .. } => &mut args[index],
             LdLen { array, .. } => {
                 assert_eq!(index, 0, "child index out of range");
                 array
@@ -925,6 +991,8 @@ impl Inst {
             TryCatchHandler { .. } => Flags::CONTROL_FLOW | Flags::MAY_WRITE_LOCALS,
             PinnedRegion { .. } => Flags::MAY_WRITE_LOCALS,
             YieldReturn { .. } => Flags::MAY_BRANCH | Flags::SIDE_EFFECT,
+            Await { .. } => Flags::SIDE_EFFECT,
+            Dynamic { .. } => throws | Flags::SIDE_EFFECT,
             DebugBreak => Flags::SIDE_EFFECT,
             Call(_) | CallVirt(_) | NewObj(_) | CallIndirect { .. } => throws | Flags::SIDE_EFFECT,
             Ckfinite { .. }
@@ -1080,6 +1148,7 @@ impl Function {
             Inst::Switch { sections, .. } => sections,
             Inst::TryCatch { handlers, .. } => handlers,
             Inst::Call(c) | Inst::CallVirt(c) | Inst::NewObj(c) => &mut c.args,
+            Inst::Dynamic { args, .. } => args,
             Inst::NewArr { indices, .. } | Inst::LdElema { indices, .. } => indices,
             other => panic!("{other:?} has no instruction list"),
         }
@@ -1225,6 +1294,7 @@ impl Function {
             Inst::Switch { sections, .. } => sections,
             Inst::TryCatch { handlers, .. } => handlers,
             Inst::Call(c) | Inst::CallVirt(c) | Inst::NewObj(c) => &c.args,
+            Inst::Dynamic { args, .. } => args,
             Inst::NewArr { indices, .. } | Inst::LdElema { indices, .. } => indices,
             _ => &[],
         }
@@ -1341,6 +1411,25 @@ impl Function {
         match self.inst(id) {
             If { csharp_type, .. } => csharp_type.map_or(StackType::Void, |t| ts.stack_type(t)),
             GetPinnableReference { .. } => StackType::Ref,
+            Await { get_result, .. } => match get_result {
+                Some(AwaiterMethod::Method(m)) => ts.stack_type(m.method.ret),
+                Some(AwaiterMethod::Dynamic(_)) => StackType::Obj,
+                None => StackType::Unknown,
+            },
+            Dynamic {
+                kind,
+                operation,
+                ty,
+                ..
+            } => match kind {
+                DynamicKind::Convert | DynamicKind::InvokeConstructor => {
+                    ty.map_or(StackType::Unknown, |t| ts.stack_type(t))
+                }
+                DynamicKind::IsEvent => StackType::I4,
+                // IsFalse and IsTrue (ExpressionType 84, 83) produce a bool.
+                DynamicKind::UnaryOperator if matches!(operation, 83 | 84) => StackType::I4,
+                _ => StackType::Obj,
+            },
             Nop { .. }
             | PinnedRegion { .. }
             | YieldReturn { .. }
@@ -1430,6 +1519,26 @@ impl Function {
         let known = |ts: &mut TypeSystem<'_, '_>, code| ts.known_type(code);
         let by_ref = |ts: &mut TypeSystem<'_, '_>, t| ts.intern(TypeData::ByRef(t));
         match self.inst(id) {
+            Await { get_result, .. } => match get_result {
+                Some(AwaiterMethod::Method(m)) => m.method.ret,
+                Some(AwaiterMethod::Dynamic(_)) => ts.intern(TypeData::Dynamic),
+                None => ts.intern(TypeData::UnknownSpecial),
+            },
+            Dynamic {
+                kind,
+                operation,
+                ty,
+                ..
+            } => match kind {
+                DynamicKind::Convert | DynamicKind::InvokeConstructor => {
+                    ty.unwrap_or_else(|| ts.intern(TypeData::UnknownSpecial))
+                }
+                DynamicKind::IsEvent => known(ts, KnownTypeCode::Boolean),
+                DynamicKind::UnaryOperator if matches!(operation, 83 | 84) => {
+                    known(ts, KnownTypeCode::Boolean)
+                }
+                _ => ts.intern(TypeData::Dynamic),
+            },
             InvalidBranch { expected, .. } | InvalidExpression { expected, .. } => {
                 find_stack_type(ts, *expected)
             }

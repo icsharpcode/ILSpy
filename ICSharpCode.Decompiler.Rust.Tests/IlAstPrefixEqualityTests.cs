@@ -134,7 +134,12 @@ public class IlAstPrefixEqualityTests
 				UseRefLocalsForAccurateOrderOfEvaluation = settings.UseRefLocalsForAccurateOrderOfEvaluation,
 			};
 			var function = reader.ReadIL(handle, body);
-			function.RunTransforms(Truncate(CSharpDecompiler.GetILTransforms(), prefix), new ILTransformContext(function, ts, null, settings));
+			// RunTransforms without its Debug-only invariant checks: the reference is what a Release
+			// pipeline produces, and the managed async/await decompiler leaves trees on some runtime
+			// methods that the checks reject (an instruction shared by two blocks).
+			var context = new ILTransformContext(function, ts, null, settings);
+			foreach (var transform in Truncate(CSharpDecompiler.GetILTransforms(), prefix))
+				transform.Run(function, context);
 			return IlAstReadEqualityTests.Print(function);
 		}
 		catch (Exception ex)
@@ -171,9 +176,9 @@ public class IlAstPrefixEqualityTests
 	[Test]
 	public void EngineSettingsAreDecompilerSettings()
 	{
-		Assert.That(RustSettings.Names, Is.EqualTo(new[] { "RemoveDeadStores", "SortSwitchSections", "PatternBasedFixedStatement", "YieldReturn" }));
-		var settings = new DecompilerSettings { RemoveDeadStores = false, SortSwitchSections = true, PatternBasedFixedStatement = false, YieldReturn = true };
-		Assert.That(RustSettings.Bits(settings), Is.EqualTo(10UL));
+		Assert.That(RustSettings.Names, Is.EqualTo(new[] { "RemoveDeadStores", "SortSwitchSections", "PatternBasedFixedStatement", "YieldReturn", "AsyncAwait", "AsyncEnumerator", "AwaitInCatchFinally", "Dynamic" }));
+		var settings = new DecompilerSettings { RemoveDeadStores = false, SortSwitchSections = true, PatternBasedFixedStatement = false, YieldReturn = true, AsyncAwait = false, AsyncEnumerator = true, AwaitInCatchFinally = false, Dynamic = true };
+		Assert.That(RustSettings.Bits(settings), Is.EqualTo(0xAAUL));
 	}
 
 	static void AssertPrefixEqual(string path, DecompilerSettings settings)
