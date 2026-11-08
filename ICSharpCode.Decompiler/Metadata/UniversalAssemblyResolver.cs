@@ -257,7 +257,7 @@ namespace ICSharpCode.Decompiler.Metadata
 		public MetadataFile? ResolveModule(MetadataFile mainModule, string moduleName)
 		{
 			string? baseDirectory = Path.GetDirectoryName(mainModule.FileName);
-			if (baseDirectory == null)
+			if (baseDirectory == null || !IsSimpleFileName(moduleName))
 				return null;
 			string moduleFileName = Path.Combine(baseDirectory, moduleName);
 			return CreatePEFileFromFileName(moduleFileName, ex => new ResolutionException(mainModule.FileName, moduleName, moduleFileName, ex));
@@ -609,11 +609,16 @@ namespace ICSharpCode.Decompiler.Metadata
 		static readonly string[] windowsMetadataExtensions = { ".winmd", ".dll" };
 		static readonly char[] invalidAssemblyNameCharacters = { '/', '\\', ':' };
 
+		internal static bool IsSimpleFileName(string name)
+		{
+			return name.IndexOfAny(invalidAssemblyNameCharacters) < 0;
+		}
+
 		string? SearchDirectory(IAssemblyReference name, string directory)
 		{
 			// Assembly reference names are identifiers, not paths. Rejecting separators prevents a
 			// malformed reference from escaping the configured search directory during Path.Combine.
-			if (name.Name.IndexOfAny(invalidAssemblyNameCharacters) >= 0)
+			if (!IsSimpleFileName(name.Name))
 				return null;
 
 			var extensions = name.IsWindowsRuntime ? windowsMetadataExtensions : assemblyExtensions;
