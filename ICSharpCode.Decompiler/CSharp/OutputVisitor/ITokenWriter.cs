@@ -18,6 +18,7 @@
 
 using System;
 using System.IO;
+using System.Text;
 
 using ICSharpCode.Decompiler.CSharp.Syntax;
 
@@ -86,6 +87,45 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			if (!(writer is ILocatable))
 				throw new InvalidOperationException("writer does not provide locations!");
 			return new InsertMissingTokensDecorator(writer, (ILocatable)writer);
+		}
+	}
+
+	internal static class CommentUtilities
+	{
+		static readonly char[] lineTerminators = { '\r', '\n', '\u0085', '\u2028', '\u2029' };
+
+		public static string EscapeLineTerminators(string content)
+		{
+			int firstLineTerminator = content.IndexOfAny(lineTerminators);
+			if (firstLineTerminator < 0)
+				return content;
+
+			var escapedContent = new StringBuilder(content.Length);
+			for (int i = 0; i < content.Length; i++)
+			{
+				switch (content[i])
+				{
+					case '\r':
+						escapedContent.Append("\\r");
+						break;
+					case '\n':
+						escapedContent.Append("\\n");
+						break;
+					case '\u0085':
+						escapedContent.Append("\\u0085");
+						break;
+					case '\u2028':
+						escapedContent.Append("\\u2028");
+						break;
+					case '\u2029':
+						escapedContent.Append("\\u2029");
+						break;
+					default:
+						escapedContent.Append(content[i]);
+						break;
+				}
+			}
+			return escapedContent.ToString();
 		}
 	}
 

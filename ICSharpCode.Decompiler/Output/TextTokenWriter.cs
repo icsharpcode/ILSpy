@@ -414,6 +414,7 @@ namespace ICSharpCode.Decompiler
 			{
 				case CommentType.SingleLine:
 					output.Write("//");
+					content = CommentUtilities.EscapeLineTerminators(content);
 					output.WriteLine(content);
 					break;
 				case CommentType.MultiLine:
@@ -422,6 +423,7 @@ namespace ICSharpCode.Decompiler
 					output.Write("*/");
 					break;
 				case CommentType.Documentation:
+					content = CommentUtilities.EscapeLineTerminators(content);
 					// Only a following documentation comment continues the fold: a regular comment in
 					// the same trivia list must not keep the fold open (it never calls MarkFoldEnd).
 					bool isLastLine = nodeStack.Peek().NextSibling is not Comment { CommentType: CommentType.Documentation };
