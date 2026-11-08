@@ -94,7 +94,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public FullTypeName FullTypeName => fullTypeName;
 
-		public override int TypeParameterCount => fullTypeName.TypeParameterCount;
+		public override int TypeParameterCount => Math.Min(fullTypeName.TypeParameterCount, ReflectionHelper.MaxTypeParameterCount);
 		public override IReadOnlyList<ITypeParameter> TypeParameters => DummyTypeParameter.GetClassTypeParameterList(TypeParameterCount);
 		public override IReadOnlyList<IType> TypeArguments => TypeParameters;
 

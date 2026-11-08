@@ -42,6 +42,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		static ITypeParameter GetTypeParameter(ref ITypeParameter[] typeParameters, SymbolKind symbolKind, int index)
 		{
+			if (index >= ReflectionHelper.MaxTypeParameterCount)
+				return new DummyTypeParameter(symbolKind, index);
 			ITypeParameter[] tps = typeParameters;
 			while (index >= tps.Length)
 			{
@@ -74,6 +76,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		/// </summary>
 		internal static IReadOnlyList<ITypeParameter> GetClassTypeParameterList(int length)
 		{
+			length = Math.Min(length, ReflectionHelper.MaxTypeParameterCount);
 			IReadOnlyList<ITypeParameter>[] tps = classTypeParameterLists;
 			while (length >= tps.Length)
 			{
