@@ -1543,10 +1543,7 @@ impl AsyncAwaitDecompiler {
         let f = &mut r.function;
         let body = f.body.expect("body");
         for leave in f.descendants_post(body) {
-            if self.move_next_leaves.contains(&leave)
-                && f.node(leave).parent.is_some()
-                && f.is_connected(leave)
-            {
+            if self.move_next_leaves.contains(&leave) && f.is_connected(leave) {
                 let invalid =
                     invalid_branch(f, "leave MoveNext - await not detected correctly".into());
                 f.add_il_range(invalid, f.il_range(leave));

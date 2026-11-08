@@ -1183,6 +1183,25 @@ survive as written in the IL.
 The no-op red run failed 2,082 of 3,550 equality cases, the most of any step so far, because
 nearly every method has some `ldloca` access. The port passed on its first run.
 
+### 3.35 SplitVariables again (item 19, IL prefix 13)
+
+A ratchet-only step: the second `SplitVariables` in the pipeline is the ported transform. It
+surfaced one change to shared code.
+
+**Removed nodes keep a stale parent.** In the managed tree, `ReplaceWith` and the removals of
+`InstructionCollection` leave the removed instruction's `Parent` as it was. Until now the arena
+cleared it.
+
+On one runtime-async method of `System.Net.Quic`, a connected branch targets a block that the
+runtime-async rewrite had removed from its container. The managed data flow visitor still
+reaches that block's stale container through `Parent`, and only `Debug.Fail`s when the
+container has no work list. The port panicked instead.
+
+The arena now keeps the stale parent, as the managed one does:
+- The places that used a cleared parent to mean "detached" test connectivity or list
+  membership instead.
+- The data flow visitor treats a missing work list as the managed code does.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

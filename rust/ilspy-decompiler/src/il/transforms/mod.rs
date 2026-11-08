@@ -85,6 +85,7 @@ const PIPELINE: &[fn(&mut ReadFunction, &mut Context<'_, '_, '_>)] = &[
     super::control_flow::exit_points::run,
     ldloca_dup_init_obj_transform::run,
     early_expression_transforms::run,
+    split_variables::run,
 ];
 
 /// Runs the first `prefix` leaves of the pipeline.

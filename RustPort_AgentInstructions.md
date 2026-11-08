@@ -347,7 +347,7 @@ the reasons. This file holds only the ordered steps, their gates and their rules
   - [x] 16. DetectExitPoints (M)
   - [x] 17. LdLocaDupInitObjTransform (S)
   - [x] 18. EarlyExpressionTransforms (M)
-  - [ ] 19. SplitVariables, second occurrence (S, ratchet only)
+  - [x] 19. SplitVariables, second occurrence (S, ratchet only)
   - [ ] 20. RemoveDeadVariableInit (S)
   - [ ] 21. ControlFlowSimplification, second occurrence (S, ratchet only)
   - [ ] 22. DynamicCallSiteTransform (M)

@@ -1136,7 +1136,7 @@ impl Function {
         let entry = self.entry_point(parent);
         self.inst_mut(parent).set_child(index, new);
         self.adopt(parent, new, index);
-        self.nodes[old.0 as usize].parent = None;
+        // `old` keeps its (now stale) parent, as in the managed tree.
         if self.is_connected(parent) {
             // `new` may be a child of `old`: count it before `old` releases its children.
             self.add_ref(new);
@@ -1249,13 +1249,8 @@ impl Function {
     /// the given nodes in order when `owner` is connected, and moves the entry point's edge.
     fn replace_items(&mut self, owner: NodeId, items: Vec<NodeId>, ops: Vec<(NodeId, bool)>) {
         let entry = self.entry_point(owner);
-        let old = std::mem::replace(self.list_mut(owner), items);
-        // An item that already moved into another list keeps its new parent.
-        for &r in &old {
-            if self.nodes[r.0 as usize].parent == Some(owner) {
-                self.nodes[r.0 as usize].parent = None;
-            }
-        }
+        // Removed items keep their (now stale) parent, as in the managed tree.
+        *self.list_mut(owner) = items;
         self.relink(owner);
         if self.is_connected(owner) {
             for (node, connect) in ops {
@@ -1709,7 +1704,8 @@ mod tests {
         f.replace(a, b);
         assert_eq!(f.inst(throw).children(), [b]);
         assert_eq!(f.node(b).parent, Some(throw));
-        assert_eq!(f.node(a).parent, None);
+        // The replaced node keeps its stale parent, as in the managed tree.
+        assert_eq!(f.node(a).parent, Some(throw));
     }
 
     #[test]
@@ -1874,7 +1870,8 @@ mod list_tests {
         let removed = f.truncate(b, 1);
         assert_eq!(removed, [a, d]);
         assert_eq!(f.list(b), [c]);
-        assert_eq!(f.node(a).parent, None);
+        // Removed items keep their stale parent, as in the managed tree.
+        assert_eq!(f.node(a).parent, Some(b));
         // The final instruction follows the list.
         let Inst::Block { final_inst, .. } = *f.inst(b) else {
             unreachable!()

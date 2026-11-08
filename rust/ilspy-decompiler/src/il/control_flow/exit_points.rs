@@ -85,7 +85,13 @@ pub fn run(r: &mut ReadFunction, _ctx: &mut Context<'_, '_, '_>) {
     for block in d.blocks_potentially_made_unreachable {
         let unreachable = f.node(block).incoming_edge_count == 0
             || (f.node(block).incoming_edge_count == 1 && is_infinite_loop(f, block));
-        if unreachable && f.node(block).parent.is_some() {
+        // A block already taken out keeps a stale parent: only a block still in its container
+        // goes.
+        let in_container = f
+            .node(block)
+            .parent
+            .is_some_and(|c| f.list(c).get(f.node(block).child_index as usize) == Some(&block));
+        if unreachable && in_container {
             f.remove_block(block);
         }
     }
@@ -124,7 +130,7 @@ impl DetectExitPoints {
                 .push(inst);
         } else if compatible_exit_instruction(f, inst, e.current_exit) {
             // shortcut: an exit an inner container already replaced is stale here; the managed code replaces its old slot, this skips it
-            if f.node(inst).parent.is_some() {
+            if f.is_connected(inst) {
                 let container = e.container;
                 let l = leave(f, container, inst);
                 f.replace(inst, l);

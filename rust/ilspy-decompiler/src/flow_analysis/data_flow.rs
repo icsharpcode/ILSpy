@@ -261,10 +261,11 @@ impl<S: State> Flow<S> {
             target_state.join_with(branch_state);
             let container = f.node(target).parent.expect("target in a container");
             let index = f.node(target).child_index as usize;
-            self.work_lists
-                .get_mut(&container)
-                .expect("the target container is being visited")
-                .insert(index);
+            // A branch to a block that left its container (a stale parent) finds no work list;
+            // the managed code only asserts.
+            if let Some(work_list) = self.work_lists.get_mut(&container) {
+                work_list.insert(index);
+            }
         }
     }
 
