@@ -68,6 +68,11 @@ namespace ICSharpCode.Decompiler.CSharp
 		SyntaxTree? syntaxTree;
 
 		List<IILTransform> ilTransforms = GetILTransforms();
+		// RUST-SEAM-1 BEGIN
+		// While seam 1 has run a member's transforms itself, the original RunTransforms call sees
+		// no transforms; this holds the real list until the call has returned.
+		List<IILTransform>? rustSuspendedILTransforms;
+		// RUST-SEAM-1 END
 
 		/// <summary>
 		/// Pre-yield/await transforms.
@@ -2440,8 +2445,29 @@ namespace ICSharpCode.Decompiler.CSharp
 				// boundary to the member the pipeline is only about to start.
 				context.StepStartGroup(method.FullName);
 				// RUST-SEAM-1 BEGIN
+				// A member that threw between the suspension and the restore below left it in place.
+				if (rustSuspendedILTransforms != null)
+				{
+					ilTransforms = rustSuspendedILTransforms;
+					rustSuspendedILTransforms = null;
+				}
+				var rustRemainingTransforms = Rust.Interop.RustSeam1.Serve(typeSystem, method, entityDecl, parameterOffset,
+					SelectILTransforms(localSettings.DecompileMemberBodies), RecordSteps, DebugInfoProvider, ref function, ref context);
+				if (rustRemainingTransforms != null)
+				{
+					function.RunTransforms(rustRemainingTransforms, context);
+					rustSuspendedILTransforms = ilTransforms;
+					ilTransforms = new List<IILTransform>();
+				}
 				// RUST-SEAM-1 END
 				function.RunTransforms(SelectILTransforms(localSettings.DecompileMemberBodies), context);
+				// RUST-SEAM-1 BEGIN
+				if (rustSuspendedILTransforms != null)
+				{
+					ilTransforms = rustSuspendedILTransforms;
+					rustSuspendedILTransforms = null;
+				}
+				// RUST-SEAM-1 END
 
 
 				// Generate C# AST only if bodies should be displayed.

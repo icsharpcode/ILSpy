@@ -312,9 +312,10 @@ the reasons. This file holds only the ordered steps, their gates and their rules
     its transform creates, with their materializer cases, so no opcode exists in Rust before
     a gate exercises it.
 
-- [ ] **6. Seam 1 at N = 0, ratchet, strict mode.** Size S. Subject: `Wire seam 1 of the shim to the Rust engine`.
+- [x] **6. Seam 1 at N = 0, ratchet, strict mode.** Size S. Subject: `Wire seam 1 of the shim to the Rust engine`.
   - In the shim's `CSharpDecompiler.cs` seam 1 block: ask the engine for the ILAst after the
-    first `N` IL transforms (`N` from `rust/port-status.json`), materialize, run the managed
+    first `N` IL transforms (`N` is the engine's `IL_PREFIX`, rounded down to a top-level
+    boundary; `rust/port-status.json` must equal it), materialize, run the managed
     transforms from `N` on. Status `Unsupported` falls back to the managed path for that
     method and increments a counter; `Error`/`Panic` become a `DecompilerException` through
     the existing per-member error path; strict mode turns `Unsupported` into a failure.
@@ -326,7 +327,9 @@ the reasons. This file holds only the ordered steps, their gates and their rules
 
 - [ ] **7-66. One IL transform per commit, in pipeline order.** Subject pattern:
   `Port <TransformName> to Rust (IL prefix <N>)`. Each commit ports the transform, bumps
-  `il_prefix` in the ratchet, and passes G-rust, G-oracle, G-ilast(N) and G-ratchet.
+  `il_prefix` in the ratchet, and passes G-rust, G-oracle, G-ilast(N) and G-ratchet. `N`
+  counts pipeline leaves (lecture 3.22), 59 in all: item `k` is prefix `k - 6` up to item 31,
+  and from item 33 on the FORK and item 56 (three leaves) shift the numbering.
   Divergences that the text oracle accepts go into the allowlist with a reason. Transforms
   that repeat in the pipeline are ported once and the later occurrences are ratchet-only
   commits (size S) that verify the prefix. The nested groups keep their driver shape: a

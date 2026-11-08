@@ -73,10 +73,12 @@ impl<'a> Lister<'_, 'a> {
             out.push('\n');
         };
         line(format!("METADATA {}", md.version));
-        line(format!(
-            "CLI flags={:08x} entry={:08x}",
-            md.pe.cli.flags, md.pe.cli.entry_point
-        ));
+        if let Some(pe) = &md.pe {
+            line(format!(
+                "CLI flags={:08x} entry={:08x}",
+                pe.cli.flags, pe.cli.entry_point
+            ));
+        }
         line(format!(
             "HEAP strings={} blob={} guid={} us={}",
             md.strings.len(),

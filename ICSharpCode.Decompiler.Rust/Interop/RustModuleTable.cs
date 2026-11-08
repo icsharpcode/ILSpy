@@ -59,7 +59,10 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 			{
 				var module = metadataModules[i];
 				var metadata = module.MetadataFile.Metadata;
-				var image = ((PEFile)module.MetadataFile).Reader.GetEntireImage();
+				// References loaded with PEStreamOptions.PrefetchMetadata hold only their metadata
+				// block, which is all the engine needs of them.
+				var reader = ((PEFile)module.MetadataFile).Reader;
+				var image = reader.IsEntireImageAvailable ? reader.GetEntireImage() : reader.GetMetadata();
 				var asmRefs = Enumerable.Range(1, metadata.GetTableRowCount(TableIndex.AssemblyRef))
 					.Select(row => IndexOf(module.ResolveModule(MetadataTokens.AssemblyReferenceHandle(row)))).ToArray();
 				var modRefs = Enumerable.Range(1, metadata.GetTableRowCount(TableIndex.ModuleRef))
@@ -123,6 +126,19 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 			if (status != RustStatus.Ok)
 				throw new InvalidOperationException($"ilspy_debug_read_il: {status}: {NativeMethods.LastError}");
 			return bytes;
+		}
+
+		/// <summary>
+		/// Gives <paramref name="session"/> this compilation. The engine copies everything but the
+		/// images, so this table may be disposed afterwards.
+		/// </summary>
+		public unsafe void Load(RustSession session)
+		{
+			RustStatus status;
+			fixed (RustModule* p = modules)
+				status = NativeMethods.ilspy_session_load(session, p, (UIntPtr)modules.Length, options);
+			if (status != RustStatus.Ok)
+				throw new InvalidOperationException($"ilspy_session_load: {status}: {NativeMethods.LastError}");
 		}
 
 		public void Dispose()

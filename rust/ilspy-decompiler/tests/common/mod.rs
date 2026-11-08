@@ -96,6 +96,16 @@ fn assembly_name(md: &Metadata<'_>) -> String {
 /// AssemblyRefs resolve by simple name among the given modules, as a host whose reference
 /// closure is exactly this set would resolve them.
 pub fn compilation(modules: &[(PathBuf, u32)]) -> Compilation<'static> {
+    compilation_with_blocks(modules, &[])
+}
+
+/// As `compilation`, but the modules at the indices in `metadata_only` are passed as their
+/// bare metadata block, as a host does for references it holds only the metadata of.
+#[allow(dead_code)]
+pub fn compilation_with_blocks(
+    modules: &[(PathBuf, u32)],
+    metadata_only: &[usize],
+) -> Compilation<'static> {
     let images: Vec<&'static [u8]> = modules
         .iter()
         .map(|(path, _)| &*Vec::leak(std::fs::read(path).expect("read fixture")))
@@ -108,7 +118,8 @@ pub fn compilation(modules: &[(PathBuf, u32)]) -> Compilation<'static> {
         .iter()
         .zip(modules)
         .zip(&names)
-        .map(|((image, (_, options)), name)| {
+        .enumerate()
+        .map(|(index, ((image, (_, options)), name))| {
             let md = Metadata::parse(image).expect("metadata");
             let assembly_refs = (1..=md.tables.rows(TableId::AssemblyRef))
                 .map(|row| {
@@ -120,6 +131,12 @@ pub fn compilation(modules: &[(PathBuf, u32)]) -> Compilation<'static> {
                         .map(|i| ModuleId(i as u32))
                 })
                 .collect();
+            let image = if metadata_only.contains(&index) {
+                let pe = md.pe.as_ref().expect("PE image");
+                pe.directory_data(pe.cli.metadata).expect("metadata block")
+            } else {
+                image
+            };
             ModuleInput {
                 image,
                 assembly_name: name.clone(),

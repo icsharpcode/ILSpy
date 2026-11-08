@@ -35,7 +35,7 @@ public class MetadataListingEqualityTests
 	[TestCaseSource(typeof(Corpus), nameof(Corpus.AllImages))]
 	public void MetadataListingEquality(string path)
 	{
-		byte[] image = File.ReadAllBytes(path);
+		byte[] image = Corpus.ReadFile(path);
 		string expected = MetadataListing.Create(image);
 		string actual = NativeMethods.DebugListMembers(image);
 		Assert.That(Corpus.FirstDifference(expected, actual), Is.Null);

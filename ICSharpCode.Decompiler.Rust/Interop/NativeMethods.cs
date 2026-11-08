@@ -80,6 +80,15 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		internal static extern void ilspy_buf_free(RustBuffer buffer);
 
 		[DllImport(Library, CallingConvention = CallingConvention.Cdecl)]
+		internal static extern uint ilspy_il_prefix();
+
+		[DllImport(Library, CallingConvention = CallingConvention.Cdecl)]
+		internal static extern unsafe RustStatus ilspy_session_load(RustSession session, RustModule* modules, UIntPtr count, uint options);
+
+		[DllImport(Library, CallingConvention = CallingConvention.Cdecl)]
+		internal static extern RustStatus ilspy_session_read_function(RustSession session, uint methodToken, uint ilPrefix, uint readerFlags, IntPtr debugContext, RustDebugInfo.Callback? debugInfo, out RustBuffer wire);
+
+		[DllImport(Library, CallingConvention = CallingConvention.Cdecl)]
 		static extern unsafe RustStatus ilspy_debug_list_members(byte* image, UIntPtr length, out RustBuffer listing);
 
 		[DllImport(Library, CallingConvention = CallingConvention.Cdecl)]

@@ -22,6 +22,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection.PortableExecutable;
 using System.Runtime.CompilerServices;
+using System.Threading;
 
 using ICSharpCode.Decompiler.CSharp;
 
@@ -89,6 +90,26 @@ static class Corpus
 		catch (BadImageFormatException)
 		{
 			return false;
+		}
+	}
+
+	/// <summary>
+	/// The bytes of a corpus file. In a solution test run ICSharpCode.Decompiler.Tests rewrites
+	/// fixtures while this suite reads them; the compiler holds a file exclusively until it is
+	/// complete, so a sharing violation is waited out.
+	/// </summary>
+	public static byte[] ReadFile(string path)
+	{
+		for (int attempt = 0; ; attempt++)
+		{
+			try
+			{
+				return File.ReadAllBytes(path);
+			}
+			catch (IOException) when (attempt < 100 && File.Exists(path))
+			{
+				Thread.Sleep(100);
+			}
 		}
 	}
 

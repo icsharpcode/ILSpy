@@ -11,12 +11,13 @@ use std::cell::RefCell;
 use std::ffi::{CString, c_char, c_void};
 use std::panic::{self, AssertUnwindSafe};
 use std::ptr;
-use std::sync::Once;
+use std::sync::{Once, OnceLock};
 
 use ilspy_decompiler::Session;
 use ilspy_decompiler::il::debug_info::{DebugInfo, ExtraTypeInfo};
 use ilspy_decompiler::il::reader::ReaderOptions;
 use ilspy_decompiler::typesystem::compilation::{Compilation, ModuleId, ModuleInput};
+use ilspy_decompiler::typesystem::members::MethodDefId;
 use ilspy_decompiler::typesystem::types::TypeSystem;
 
 static VERSION_C: &str = concat!(env!("CARGO_PKG_VERSION"), "\0");
@@ -164,6 +165,7 @@ pub extern "C" fn ilspy_session_new(ctx: *mut c_void) -> *mut FfiSession {
         Ok(Box::into_raw(Box::new(FfiSession {
             _ctx: ctx,
             _session: Session::new(),
+            compilation: OnceLock::new(),
         })))
     })
 }
@@ -431,6 +433,106 @@ pub unsafe extern "C" fn ilspy_debug_read_il(
 pub struct FfiSession {
     _ctx: *mut c_void,
     _session: Session,
+    /// Set once by `ilspy_session_load`. The images are borrowed from the host, which keeps
+    /// them alive for the session's lifetime; everything else was copied.
+    compilation: OnceLock<Compilation<'static>>,
+}
+
+/// `ilspy_il_prefix`: the number of IL transforms the engine serves (`IL_PREFIX`).
+#[unsafe(no_mangle)]
+pub extern "C" fn ilspy_il_prefix() -> u32 {
+    ilspy_decompiler::IL_PREFIX
+}
+
+/// Gives the session its compilation: the modules as for `ilspy_debug_type_listing`, main
+/// module first, under `TypeSystemOptions` `options`. Only the images must stay valid after
+/// the call, until the session is freed. A session is loaded at most once.
+///
+/// # Safety
+/// `session` must be a live session; `modules` must point to `count` valid `FfiModule`s
+/// whose images outlive the session.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn ilspy_session_load(
+    session: *mut FfiSession,
+    modules: *const FfiModule,
+    count: usize,
+    options: u32,
+) -> Status {
+    match run(|| {
+        // SAFETY: the caller guarantees a live session.
+        let session = unsafe { session.as_ref() }.ok_or("null session")?;
+        // SAFETY: the caller guarantees the module array; the images outlive the session.
+        let inputs = unsafe { module_inputs(modules, count, options) };
+        let comp = Compilation::new(inputs).map_err(|e| e.to_string())?;
+        session
+            .compilation
+            .set(comp)
+            .map_err(|_| "the session is already loaded".to_owned())
+    }) {
+        Ok(()) => Status::Ok,
+        Err(status) => status,
+    }
+}
+
+/// Seam 1: the function of the main module's method `method_token` after the first
+/// `il_prefix` IL transforms, as a one-entry wire v1 message (`wire::ilast::read_function`).
+/// `Unsupported` when `il_prefix` exceeds `ilspy_il_prefix()`. `reader_flags`, `debug_ctx`
+/// and `debug_info` as for `ilspy_debug_read_il`. Safe to call from several threads at once.
+///
+/// # Safety
+/// `session` must be a live, loaded session; `out` must be writable; `debug_info` must honor
+/// the `DebugInfoCallback` contract.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn ilspy_session_read_function(
+    session: *const FfiSession,
+    method_token: u32,
+    il_prefix: u32,
+    reader_flags: u32,
+    debug_ctx: *mut c_void,
+    debug_info: Option<DebugInfoCallback>,
+    out: *mut Buf,
+) -> Status {
+    // SAFETY: the caller guarantees `out` is writable.
+    unsafe { out.write(Buf::EMPTY) };
+    if il_prefix > ilspy_decompiler::IL_PREFIX {
+        set_last_error(format!(
+            "IL prefix {il_prefix} is beyond the engine's {}",
+            ilspy_decompiler::IL_PREFIX
+        ));
+        return Status::Unsupported;
+    }
+    let host = debug_info.map(|callback| HostDebugInfo {
+        ctx: debug_ctx,
+        callback,
+    });
+    let reader = ReaderOptions {
+        use_ref_locals_for_accurate_order_of_evaluation: reader_flags & 1 != 0,
+        debug_info: host.as_ref().map(|h| h as &dyn DebugInfo),
+    };
+    match run(|| {
+        // SAFETY: the caller guarantees a live session.
+        let session = unsafe { session.as_ref() }.ok_or("null session")?;
+        let comp = session
+            .compilation
+            .get()
+            .ok_or("the session has no compilation")?;
+        if method_token >> 24 != 0x06 {
+            return Err(format!("0x{method_token:08x} is not a MethodDef token"));
+        }
+        let method = MethodDefId {
+            module: ModuleId(0),
+            row: method_token & 0x00FF_FFFF,
+        };
+        let mut ts = TypeSystem::new(comp);
+        ilspy_decompiler::wire::ilast::read_function(&mut ts, method, reader)
+    }) {
+        Ok(bytes) => {
+            // SAFETY: as above.
+            unsafe { out.write(Buf::from_vec(bytes)) };
+            Status::Ok
+        }
+        Err(status) => status,
+    }
 }
 
 #[cfg(test)]

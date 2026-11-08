@@ -754,3 +754,26 @@ pub fn read_module(
     }
     w.finish()
 }
+
+/// Reads one method body of `module` and encodes it as a one-entry message in the
+/// `read_module` format; a failed read is an error for the caller, not an entry.
+pub fn read_function(
+    ts: &mut TypeSystem<'_, '_>,
+    method: crate::typesystem::members::MethodDefId,
+    options: crate::il::reader::ReaderOptions<'_>,
+) -> Result<Vec<u8>, String> {
+    use crate::metadata::tables::rows;
+    let md = &ts.comp.module(method.module).md;
+    let rva = md
+        .get::<rows::MethodDef>(method.row)
+        .map_err(|e| e.to_string())?
+        .rva;
+    if rva == 0 {
+        return Err(format!("MethodDef row {} has no body", method.row));
+    }
+    let body = md.method_body(rva).map_err(|e| e.to_string())?;
+    let f = crate::il::reader::read_il(ts, method, body, options).map_err(|e| e.to_string())?;
+    let mut w = ModuleWriter::new(ts);
+    w.function(method.row, &f)?;
+    Ok(w.finish())
+}

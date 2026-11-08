@@ -147,7 +147,7 @@ fatal.
 
 `CSharp/CSharpDecompiler.cs` is the only diverging copy. It is `public class`, not partial, and
 the original must not change, so the shim carries its own copy with two marked blocks:
-`RUST-SEAM-1` around `function.RunTransforms(...)` (line 2440 of the original) and
+`RUST-SEAM-1` around `function.RunTransforms(...)` (line 2440 of the original; as built, three blocks, section 3.22) and
 `RUST-SEAM-2` around the AST transform loop. A shim test strips the marked blocks and asserts
 byte equality with the original file, so upstream changes to `CSharpDecompiler.cs` show up as
 a red test rather than a silent fork.
@@ -788,6 +788,71 @@ A managed quirk this step keeps: PDB tuple element names never reach a local, be
 both sides. `WriteTo` does not print tuple names, so the gate's printout now adds one line per
 variable with its full type. That makes tuple names and `dynamic` part of the comparison in
 both `IlAstReadEquality` variants.
+
+### 3.22 Seam 1 at N = 0 (item 6)
+
+**The seam blocks.** The drift test only allows code to be added inside `RUST-SEAM` blocks,
+never to replace a line, and `dotnet format` re-indents a statement placed under a brace-less
+`if` or `else`. So the original `function.RunTransforms(SelectILTransforms(...), context)`
+line cannot be made conditional. Seam 1 therefore has three blocks:
+- a field `rustSuspendedILTransforms`;
+- the handover before that line;
+- a restore after it.
+
+When the engine serves a method, the handover does four things:
+- replaces `function` with the materialized engine function;
+- moves the declaration's `ILFunction` and parameter annotations to it;
+- rebuilds the context with `new ILTransformContext(context, function)`;
+- runs the remaining managed transforms.
+
+It then swaps the decompiler's `ilTransforms` for an empty list, so the original line only
+checks invariants, and the restore puts the list back. If a member throws between the swap and
+the restore, the next member's handover restores the list first. The drift test now checks the
+four blocks in file order (1, 2, 1, 1).
+
+**Where a handover may happen.** An IL prefix counts the pipeline's leaves:
+- a `BlockILTransform` counts its pre-order and post-order transforms;
+- a `StatementTransform` counts its children;
+- every other transform counts as one.
+
+The standard pipeline has 59 leaves: the 58 items 7 to 64 minus the FORK item 32, plus two,
+because item 56 covers three transforms. A block group interleaves its leaves per block, so the
+engine can only take over at a boundary between top-level transforms (`IlTransformPrefix.
+TopLevelBoundary`). The `IlAstPrefixEquality` harness instead truncates groups, so every leaf
+has its own index for comparison.
+
+**When the seam falls back.** It serves only when the leading transforms of the decompiler's
+list have the leaf types of `CSharpDecompiler.GetILTransforms()`. It compares type names, not
+transform options. With `RecordSteps` set (the Debug Steps pane) it asks for prefix 0, so every
+step stays visible. A type system whose main module has no in-memory PE image falls back, and
+each fallback is counted. Strict mode (`ILSPY_RUST_STRICT=1`) turns a fallback into a
+`RustEngineException`. An engine error or panic surfaces the same way, through the existing
+per-member error comment.
+
+**The session.** `RustEngine` keeps one engine session per type system in a
+`ConditionalWeakTable`. `ilspy_session_load` builds the compilation once. The engine copies
+everything except the images, which the `PEFile`s keep alive. The session can serve threads in
+parallel because `Compilation` is `Sync`, and each call gets its own `TypeSystem`. The ratchet
+run found that `CSharpDecompiler(string fileName)` loads references with
+`PEStreamOptions.PrefetchMetadata`, which leaves no whole image in memory. Such a reference is
+now passed as its bare metadata block, and the engine recognizes it by the `BSJB` signature.
+The main module still needs its whole image, for the method bodies.
+
+**Known costs at N = 0.** The managed reader still runs before the seam, because the handover
+can only come after it. Each method is therefore read twice, and a method the managed reader
+rejects never reaches the engine.
+
+**The ratchet.** `rust/port-status.json` is `il_prefix` 0, `ast_prefix` 0 and
+`methods_served_pct` 100.0. That share is measured by decompiling the shim test assembly and
+ICSharpCode.ILSpyX. The committed values must equal the measured ones, so a drop fails, and so
+does a rise that has not been committed. `rust/ilast-divergence-allowlist.json` starts empty.
+
+**Solution test runs.** In `dotnet test --solution`, ICSharpCode.Decompiler.Tests recompiles the
+fixtures while the shim suite reads them. The shim tests used to memory-map the fixtures and
+never release them, which made `csc` fail. They now read each fixture into memory, retrying
+while the compiler holds the file. One UI test,
+`SwitchListAndDeleteAllTests.Ctrl_A_Then_Delete_Drops_The_Selection_History_And_Tab`, hangs on
+this machine on `master` as well, in Avalonia font fallback. The gate run excludes it.
 
 ## 4. Alternatives evaluated
 

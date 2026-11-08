@@ -24,6 +24,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
+using System.Reflection.PortableExecutable;
 using System.Text;
 
 using ICSharpCode.Decompiler.CSharp;
@@ -47,8 +48,11 @@ public class TypeSystemListingEqualityTests
 {
 	internal static DecompilerTypeSystem Load(string path, TypeSystemOptions options)
 	{
-		var file = new PEFile(path);
-		var resolver = new UniversalAssemblyResolver(path, false, file.DetectTargetFrameworkId());
+		// Prefetched images release their files at once: ICSharpCode.Decompiler.Tests recompiles
+		// the fixtures while this suite reads them when both run in one solution test run.
+		var file = new PEFile(path, new MemoryStream(Corpus.ReadFile(path)), PEStreamOptions.PrefetchEntireImage);
+		var resolver = new UniversalAssemblyResolver(path, false, file.DetectTargetFrameworkId(),
+			streamOptions: PEStreamOptions.PrefetchMetadata);
 		return new DecompilerTypeSystem(file, resolver, options);
 	}
 

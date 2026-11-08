@@ -25,6 +25,7 @@ pub struct TypeDefId {
 
 /// One module as the host describes it.
 pub struct ModuleInput<'a> {
+    /// The PE image, or only its metadata block (starting with `BSJB`).
     pub image: &'a [u8],
     /// The simple assembly name (empty for a netmodule).
     pub assembly_name: String,
@@ -100,7 +101,12 @@ impl<'a> Compilation<'a> {
             .into_iter()
             .map(|input| {
                 Ok(Module {
-                    md: Metadata::parse(input.image)?,
+                    // A host without the whole image passes the bare metadata block.
+                    md: if input.image.starts_with(b"BSJB") {
+                        Metadata::parse_metadata_block(input.image)?
+                    } else {
+                        Metadata::parse(input.image)?
+                    },
                     assembly_name: input.assembly_name,
                     assembly_refs: input.assembly_refs,
                     module_refs: input.module_refs,

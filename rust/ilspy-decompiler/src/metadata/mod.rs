@@ -24,7 +24,8 @@ use bytes::Bytes;
 /// A parsed module. Borrows the image; nothing is copied.
 #[derive(Clone, Debug)]
 pub struct Metadata<'a> {
-    pub pe: PeImage<'a>,
+    /// None for a module the host passed as a bare metadata block (no method bodies).
+    pub pe: Option<PeImage<'a>>,
     pub version: String,
     pub strings: StringHeap<'a>,
     pub blobs: BlobHeap<'a>,
@@ -37,6 +38,16 @@ impl<'a> Metadata<'a> {
     pub fn parse(image: &'a [u8]) -> Result<Self> {
         let pe = PeImage::parse(image)?;
         let root = pe.directory_data(pe.cli.metadata)?;
+        Self::from_root(root, Some(pe))
+    }
+
+    /// A module from its metadata block alone (the `BSJB` root), for references whose host
+    /// image is not in memory. Method bodies are then unavailable.
+    pub fn parse_metadata_block(root: &'a [u8]) -> Result<Self> {
+        Self::from_root(root, None)
+    }
+
+    fn from_root(root: &'a [u8], pe: Option<PeImage<'a>>) -> Result<Self> {
         let mut b = Bytes::new(root);
         if b.u32()? != 0x424A_5342 {
             return Err(Error::Malformed("missing metadata signature"));
@@ -113,7 +124,11 @@ impl<'a> Metadata<'a> {
 
     /// The method body at `rva`.
     pub fn method_body(&self, rva: u32) -> Result<MethodBody<'a>> {
-        MethodBody::parse(self.pe.section_data(rva)?)
+        let pe = self
+            .pe
+            .as_ref()
+            .ok_or(Error::Malformed("no PE image for method bodies"))?;
+        MethodBody::parse(pe.section_data(rva)?)
     }
 
     /// The list owned by `row` of `owner`, where `column` holds each owner's first list row,

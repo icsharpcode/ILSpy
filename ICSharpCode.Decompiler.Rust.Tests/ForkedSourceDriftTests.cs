@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System.IO;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 
@@ -47,7 +48,10 @@ public class ForkedSourceDriftTests
 		string original = ReadNormalized(Path.Combine(root, "ICSharpCode.Decompiler", "CSharp", "CSharpDecompiler.cs"));
 		string fork = ReadNormalized(Path.Combine(root, "ICSharpCode.Decompiler.Rust", "CSharp", "CSharpDecompiler.cs"));
 
-		Assert.That(SeamBlock.Matches(fork), Has.Count.EqualTo(2), "expected the RUST-SEAM-1 and RUST-SEAM-2 blocks");
+		// Seam 1 has three blocks: a field, the handover before the RunTransforms call and the
+		// restore after it. Seam 2 has one.
+		var blocks = SeamBlock.Matches(fork);
+		Assert.That(blocks.Select(m => m.Groups["n"].Value), Is.EqualTo(new[] { "1", "2", "1", "1" }), "the RUST-SEAM blocks in file order");
 		Assert.That(SeamBlock.Replace(fork, ""), Is.EqualTo(original));
 	}
 }

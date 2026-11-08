@@ -2958,3 +2958,17 @@ fn generic_delegate_reference_type_constraints() {
     assert_eq!(ts.is_reference_type(t0), None);
     assert_eq!(ts.is_reference_type(t1), Some(true));
 }
+
+/// A reference passed as its bare metadata block types the same as its full image.
+#[test]
+fn metadata_block_references_list_like_images() {
+    let modules = [
+        (common::test_assembly(), options::DEFAULT),
+        (common::mscorlib(), options::DEFAULT),
+    ];
+    let full = common::compilation(&modules);
+    let blocks = common::compilation_with_blocks(&modules, &[1]);
+    assert!(blocks.module(ModuleId(1)).md.pe.is_none());
+    use ilspy_decompiler::typesystem::listing::listing;
+    assert_eq!(listing(&blocks), listing(&full));
+}
