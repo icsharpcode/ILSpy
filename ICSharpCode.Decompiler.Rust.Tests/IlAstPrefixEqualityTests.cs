@@ -171,9 +171,9 @@ public class IlAstPrefixEqualityTests
 	[Test]
 	public void EngineSettingsAreDecompilerSettings()
 	{
-		Assert.That(RustSettings.Names, Is.EqualTo(new[] { "RemoveDeadStores", "SortSwitchSections", "PatternBasedFixedStatement" }));
-		var settings = new DecompilerSettings { RemoveDeadStores = false, SortSwitchSections = true, PatternBasedFixedStatement = false };
-		Assert.That(RustSettings.Bits(settings), Is.EqualTo(2UL));
+		Assert.That(RustSettings.Names, Is.EqualTo(new[] { "RemoveDeadStores", "SortSwitchSections", "PatternBasedFixedStatement", "YieldReturn" }));
+		var settings = new DecompilerSettings { RemoveDeadStores = false, SortSwitchSections = true, PatternBasedFixedStatement = false, YieldReturn = true };
+		Assert.That(RustSettings.Bits(settings), Is.EqualTo(10UL));
 	}
 
 	static void AssertPrefixEqual(string path, DecompilerSettings settings)

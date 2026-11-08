@@ -4,6 +4,7 @@ pub mod ast;
 mod block_builder;
 pub mod control_flow;
 pub mod debug_info;
+pub mod import;
 pub mod opcodes;
 mod patterns;
 pub mod reader;

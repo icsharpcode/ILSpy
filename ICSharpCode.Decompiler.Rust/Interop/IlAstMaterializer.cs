@@ -276,11 +276,17 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 			return new IfInstruction(condition, trueInst, falseInst, type != 0 ? TypeAt(type - 1) : null);
 		}
 
+		ILInstruction LdMemberToken()
+		{
+			var token = Member(out var memberContext);
+			return new LdMemberToken(mainModule.ResolveEntity(token, memberContext) as IMember
+				?? throw new InvalidOperationException("ldtoken operand is not a member"));
+		}
+
 		ILInstruction GetPinnableReference()
 		{
 			var type = Type();
-			int token = (int)UVar();
-			var method = token == 0 ? null : mainModule.ResolveMethod(MetadataTokens.EntityHandle(token), context);
+			var method = Bool() ? Method() : null;
 			return new GetPinnableReference(Node(), type, method);
 		}
 
@@ -292,6 +298,8 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 			int localSignatureLength = Len();
 			int asyncReturnType = Len();
 			int helperVariableCount = Len();
+			byte stateMachineFlags = U8();
+			var moveNextMethod = Bool() ? Method() : null;
 			variables = new ILVariable[Len()];
 			for (int i = 0; i < variables.Length; i++)
 				variables[i] = ReadVariable();
@@ -316,6 +324,10 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				function.AsyncReturnType = TypeAt(asyncReturnType - 1);
 			function.AddRef();
 			helperVariableCountField.SetValue(function, helperVariableCount);
+			function.IsIterator = (stateMachineFlags & 1) != 0;
+			function.StateMachineCompiledWithMono = (stateMachineFlags & 2) != 0;
+			function.StateMachineCompiledWithLegacyVisualBasic = (stateMachineFlags & 4) != 0;
+			function.MoveNextMethod = moveNextMethod;
 			function.SequencePointCandidates = sequencePoints;
 			function.Warnings.AddRange(warnings);
 			return function;
@@ -337,16 +349,39 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 			}
 			v.IsRefReadOnly = (flags & 8) != 0;
 			v.RemoveIfRedundant = (flags & 16) != 0;
+			if (Bool())
+				v.StateMachineField = Field();
 			return v;
 		}
 
 		ILVariable Variable() => variables[Len()];
 
-		IMethod Method() => mainModule.ResolveMethod(MetadataTokens.EntityHandle((int)Token()), context);
+		/// <summary>
+		/// A member token and the context it resolves in: the function's own, or the state machine
+		/// context the yield-return and async decompilers read compiler-generated methods in (the
+		/// function's class and method type parameters as class type parameters).
+		/// </summary>
+		EntityHandle Member(out GenericContext memberContext)
+		{
+			ulong v = UVar();
+			memberContext = (v & 1) == 0 ? context : new GenericContext(
+				classTypeParameters: (context.ClassTypeParameters ?? []).Concat(context.MethodTypeParameters ?? []).ToArray(),
+				methodTypeParameters: null);
+			return MetadataTokens.EntityHandle(checked((int)(v >> 1)));
+		}
+
+		IMethod Method()
+		{
+			var token = Member(out var memberContext);
+			return mainModule.ResolveMethod(token, memberContext);
+		}
 
 		IField Field()
-			=> mainModule.ResolveEntity(MetadataTokens.EntityHandle((int)Token()), context) as IField
+		{
+			var token = Member(out var memberContext);
+			return mainModule.ResolveEntity(token, memberContext) as IField
 				?? throw new InvalidOperationException("Field token does not resolve to a field");
+		}
 
 		ILInstruction[] Nodes()
 		{
@@ -410,8 +445,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				35 => new LdFtn(Method()),
 				36 => LdVirtFtn(),
 				37 => new LdTypeToken(Type()),
-				38 => new LdMemberToken(mainModule.ResolveEntity(MetadataTokens.EntityHandle((int)Token()), context) as IMember
-					?? throw new InvalidOperationException("ldtoken operand is not a member")),
+				38 => LdMemberToken(),
 				39 => new LocAlloc(Node()),
 				40 => Cpblk(),
 				41 => Initblk(),
@@ -437,6 +471,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				61 => WithType((a, t) => new RefAnyValue(a, t)),
 				62 => new PinnedRegion(Variable(), Node(), Node()),
 				63 => GetPinnableReference(),
+				64 => new YieldReturn(Node()),
 				_ => throw new InvalidOperationException($"Unknown wire opcode {op}"),
 			};
 			inst.SetILRange(range);

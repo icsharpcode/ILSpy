@@ -123,10 +123,35 @@ pub enum TypeData {
 }
 
 /// The type parameters in scope, as `(owner, count)`.
-#[derive(Clone, Copy, Debug, Default)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct GenericContext {
     pub class: Option<(TypeDefId, u32)>,
     pub method: Option<(super::members::MethodDefId, u32)>,
+    /// Class type parameters after the class's own map to these method type parameters:
+    /// the context the state machine decompilers read a compiler-generated class's methods in
+    /// (`new GenericContext(classTypeParameters: class ++ method, methodTypeParameters: null)`).
+    pub class_tail: Option<(super::members::MethodDefId, u32)>,
+}
+
+impl GenericContext {
+    /// The owner and index of class type parameter `index`.
+    pub fn class_param(&self, index: u32) -> Option<ClassParam> {
+        let own = self.class.map_or(0, |(_, count)| count);
+        if index < own {
+            return self.class.map(|(def, _)| ClassParam::Class(def, index));
+        }
+        match self.class_tail {
+            Some((m, count)) if index - own < count => Some(ClassParam::Method(m, index - own)),
+            _ => None,
+        }
+    }
+}
+
+/// Where a class type parameter of a `GenericContext` comes from.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum ClassParam {
+    Class(TypeDefId, u32),
+    Method(super::members::MethodDefId, u32),
 }
 
 pub struct TypeSystem<'c, 'a> {
@@ -398,16 +423,20 @@ impl<'c, 'a> TypeSystem<'c, 'a> {
                     self.intern(TypeData::Inst { generic, args })
                 }
             }
-            SigType::TypeParam(index) => {
-                let owner = match ctx.class {
-                    Some((def, count)) if *index < count => self.class_param_owner(def, *index),
-                    _ => TypeParamOwner::DummyType,
-                };
-                self.intern(TypeData::TypeParam {
-                    owner,
+            SigType::TypeParam(index) => match ctx.class_param(*index) {
+                Some(ClassParam::Class(def, i)) => {
+                    let owner = self.class_param_owner(def, i);
+                    self.intern(TypeData::TypeParam { owner, index: i })
+                }
+                Some(ClassParam::Method(m, i)) => self.intern(TypeData::TypeParam {
+                    owner: TypeParamOwner::Method(m),
+                    index: i,
+                }),
+                None => self.intern(TypeData::TypeParam {
+                    owner: TypeParamOwner::DummyType,
                     index: *index,
-                })
-            }
+                }),
+            },
             SigType::MethodParam(index) => {
                 let owner = match ctx.method {
                     Some((m, count)) if *index < count => TypeParamOwner::Method(m),

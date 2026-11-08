@@ -89,11 +89,35 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 			entityDecl.RemoveAnnotations<ILFunction>();
 			foreach (var parameter in entityDecl.GetChildren(Slots.Parameter))
 				parameter.RemoveAnnotations<ILVariableResolveResult>();
-			CSharpDecompiler.AddAnnotationsToDeclaration(method, entityDecl, rustFunction!, parameterOffset);
+			AddAnnotationsToDeclaration(method, entityDecl, rustFunction!, parameterOffset);
 			function = rustFunction!;
 			context = new ILTransformContext(context, function);
 			Interlocked.Increment(ref served);
 			return pipeline.Skip(topLevelCount);
+		}
+
+		/// <summary>
+		/// <see cref="CSharpDecompiler.AddAnnotationsToDeclaration"/> for a function after its IL
+		/// prefix. A state machine decompiler may have moved the parameters of the compiler-generated
+		/// methods (another <c>this</c>) into the function; the reader's own parameters come first in
+		/// the variable list, so the first parameter per index is the method's.
+		/// </summary>
+		static void AddAnnotationsToDeclaration(IMethod method, EntityDeclaration entityDecl, ILFunction function, int parameterOffset)
+		{
+			var parameters = new Dictionary<int, ILVariable>();
+			foreach (var v in function.Variables)
+			{
+				if (v.Kind == VariableKind.Parameter && !parameters.ContainsKey(v.Index!.Value))
+					parameters.Add(v.Index.Value, v);
+			}
+			int i = parameterOffset;
+			foreach (var parameter in entityDecl.GetChildren(Slots.Parameter))
+			{
+				if (parameters.TryGetValue(i, out var v))
+					parameter.AddAnnotation(new ILVariableResolveResult(v, method.Parameters[i].Type));
+				i++;
+			}
+			entityDecl.AddAnnotation(function);
 		}
 
 		static IEnumerable<IILTransform>? Fallback(string? reason)

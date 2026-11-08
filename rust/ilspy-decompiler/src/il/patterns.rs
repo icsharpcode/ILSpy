@@ -204,3 +204,76 @@ impl Function {
                 .all(|(&x, &y)| self.structurally_equal(x, y))
     }
 }
+
+impl Function {
+    /// `ILVariable.IsThis`.
+    pub fn is_this(&self, v: VarId) -> bool {
+        let var = self.var(v);
+        var.kind == super::ast::VariableKind::Parameter && var.index.is_some_and(|i| i < 0)
+    }
+
+    /// `MatchLdThis`.
+    pub fn match_ld_this(&self, id: NodeId) -> bool {
+        self.match_ldloc(id).is_some_and(|v| self.is_this(v))
+    }
+
+    /// `MatchStFld`: `stobj(ldflda F(target), value)`, neither volatile nor unaligned.
+    pub fn match_stfld(&self, id: NodeId) -> Option<(NodeId, &super::ast::FieldOperand, NodeId)> {
+        let Inst::StObj {
+            target: address,
+            value,
+            is_volatile: false,
+            unaligned: 0,
+            ..
+        } = *self.inst(id)
+        else {
+            return None;
+        };
+        match self.inst(address) {
+            Inst::LdFlda { target, field, .. } => Some((*target, field, value)),
+            _ => None,
+        }
+    }
+
+    /// `MatchLdFld`: `ldobj(ldflda F(target))`, neither volatile nor unaligned. For a field of
+    /// a value type, a target `addressof(x)` stands for `x`.
+    pub fn match_ldfld(
+        &self,
+        ts: &mut crate::typesystem::types::TypeSystem<'_, '_>,
+        id: NodeId,
+    ) -> Option<(NodeId, &super::ast::FieldOperand)> {
+        let Inst::LdObj {
+            target: address,
+            is_volatile: false,
+            unaligned: 0,
+            ..
+        } = *self.inst(id)
+        else {
+            return None;
+        };
+        let Inst::LdFlda { target, field, .. } = self.inst(address) else {
+            return None;
+        };
+        let reference = field
+            .field
+            .declaring
+            .is_some_and(|d| ts.is_reference_type(d) == Some(true));
+        let target = match self.inst(*target) {
+            Inst::AddressOf { value, .. } if !reference => *value,
+            _ => *target,
+        };
+        Some((target, field))
+    }
+
+    /// `MatchDefaultOrNullOrZero`.
+    pub fn match_default_or_null_or_zero(&self, id: NodeId) -> bool {
+        match *self.inst(id) {
+            Inst::LdNull | Inst::DefaultValue { .. } => true,
+            Inst::LdcI4 { value } => value == 0,
+            Inst::LdcI8 { value } => value == 0,
+            Inst::LdcF4 { bits } => f32::from_bits(bits) == 0.0,
+            Inst::LdcF8 { bits } => f64::from_bits(bits) == 0.0,
+            _ => false,
+        }
+    }
+}

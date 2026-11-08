@@ -192,6 +192,7 @@ impl<S: State> Flow<S> {
                 self.visit(a, f, value);
                 a.handle_store(self, f, id, var);
             }
+            &Inst::YieldReturn { value } => self.visit(a, f, value),
             // `ReachingDefinitionsVisitor.VisitPinnedRegion`.
             &Inst::PinnedRegion {
                 variable,

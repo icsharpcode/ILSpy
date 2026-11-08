@@ -1007,6 +1007,63 @@ Instruction equality (`ILInstruction.Match(...).Success` without pattern nodes) 
 `Function::structurally_equal`. It compares the kind and the operands, then the children
 recursively.
 
+### 3.29 YieldReturnDecompiler (item 13, IL prefix 7)
+
+**Several functions, several arenas.** The managed transform reads the enumerator's
+constructor, `get_Current`, `GetEnumerator`, `Dispose`, `MoveNext` and the finally methods
+into separate `ILFunction`s, then moves instructions and variables between them. In Rust
+each of these reads gets an arena of its own: `read_il_in_context` with the state-machine
+generic context (lecture 3.28's `class_tail`), followed by `run_early_il_transforms`.
+`MoveNext()` is converted inside its own arena, and its old tree is released there. Then
+`Function::import` appends the arena to the iterator's arena by shifting node and variable
+ids. Finally bodies are imported when a try-finally takes them.
+
+The reference counts match the managed ones:
+- An instruction that moves into the new body is still listed by its old block. Releasing
+  the old root disconnects it.
+- Setting the new body connects it again, in post-order, so the variable lists come out in
+  the managed order.
+- Mono's inlined finally functions are imported without a release, as the managed code
+  never releases them.
+
+**Supporting ports.**
+- `SymbolicExecution`, `StateRangeAnalysis` (all four modes), `LongDict` and
+  `SwitchAnalysis.MakeSetWhereComparisonIsTrue`.
+- `CopyPropagation.Propagate`, which the transform calls on its own; the pipeline step comes
+  later.
+- `OrderedMap`, which mirrors `Dictionary` enumeration order (insertion order, removals keep
+  the rest in order).
+- A raw-IL check for `TransformDisplayClassUsage.ValidateConstructor`. It tells Mono's
+  parameterless enumerator constructor from legacy Visual Basic's. Only the parameterless
+  form is reachable from a `newobj` without arguments.
+
+**Wire v1 additions.**
+- `YieldReturn` (opcode 64).
+- The iterator flags byte and the `MoveNext` method in the header.
+- Each variable's `StateMachineField`.
+- Member tokens carry a state-machine-context bit, so the host resolves them in the
+  concatenated generic context.
+
+**New engine setting.** `YieldReturn`.
+
+**Managed semantics the gate exposed in shared code.**
+- `ILReader` with an explicit generic context specializes the method for it. `this` of
+  `MoveNext()` is `d__N<``0>`, not the class's own `d__N<`0>`. `Reader::new` now calls
+  `specialize` the same way.
+- ILInlining always inlines into `yield return`, and always inlines a load of a variable
+  that has a state machine field into a variable that has none.
+
+**Seam 1 annotations.** After this step an iterator function also holds `MoveNext()`'s
+`this` parameter, as in the managed pipeline. The managed code annotates the declaration's
+parameters before any transform runs, so it never meets the duplicate index -1. The seam
+annotates after the prefix, so `RustSeam1` keeps the first parameter per index (the reader's
+own come first) instead of calling `AddAnnotationsToDeclaration`, which maps by index and
+throws on the duplicate.
+
+**Debug-only differences.** In DEBUG builds the managed code inserts commented `nop`s (state
+ranges, `state == N`). The early transforms at the end of the step delete them, so the port
+leaves them out.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

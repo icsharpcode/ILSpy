@@ -869,6 +869,7 @@ fn new_pinned_region_local(
         uses_initial_value: false,
         is_ref_read_only: false,
         remove_if_redundant: false,
+        state_machine_field: None,
         load_instructions: Vec::new(),
         store_instructions: Vec::new(),
         address_instructions: Vec::new(),

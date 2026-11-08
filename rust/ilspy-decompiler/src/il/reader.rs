@@ -18,7 +18,9 @@ use crate::typesystem::known::KnownTypeCode;
 use crate::typesystem::members::{MethodDefId, RefKind};
 use crate::typesystem::options;
 use crate::typesystem::resolve::{FieldOrigin, ResolvedField, ResolvedMethod};
-use crate::typesystem::types::{GenericContext, Nullability, TypeData, TypeId, TypeSystem};
+use crate::typesystem::types::{
+    ClassParam, GenericContext, Nullability, TypeData, TypeId, TypeParamOwner, TypeSystem,
+};
 use crate::util::bitset::BitSet;
 use crate::util::interval::Interval;
 use crate::util::interval::LongInterval;
@@ -58,6 +60,8 @@ struct Decoded {
 
 /// The result of reading a method: the function and what `ILReader.ReadIL` reports besides.
 pub struct ReadFunction {
+    /// `ILFunction.Method`.
+    pub method: MethodDefId,
     /// `ILFunction.AsyncReturnType`: the unpacked task type of a runtime async method.
     pub async_return_type: Option<TypeId>,
     pub function: Function,
@@ -69,6 +73,12 @@ pub struct ReadFunction {
     pub sequence_point_candidates: Vec<i32>,
     /// `ILFunction.helperVariableCount`: how many `I_n` variables `RegisterVariable` named.
     pub helper_variable_count: u32,
+    /// `IsIterator`, `StateMachineCompiledWithMono`, `StateMachineCompiledWithLegacyVisualBasic`.
+    pub is_iterator: bool,
+    pub state_machine_compiled_with_mono: bool,
+    pub state_machine_compiled_with_legacy_visual_basic: bool,
+    /// `MoveNextMethod`.
+    pub move_next_method: Option<MethodOperand>,
 }
 
 /// The kind of a type as the reader distinguishes it (`IType.Kind`).
@@ -232,7 +242,11 @@ impl<'r, 'c, 'a> Reader<'r, 'c, 'a> {
     fn read_method(&mut self) -> Result<MethodOperand> {
         let token = self.read_token()?;
         let method = self.ts.resolve_method(self.module, token, self.ctx)?;
-        Ok(MethodOperand { token, method })
+        Ok(MethodOperand {
+            token,
+            method,
+            state_machine_context: self.ctx.class_tail.is_some(),
+        })
     }
 
     /// `ResolveEntity(token) as IField`.
@@ -283,7 +297,11 @@ impl<'r, 'c, 'a> Reader<'r, 'c, 'a> {
         let field = self
             .resolve_field(token)?
             .ok_or(Error::Malformed("Invalid field token"))?;
-        Ok(FieldOperand { token, field })
+        Ok(FieldOperand {
+            token,
+            field,
+            state_machine_context: self.ctx.class_tail.is_some(),
+        })
     }
 
     fn new_variable(
@@ -305,6 +323,7 @@ impl<'r, 'c, 'a> Reader<'r, 'c, 'a> {
             uses_initial_value: parameter,
             is_ref_read_only: false,
             remove_if_redundant: false,
+            state_machine_field: None,
             load_instructions: Vec::new(),
             store_instructions: Vec::new(),
             address_instructions: Vec::new(),
@@ -317,10 +336,31 @@ impl<'r, 'c, 'a> Reader<'r, 'c, 'a> {
         method_id: MethodDefId,
         body: MethodBody<'a>,
         options: ReaderOptions<'r>,
+        context: Option<GenericContext>,
     ) -> Result<Self> {
         let module = method_id.module;
         let method = ts.method_definition(method_id)?;
-        let ctx = ts.method_context(method_id)?;
+        let (method, ctx) = match context {
+            // An explicit context specializes the method for it (`Specialize(ToSubstitution())`).
+            Some(c) => {
+                let count = c.class.map_or(0, |(_, n)| n) + c.class_tail.map_or(0, |(_, n)| n);
+                let args = (0..count)
+                    .map(|i| match c.class_param(i) {
+                        Some(ClassParam::Class(def, i)) => {
+                            let owner = ts.class_param_owner(def, i);
+                            ts.intern(TypeData::TypeParam { owner, index: i })
+                        }
+                        Some(ClassParam::Method(m, i)) => ts.intern(TypeData::TypeParam {
+                            owner: TypeParamOwner::Method(m),
+                            index: i,
+                        }),
+                        None => unreachable!("index below the context's count"),
+                    })
+                    .collect();
+                (ts.specialize(method, Some(args), None), c)
+            }
+            None => (method, ts.method_context(method_id)?),
+        };
         let impl_flags = ts
             .comp
             .module(module)
@@ -2545,18 +2585,30 @@ impl<'r, 'c, 'a> Reader<'r, 'c, 'a> {
             0x06 | 0x2B => {
                 let method = self.ts.resolve_method(self.module, token, self.ctx)?;
                 Ok(self.add(Inst::LdMemberToken {
-                    member: MemberOperand::Method(MethodOperand { token, method }),
+                    member: MemberOperand::Method(MethodOperand {
+                        token,
+                        method,
+                        state_machine_context: self.ctx.class_tail.is_some(),
+                    }),
                 }))
             }
             0x04 | 0x0A => {
                 if let Some(field) = self.resolve_field(token)? {
                     return Ok(self.add(Inst::LdMemberToken {
-                        member: MemberOperand::Field(FieldOperand { token, field }),
+                        member: MemberOperand::Field(FieldOperand {
+                            token,
+                            field,
+                            state_machine_context: self.ctx.class_tail.is_some(),
+                        }),
                     }));
                 }
                 let method = self.ts.resolve_method(self.module, token, self.ctx)?;
                 Ok(self.add(Inst::LdMemberToken {
-                    member: MemberOperand::Method(MethodOperand { token, method }),
+                    member: MemberOperand::Method(MethodOperand {
+                        token,
+                        method,
+                        state_machine_context: self.ctx.class_tail.is_some(),
+                    }),
                 }))
             }
             _ => Err(Error::Malformed(
@@ -2629,6 +2681,11 @@ impl<'r, 'c, 'a> Reader<'r, 'c, 'a> {
             warnings,
             sequence_point_candidates: self.sequence_point_candidates,
             helper_variable_count: 0,
+            method: self.method_id,
+            is_iterator: false,
+            state_machine_compiled_with_mono: false,
+            state_machine_compiled_with_legacy_visual_basic: false,
+            move_next_method: None,
         })
     }
 }
@@ -2640,7 +2697,19 @@ pub fn read_il<'c, 'a>(
     body: MethodBody<'a>,
     options: ReaderOptions<'_>,
 ) -> Result<ReadFunction> {
-    let mut reader = Reader::new(ts, method, body, options)?;
+    read_il_in_context(ts, method, body, options, None)
+}
+
+/// `ReadIL` with an explicit generic context (`None`: the method's own), as the state machine
+/// decompilers use for the methods of a compiler-generated class.
+pub fn read_il_in_context<'c, 'a>(
+    ts: &mut TypeSystem<'c, 'a>,
+    method: MethodDefId,
+    body: MethodBody<'a>,
+    options: ReaderOptions<'_>,
+    context: Option<GenericContext>,
+) -> Result<ReadFunction> {
+    let mut reader = Reader::new(ts, method, body, options, context)?;
     reader.read_instructions()?;
     reader.finish()
 }

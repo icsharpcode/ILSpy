@@ -83,6 +83,7 @@ mod op {
     pub const REF_ANY_VALUE: u8 = 61;
     pub const PINNED_REGION: u8 = 62;
     pub const GET_PINNABLE_REFERENCE: u8 = 63;
+    pub const YIELD_RETURN: u8 = 64;
 }
 
 /// Writes every function of one module.
@@ -161,6 +162,13 @@ impl FunctionWriter<'_, '_, '_, '_> {
         self.out.uvar(u64::from(i));
     }
 
+    /// A member token, shifted left by one; bit 0 says the host resolves it in the state
+    /// machine context (the function's class and method type parameters as class parameters).
+    fn member(&mut self, token: u32, state_machine_context: bool) {
+        self.out
+            .uvar(u64::from(token) << 1 | u64::from(state_machine_context));
+    }
+
     /// An optional type as its index + 1, 0 for none.
     fn opt_ty(&mut self, t: Option<TypeId>) {
         match t {
@@ -236,6 +244,13 @@ impl FunctionWriter<'_, '_, '_, '_> {
             None => self.out.u8(0),
         }
         self.out.uvar(u64::from(r.helper_variable_count));
+        self.out.u8(u8::from(r.is_iterator)
+            | u8::from(r.state_machine_compiled_with_mono) << 1
+            | u8::from(r.state_machine_compiled_with_legacy_visual_basic) << 2);
+        self.out.bool(r.move_next_method.is_some());
+        if let Some(m) = &r.move_next_method {
+            self.member(m.token, m.state_machine_context);
+        }
         self.out.len(r.variables.len());
         for &v in &r.variables {
             let var = self.f.var(v);
@@ -255,6 +270,11 @@ impl FunctionWriter<'_, '_, '_, '_> {
                 | u8::from(var.uses_initial_value) << 2
                 | u8::from(var.is_ref_read_only) << 3
                 | u8::from(var.remove_if_redundant) << 4);
+            self.out.bool(var.state_machine_field.is_some());
+            if let Some(field) = &var.state_machine_field {
+                let (token, state_machine) = (field.token, field.state_machine_context);
+                self.member(token, state_machine);
+            }
         }
         self.out.len(r.warnings.len());
         for w in &r.warnings {
@@ -476,7 +496,7 @@ impl FunctionWriter<'_, '_, '_, '_> {
                     _ => op::NEW_OBJ,
                 };
                 tag(t, &mut self.out);
-                self.out.uvar(u64::from(c.method.token));
+                self.member(c.method.token, c.method.state_machine_context);
                 self.out.u8(u8::from(c.is_tail)
                     | u8::from(c.il_stack_was_empty) << 1
                     | u8::from(c.constrained_to.is_some()) << 2);
@@ -569,11 +589,11 @@ impl FunctionWriter<'_, '_, '_, '_> {
             Inst::LdNull => tag(op::LD_NULL, &mut self.out),
             Inst::LdFtn { method } => {
                 tag(op::LD_FTN, &mut self.out);
-                self.out.uvar(u64::from(method.token));
+                self.member(method.token, method.state_machine_context);
             }
             Inst::LdVirtFtn { arg, method } => {
                 tag(op::LD_VIRT_FTN, &mut self.out);
-                self.out.uvar(u64::from(method.token));
+                self.member(method.token, method.state_machine_context);
                 self.node(arg)?;
             }
             Inst::LdTypeToken { ty } => {
@@ -582,11 +602,11 @@ impl FunctionWriter<'_, '_, '_, '_> {
             }
             Inst::LdMemberToken { member } => {
                 tag(op::LD_MEMBER_TOKEN, &mut self.out);
-                let token = match member {
-                    MemberOperand::Method(m) => m.token,
-                    MemberOperand::Field(f) => f.token,
+                let (token, state_machine) = match member {
+                    MemberOperand::Method(m) => (m.token, m.state_machine_context),
+                    MemberOperand::Field(f) => (f.token, f.state_machine_context),
                 };
-                self.out.uvar(u64::from(token));
+                self.member(token, state_machine);
             }
             Inst::LocAlloc { arg } => {
                 tag(op::LOC_ALLOC, &mut self.out);
@@ -626,13 +646,13 @@ impl FunctionWriter<'_, '_, '_, '_> {
                 delay_exceptions,
             } => {
                 tag(op::LD_FLDA, &mut self.out);
-                self.out.uvar(u64::from(field.token));
+                self.member(field.token, field.state_machine_context);
                 self.out.bool(delay_exceptions);
                 self.node(target)?;
             }
             Inst::LdsFlda { field } => {
                 tag(op::LDS_FLDA, &mut self.out);
-                self.out.uvar(u64::from(field.token));
+                self.member(field.token, field.state_machine_context);
             }
             Inst::CastClass { arg, ty }
             | Inst::IsInst { arg, ty }
@@ -664,11 +684,17 @@ impl FunctionWriter<'_, '_, '_, '_> {
                 self.node(init)?;
                 self.node(body)?;
             }
+            Inst::YieldReturn { value } => {
+                tag(op::YIELD_RETURN, &mut self.out);
+                self.node(value)?;
+            }
             Inst::GetPinnableReference { arg, ty, method } => {
                 tag(op::GET_PINNABLE_REFERENCE, &mut self.out);
                 self.ty(ty);
-                // The method token, 0 for none.
-                self.out.uvar(u64::from(method.map_or(0, |m| m.token)));
+                self.out.bool(method.is_some());
+                if let Some(m) = method {
+                    self.member(m.token, m.state_machine_context);
+                }
                 self.node(arg)?;
             }
             Inst::LdObj {
@@ -822,7 +848,11 @@ pub fn read_function(
     }
     let body = md.method_body(rva).map_err(|e| e.to_string())?;
     let mut f = crate::il::reader::read_il(ts, method, body, options).map_err(|e| e.to_string())?;
-    let mut ctx = crate::il::transforms::Context { ts, settings };
+    let mut ctx = crate::il::transforms::Context {
+        ts,
+        settings,
+        reader: options,
+    };
     crate::il::transforms::run_prefix(&mut f, &mut ctx, il_prefix);
     let mut w = ModuleWriter::new(ts);
     w.function(method.row, &f)?;

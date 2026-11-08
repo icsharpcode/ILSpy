@@ -156,6 +156,7 @@ fn early_transforms_run_on_every_body() {
         let mut ctx = Context {
             ts: &mut ts,
             settings: Settings::default(),
+            reader: ReaderOptions::default(),
         };
         run_prefix(&mut r, &mut ctx, ilspy_decompiler::IL_PREFIX);
         let listed: std::collections::HashSet<_> = r.variables.iter().copied().collect();

@@ -220,6 +220,13 @@ fn non_aggressive_inline_into(
     ) {
         return true;
     }
+    if let Inst::LdLoc { var } = *f.inst(inlined)
+        && f.var(v).state_machine_field.is_none()
+        && f.var(var).state_machine_field.is_some()
+    {
+        // Roslyn puts a fetched state machine field into a temporary.
+        return true;
+    }
     if f.result_type(ctx.ts, inlined) == StackType::Ref {
         // VB uses ref locals for compound assignments; avoid them.
         return true;
@@ -230,7 +237,7 @@ fn non_aggressive_inline_into(
         parent = f.node(parent).parent.expect("nullable ctor has a parent");
     }
     match f.inst(parent) {
-        Inst::Leave { .. } => return true,
+        Inst::Leave { .. } | Inst::YieldReturn { .. } => return true,
         Inst::Switch { .. } => {
             // Keep the variable's type on the switch when inlining into its value slot.
             if f.var(v).kind != VariableKind::StackSlot && f.node(load).child_index == 0 {
@@ -459,4 +466,29 @@ fn satisfies_slot_restriction_for_inlining(
         return is_pure(f.flags(value));
     }
     true
+}
+
+/// `InlineInto`: inlines the instructions before `pos` into the one at `pos`, as long as
+/// that succeeds; returns how many were inlined.
+pub fn inline_into(
+    f: &mut Function,
+    block: NodeId,
+    pos: usize,
+    options: u32,
+    ctx: &mut Context<'_, '_, '_>,
+) -> usize {
+    if pos >= f.list(block).len() {
+        return 0;
+    }
+    let mut count = 0;
+    let mut pos = pos;
+    while pos > 0 {
+        pos -= 1;
+        if inline_one_if_possible(f, block, pos, options, ctx) {
+            count += 1;
+        } else {
+            break;
+        }
+    }
+    count
 }

@@ -2,5 +2,6 @@
 
 pub mod bitset;
 pub mod interval;
+pub mod long_dict;
 pub mod long_set;
 pub mod union_find;

@@ -230,6 +230,8 @@ pub struct Variable {
     /// `RemoveIfRedundant`: set by RemoveInfeasiblePathTransform; such a stack slot is split
     /// like a local.
     pub remove_if_redundant: bool,
+    /// `StateMachineField`: the field of the compiler-generated class the variable stands for.
+    pub state_machine_field: Option<FieldOperand>,
     /// The connected `ldloc` instructions (`LoadInstructions`), maintained by the arena in the
     /// managed order: appended on connect, swap-removed on disconnect.
     pub load_instructions: Vec<NodeId>,
@@ -274,6 +276,9 @@ impl Variable {
 pub struct MethodOperand {
     pub token: u32,
     pub method: ResolvedMethod,
+    /// Read in a state machine context (`GenericContext::class_tail`): the host resolves the
+    /// token with the function's class and method type parameters as class parameters.
+    pub state_machine_context: bool,
 }
 
 /// A field operand, as `MethodOperand`.
@@ -281,6 +286,8 @@ pub struct MethodOperand {
 pub struct FieldOperand {
     pub token: u32,
     pub field: ResolvedField,
+    /// As `MethodOperand::state_machine_context`.
+    pub state_machine_context: bool,
 }
 
 /// A type operand: the metadata token it was read from (0 for a known type the reader picks
@@ -571,6 +578,10 @@ pub enum Inst {
         ty: TypeId,
         method: Option<MethodOperand>,
     },
+    /// `yield return value`.
+    YieldReturn {
+        value: NodeId,
+    },
 }
 
 /// The shared state of `call`, `callvirt` and `newobj`.
@@ -676,6 +687,7 @@ impl Inst {
             | GetPinnableReference { arg, .. }
             | LdVirtFtn { arg, .. }
             | Conv { arg, .. } => vec![*arg],
+            YieldReturn { value } => vec![*value],
             PinnedRegion { init, body, .. } => vec![*init, *body],
             Leave { value, .. } => vec![*value],
             If {
@@ -788,7 +800,10 @@ impl Inst {
             PinnedRegion { init, body, .. } => {
                 [init, body].into_iter().nth(index).expect("child index")
             }
-            Leave { value, .. } | StLoc { value, .. } | AddressOf { value, .. } => {
+            Leave { value, .. }
+            | StLoc { value, .. }
+            | AddressOf { value, .. }
+            | YieldReturn { value } => {
                 assert_eq!(index, 0, "child index out of range");
                 value
             }
@@ -909,6 +924,7 @@ impl Inst {
             | TryFault { .. } => Flags::CONTROL_FLOW,
             TryCatchHandler { .. } => Flags::CONTROL_FLOW | Flags::MAY_WRITE_LOCALS,
             PinnedRegion { .. } => Flags::MAY_WRITE_LOCALS,
+            YieldReturn { .. } => Flags::MAY_BRANCH | Flags::SIDE_EFFECT,
             DebugBreak => Flags::SIDE_EFFECT,
             Call(_) | CallVirt(_) | NewObj(_) | CallIndirect { .. } => throws | Flags::SIDE_EFFECT,
             Ckfinite { .. }
@@ -1327,6 +1343,7 @@ impl Function {
             GetPinnableReference { .. } => StackType::Ref,
             Nop { .. }
             | PinnedRegion { .. }
+            | YieldReturn { .. }
             | Branch { .. }
             | Leave { .. }
             | SwitchSection { .. }
@@ -1430,6 +1447,7 @@ impl Function {
             | TryCatchHandler { .. }
             | If { .. }
             | PinnedRegion { .. }
+            | YieldReturn { .. }
             | Switch { .. }
             | TryCatch { .. }
             | TryFinally { .. }

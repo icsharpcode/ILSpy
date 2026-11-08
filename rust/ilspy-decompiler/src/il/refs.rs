@@ -165,6 +165,21 @@ impl Function {
         }
     }
 
+    /// `Leave.TargetContainer = container`.
+    pub fn set_leave_target(&mut self, leave: NodeId, container: NodeId) {
+        let connected = self.is_connected(leave);
+        if connected {
+            self.count(leave, false);
+        }
+        match self.inst_mut(leave) {
+            Inst::Leave { target, .. } => *target = Some(container),
+            other => panic!("{other:?} is not a leave"),
+        }
+        if connected {
+            self.count(leave, true);
+        }
+    }
+
     /// The target block of a connected branch.
     pub fn branch_target(&self, branch: NodeId) -> NodeId {
         match self.inst(branch) {
@@ -267,6 +282,7 @@ mod tests {
             uses_initial_value: false,
             is_ref_read_only: false,
             remove_if_redundant: false,
+            state_machine_field: None,
             load_instructions: Vec::new(),
             store_instructions: Vec::new(),
             address_instructions: Vec::new(),

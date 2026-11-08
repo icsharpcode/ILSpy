@@ -6,7 +6,9 @@ use crate::metadata::{Error, Result};
 
 use super::names::{FullTypeName, TopLevelTypeName, split_type_parameter_count};
 use super::typename::{self, TypeName};
-use super::types::{GenericContext, Nullability, TypeData, TypeId, TypeParamOwner, TypeSystem};
+use super::types::{
+    ClassParam, GenericContext, Nullability, TypeData, TypeId, TypeParamOwner, TypeSystem,
+};
 
 /// `new TopLevelTypeName(reflectionName)`.
 pub fn top_level_from_reflection(name: &str) -> TopLevelTypeName {
@@ -121,13 +123,14 @@ impl TypeSystem<'_, '_> {
             if let Some(index) = parse_int(digits) {
                 let index = u32::try_from(index)
                     .map_err(|_| Error::Malformed("negative type parameter index"))?;
-                let owner = match (is_method, ctx.class, ctx.method) {
-                    (true, _, Some((m, count))) if index < count => TypeParamOwner::Method(m),
-                    (true, _, _) => TypeParamOwner::DummyMethod,
-                    (false, Some((def, count)), _) if index < count => {
-                        self.class_param_owner(def, index)
-                    }
-                    (false, _, _) => TypeParamOwner::DummyType,
+                let (owner, index) = match (is_method, ctx.method) {
+                    (true, Some((m, count))) if index < count => (TypeParamOwner::Method(m), index),
+                    (true, _) => (TypeParamOwner::DummyMethod, index),
+                    (false, _) => match ctx.class_param(index) {
+                        Some(ClassParam::Class(def, i)) => (self.class_param_owner(def, i), i),
+                        Some(ClassParam::Method(m, i)) => (TypeParamOwner::Method(m), i),
+                        None => (TypeParamOwner::DummyType, index),
+                    },
                 };
                 return Ok(self.intern(TypeData::TypeParam { owner, index }));
             }

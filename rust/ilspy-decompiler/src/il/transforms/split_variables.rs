@@ -366,6 +366,7 @@ impl GroupStores {
                     uses_initial_value: false,
                     is_ref_read_only: false,
                     remove_if_redundant: o.remove_if_redundant,
+                    state_machine_field: o.state_machine_field.clone(),
                     load_instructions: Vec::new(),
                     store_instructions: Vec::new(),
                     address_instructions: Vec::new(),

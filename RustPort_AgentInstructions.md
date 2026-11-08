@@ -341,7 +341,7 @@ the reasons. This file holds only the ordered steps, their gates and their rules
   - [x] 10. InlineReturnTransform (S)
   - [x] 11. RemoveInfeasiblePathTransform (S)
   - [x] 12. DetectPinnedRegions (M)
-  - [ ] 13. YieldReturnDecompiler (L)
+  - [x] 13. YieldReturnDecompiler (L)
   - [ ] 14. AsyncAwaitDecompiler (L)
   - [ ] 15. DetectCatchWhenConditionBlocks (S)
   - [ ] 16. DetectExitPoints (M)
