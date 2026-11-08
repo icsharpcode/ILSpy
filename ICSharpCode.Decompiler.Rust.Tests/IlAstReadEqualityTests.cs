@@ -47,8 +47,9 @@ public class IlAstReadEqualityTests
 
 	/// <summary>
 	/// <see cref="ILFunction.WriteTo"/> with IL ranges, plus what the printout leaves out: the
-	/// full variable types (with tuple element names and <c>dynamic</c>), the local signature
-	/// length and the sequence point candidates.
+	/// full variable types (with tuple element names and <c>dynamic</c>) and the internal
+	/// <c>RemoveIfRedundant</c> flag, the local signature length and the sequence point
+	/// candidates.
 	/// </summary>
 	internal static string Print(ILFunction function)
 	{
@@ -56,7 +57,7 @@ public class IlAstReadEqualityTests
 		function.WriteTo(output, new ILAstWritingOptions { ShowILRanges = true });
 		output.WriteLine();
 		foreach (var v in function.Variables)
-			output.WriteLine($"variable {v.Name} : {v.Type}");
+			output.WriteLine($"variable {v.Name} : {v.Type}" + (v.RemoveIfRedundant ? " remove-if-redundant" : ""));
 		output.WriteLine("locals: " + function.LocalVariableSignatureLength);
 		output.WriteLine("sequence points: " + string.Join(",", function.SequencePointCandidates ?? []));
 		return output.ToString().Replace("\r\n", "\n");

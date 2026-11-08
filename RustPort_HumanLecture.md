@@ -969,6 +969,14 @@ The collection operations keep their managed sequencing:
 A unit test pins post-order connection and swap-removal. The transforms ported so far did not
 depend on these orders; the reader and prefix equalities still hold with them.
 
+### 3.27 RemoveInfeasiblePathTransform (item 11, IL prefix 5)
+
+The transform sets the internal `ILVariable.RemoveIfRedundant`, which SplitVariables reads to
+split such stack slots like locals. The flag is not printed, but managed transforms after the
+handover read it. So it travels as variable flag bit 16 in wire v1, and the gate's printout
+marks it on each variable line. `BlockContainer.SortBlocks(deleteUnreachableBlocks: true)`
+reuses the reader's topological sort.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

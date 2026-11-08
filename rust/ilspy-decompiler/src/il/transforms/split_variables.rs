@@ -118,8 +118,8 @@ fn is_candidate_variable(
     match f.var(v).kind {
         VariableKind::Local => {}
         // Stack slots are split by construction, except the locals-turned-stack-slots of
-        // async functions.
-        VariableKind::StackSlot if is_async => {}
+        // async functions and the slots RemoveInfeasiblePathTransform marked.
+        VariableKind::StackSlot if is_async || f.var(v).remove_if_redundant => {}
         // Parameters are not split; pinned locals must not be (it would extend the pin).
         _ => return false,
     }
@@ -374,6 +374,7 @@ impl GroupStores {
                     // Set below when an uninitialized load is part of the group.
                     uses_initial_value: false,
                     is_ref_read_only: false,
+                    remove_if_redundant: o.remove_if_redundant,
                     load_instructions: Vec::new(),
                     store_instructions: Vec::new(),
                     address_instructions: Vec::new(),

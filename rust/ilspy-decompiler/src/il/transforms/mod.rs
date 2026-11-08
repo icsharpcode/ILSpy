@@ -8,6 +8,7 @@ use super::reader::ReadFunction;
 
 pub mod il_inlining;
 pub mod inline_return_transform;
+pub mod remove_infeasible_path_transform;
 pub mod split_variables;
 
 /// The `DecompilerSettings` the ported transforms read, by property name. The host sends
@@ -46,6 +47,7 @@ const PIPELINE: &[fn(&mut ReadFunction, &mut Context<'_, '_, '_>)] = &[
     split_variables::run,
     |r, ctx| il_inlining::ILInlining::default().run(r, ctx),
     |r, _| inline_return_transform::run(&mut r.function),
+    |r, _| remove_infeasible_path_transform::run(&mut r.function),
 ];
 
 /// Runs the first `prefix` leaves of the pipeline.

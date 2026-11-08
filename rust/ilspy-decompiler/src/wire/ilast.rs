@@ -239,7 +239,8 @@ impl FunctionWriter<'_, '_, '_, '_> {
             self.out.u8(u8::from(var.has_generated_name)
                 | u8::from(var.initial_value_is_initialized) << 1
                 | u8::from(var.uses_initial_value) << 2
-                | u8::from(var.is_ref_read_only) << 3);
+                | u8::from(var.is_ref_read_only) << 3
+                | u8::from(var.remove_if_redundant) << 4);
         }
         self.out.len(r.warnings.len());
         for w in &r.warnings {

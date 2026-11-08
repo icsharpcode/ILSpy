@@ -302,6 +302,7 @@ impl<'r, 'c, 'a> Reader<'r, 'c, 'a> {
             initial_value_is_initialized: parameter,
             uses_initial_value: parameter,
             is_ref_read_only: false,
+            remove_if_redundant: false,
             load_instructions: Vec::new(),
             store_instructions: Vec::new(),
             address_instructions: Vec::new(),

@@ -336,6 +336,7 @@ impl<'f> BlockBuilder<'f> {
                     initial_value_is_initialized: false,
                     uses_initial_value: false,
                     is_ref_read_only: false,
+                    remove_if_redundant: false,
                     load_instructions: Vec::new(),
                     store_instructions: Vec::new(),
                     address_instructions: Vec::new(),

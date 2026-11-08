@@ -227,6 +227,9 @@ pub struct Variable {
     pub initial_value_is_initialized: bool,
     pub uses_initial_value: bool,
     pub is_ref_read_only: bool,
+    /// `RemoveIfRedundant`: set by RemoveInfeasiblePathTransform; such a stack slot is split
+    /// like a local.
+    pub remove_if_redundant: bool,
     /// The connected `ldloc` instructions (`LoadInstructions`), maintained by the arena in the
     /// managed order: appended on connect, swap-removed on disconnect.
     pub load_instructions: Vec<NodeId>,

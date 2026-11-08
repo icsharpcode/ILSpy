@@ -122,3 +122,33 @@ impl Function {
         }
     }
 }
+
+impl Function {
+    /// `MatchIfInstruction` without an else branch: the condition and the true instruction.
+    pub fn match_if_instruction(&self, id: NodeId) -> Option<(NodeId, NodeId)> {
+        match *self.inst(id) {
+            Inst::If {
+                condition,
+                true_inst,
+                false_inst,
+            } if self.match_nop(false_inst) => Some((condition, true_inst)),
+            _ => None,
+        }
+    }
+
+    /// `Block.MatchIfAtEndOfBlock`: `if (condition) trueInst; falseInst` as the last two
+    /// instructions, with each logic not of the condition swapping the two.
+    pub fn match_if_at_end_of_block(&self, block: NodeId) -> Option<(NodeId, NodeId, NodeId)> {
+        let list = self.list(block);
+        if list.len() < 2 {
+            return None;
+        }
+        let (mut condition, mut true_inst) = self.match_if_instruction(list[list.len() - 2])?;
+        let mut false_inst = list[list.len() - 1];
+        while let Some(arg) = self.match_logic_not(condition) {
+            condition = arg;
+            std::mem::swap(&mut true_inst, &mut false_inst);
+        }
+        Some((condition, true_inst, false_inst))
+    }
+}

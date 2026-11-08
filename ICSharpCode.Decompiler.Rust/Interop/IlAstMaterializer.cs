@@ -313,6 +313,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				v.UsesInitialValue = (flags & 4) != 0;
 			}
 			v.IsRefReadOnly = (flags & 8) != 0;
+			v.RemoveIfRedundant = (flags & 16) != 0;
 			return v;
 		}
 
