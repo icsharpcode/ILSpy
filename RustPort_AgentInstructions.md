@@ -350,7 +350,7 @@ the reasons. This file holds only the ordered steps, their gates and their rules
   - [x] 19. SplitVariables, second occurrence (S, ratchet only)
   - [x] 20. RemoveDeadVariableInit (S)
   - [x] 21. ControlFlowSimplification, second occurrence (S, ratchet only)
-  - [ ] 22. DynamicCallSiteTransform (M)
+  - [x] 22. DynamicCallSiteTransform (M)
   - [ ] 23. SwitchDetection (L)
   - [ ] 24. SwitchOnStringTransform (M)
   - [ ] 25. SwitchOnNullableTransform (M)

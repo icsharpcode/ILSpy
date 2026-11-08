@@ -51,6 +51,25 @@ struct CallSiteInfo {
     member_name: Option<String>,
 }
 
+/// `Run`: the call sites of the whole function; the containers with transformed call sites
+/// lose their unreachable init blocks.
+pub fn run(r: &mut crate::il::reader::ReadFunction, ctx: &mut Context<'_, '_, '_>) {
+    if !ctx.settings.dynamic {
+        return;
+    }
+    let f = &mut r.function;
+    let body = f.body.expect("body");
+    let mut callsites = HashMap::new();
+    for block in f.descendants_post(body) {
+        if matches!(f.inst(block), Inst::Block { .. }) {
+            find_dynamic_call_sites_in_block(f, ctx.ts, block, &mut callsites);
+        }
+    }
+    for container in transform_call_sites(f, ctx.ts, body, &callsites) {
+        super::remove_infeasible_path_transform::sort_blocks(f, container);
+    }
+}
+
 /// `RunOnBasicBlock`: the call sites initialized in `block`, transformed in its container.
 /// The now-unreachable init blocks stay for the caller's `SortBlocks`.
 pub fn run_on_basic_block(f: &mut Function, ctx: &mut Context<'_, '_, '_>, block: NodeId) {

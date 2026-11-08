@@ -1220,6 +1220,21 @@ of return blocks, is the ported transform. It cleans up after `SplitVariables` a
 `RemoveDeadVariableInit` (for example, branch-to-leave chains they make possible). The no-op
 red run failed 1,597 of 3,550 equality cases; the step passed on its first run.
 
+### 3.38 DynamicCallSiteTransform (item 22, IL prefix 16)
+
+The call-site matching, the dynamic instructions and their wire form came with item 14, whose
+dynamic awaits need `RunOnBasicBlock`. This step adds `Run` for the whole function:
+- It collects the call sites initialized in any block.
+- It transforms their invokes anywhere in the function body.
+- It sorts the containers it changed, so the unreachable init blocks go.
+
+Two shortcuts carry over, each noted in the code:
+- A second initialization of the same cache field throws in the managed `Dictionary.Add`;
+  here the first one wins.
+- A `CSharpArgumentInfo` without a matching delegate parameter makes the call site not match.
+
+The no-op red run failed 149 of 3,550 equality cases; the step passed on its first run.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |
