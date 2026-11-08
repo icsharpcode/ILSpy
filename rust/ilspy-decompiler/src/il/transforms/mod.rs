@@ -3,8 +3,10 @@
 
 use crate::typesystem::types::TypeSystem;
 
-use super::ast::Function;
 use super::control_flow::control_flow_simplification::ControlFlowSimplification;
+use super::reader::ReadFunction;
+
+pub mod split_variables;
 
 /// The `DecompilerSettings` the ported transforms read, by property name. The host sends
 /// them as a bit set in this order (`Interop/RustSettings.cs` looks the names up by
@@ -37,16 +39,18 @@ pub struct Context<'t, 'c, 'a> {
 
 /// The leaves of the IL pipeline the engine has ported, in run order. `IL_PREFIX` is its
 /// length.
-const PIPELINE: &[fn(&mut Function, &mut Context<'_, '_, '_>)] =
-    &[|f, ctx| ControlFlowSimplification::default().run(f, ctx)];
+const PIPELINE: &[fn(&mut ReadFunction, &mut Context<'_, '_, '_>)] = &[
+    |r, ctx| ControlFlowSimplification::default().run(&mut r.function, ctx),
+    split_variables::run,
+];
 
 /// Runs the first `prefix` leaves of the pipeline.
 ///
 /// # Panics
 /// When `prefix` exceeds `IL_PREFIX`; the FFI layer rejects such requests first.
-pub fn run_prefix(f: &mut Function, ctx: &mut Context<'_, '_, '_>, prefix: u32) {
+pub fn run_prefix(r: &mut ReadFunction, ctx: &mut Context<'_, '_, '_>, prefix: u32) {
     for transform in &PIPELINE[..prefix as usize] {
-        transform(f, ctx);
+        transform(r, ctx);
     }
 }
 

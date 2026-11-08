@@ -336,7 +336,7 @@ the reasons. This file holds only the ordered steps, their gates and their rules
   post-order block driver over a CFG for `BlockILTransform`, a statement driver with rerun
   for `StatementTransform`.
   - [x] 7. ControlFlowSimplification (M)
-  - [ ] 8. SplitVariables (M)
+  - [x] 8. SplitVariables (M)
   - [ ] 9. ILInlining (L)
   - [ ] 10. InlineReturnTransform (S)
   - [ ] 11. RemoveInfeasiblePathTransform (S)

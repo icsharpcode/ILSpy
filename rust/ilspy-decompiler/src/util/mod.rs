@@ -3,3 +3,4 @@
 pub mod bitset;
 pub mod interval;
 pub mod long_set;
+pub mod union_find;

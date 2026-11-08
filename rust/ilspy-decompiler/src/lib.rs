@@ -3,6 +3,7 @@
 //! Hosted by the C# shim `ICSharpCode.Decompiler.Rust` through the `ilspy-decompiler-ffi`
 //! crate. See `RustPort_HumanLecture.md` at the repository root for the architecture.
 
+pub mod flow_analysis;
 pub mod il;
 pub mod metadata;
 pub mod typesystem;
@@ -11,7 +12,7 @@ pub mod wire;
 
 /// How many IL transforms of `CSharpDecompiler.GetILTransforms()`, flattened in pipeline
 /// order, the engine runs before it hands a function to the host (seam 1).
-pub const IL_PREFIX: u32 = 1;
+pub const IL_PREFIX: u32 = 2;
 
 /// The engine version, as declared in the workspace manifest.
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");

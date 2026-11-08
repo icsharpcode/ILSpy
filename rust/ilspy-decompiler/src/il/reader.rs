@@ -23,6 +23,7 @@ use crate::util::bitset::BitSet;
 use crate::util::interval::Interval;
 use crate::util::interval::LongInterval;
 use crate::util::long_set::LongSet;
+use crate::util::union_find::UnionFind;
 
 use super::ast::*;
 use super::block_builder::{BlockBuilder, topological_sort};
@@ -785,7 +786,7 @@ impl<'r, 'c, 'a> Reader<'r, 'c, 'a> {
 
     /// `CheckOutgoingEdges`: the union-find of stack slots that meet on an edge, with stack
     /// adjustments inserted where the types differ.
-    fn check_outgoing_edges(&mut self) -> Result<UnionFind> {
+    fn check_outgoing_edges(&mut self) -> Result<UnionFind<VarId>> {
         let mut union_find = UnionFind::default();
         for index in 0..self.blocks.len() {
             let edges = self.blocks[index].outgoing.clone();
@@ -846,7 +847,7 @@ impl<'r, 'c, 'a> Reader<'r, 'c, 'a> {
     }
 
     /// `CollectStackVariablesVisitor` over the blocks in import order.
-    fn collect_stack_variables(&mut self, mut union_find: UnionFind) {
+    fn collect_stack_variables(&mut self, mut union_find: UnionFind<VarId>) {
         let mut seen: Vec<VarId> = Vec::new();
         let mut seen_set: HashSet<VarId> = HashSet::new();
         for index in 0..self.blocks.len() {
@@ -2716,44 +2717,6 @@ pub fn cast(
                 actual.name()
             ));
             c(f, ts, inst, expected.to_primitive(Sign::None), Sign::Signed)
-        }
-    }
-}
-
-/// `UnionFind<ILVariable>`.
-#[derive(Default)]
-pub(super) struct UnionFind {
-    parent: HashMap<VarId, VarId>,
-    rank: HashMap<VarId, u32>,
-}
-
-impl UnionFind {
-    pub(super) fn find(&mut self, v: VarId) -> VarId {
-        let p = *self.parent.get(&v).unwrap_or(&v);
-        if p == v {
-            return v;
-        }
-        let root = self.find(p);
-        self.parent.insert(v, root);
-        root
-    }
-
-    pub(super) fn merge(&mut self, a: VarId, b: VarId) {
-        let (ra, rb) = (self.find(a), self.find(b));
-        if ra == rb {
-            return;
-        }
-        let (ka, kb) = (
-            *self.rank.get(&ra).unwrap_or(&0),
-            *self.rank.get(&rb).unwrap_or(&0),
-        );
-        if ka < kb {
-            self.parent.insert(ra, rb);
-        } else if ka > kb {
-            self.parent.insert(rb, ra);
-        } else {
-            self.parent.insert(rb, ra);
-            self.rank.insert(ra, ka + 1);
         }
     }
 }

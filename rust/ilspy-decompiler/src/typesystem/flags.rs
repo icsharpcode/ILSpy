@@ -117,6 +117,7 @@ impl TypeSystem<'_, '_> {
         match self.data(t) {
             TypeData::Def(def) => self.type_flags(*def).by_ref_like,
             TypeData::Inst { generic, .. } => self.is_by_ref_like(*generic),
+            TypeData::ByRef(_) => true,
             TypeData::Annotated { inner, .. }
             | TypeData::Modified { inner, .. }
             | TypeData::Pinned(inner) => self.is_by_ref_like(*inner),

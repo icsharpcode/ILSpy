@@ -95,8 +95,8 @@ static class Corpus
 
 	/// <summary>
 	/// The bytes of a corpus file. In a solution test run ICSharpCode.Decompiler.Tests rewrites
-	/// fixtures while this suite reads them; the compiler holds a file exclusively until it is
-	/// complete, so a sharing violation is waited out.
+	/// fixtures while this suite reads them: a fixture can be locked by the compiler or the PDB
+	/// tests, or briefly deleted before it is rebuilt, so both are waited out for up to a minute.
 	/// </summary>
 	public static byte[] ReadFile(string path)
 	{
@@ -106,7 +106,7 @@ static class Corpus
 			{
 				return File.ReadAllBytes(path);
 			}
-			catch (IOException) when (attempt < 100 && File.Exists(path))
+			catch (IOException) when (attempt < 600)
 			{
 				Thread.Sleep(100);
 			}

@@ -130,3 +130,43 @@ fn debug_info_names_and_types_the_locals() {
     }
     assert!(named > 0 && generated > 0 && dynamic > 0);
 }
+
+/// The first transforms (ControlFlowSimplification, SplitVariables) over every body: no
+/// panic, and no dead non-parameter variable survives `RemoveDead`.
+#[test]
+fn early_transforms_run_on_every_body() {
+    use ilspy_decompiler::il::transforms::{Context, Settings, run_prefix};
+    let comp = common::compilation(&[
+        (common::test_assembly(), options::DEFAULT),
+        (common::mscorlib(), options::DEFAULT),
+    ]);
+    let mut ts = TypeSystem::new(&comp);
+    let module = ModuleId(0);
+    let md = &comp.module(module).md;
+    let mut split = 0;
+    for row in 1..=md.tables.rows(TableId::MethodDef) {
+        let rva = md.get::<rows::MethodDef>(row).unwrap().rva;
+        if rva == 0 {
+            continue;
+        }
+        let body = md.method_body(rva).unwrap();
+        let id = MethodDefId { module, row };
+        let mut r = read_il(&mut ts, id, body, ReaderOptions::default()).unwrap();
+        let before = r.variables.len();
+        let mut ctx = Context {
+            ts: &mut ts,
+            settings: Settings::default(),
+        };
+        run_prefix(&mut r, &mut ctx, ilspy_decompiler::IL_PREFIX.min(2));
+        for &v in &r.variables {
+            let var = r.function.var(v);
+            assert!(
+                !var.is_dead() || var.kind == VariableKind::Parameter,
+                "row {row}: dead {}",
+                var.name
+            );
+        }
+        split += usize::from(r.variables.len() != before);
+    }
+    assert!(split > 0, "no function changed its variables");
+}

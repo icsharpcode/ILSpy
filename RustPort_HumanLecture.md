@@ -895,6 +895,34 @@ gate with every engine setting flipped, over the `Switch*` fixtures and ICSharpC
 test pins its length to `IL_PREFIX`. `wire::ilast::read_function` runs the prefix the host
 asks for.
 
+### 3.24 Data flow analysis and SplitVariables (item 8, IL prefix 2)
+
+`flow_analysis/data_flow.rs` ports `DataFlowVisitor`:
+- a generic forward analysis with a worklist per container, in block order;
+- branches and leaves that run `finally` blocks;
+- the exception state of each try block;
+- the condition evaluation of `if`.
+
+It is generic over a `State` trait (join semi-lattice with bottom) and an `Analysis` trait
+(what loads and stores do). The managed states share objects by reference in a few places. The
+port clones where the managed code clones and moves where it only renames a reference, so each
+join sees the same contents. An instruction with control-flow flags and no case of its own
+panics, like the managed `NotImplementedException`; the per-method error path catches it.
+`flow_analysis/reaching_definitions.rs` ports `ReachingDefinitionsVisitor`: a bit set over all
+stores of the analyzed variables, in tree order, plus an uninitialized pseudo store per
+variable.
+
+SplitVariables needs the function's variable list (`ILFunction.Variables`): it adds the split
+variables and then drops the dead ones. So `PIPELINE` entries now take the whole
+`ReadFunction`. `ILVariableCollection.RemoveAt` also moves the last variable into the gap,
+like `Block.Remove`, and the port does the same.
+
+The first G-ilast(2) run differed in 25 images, all on ref struct locals:
+- `ByReferenceType.IsByRefLike` is true in the managed type system, so a call returning
+  `ref T` keeps its receiver's local whole. The Rust `is_by_ref_like` now says so as well.
+- `accessor_owner` returns the owner's metadata token, not its row. The `Span<T>` indexer
+  exemption therefore needs the table check and the row mask.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

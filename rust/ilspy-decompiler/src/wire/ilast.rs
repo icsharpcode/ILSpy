@@ -777,7 +777,7 @@ pub fn read_function(
     let body = md.method_body(rva).map_err(|e| e.to_string())?;
     let mut f = crate::il::reader::read_il(ts, method, body, options).map_err(|e| e.to_string())?;
     let mut ctx = crate::il::transforms::Context { ts, settings };
-    crate::il::transforms::run_prefix(&mut f.function, &mut ctx, il_prefix);
+    crate::il::transforms::run_prefix(&mut f, &mut ctx, il_prefix);
     let mut w = ModuleWriter::new(ts);
     w.function(method.row, &f)?;
     Ok(w.finish())
