@@ -1304,6 +1304,13 @@ in item 23 already, in anticipation of this step.
 
 The no-op red run failed 68 of 3,550 equality cases; the step passed on its first run.
 
+### 3.42 SplitVariables, third occurrence (item 26, IL prefix 20)
+
+A ratchet-only step: the third `SplitVariables` is the ported transform. The switch transforms
+just before it remove stores and copies, which leaves more variables whose uses fall apart
+into independent groups. The no-op red run failed 1,153 of 3,550 equality cases; the step
+passed on its first run.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

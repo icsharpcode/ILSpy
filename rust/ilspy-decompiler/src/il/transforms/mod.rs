@@ -109,6 +109,7 @@ const PIPELINE: &[fn(&mut ReadFunction, &mut Context<'_, '_, '_>)] = &[
     super::control_flow::switch_detection::run,
     switch_on_string_transform::run,
     switch_on_nullable_transform::run,
+    split_variables::run,
 ];
 
 /// Runs the first `prefix` leaves of the pipeline.
