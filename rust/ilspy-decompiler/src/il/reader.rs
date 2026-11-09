@@ -82,8 +82,6 @@ pub struct ReadFunction {
     /// `AsyncDebugInfo`: the catch handler offset (-1 for none) and the `(yield, resume)`
     /// offsets of each await.
     pub async_debug_info: Option<(i32, Vec<(i32, i32)>)>,
-    /// `ChainedConstructorCallILOffset`, computed on first use and kept.
-    pub chained_constructor_call_il_offset: Option<i32>,
 }
 
 /// The kind of a type as the reader distinguishes it (`IType.Kind`).
@@ -2704,6 +2702,12 @@ impl<'r, 'c, 'a> Reader<'r, 'c, 'a> {
         }
         warnings.append(&mut self.warnings);
         self.sequence_point_candidates.sort_unstable();
+        self.f.is_instance_constructor = self
+            .ts
+            .member_name(crate::typesystem::inheritance::MemberDef::Method(
+                self.method_id,
+            ))
+            .is_ok_and(|n| n == ".ctor");
         Ok(ReadFunction {
             function: self.f,
             variables,
@@ -2719,7 +2723,6 @@ impl<'r, 'c, 'a> Reader<'r, 'c, 'a> {
             state_machine_compiled_with_legacy_visual_basic: false,
             move_next_method: None,
             async_debug_info: None,
-            chained_constructor_call_il_offset: None,
         })
     }
 }

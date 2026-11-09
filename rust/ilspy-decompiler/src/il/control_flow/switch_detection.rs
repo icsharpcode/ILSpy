@@ -526,8 +526,7 @@ fn find_continue(f: &Function, cfg: &ControlFlowGraph, head: usize) -> usize {
 pub(crate) fn match_increment_block(f: &Function, block: NodeId) -> Option<NodeId> {
     let (&last, rest) = f.list(block).split_last()?;
     let head = f.match_branch(last)?;
-    // `IsSimpleStatement` also accepts the compound assignments, which the arena gains with
-    // the transforms that create them.
+    // `IsSimpleStatement`.
     rest.iter()
         .all(|&i| {
             matches!(
@@ -537,6 +536,8 @@ pub(crate) fn match_increment_block(f: &Function, block: NodeId) -> Option<NodeI
                     | Inst::NewObj(_)
                     | Inst::StLoc { .. }
                     | Inst::StObj { .. }
+                    | Inst::NumericCompoundAssign { .. }
+                    | Inst::UserDefinedCompoundAssign { .. }
             )
         })
         .then_some(head)

@@ -109,7 +109,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 			switch (status)
 			{
 				case RustStatus.Ok:
-					var (read, error) = IlAstMaterializer.ReadModule(bytes, typeSystem, modules)[MetadataTokens.GetRowNumber(method)];
+					var (read, error) = IlAstMaterializer.ReadModule(bytes, typeSystem, modules, settings)[MetadataTokens.GetRowNumber(method)];
 					function = read ?? throw new RustEngineException(error ?? "no function");
 					return status;
 				case RustStatus.Unsupported:

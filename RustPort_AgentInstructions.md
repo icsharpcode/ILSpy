@@ -371,7 +371,7 @@ the reasons. This file holds only the ordered steps, their gates and their rules
   - [x] 35. CachedDelegateInitialization (S)
   - [x] 36. CachedReadOnlySpanInitialization (S)
   - [x] 37. StatementTransform driver and ILInlining with AllowInliningOfLdloca (M)
-  - [ ] 38. ExpressionTransforms (L)
+  - [x] 38. ExpressionTransforms (L)
   - [ ] 39. DynamicIsEventAssignmentTransform (S)
   - [ ] 40. TransformAssignment (L)
   - [ ] 41. NullCoalescingTransform (M)

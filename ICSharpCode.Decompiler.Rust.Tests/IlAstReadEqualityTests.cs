@@ -96,7 +96,7 @@ public class IlAstReadEqualityTests
 		}
 		using var disposeDebugInfo = debugInfo as IDisposable;
 		using var table = new RustModuleTable(ts);
-		var engine = IlAstMaterializer.ReadModule(table.DebugReadIL(UseRefLocals, debugInfo), ts, table.Modules);
+		var engine = IlAstMaterializer.ReadModule(table.DebugReadIL(UseRefLocals, debugInfo), ts, table.Modules, new DecompilerSettings());
 		var metadata = module.MetadataFile.Metadata;
 		int compared = 0;
 		foreach (var handle in metadata.MethodDefinitions)
@@ -137,7 +137,7 @@ public class IlAstReadEqualityTests
 		var debugInfo = DebugInfoUtils.LoadSymbols((PEFile)((MetadataModule)ts.MainModule).MetadataFile);
 		Assert.That(debugInfo, Is.Not.Null);
 		using var table = new RustModuleTable(ts);
-		var engine = IlAstMaterializer.ReadModule(table.DebugReadIL(UseRefLocals, debugInfo), ts, table.Modules);
+		var engine = IlAstMaterializer.ReadModule(table.DebugReadIL(UseRefLocals, debugInfo), ts, table.Modules, new DecompilerSettings());
 		var functions = engine.Values.Where(f => f.Function != null).Select(f => f.Function!).ToList();
 		Assert.That(functions.SelectMany(f => f.Variables)
 			.Any(v => v.Kind == VariableKind.Local && v.Name == "disposeDebugInfo" && !v.HasGeneratedName), Is.True);
@@ -151,7 +151,7 @@ public class IlAstReadEqualityTests
 		string path = Path.Combine(Corpus.TestCasesDirectory(), "Pretty", "ExceptionHandling.roslyn4.dll");
 		var ts = TypeSystemListingEqualityTests.Load(path, TypeSystemOptions.Default);
 		using var table = new RustModuleTable(ts);
-		var engine = IlAstMaterializer.ReadModule(table.DebugReadIL(UseRefLocals), ts, table.Modules);
+		var engine = IlAstMaterializer.ReadModule(table.DebugReadIL(UseRefLocals), ts, table.Modules, new DecompilerSettings());
 		string all = string.Join("\n", engine.Values.Where(f => f.Function != null).Select(f => Print(f.Function!)));
 		Assert.That(all, Does.Contain("stack "));
 		Assert.That(all, Does.Contain("exception stack "));

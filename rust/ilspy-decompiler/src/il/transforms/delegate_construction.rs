@@ -9,14 +9,16 @@ use super::Context;
 
 /// `MatchDelegateConstruction(inst, ...)`: `newobj D(target, ldftn M)` or
 /// `newobj D(target, ldvirtftn M)` of a delegate type (or an unknown one).
-// shortcut: the engine has no ldvirtdelegate or nested ILFunction yet, so the
-// `LdVirtDelegate` case and `allowTransformed` cannot apply; add them with
-// DelegateConstruction itself.
+// shortcut: the engine has no nested ILFunction yet, so `allowTransformed` cannot apply; add
+// it with DelegateConstruction itself.
 pub(crate) fn match_delegate_construction(
     f: &Function,
     ctx: &mut Context<'_, '_, '_>,
     inst: NodeId,
 ) -> bool {
+    if let Inst::LdVirtDelegate { ty, .. } = *f.inst(inst) {
+        return is_delegate_or_unknown(ctx, ty);
+    }
     let Inst::NewObj(call) = f.inst(inst) else {
         return false;
     };
@@ -27,9 +29,17 @@ pub(crate) fn match_delegate_construction(
         return false;
     }
     // A method without a declaring type has the unknown type there.
-    let Some(mut delegate_type) = call.method.method.declaring else {
+    let Some(delegate_type) = call.method.method.declaring else {
         return true;
     };
+    is_delegate_or_unknown(ctx, delegate_type)
+}
+
+/// `delegateType.Kind == TypeKind.Delegate || delegateType.Kind == TypeKind.Unknown`.
+fn is_delegate_or_unknown(
+    ctx: &mut Context<'_, '_, '_>,
+    mut delegate_type: crate::typesystem::types::TypeId,
+) -> bool {
     // A parameterized type has the kind of its generic type.
     while let TypeData::Inst { generic, .. } | TypeData::Annotated { inner: generic, .. } =
         *ctx.ts.data(delegate_type)

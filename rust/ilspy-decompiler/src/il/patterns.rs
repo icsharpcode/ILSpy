@@ -338,6 +338,7 @@ impl Function {
             | Inst::PinnedRegion { .. }
             | Inst::Lock { .. }
             | Inst::Using { .. }
+            | Inst::NullCoalescing { .. }
             | Inst::Match { .. } => index == 0,
             Inst::SwitchSection { .. }
             | Inst::TryCatchHandler { .. }

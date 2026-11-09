@@ -2,8 +2,8 @@
 //! instruction after it that loads the variable, where evaluation order allows it.
 
 use crate::il::ast::{
-    AwaiterMethod, BlockKind, ComparisonKind, ComparisonLiftingKind, Function, Inst, NodeId, VarId,
-    VariableKind,
+    AwaiterMethod, BlockKind, ComparisonKind, ComparisonLiftingKind, CompoundTargetKind, Function,
+    Inst, NodeId, VarId, VariableKind,
 };
 use crate::il::reader::ReadFunction;
 use crate::il::semantic_helper::{is_pure, may_reorder};
@@ -266,7 +266,25 @@ fn non_aggressive_inline_into(
     match f.inst(parent) {
         Inst::Leave { .. } | Inst::YieldReturn { .. } => return true,
         // Size expressions into `localloc.span`, and `fixed` initializers.
-        Inst::GetPinnableReference { .. } => return true,
+        Inst::GetPinnableReference { .. } | Inst::LocAllocSpan { .. } => return true,
+        // Into dynamic compound assignments.
+        Inst::Dynamic {
+            kind: crate::il::ast::DynamicKind::GetMember | crate::il::ast::DynamicKind::GetIndex,
+            ..
+        } if f
+            .node(parent)
+            .parent
+            .is_some_and(|p| matches!(f.inst(p), Inst::DynamicCompoundAssign { .. })) =>
+        {
+            return true;
+        }
+        Inst::DynamicCompoundAssign { .. } => return true,
+        // Nullables into `??`.
+        Inst::NullCoalescing { .. }
+            if known(ctx, f.var(v).ty) == Some(KnownTypeCode::NullableOfT) =>
+        {
+            return true;
+        }
         Inst::LdElema {
             with_system_index: true,
             ..
@@ -304,6 +322,9 @@ fn non_aggressive_inline_into(
             }
             return true;
         }
+        // Into getter calls that are the target of a compound assignment (the compiler uses
+        // locals to evaluate the arguments once for getter and setter).
+        Inst::Call(_) | Inst::CallVirt(_) if is_compound_target(f, parent) => return true,
         Inst::CallIndirect { .. } if f.node(load).child_index == 0 => {
             return true;
         }
@@ -412,7 +433,8 @@ fn can_inline_into_slot(
         | Inst::Switch { .. }
         | Inst::PinnedRegion { .. }
         | Inst::Lock { .. }
-        | Inst::Using { .. } => index == 0,
+        | Inst::Using { .. }
+        | Inst::NullCoalescing { .. } => index == 0,
         Inst::SwitchSection { .. }
         | Inst::TryCatch { .. }
         | Inst::TryFinally { .. }
@@ -637,9 +659,16 @@ fn used_as_this_pointer_in_call(
         Inst::Call(c) | Inst::CallVirt(c) => {
             let m = &c.method.method;
             let used = if m.accessor_kind != 0 {
-                // A getter, unless it is the target of a property compound assignment (the
-                // engine has no compound assignments yet); C# calls no setters on temporaries.
+                // A getter, unless it is the target of a property compound assignment (C#
+                // allows none on temporary structs); C# calls no setters on temporaries.
                 m.accessor_kind == 0x0002
+                    && !parent_of(parent).is_some_and(|cai| {
+                        matches!(*f.inst(cai),
+                            Inst::NumericCompoundAssign { target_kind: CompoundTargetKind::Property, target, .. }
+                            | Inst::UserDefinedCompoundAssign { target_kind: CompoundTargetKind::Property, target, .. }
+                            | Inst::DynamicCompoundAssign { target_kind: CompoundTargetKind::Property, target, .. }
+                            if target == parent)
+                    })
             } else {
                 !m.is_static
             };
@@ -832,8 +861,12 @@ fn is_generated_temporary_for_address_of(
             ReadonlyLValue => method_requires_copy_for_readonly_lvalue(ctx, &method),
         };
     }
-    // shortcut: the engine has no ldelema.inlinearray yet; add its case (always inline) with
-    // InlineArrayTransform.
+    if f.node(load)
+        .parent
+        .is_some_and(|p| matches!(f.inst(p), Inst::LdElemaInlineArray { .. }))
+    {
+        return true;
+    }
     if is_passed_to_read_only_span_ctor(f, ctx, load) {
         // An `in` or `ref readonly` parameter takes an rvalue; the expression builder copies.
         return true;
@@ -901,25 +934,26 @@ pub fn run_statement(
     pos: usize,
     options: u32,
 ) {
-    let options = options | options_for_block(r, ctx, block, pos);
-    while inline_one_if_possible(&mut r.function, block, pos, options, ctx) {}
+    let f = &mut r.function;
+    let options = options | options_for_block(f, ctx, block, pos);
+    while inline_one_if_possible(f, block, pos, options, ctx) {}
 }
 
 /// `OptionsForBlock`.
 pub(crate) fn options_for_block(
-    r: &mut ReadFunction,
+    f: &mut Function,
     ctx: &mut Context<'_, '_, '_>,
     block: NodeId,
     pos: usize,
 ) -> u32 {
     let mut result = options::NONE;
-    if ctx.settings.aggressive_inlining || is_catch_when_block(&r.function, block) {
+    if ctx.settings.aggressive_inlining || is_catch_when_block(f, block) {
         result |= options::AGGRESSIVE;
     } else {
         // The engine's functions are top-level methods, never delegates or expression trees,
         // so `PreferExpressionsOverStatements` is false.
-        let inst = r.function.list(block)[pos];
-        if is_in_constructor_initializer(r, ctx, inst) {
+        let inst = f.list(block)[pos];
+        if is_in_constructor_initializer(f, ctx, inst) {
             result |= options::AGGRESSIVE;
         }
     }
@@ -932,12 +966,12 @@ pub(crate) fn options_for_block(
 /// `IsInConstructorInitializer`: `inst` and its statement end before the chained
 /// constructor call.
 pub(crate) fn is_in_constructor_initializer(
-    r: &mut ReadFunction,
+    f: &mut Function,
     ctx: &mut Context<'_, '_, '_>,
     inst: NodeId,
 ) -> bool {
-    let ctor_call_start = chained_constructor_call_il_offset(r, ctx);
-    let f = &r.function;
+    let ctor_call_start = chained_constructor_call_il_offset(f, ctx);
+    let f = &*f;
     if f.il_range(inst).end > ctor_call_start {
         return false;
     }
@@ -959,16 +993,11 @@ pub(crate) fn is_in_constructor_initializer(
 /// `ILFunction.ChainedConstructorCallILOffset`: the start of the first `base(...)` or
 /// `this(...)` call statement of an instance constructor, -1 otherwise. Computed once, on
 /// the tree of the first request.
-fn chained_constructor_call_il_offset(r: &mut ReadFunction, ctx: &mut Context<'_, '_, '_>) -> i32 {
-    if let Some(offset) = r.chained_constructor_call_il_offset {
+fn chained_constructor_call_il_offset(f: &mut Function, ctx: &mut Context<'_, '_, '_>) -> i32 {
+    if let Some(offset) = f.chained_constructor_call_il_offset {
         return offset;
     }
-    let is_instance_constructor = ctx
-        .ts
-        .member_name(crate::typesystem::inheritance::MemberDef::Method(r.method))
-        .is_ok_and(|n| n == ".ctor");
-    let f = &r.function;
-    let offset = if is_instance_constructor {
+    let offset = if f.is_instance_constructor {
         f.descendants_post(f.body.expect("function body"))
             .into_iter()
             .find(|&d| {
@@ -988,6 +1017,18 @@ fn chained_constructor_call_il_offset(r: &mut ReadFunction, ctx: &mut Context<'_
     } else {
         -1
     };
-    r.chained_constructor_call_il_offset = Some(offset);
+    f.chained_constructor_call_il_offset = Some(offset);
     offset
+}
+
+/// Whether `inst` is in the target slot of a compound assignment
+/// (`CompoundAssignmentInstruction.TargetSlot`).
+fn is_compound_target(f: &Function, inst: NodeId) -> bool {
+    f.node(inst).parent.is_some_and(|p| {
+        matches!(*f.inst(p),
+            Inst::NumericCompoundAssign { target, .. }
+            | Inst::UserDefinedCompoundAssign { target, .. }
+            | Inst::DynamicCompoundAssign { target, .. }
+            if target == inst)
+    })
 }

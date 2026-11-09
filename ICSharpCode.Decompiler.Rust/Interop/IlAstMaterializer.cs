@@ -28,6 +28,7 @@ using System.Text;
 
 using ICSharpCode.Decompiler.DebugInfo;
 using ICSharpCode.Decompiler.IL;
+using ICSharpCode.Decompiler.IL.Transforms;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
 using ICSharpCode.Decompiler.Util;
@@ -233,22 +234,25 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		public const uint Version = 1;
 
 		readonly MetadataModule mainModule;
+		readonly DecompilerSettings settings;
+		int currentRow;
 		GenericContext context;
 		ILVariable[] variables = [];
 		Block[] blocks = [];
 		BlockContainer[] containers = [];
 
-		IlAstMaterializer(byte[] data, ICompilation compilation, IReadOnlyList<MetadataModule> modules)
+		IlAstMaterializer(byte[] data, ICompilation compilation, IReadOnlyList<MetadataModule> modules, DecompilerSettings settings)
 			: base(data, Version, compilation, modules)
 		{
 			mainModule = modules[0];
+			this.settings = settings;
 		}
 
 		/// <summary>Per MethodDef row: the function, or the engine's error message.</summary>
 		public static Dictionary<int, (ILFunction? Function, string? Error)> ReadModule(
-			byte[] wire, ICompilation compilation, IReadOnlyList<MetadataModule> modules)
+			byte[] wire, ICompilation compilation, IReadOnlyList<MetadataModule> modules, DecompilerSettings settings)
 		{
-			var reader = new IlAstMaterializer(wire, compilation, modules);
+			var reader = new IlAstMaterializer(wire, compilation, modules, settings);
 			var result = new Dictionary<int, (ILFunction?, string?)>();
 			int count = reader.Len();
 			for (int i = 0; i < count; i++)
@@ -377,6 +381,8 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		{
 			var method = mainModule.GetDefinition(MetadataTokens.MethodDefinitionHandle(row));
 			context = new GenericContext(method);
+			currentRow = row;
+			transformContext = null;
 			int codeSize = Len();
 			int localSignatureLength = Len();
 			int asyncReturnType = Len();
@@ -591,12 +597,93 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				69 => Match(),
 				70 => new LockInstruction(Node(), Node()),
 				71 => Using(),
+				72 => NumericCompoundAssign(),
+				73 => UserDefinedCompoundAssign(),
+				74 => LocAllocSpan(),
+				75 => LdVirtDelegate(),
+				76 => LdElemaInlineArray(),
+				77 => NullCoalescing(),
+				78 => DynamicCompoundAssign(),
 				_ => throw new InvalidOperationException($"Unknown wire opcode {op}"),
 			};
 			inst.SetILRange(range);
 			materialized.Add(inst);
 			return inst;
 		}
+
+		ILInstruction NumericCompoundAssign()
+		{
+			var op = (BinaryNumericOperator)U8();
+			bool check = Bool();
+			var sign = (Sign)U8();
+			var leftType = (StackType)U8();
+			var rightType = (StackType)U8();
+			var type = Type();
+			var evalMode = (CompoundEvalMode)U8();
+			var targetKind = (CompoundTargetKind)U8();
+			var target = Node();
+			var value = Node();
+			// The instruction copies its operator from a binary instruction.
+			var binary = new BinaryNumericInstruction(op, new Nop(), new Nop(), leftType, rightType, check, sign);
+			return new NumericCompoundAssign(binary, target, targetKind, value, type, evalMode, TransformContext);
+		}
+
+		ILInstruction LocAllocSpan()
+		{
+			var type = Type();
+			return new LocAllocSpan(Node(), type);
+		}
+
+		ILInstruction LdVirtDelegate()
+		{
+			var type = Type();
+			var method = Method();
+			return new LdVirtDelegate(Node(), type, method);
+		}
+
+		ILInstruction LdElemaInlineArray()
+		{
+			var type = Type();
+			bool isReadOnly = Bool();
+			var array = Node();
+			return new LdElemaInlineArray(type, array, Nodes()) { IsReadOnly = isReadOnly };
+		}
+
+		ILInstruction DynamicCompoundAssign()
+		{
+			var operation = (System.Linq.Expressions.ExpressionType)(int)IVar();
+			var binderFlags = (CSharpBinderFlags)(int)IVar();
+			var infos = ArgumentInfos();
+			var targetKind = (CompoundTargetKind)U8();
+			var target = Node();
+			return new DynamicCompoundAssign(operation, binderFlags, target, infos[0], Node(), infos[1], targetKind);
+		}
+
+		ILInstruction NullCoalescing()
+		{
+			var kind = (NullCoalescingKind)U8();
+			var type = Type();
+			var value = Node();
+			return new NullCoalescingInstruction(type, kind, value, Node());
+		}
+
+		ILInstruction UserDefinedCompoundAssign()
+		{
+			var method = Method();
+			var evalMode = (CompoundEvalMode)U8();
+			var targetKind = (CompoundTargetKind)U8();
+			var target = Node();
+			return new UserDefinedCompoundAssign(method, evalMode, target, targetKind, Node());
+		}
+
+		/// <summary>
+		/// The context the constructors of some instructions check their operands against (in
+		/// Debug builds); its function is a placeholder.
+		/// </summary>
+		ILTransformContext TransformContext => transformContext ??= new ILTransformContext(
+			new ILFunction(mainModule.GetDefinition(MetadataTokens.MethodDefinitionHandle(currentRow)), 0, context, new Nop()),
+			(IDecompilerTypeSystem)compilation, null, settings);
+		ILTransformContext? transformContext;
 
 		ILInstruction Using()
 		{

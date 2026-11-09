@@ -77,6 +77,14 @@ pub fn run(r: &mut ReadFunction, ctx: &mut Context<'_, '_, '_>, post_order: &[Bl
                         super::statement_transform::run(r, ctx, &mut bc, children)
                     }
                 }
+                if !ctx.removed_variables.is_empty() {
+                    // `ILVariableCollection.Remove` swap-removes.
+                    for v in std::mem::take(&mut ctx.removed_variables) {
+                        if let Some(i) = r.variables.iter().position(|&x| x == v) {
+                            r.variables.swap_remove(i);
+                        }
+                    }
+                }
             }
         }
     }

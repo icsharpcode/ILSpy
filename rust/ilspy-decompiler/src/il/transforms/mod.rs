@@ -17,6 +17,7 @@ pub mod early_expression_transforms;
 pub mod expression_transforms;
 pub mod il_inlining;
 pub mod index_range_transform;
+pub mod inline_array_transform;
 pub mod inline_return_transform;
 pub mod introduce_ref_read_only_modifier_on_locals;
 pub mod ldloca_dup_init_obj_transform;
@@ -28,6 +29,7 @@ pub mod split_variables;
 pub mod statement_transform;
 pub mod switch_on_nullable_transform;
 pub mod switch_on_string_transform;
+pub mod transform_assignment;
 pub mod using_transform;
 
 /// The `DecompilerSettings` the ported transforms read, by property name. The host sends
@@ -61,6 +63,12 @@ pub const SETTING_NAMES: &[&str] = &[
     "AnonymousMethods",
     "ArrayInitializers",
     "AggressiveInlining",
+    "MakeAssignmentExpressions",
+    "IntroduceIncrementAndDecrement",
+    "CheckedOperators",
+    "NativeIntegers",
+    "UnsignedRightShift",
+    "InlineArrays",
 ];
 
 /// The values of `SETTING_NAMES`.
@@ -93,6 +101,12 @@ pub struct Settings {
     pub anonymous_methods: bool,
     pub array_initializers: bool,
     pub aggressive_inlining: bool,
+    pub make_assignment_expressions: bool,
+    pub introduce_increment_and_decrement: bool,
+    pub checked_operators: bool,
+    pub native_integers: bool,
+    pub unsigned_right_shift: bool,
+    pub inline_arrays: bool,
 }
 
 impl Settings {
@@ -127,6 +141,12 @@ impl Settings {
             anonymous_methods: bit(24),
             array_initializers: bit(25),
             aggressive_inlining: bit(26),
+            make_assignment_expressions: bit(27),
+            introduce_increment_and_decrement: bit(28),
+            checked_operators: bit(29),
+            native_integers: bit(30),
+            unsigned_right_shift: bit(31),
+            inline_arrays: bit(32),
         }
     }
 }
@@ -138,6 +158,12 @@ pub struct Context<'t, 'c, 'a> {
     /// How methods are read (`CreateILReader`): the state machine decompilers read the
     /// methods of compiler-generated classes with the same options.
     pub reader: super::reader::ReaderOptions<'t>,
+    /// `StatementTransformContext.RequestRerun()` from a transform that does not see the
+    /// statement context; the statement driver takes it after each child.
+    pub rerun_requested: bool,
+    /// Variables a transform merged into others (`RecombineVariables`); the block driver
+    /// removes them from the function's variables after each transform.
+    pub removed_variables: Vec<super::ast::VarId>,
 }
 
 /// A pipeline leaf: a whole-function transform, or a post-order block transform of the
@@ -202,6 +228,9 @@ const PIPELINE: &[Leaf] = &[
             pos,
             il_inlining::options::ALLOW_INLINING_OF_LDLOCA,
         )
+    }),
+    Statement(1, |r, ctx, _, sc, block, pos| {
+        expression_transforms::run_statement(&mut r.function, ctx, sc, block, pos)
     }),
 ];
 

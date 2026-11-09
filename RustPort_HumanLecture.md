@@ -1586,6 +1586,60 @@ group, with its reason.
 The no-op red run failed 2,131 of 3,550 equality cases. The first port failed 1,175, mostly
 because ldloca inlining was still missing.
 
+### 3.53 ExpressionTransforms in the statement group (item 38, IL prefix 31)
+
+The second leaf of the statement group runs the visitor from item 31 on every statement.
+Before that, the visitor only ran on the ifs ConditionDetection inverted. Its rerun requests
+now reach the statement driver: after a store to a local, after a conditional operator,
+after a switch expression and after a compound assignment moved to the top level. A flag on
+the context carries them; `RunOnSingleStatement` drops it, as the managed method does with
+its fresh statement context.
+
+The no-op red run failed 2,392 of 3,550 equality cases. About 13,500 method and settings
+pairs differed, so the step ported the rest of the visitor, in order of impact:
+- `TransformAssignment.HandleCompoundAssign`, with three new instructions: numeric,
+  user-defined (operators and `string.Concat`) and dynamic compound assignments. These
+  account for about 7,000 differences. The rest of TransformAssignment stays with item 40.
+- `newobj Span<T>(localloc(n), count)` becomes `localloc.span T(count)`, a new instruction
+  (also with a stackalloc initializer block).
+- `ldvirtdelegate`, a new instruction, and `GetValueOrDefault(a, b)` as `a ?? b`
+  (`if.notnull`, a new instruction).
+- InlineArrayTransform, with `ldelema.inlinearray`, a new instruction; it has no step of
+  its own.
+- The dynamic set-member and set-index compound rewrites, and the dynamic add/remove event
+  pattern.
+
+Settings bits 27 to 32 are `MakeAssignmentExpressions`, `IntroduceIncrementAndDecrement`,
+`CheckedOperators`, `NativeIntegers`, `UnsignedRightShift` and `InlineArrays`. The host
+materializer now builds a transform context with the request's settings, because the
+constructor of the numeric compound assignment checks its operands against them in Debug
+builds.
+
+**Gaps that new instructions exposed.** Older ports had left out cases for instructions
+the arena did not have yet:
+- the increment-block test of ConditionDetection (`IsSimpleStatement` accepts compound
+  assignments, so a loop's increment block is recognised);
+- ILInlining's targets: getters under a compound assignment, `localloc.span`,
+  `ldelema.inlinearray`, nullables into `??`, and dynamic compound assignments;
+- `MatchDelegateConstruction` with `ldvirtdelegate`.
+
+Each shows up as a divergence in methods that never used the new instruction directly: the
+changed tree makes ConditionDetection or ILInlining choose differently. A variable removed by
+`RecombineVariables` leaves the list by swap-remove, as `ILVariableCollection.Remove` does.
+
+**Allowlisted.** ExpressionTransforms calls transforms that have their own steps later in the
+plan. Following the FORK decision, their divergences wait for those steps:
+- NullableLiftingTransform and NullPropagationTransform, items 42 and 43: 3,413 methods;
+- the span and CreateSpan initializers of TransformArrayInitializers, item 44: 633 methods;
+- UserDefinedLogicTransform, item 51: 296 methods;
+- HandleEmptyWith of TransformCollectionAndObjectInitializers, item 45: 48 methods.
+
+A harness mode sorted every difference by comparing counts of each group's instructions in
+the two printed trees. No difference was left without a group. `ICSharpCode.Decompiler.dll`
+entries now name their method by signature, because the host's new reader methods shift
+that fixture's tokens with every step that adds instructions. The allowlist check became a
+hash lookup.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

@@ -59,6 +59,29 @@ public class IlAstPrefixEqualityTests
 		File.ReadAllText(Path.Combine(RepositoryRoot(), "rust", "ilast-divergence-allowlist.json")),
 		new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower })!);
 
+	static readonly Lazy<HashSet<(string Fixture, string Method)>> allowlistKeys =
+		new(() => new HashSet<(string, string)>(allowlist.Value.Select(d => (d.Fixture, d.Method))));
+
+	/// <summary>
+	/// The fixture that is the assembly under test: it contains the host's interop code, so its
+	/// method tokens shift whenever the host gains a method. Allowlist entries name its methods
+	/// by <see cref="Signature"/> instead.
+	/// </summary>
+	const string SelfFixture = "ICSharpCode.Decompiler.dll";
+
+	static string Signature(IMethod method)
+		=> $"sig {method.DeclaringType.ReflectionName}.{method.Name}({string.Join(", ", method.Parameters.Select(p => p.Type.ReflectionName))})";
+
+	static bool IsAllowlisted(DecompilerTypeSystem ts, string fixture, MethodDefinitionHandle handle)
+	{
+		if (fixture == SelfFixture)
+		{
+			var method = ts.MainModule.GetDefinition(handle);
+			return allowlistKeys.Value.Contains((fixture, Signature(method)));
+		}
+		return allowlistKeys.Value.Contains((fixture, $"method 0x{MetadataTokens.GetToken(handle):x8}"));
+	}
+
 	/// <summary>
 	/// The transforms that run exactly the first <paramref name="prefix"/> leaves of
 	/// <paramref name="pipeline"/> (see <see cref="IlTransformPrefix"/>): a group the prefix
@@ -259,9 +282,9 @@ public class IlAstPrefixEqualityTests
 	[Test]
 	public void EngineSettingsAreDecompilerSettings()
 	{
-		Assert.That(RustSettings.Names, Is.EqualTo(new[] { "RemoveDeadStores", "SortSwitchSections", "PatternBasedFixedStatement", "YieldReturn", "AsyncAwait", "AsyncEnumerator", "AwaitInCatchFinally", "Dynamic", "SparseIntegerSwitch", "RemoveDeadCode", "SwitchStatementOnString", "SwitchOnReadOnlySpanChar", "LiftNullables", "PatternMatching", "RecursivePatternMatching", "PatternCombinators", "RelationalPatterns", "AssumeArrayLengthFitsIntoInt32", "SwitchExpressions", "Ranges", "LockStatement", "UsingStatement", "AsyncUsingAndForEachStatement", "IntroduceRefModifiersOnStructs", "AnonymousMethods", "ArrayInitializers", "AggressiveInlining" }));
-		var settings = new DecompilerSettings { RemoveDeadStores = false, SortSwitchSections = true, PatternBasedFixedStatement = false, YieldReturn = true, AsyncAwait = false, AsyncEnumerator = true, AwaitInCatchFinally = false, Dynamic = true, SparseIntegerSwitch = false, RemoveDeadCode = true, SwitchStatementOnString = false, SwitchOnReadOnlySpanChar = true, LiftNullables = false, PatternMatching = true, RecursivePatternMatching = false, PatternCombinators = true, RelationalPatterns = false, AssumeArrayLengthFitsIntoInt32 = true, SwitchExpressions = false, Ranges = true, LockStatement = false, UsingStatement = true, AsyncUsingAndForEachStatement = false, IntroduceRefModifiersOnStructs = true, AnonymousMethods = false, ArrayInitializers = true, AggressiveInlining = false };
-		Assert.That(RustSettings.Bits(settings), Is.EqualTo(0x2AAAAAAUL));
+		Assert.That(RustSettings.Names, Is.EqualTo(new[] { "RemoveDeadStores", "SortSwitchSections", "PatternBasedFixedStatement", "YieldReturn", "AsyncAwait", "AsyncEnumerator", "AwaitInCatchFinally", "Dynamic", "SparseIntegerSwitch", "RemoveDeadCode", "SwitchStatementOnString", "SwitchOnReadOnlySpanChar", "LiftNullables", "PatternMatching", "RecursivePatternMatching", "PatternCombinators", "RelationalPatterns", "AssumeArrayLengthFitsIntoInt32", "SwitchExpressions", "Ranges", "LockStatement", "UsingStatement", "AsyncUsingAndForEachStatement", "IntroduceRefModifiersOnStructs", "AnonymousMethods", "ArrayInitializers", "AggressiveInlining", "MakeAssignmentExpressions", "IntroduceIncrementAndDecrement", "CheckedOperators", "NativeIntegers", "UnsignedRightShift", "InlineArrays" }));
+		var settings = new DecompilerSettings { RemoveDeadStores = false, SortSwitchSections = true, PatternBasedFixedStatement = false, YieldReturn = true, AsyncAwait = false, AsyncEnumerator = true, AwaitInCatchFinally = false, Dynamic = true, SparseIntegerSwitch = false, RemoveDeadCode = true, SwitchStatementOnString = false, SwitchOnReadOnlySpanChar = true, LiftNullables = false, PatternMatching = true, RecursivePatternMatching = false, PatternCombinators = true, RelationalPatterns = false, AssumeArrayLengthFitsIntoInt32 = true, SwitchExpressions = false, Ranges = true, LockStatement = false, UsingStatement = true, AsyncUsingAndForEachStatement = false, IntroduceRefModifiersOnStructs = true, AnonymousMethods = false, ArrayInitializers = true, AggressiveInlining = false, MakeAssignmentExpressions = true, IntroduceIncrementAndDecrement = false, CheckedOperators = true, NativeIntegers = false, UnsignedRightShift = true, InlineArrays = false };
+		Assert.That(RustSettings.Bits(settings), Is.EqualTo(0xAAAAAAAAUL));
 	}
 
 	static void AssertPrefixEqual(string path, DecompilerSettings settings)
@@ -278,7 +301,7 @@ public class IlAstPrefixEqualityTests
 			if (metadata.GetMethodDefinition(handle).RelativeVirtualAddress == 0)
 				continue;
 			string name = $"method 0x{MetadataTokens.GetToken(handle):x8}";
-			if (allowlist.Value.Any(d => d.Fixture == fixture && d.Method == name))
+			if (IsAllowlisted(ts, fixture, handle))
 				continue;
 			string? expected = Managed(ts, handle, settings, prefix, out string? managedError);
 			string? engineError = null;

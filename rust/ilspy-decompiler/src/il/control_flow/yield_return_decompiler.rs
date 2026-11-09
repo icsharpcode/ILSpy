@@ -319,6 +319,8 @@ pub fn create_il_ast(
         ts: &mut *ctx.ts,
         settings: ctx.settings,
         reader: ctx.reader,
+        rerun_requested: false,
+        removed_variables: Vec::new(),
     };
     run_early_il_transforms(&mut read, &mut inner, true);
     Ok(read)

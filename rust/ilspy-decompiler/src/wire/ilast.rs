@@ -91,6 +91,13 @@ mod op {
     pub const MATCH: u8 = 69;
     pub const LOCK: u8 = 70;
     pub const USING: u8 = 71;
+    pub const NUMERIC_COMPOUND_ASSIGN: u8 = 72;
+    pub const USER_DEFINED_COMPOUND_ASSIGN: u8 = 73;
+    pub const LOC_ALLOC_SPAN: u8 = 74;
+    pub const LD_VIRT_DELEGATE: u8 = 75;
+    pub const LD_ELEMA_INLINE_ARRAY: u8 = 76;
+    pub const NULL_COALESCING: u8 = 77;
+    pub const DYNAMIC_COMPOUND_ASSIGN: u8 = 78;
     /// A node already written (it has two parents).
     pub const NODE_REFERENCE: u8 = 255;
 }
@@ -822,6 +829,116 @@ impl FunctionWriter<'_, '_, '_, '_> {
                 self.out
                     .u8(u8::from(is_async) | u8::from(is_ref_struct) << 1);
             }
+            Inst::NumericCompoundAssign {
+                op: o,
+                check_overflow,
+                sign,
+                left_input,
+                right_input,
+                is_lifted,
+                ty,
+                eval_mode,
+                target_kind,
+                target,
+                value,
+                ..
+            } => {
+                if is_lifted {
+                    return Err("lifted compound assignments are not on the wire yet".into());
+                }
+                tag(op::NUMERIC_COMPOUND_ASSIGN, &mut self.out);
+                self.out.u8(o as u8);
+                self.out.bool(check_overflow);
+                self.out.u8(sign as u8);
+                self.stack_type(left_input);
+                self.stack_type(right_input);
+                self.ty(ty);
+                self.out.u8(eval_mode as u8);
+                self.out.u8(target_kind as u8);
+                self.node(target)?;
+                self.node(value)?;
+            }
+            Inst::UserDefinedCompoundAssign {
+                ref method,
+                eval_mode,
+                target_kind,
+                target,
+                value,
+            } => {
+                tag(op::USER_DEFINED_COMPOUND_ASSIGN, &mut self.out);
+                self.member(method.token, method.state_machine_context);
+                self.out.u8(eval_mode as u8);
+                self.out.u8(target_kind as u8);
+                self.node(target)?;
+                self.node(value)?;
+            }
+            Inst::DynamicCompoundAssign {
+                operation,
+                binder_flags,
+                ref target_info,
+                ref value_info,
+                target_kind,
+                target,
+                value,
+                ..
+            } => {
+                // The host derives the evaluation mode from the operation, as the constructor
+                // does.
+                tag(op::DYNAMIC_COMPOUND_ASSIGN, &mut self.out);
+                self.out.ivar(i64::from(operation));
+                self.out.ivar(i64::from(binder_flags));
+                self.out.len(2);
+                for info in [target_info, value_info] {
+                    self.out.ivar(i64::from(info.flags));
+                    self.out.bool(info.name.is_some());
+                    if let Some(n) = &info.name {
+                        self.string(n);
+                    }
+                    self.ty(info.compile_time_type);
+                }
+                self.out.u8(target_kind as u8);
+                self.node(target)?;
+                self.node(value)?;
+            }
+            Inst::LocAllocSpan { arg, ty } => {
+                tag(op::LOC_ALLOC_SPAN, &mut self.out);
+                self.ty(ty);
+                self.node(arg)?;
+            }
+            Inst::LdVirtDelegate {
+                arg,
+                ty,
+                ref method,
+            } => {
+                tag(op::LD_VIRT_DELEGATE, &mut self.out);
+                self.ty(ty);
+                self.member(method.token, method.state_machine_context);
+                self.node(arg)?;
+            }
+            Inst::LdElemaInlineArray {
+                ty,
+                array,
+                ref indices,
+                is_read_only,
+            } => {
+                tag(op::LD_ELEMA_INLINE_ARRAY, &mut self.out);
+                self.ty(ty);
+                self.out.bool(is_read_only);
+                self.node(array)?;
+                self.nodes(indices)?;
+            }
+            Inst::NullCoalescing {
+                kind,
+                ty,
+                value,
+                fallback,
+            } => {
+                tag(op::NULL_COALESCING, &mut self.out);
+                self.out.u8(kind as u8);
+                self.ty(ty);
+                self.node(value)?;
+                self.node(fallback)?;
+            }
             Inst::YieldReturn { value } => {
                 tag(op::YIELD_RETURN, &mut self.out);
                 self.node(value)?;
@@ -1054,6 +1171,8 @@ pub fn read_function(
         ts,
         settings,
         reader: options,
+        rerun_requested: false,
+        removed_variables: Vec::new(),
     };
     crate::il::transforms::run_prefix(&mut f, &mut ctx, il_prefix);
     let mut w = ModuleWriter::new(ts);

@@ -145,7 +145,11 @@ fn with_field(
     {
         return false;
     }
-    if !match_delegate_construction(f, ctx, unwrap_invalid_conv(f, value)) {
+    // The managed code casts the value to `NewObj` first.
+    let construction = unwrap_invalid_conv(f, value);
+    if !matches!(f.inst(construction), Inst::NewObj(_))
+        || !match_delegate_construction(f, ctx, construction)
+    {
         return false;
     }
     let usages: Vec<NodeId> = sibling(f, block, i, 1)
@@ -201,7 +205,7 @@ fn with_local(
     else {
         return false;
     };
-    if !match_delegate_construction(f, ctx, value) {
+    if !matches!(f.inst(value), Inst::NewObj(_)) || !match_delegate_construction(f, ctx, value) {
         return false;
     }
     // No other stores or loads of the variable.

@@ -212,6 +212,15 @@ impl<S: State> Flow<S> {
                 a.handle_store(self, f, id, variable);
                 self.visit(a, f, body);
             }
+            // `HandleBinaryWithOptionalEvaluation`: the fallback may not run.
+            &Inst::NullCoalescing {
+                value, fallback, ..
+            } => {
+                self.visit(a, f, value);
+                let branch_state = self.state.clone();
+                self.visit(a, f, fallback);
+                self.state.join_with(&branch_state);
+            }
             // `VisitUsingInstruction`: no store of the variable is recorded.
             &Inst::Using {
                 resource_expression,

@@ -221,7 +221,7 @@ impl TypeSystem<'_, '_> {
     }
 
     /// The known type code of the definition behind `t` after `GetEnumUnderlyingType()`.
-    fn enum_underlying_known(&self, t: TypeId) -> Option<KnownTypeCode> {
+    pub(crate) fn enum_underlying_known(&self, t: TypeId) -> Option<KnownTypeCode> {
         let def = self.definition(t)?;
         let info = self.comp.type_def(def).ok()?;
         let is_definition_or_instance = matches!(
@@ -346,6 +346,38 @@ impl TypeSystem<'_, '_> {
             Some(KnownTypeCode::IntPtr | KnownTypeCode::UIntPtr) => NATIVE_INT_SIZE,
             Some(KnownTypeCode::Int64 | KnownTypeCode::UInt64 | KnownTypeCode::Double) => 8,
             _ => 0,
+        }
+    }
+
+    /// `IType.GetSign()`.
+    pub fn type_sign(&mut self, t: TypeId) -> Sign {
+        let t = self.skip_modifiers(t);
+        match self.data(t) {
+            TypeData::Pointer(_) | TypeData::NUInt | TypeData::FnPtr(_) => return Sign::Unsigned,
+            TypeData::NInt => return Sign::Signed,
+            _ => {}
+        }
+        match self.enum_underlying_known(t) {
+            Some(
+                KnownTypeCode::SByte
+                | KnownTypeCode::Int16
+                | KnownTypeCode::Int32
+                | KnownTypeCode::Int64
+                | KnownTypeCode::IntPtr
+                | KnownTypeCode::Single
+                | KnownTypeCode::Double
+                | KnownTypeCode::Decimal,
+            ) => Sign::Signed,
+            Some(
+                KnownTypeCode::UIntPtr
+                | KnownTypeCode::Char
+                | KnownTypeCode::Boolean
+                | KnownTypeCode::Byte
+                | KnownTypeCode::UInt16
+                | KnownTypeCode::UInt32
+                | KnownTypeCode::UInt64,
+            ) => Sign::Unsigned,
+            _ => Sign::None,
         }
     }
 

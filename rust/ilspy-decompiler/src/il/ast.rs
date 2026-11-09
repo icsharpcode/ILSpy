@@ -91,6 +91,18 @@ named_enum!(
     }
 );
 named_enum!(
+    /// `NullCoalescingKind`.
+    NullCoalescingKind { Ref, Nullable, NullableWithValueFallback }
+);
+named_enum!(
+    /// `CompoundEvalMode`.
+    CompoundEvalMode { EvaluatesToOldValue, EvaluatesToNewValue }
+);
+named_enum!(
+    /// `CompoundTargetKind`.
+    CompoundTargetKind { Address, Property, Dynamic }
+);
+named_enum!(
     /// `ContainerKind`.
     ContainerKind { Normal, Loop, Switch, While, DoWhile, For }
 );
@@ -621,6 +633,70 @@ pub enum Inst {
         on_expression: NodeId,
         body: NodeId,
     },
+    /// `dynamic.compound.op(target, value)`: a compound assignment through the dynamic binder.
+    DynamicCompoundAssign {
+        /// `ExpressionType`.
+        operation: i32,
+        /// `CSharpBinderFlags`.
+        binder_flags: i32,
+        target_info: DynamicArgInfo,
+        value_info: DynamicArgInfo,
+        eval_mode: CompoundEvalMode,
+        target_kind: CompoundTargetKind,
+        target: NodeId,
+        value: NodeId,
+    },
+    /// `localloc.span T(count)`: `stackalloc T[count]` as a `Span<T>`.
+    LocAllocSpan {
+        arg: NodeId,
+        ty: TypeId,
+    },
+    /// `ldvirtdelegate D M(target)`: a delegate of a virtual method.
+    LdVirtDelegate {
+        arg: NodeId,
+        ty: TypeId,
+        method: MethodOperand,
+    },
+    /// `ldelema.inlinearray T(array, indices)`: an element address of an inline array.
+    LdElemaInlineArray {
+        ty: TypeId,
+        array: NodeId,
+        indices: Vec<NodeId>,
+        is_read_only: bool,
+    },
+    /// `if.notnull(value, fallback)`: `value ?? fallback`.
+    NullCoalescing {
+        kind: NullCoalescingKind,
+        ty: TypeId,
+        value: NodeId,
+        fallback: NodeId,
+    },
+    /// `numeric.compound.op(target, value)`: `target op= value` on a numeric target.
+    NumericCompoundAssign {
+        op: BinaryNumericOperator,
+        check_overflow: bool,
+        sign: Sign,
+        left_input: StackType,
+        right_input: StackType,
+        /// `UnderlyingResultType`.
+        underlying_result: StackType,
+        is_lifted: bool,
+        /// The type of the target.
+        ty: TypeId,
+        eval_mode: CompoundEvalMode,
+        target_kind: CompoundTargetKind,
+        target: NodeId,
+        value: NodeId,
+    },
+    /// `user.compound.op(target, value)`: a user-defined operator (or `string.Concat`) as
+    /// `target op= value`.
+    UserDefinedCompoundAssign {
+        method: MethodOperand,
+        eval_mode: CompoundEvalMode,
+        target_kind: CompoundTargetKind,
+        target: NodeId,
+        value: NodeId,
+    },
     /// `using (variable = resource_expression) body`.
     Using {
         variable: VarId,
@@ -821,6 +897,18 @@ impl Inst {
                 body,
                 ..
             } => vec![*resource_expression, *body],
+            NumericCompoundAssign { target, value, .. }
+            | UserDefinedCompoundAssign { target, value, .. }
+            | DynamicCompoundAssign { target, value, .. } => vec![*target, *value],
+            LocAllocSpan { arg, .. } | LdVirtDelegate { arg, .. } => vec![*arg],
+            LdElemaInlineArray { array, indices, .. } => {
+                let mut c = vec![*array];
+                c.extend(indices);
+                c
+            }
+            NullCoalescing {
+                value, fallback, ..
+            } => vec![*value, *fallback],
             Leave { value, .. } => vec![*value],
             If {
                 condition,
@@ -948,6 +1036,28 @@ impl Inst {
                 body,
                 ..
             } => [resource_expression, body]
+                .into_iter()
+                .nth(index)
+                .expect("child index"),
+            NumericCompoundAssign { target, value, .. }
+            | UserDefinedCompoundAssign { target, value, .. }
+            | DynamicCompoundAssign { target, value, .. } => {
+                [target, value].into_iter().nth(index).expect("child index")
+            }
+            LocAllocSpan { arg, .. } | LdVirtDelegate { arg, .. } => {
+                assert_eq!(index, 0, "child index out of range");
+                arg
+            }
+            LdElemaInlineArray { array, indices, .. } => {
+                if index == 0 {
+                    array
+                } else {
+                    &mut indices[index - 1]
+                }
+            }
+            NullCoalescing {
+                value, fallback, ..
+            } => [value, fallback]
                 .into_iter()
                 .nth(index)
                 .expect("child index"),
@@ -1097,6 +1207,21 @@ impl Inst {
             PinnedRegion { .. } => Flags::MAY_WRITE_LOCALS,
             Lock { .. } => Flags::CONTROL_FLOW | Flags::SIDE_EFFECT,
             Using { .. } => Flags::MAY_WRITE_LOCALS | Flags::CONTROL_FLOW | Flags::SIDE_EFFECT,
+            &NumericCompoundAssign {
+                op, check_overflow, ..
+            } => {
+                let divides = matches!(op, BinaryNumericOperator::Div | BinaryNumericOperator::Rem);
+                if check_overflow || divides {
+                    throws | Flags::SIDE_EFFECT
+                } else {
+                    Flags::SIDE_EFFECT
+                }
+            }
+            UserDefinedCompoundAssign { .. } | DynamicCompoundAssign { .. } => {
+                throws | Flags::SIDE_EFFECT
+            }
+            LocAllocSpan { .. } | LdVirtDelegate { .. } | LdElemaInlineArray { .. } => throws,
+            NullCoalescing { .. } => Flags::CONTROL_FLOW,
             YieldReturn { .. } => Flags::MAY_BRANCH | Flags::SIDE_EFFECT,
             Await { .. } => Flags::SIDE_EFFECT,
             Dynamic { .. } => throws | Flags::SIDE_EFFECT,
@@ -1159,6 +1284,10 @@ pub struct Function {
     pub variables: Vec<Variable>,
     /// The `BlockContainer` body.
     pub body: Option<NodeId>,
+    /// Whether the function is an instance constructor (`Method.IsConstructor && !IsStatic`).
+    pub is_instance_constructor: bool,
+    /// `ChainedConstructorCallILOffset`, computed on first use and kept.
+    pub chained_constructor_call_il_offset: Option<i32>,
 }
 
 impl Function {
@@ -1505,6 +1634,13 @@ impl Function {
                 });
                 combined | Flags::CONTROL_FLOW
             }
+            NullCoalescing {
+                value, fallback, ..
+            } => {
+                Flags::CONTROL_FLOW
+                    | self.flags(*value)
+                    | Flags::combine_branches(Flags::NONE, self.flags(*fallback))
+            }
             TryFault {
                 try_block,
                 fault_block,
@@ -1571,6 +1707,23 @@ impl Function {
                 DynamicKind::UnaryOperator if matches!(operation, 83 | 84) => StackType::I4,
                 _ => StackType::Obj,
             },
+            NumericCompoundAssign {
+                is_lifted,
+                underlying_result,
+                ..
+            } => {
+                if *is_lifted {
+                    StackType::VT
+                } else {
+                    *underlying_result
+                }
+            }
+            UserDefinedCompoundAssign { method, .. } => ts.stack_type(method.method.ret),
+            DynamicCompoundAssign { .. } => StackType::Obj,
+            LocAllocSpan { .. } => StackType::VT,
+            LdVirtDelegate { .. } => StackType::Obj,
+            LdElemaInlineArray { .. } => StackType::Ref,
+            NullCoalescing { ty, .. } => ts.stack_type(*ty),
             Nop { .. }
             | PinnedRegion { .. }
             | Lock { .. }
@@ -1693,6 +1846,11 @@ impl Function {
                 ..
             } => *t,
             GetPinnableReference { ty, .. } => by_ref(ts, *ty),
+            NumericCompoundAssign { ty, .. } => *ty,
+            UserDefinedCompoundAssign { method, .. } => method.method.ret,
+            LocAllocSpan { ty, .. } | LdVirtDelegate { ty, .. } | NullCoalescing { ty, .. } => *ty,
+            LdElemaInlineArray { ty, .. } => by_ref(ts, *ty),
+            DynamicCompoundAssign { .. } => ts.intern(TypeData::Dynamic),
             Nop { .. }
             | Branch { .. }
             | Leave { .. }
