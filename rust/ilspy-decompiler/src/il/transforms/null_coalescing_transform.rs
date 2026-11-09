@@ -28,7 +28,7 @@ pub fn run(
 }
 
 /// `Block.Unwrap`.
-fn unwrap_block(f: &Function, inst: NodeId) -> NodeId {
+pub(crate) fn unwrap_block(f: &Function, inst: NodeId) -> NodeId {
     if let Inst::Block { final_inst, .. } = *f.inst(inst)
         && f.list(inst).len() == 1
         && f.match_nop(final_inst)

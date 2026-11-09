@@ -100,6 +100,8 @@ mod op {
     pub const DYNAMIC_COMPOUND_ASSIGN: u8 = 78;
     pub const THREE_VALUED_BOOL_AND: u8 = 79;
     pub const THREE_VALUED_BOOL_OR: u8 = 80;
+    pub const NULLABLE_UNWRAP: u8 = 81;
+    pub const NULLABLE_REWRAP: u8 = 82;
     /// A node already written (it has two parents).
     pub const NODE_REFERENCE: u8 = 255;
 }
@@ -972,6 +974,23 @@ impl FunctionWriter<'_, '_, '_, '_> {
                 self.ty(ty);
                 self.node(value)?;
                 self.node(fallback)?;
+            }
+            Inst::NullableUnwrap {
+                arg,
+                ty,
+                result,
+                ref_input,
+            } => {
+                tag(op::NULLABLE_UNWRAP, &mut self.out);
+                self.ty(ty);
+                self.stack_type(result);
+                self.out.bool(ref_input);
+                self.node(arg)?;
+            }
+            Inst::NullableRewrap { arg, ty } => {
+                tag(op::NULLABLE_REWRAP, &mut self.out);
+                self.ty(ty);
+                self.node(arg)?;
             }
             Inst::YieldReturn { value } => {
                 tag(op::YIELD_RETURN, &mut self.out);

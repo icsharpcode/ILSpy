@@ -688,6 +688,20 @@ pub enum Inst {
         value: NodeId,
         fallback: NodeId,
     },
+    /// `nullable.unwrap(arg)`: the value of a nullable `arg` (a reference to it when
+    /// `ref_input`); a null input jumps to the innermost enclosing `nullable.rewrap`.
+    NullableUnwrap {
+        arg: NodeId,
+        ty: TypeId,
+        result: StackType,
+        ref_input: bool,
+    },
+    /// `nullable.rewrap(arg)`: the result of `arg`, or null when a `nullable.unwrap` in it
+    /// saw null (`?.`).
+    NullableRewrap {
+        arg: NodeId,
+        ty: TypeId,
+    },
     /// `numeric.compound.op(target, value)`: `target op= value` on a numeric target.
     NumericCompoundAssign {
         op: BinaryNumericOperator,
@@ -920,7 +934,10 @@ impl Inst {
             NumericCompoundAssign { target, value, .. }
             | UserDefinedCompoundAssign { target, value, .. }
             | DynamicCompoundAssign { target, value, .. } => vec![*target, *value],
-            LocAllocSpan { arg, .. } | LdVirtDelegate { arg, .. } => vec![*arg],
+            LocAllocSpan { arg, .. }
+            | LdVirtDelegate { arg, .. }
+            | NullableUnwrap { arg, .. }
+            | NullableRewrap { arg, .. } => vec![*arg],
             LdElemaInlineArray { array, indices, .. } => {
                 let mut c = vec![*array];
                 c.extend(indices);
@@ -1067,7 +1084,10 @@ impl Inst {
             | DynamicCompoundAssign { target, value, .. } => {
                 [target, value].into_iter().nth(index).expect("child index")
             }
-            LocAllocSpan { arg, .. } | LdVirtDelegate { arg, .. } => {
+            LocAllocSpan { arg, .. }
+            | LdVirtDelegate { arg, .. }
+            | NullableUnwrap { arg, .. }
+            | NullableRewrap { arg, .. } => {
                 assert_eq!(index, 0, "child index out of range");
                 arg
             }
@@ -1245,6 +1265,8 @@ impl Inst {
             }
             LocAllocSpan { .. } | LdVirtDelegate { .. } | LdElemaInlineArray { .. } => throws,
             NullCoalescing { .. } => Flags::CONTROL_FLOW,
+            NullableUnwrap { .. } => Flags::MAY_UNWRAP_NULL,
+            NullableRewrap { .. } => Flags::CONTROL_FLOW,
             YieldReturn { .. } => Flags::MAY_BRANCH | Flags::SIDE_EFFECT,
             Await { .. } => Flags::SIDE_EFFECT,
             Dynamic { .. } => throws | Flags::SIDE_EFFECT,
@@ -1664,6 +1686,11 @@ impl Function {
                     | self.flags(*value)
                     | Flags::combine_branches(Flags::NONE, self.flags(*fallback))
             }
+            // A null input of a `nullable.unwrap` inside continues after the rewrap.
+            NullableRewrap { arg, .. } => {
+                let removed = Flags::MAY_UNWRAP_NULL.0 | Flags::END_POINT_UNREACHABLE.0;
+                Flags(self.flags(*arg).0 & !removed) | Flags::CONTROL_FLOW
+            }
             TryFault {
                 try_block,
                 fault_block,
@@ -1747,6 +1774,11 @@ impl Function {
             LdVirtDelegate { .. } => StackType::Obj,
             LdElemaInlineArray { .. } => StackType::Ref,
             NullCoalescing { ty, .. } => ts.stack_type(*ty),
+            NullableUnwrap { result, .. } => *result,
+            NullableRewrap { arg, ty } => match self.result_type(ts, *arg) {
+                StackType::Void => StackType::Void,
+                _ => ts.stack_type(*ty),
+            },
             Nop { .. }
             | PinnedRegion { .. }
             | Lock { .. }
@@ -1883,7 +1915,11 @@ impl Function {
             GetPinnableReference { ty, .. } => by_ref(ts, *ty),
             NumericCompoundAssign { ty, .. } => *ty,
             UserDefinedCompoundAssign { method, .. } => method.method.ret,
-            LocAllocSpan { ty, .. } | LdVirtDelegate { ty, .. } | NullCoalescing { ty, .. } => *ty,
+            LocAllocSpan { ty, .. }
+            | LdVirtDelegate { ty, .. }
+            | NullCoalescing { ty, .. }
+            | NullableUnwrap { ty, .. }
+            | NullableRewrap { ty, .. } => *ty,
             LdElemaInlineArray { ty, .. } => by_ref(ts, *ty),
             DynamicCompoundAssign { .. } => ts.intern(TypeData::Dynamic),
             Nop { .. }

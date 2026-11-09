@@ -1724,6 +1724,33 @@ shrinks from 4,473 to 3,771 entries.
 The no-op red run failed 111 of 3,550 equality cases; the port then matched every case
 outside the allowlist.
 
+### 3.58 NullPropagationTransform (item 43, IL prefix 36)
+
+The transform recovers the null-conditional operator `?.`:
+- `v != null ? v.M() : null` becomes `v?.M()`.
+- `if (v != null) v.M();` becomes `v?.M();`.
+- `v.HasValue ? v.GetValueOrDefault().M() : default` handles nullable value types the
+  same way.
+- With a value-type result and a non-null fallback, it becomes `v?.M() ?? fallback`.
+
+`?.` needed two new instructions:
+- `nullable.unwrap` (wire opcode 81) marks where a null input leaves the chain.
+- `nullable.rewrap` (82) marks where the chain resumes with null.
+
+Inlining, the flags and the data flow visitor learned their rules: an unwrap is a
+conditional jump to its enclosing rewrap. UsingTransform now also matches the
+`obj?.Dispose()` form its `finally` takes after this step. NullableLiftingTransform calls
+the transform first, as the managed code does; that removes the last item 42 shortcut.
+
+The managed code also asks the C# resolver whether a static extension method call can be
+written as `x?.M()`. The IL pipeline the tests compare runs without a using scope, where the
+resolver finds no extension methods, so the port rejects static calls (a shortcut until the
+semantics step, item 67). The new settings bit 35 is `NullPropagation`.
+
+The no-op red run failed 488 of 3,550 equality cases. The port then matched every case
+outside the allowlist, which shrinks from 3,771 to 1,049 entries; two newly visible array
+initializer cases are allowlisted for item 44.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

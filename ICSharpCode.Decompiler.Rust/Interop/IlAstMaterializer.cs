@@ -610,6 +610,8 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				78 => DynamicCompoundAssign(),
 				79 => new ThreeValuedBoolAnd(Node(), Node()),
 				80 => new ThreeValuedBoolOr(Node(), Node()),
+				81 => NullableUnwrap(),
+				82 => NullableRewrap(),
 				_ => throw new InvalidOperationException($"Unknown wire opcode {op}"),
 			};
 			inst.SetILRange(range);
@@ -664,6 +666,20 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 			var targetKind = (CompoundTargetKind)U8();
 			var target = Node();
 			return new DynamicCompoundAssign(operation, binderFlags, target, infos[0], Node(), infos[1], targetKind);
+		}
+
+		ILInstruction NullableUnwrap()
+		{
+			var type = Type();
+			var resultType = (StackType)U8();
+			bool refInput = Bool();
+			return new NullableUnwrap(type, resultType, Node(), refInput);
+		}
+
+		ILInstruction NullableRewrap()
+		{
+			var type = Type();
+			return new NullableRewrap(Node(), type);
 		}
 
 		ILInstruction NullCoalescing()

@@ -48,6 +48,9 @@ pub struct Flow<S: State> {
     work_lists: HashMap<NodeId, BTreeSet<usize>>,
     branches_triggering_finally: Vec<(NodeId, S)>,
     state_on_exception: HashMap<NodeId, S>,
+    /// `stateOnNullableRewrap`: everything that can reach the innermost enclosing
+    /// `nullable.rewrap` through a null input.
+    state_on_nullable_rewrap: S,
 }
 
 impl<S: State> Flow<S> {
@@ -59,7 +62,7 @@ impl<S: State> Flow<S> {
         Flow {
             current_state_on_exception: initial.clone(),
             state: initial,
-            bottom,
+            bottom: bottom.clone(),
             manual_flags: Flags::CONTROL_FLOW
                 | Flags::MAY_BRANCH
                 | Flags::MAY_UNWRAP_NULL
@@ -70,6 +73,7 @@ impl<S: State> Flow<S> {
             work_lists: HashMap::new(),
             branches_triggering_finally: Vec::new(),
             state_on_exception: HashMap::new(),
+            state_on_nullable_rewrap: bottom,
         }
     }
 
@@ -211,6 +215,19 @@ impl<S: State> Flow<S> {
                 self.visit(a, f, init);
                 a.handle_store(self, f, id, variable);
                 self.visit(a, f, body);
+            }
+            &Inst::NullableRewrap { arg, .. } => {
+                let old =
+                    std::mem::replace(&mut self.state_on_nullable_rewrap, self.bottom.clone());
+                self.visit(a, f, arg);
+                // Join the incoming control flow from the `nullable.unwrap`s.
+                self.state.join_with(&self.state_on_nullable_rewrap);
+                self.state_on_nullable_rewrap = old;
+            }
+            &Inst::NullableUnwrap { arg, .. } => {
+                self.visit(a, f, arg);
+                // A conditional edge to the enclosing `nullable.rewrap`.
+                self.state_on_nullable_rewrap.join_with(&self.state);
             }
             // `HandleBinaryWithOptionalEvaluation`: the fallback may not run.
             &Inst::NullCoalescing {

@@ -292,6 +292,8 @@ fn non_aggressive_inline_into(
             return true;
         }
         Inst::DynamicCompoundAssign { .. } => return true,
+        // Into the `?.` operator.
+        Inst::NullableUnwrap { .. } => return true,
         // Nullables into `??`.
         Inst::NullCoalescing { .. }
             if known(ctx, f.var(v).ty) == Some(KnownTypeCode::NullableOfT) =>
@@ -449,6 +451,8 @@ fn can_inline_into_slot(
         | Inst::Lock { .. }
         | Inst::Using { .. }
         | Inst::NullCoalescing { .. } => index == 0,
+        // Not an expression containing a `nullable.unwrap` that it does not rewrap itself.
+        Inst::NullableRewrap { .. } => !f.has_flag(moved, crate::il::ast::Flags::MAY_UNWRAP_NULL),
         Inst::SwitchSection { .. }
         | Inst::TryCatch { .. }
         | Inst::TryFinally { .. }
@@ -697,6 +701,7 @@ fn used_as_this_pointer_in_call(
             Some(m) => ThisCallMethod::Method(m.method.clone(), None),
             None => ThisCallMethod::None,
         }),
+        Inst::NullableUnwrap { ref_input, .. } => ref_input.then_some(ThisCallMethod::None),
         _ => None,
     }
 }

@@ -458,14 +458,19 @@ fn match_dispose_check(
 ) -> Option<u32> {
     let is_async = dispose_type == KnownTypeCode::IAsyncDisposable;
     let obj_type = f.var(obj).ty;
-    // shortcut: the engine has no nullable.rewrap or nullable.unwrap instructions yet, so
-    // their patterns (`obj?.Dispose()`) never match; add them with NullPropagationTransform.
     if known(ctx, obj_type) == Some(KnownTypeCode::NullableOfT) {
-        let (condition, dispose_inst) = f.match_if_instruction(check)?;
-        if !match_has_value_call_of(f, ctx, condition, obj) {
-            return None;
-        }
-        let &[mut invocation] = block_instructions(f, dispose_inst)? else {
+        let mut invocation = if let Some((condition, dispose_inst)) = f.match_if_instruction(check)
+        {
+            if !match_has_value_call_of(f, ctx, condition, obj) {
+                return None;
+            }
+            let &[invocation] = block_instructions(f, dispose_inst)? else {
+                return None;
+            };
+            invocation
+        } else if let Inst::NullableRewrap { arg, .. } = *f.inst(check) {
+            arg
+        } else {
             return None;
         };
         if is_async {
@@ -493,7 +498,11 @@ fn match_dispose_check(
                     && same_underlying
                     && f.match_ldloc(boxed) == Some(obj)
             }
-            Inst::AddressOf { value, .. } => match_get_value_or_default_of(f, ctx, value, obj),
+            Inst::AddressOf { value, .. } => {
+                match_get_value_or_default_of(f, ctx, value, obj)
+                    || matches!(*f.inst(value), Inst::NullableUnwrap { arg, .. }
+                        if f.match_ldloc(arg) == Some(obj))
+            }
             _ => false,
         };
         return matched.then_some(2);
@@ -502,7 +511,24 @@ fn match_dispose_check(
     let mut boxed_value = false;
     let dispose_call;
     let mut dispose_method = dispose_method.to_owned();
-    if is_reference {
+    let mut obj_loads = 2;
+    let is_rewrap = matches!(f.inst(check), Inst::NullableRewrap { .. });
+    if is_reference && let Inst::NullableRewrap { arg, .. } = *f.inst(check) {
+        // The null check of a reference type may have become `obj?.Dispose();`.
+        let Inst::CallVirt(cv) = f.inst(arg) else {
+            return None;
+        };
+        target = *cv.args.first()?;
+        if let Inst::LdObjIfRef { target: t, .. } = *f.inst(target) {
+            target = t;
+        }
+        let Inst::NullableUnwrap { arg: unwrapped, .. } = *f.inst(target) else {
+            return None;
+        };
+        obj_loads = 1;
+        dispose_call = cv;
+        target = unwrapped;
+    } else if is_reference {
         // Reference types have a null check.
         let (condition, dispose_inst) = f.match_if_instruction(check)?;
         let is_inlined_isinst =
@@ -580,8 +606,12 @@ fn match_dispose_check(
     }
     let matched = f.match_ld_loc_ref(ctx.ts, target) == Some(obj)
         || (boxed_value && f.match_ldloc(target) == Some(obj))
-        || (using_null && matches!(f.inst(dispose_call.args[0]), Inst::LdNull));
-    matched.then_some(2)
+        || (using_null && matches!(f.inst(dispose_call.args[0]), Inst::LdNull))
+        || (is_reference
+            && is_rewrap
+            && matches!(*f.inst(target), Inst::IsInst { arg, ty }
+                if f.match_ldloc(arg) == Some(obj) && known(ctx, ty.ty) == Some(dispose_type)));
+    matched.then_some(obj_loads)
 }
 
 /// `MatchNullCheckOrTypeCheck`: whether the check tests an inlined `isinst`; `obj` becomes

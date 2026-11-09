@@ -225,7 +225,7 @@ fn is_nullable(ctx: &mut Context<'_, '_, '_>, t: TypeId) -> bool {
 }
 
 /// `NullableType.IsNonNullableValueType`.
-fn is_non_nullable_value_type(ctx: &mut Context<'_, '_, '_>, t: TypeId) -> bool {
+pub(crate) fn is_non_nullable_value_type(ctx: &mut Context<'_, '_, '_>, t: TypeId) -> bool {
     ctx.ts.is_reference_type(t) == Some(false) && !is_nullable(ctx, t)
 }
 
@@ -556,8 +556,14 @@ impl NullableLifting {
             condition = arg;
             std::mem::swap(&mut true_inst, &mut false_inst);
         }
-        // shortcut: NullPropagationTransform, which runs first under the NullPropagation
-        // setting, is not ported yet; it comes with NullPropagationStatementTransform (item 43).
+        if ctx.settings.null_propagation
+            && !super::null_propagation_transform::is_protected_if_inst(f, if_inst)
+            && let Some(r) =
+                super::null_propagation_transform::run(f, ctx, condition, true_inst, false_inst)
+        {
+            f.add_il_range(r, f.il_range(if_inst));
+            return Some(r);
+        }
         if !ctx.settings.lift_nullables {
             return None;
         }
