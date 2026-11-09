@@ -1370,7 +1370,7 @@ fn new_dynamic_compound_assign(
 /// `TransformDynamicSetMemberInstruction`: `dynamic.setmember.compound N(target,
 /// dynamic.binary.operator op(dynamic.getmember N(target), value))` becomes
 /// `dynamic.compound.op(dynamic.getmember N(target), value)`.
-fn transform_dynamic_set_member(f: &mut Function, inst: NodeId) {
+pub(crate) fn transform_dynamic_set_member(f: &mut Function, inst: NodeId) {
     use crate::il::ast::DynamicKind;
     let Some((flags, name, _, _, args)) = dynamic_parts(f, inst, DynamicKind::SetMember) else {
         return;
@@ -1465,7 +1465,10 @@ fn unwrap_block(f: &Function, inst: NodeId) -> NodeId {
 /// `TransformDynamicAddAssignOrRemoveAssign`: `if (dynamic.isevent(target)) add_E(target,
 /// value) else dynamic.compound.addassign(dynamic.getmember E(target), value)` becomes the
 /// compound assignment.
-fn transform_dynamic_add_assign_or_remove_assign(f: &mut Function, inst: NodeId) -> bool {
+pub(crate) fn transform_dynamic_add_assign_or_remove_assign(
+    f: &mut Function,
+    inst: NodeId,
+) -> bool {
     use crate::il::ast::DynamicKind;
     let Inst::If {
         mut condition,

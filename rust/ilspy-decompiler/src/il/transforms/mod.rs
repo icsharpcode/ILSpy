@@ -13,6 +13,7 @@ pub mod copy_propagation;
 pub mod delegate_construction;
 pub mod detect_catch_when_condition_blocks;
 pub mod dynamic_call_site;
+pub mod dynamic_is_event_assignment_transform;
 pub mod early_expression_transforms;
 pub mod expression_transforms;
 pub mod il_inlining;
@@ -232,6 +233,7 @@ const PIPELINE: &[Leaf] = &[
     Statement(1, |r, ctx, _, sc, block, pos| {
         expression_transforms::run_statement(&mut r.function, ctx, sc, block, pos)
     }),
+    Statement(1, dynamic_is_event_assignment_transform::run),
 ];
 
 /// Runs the first `prefix` leaves of the pipeline.

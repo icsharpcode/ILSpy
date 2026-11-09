@@ -1640,6 +1640,19 @@ entries now name their method by signature, because the host's new reader method
 that fixture's tokens with every step that adds instructions. The allowlist check became a
 hash lookup.
 
+### 3.54 DynamicIsEventAssignmentTransform (item 39, IL prefix 32)
+
+A dynamic `d.Event += handler` lowers to a runtime check: if the member is an event, the
+code calls its `add_` accessor, otherwise it runs a dynamic compound assignment. The
+compiler caches the is-event flag and the member's current value in locals and may copy the
+value into a temporary. The diamond shows up as an if/else, possibly nested in an argument,
+or, when the result is returned, as two leaves. The transform matches both, removes the
+cache, and reuses the two rewrites from item 38 (the set-member compound and the add/remove
+pattern) to leave one `dynamic.compound` instruction. It then reruns from the collapsed
+statement.
+
+The no-op red run failed 16 of 3,550 equality cases; the port passed on its first run.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |
