@@ -360,7 +360,8 @@ fn is_nullable_ctor(f: &Function, ctx: &mut Context<'_, '_, '_>, id: NodeId) -> 
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-enum Find {
+/// `FindResultType`.
+pub(crate) enum Find {
     Found(NodeId),
     /// Not found, and the moved expression cannot be reordered past this point.
     Stop,
@@ -369,7 +370,7 @@ enum Find {
 }
 
 /// `FindLoadInNext`.
-fn find_load_in_next(
+pub(crate) fn find_load_in_next(
     f: &mut Function,
     ctx: &mut Context<'_, '_, '_>,
     expr: Option<NodeId>,

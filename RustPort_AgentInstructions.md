@@ -374,7 +374,7 @@ the reasons. This file holds only the ordered steps, their gates and their rules
   - [x] 38. ExpressionTransforms (L)
   - [x] 39. DynamicIsEventAssignmentTransform (S)
   - [x] 40. TransformAssignment (L)
-  - [ ] 41. NullCoalescingTransform (M)
+  - [x] 41. NullCoalescingTransform (M)
   - [ ] 42. NullableLiftingStatementTransform (M)
   - [ ] 43. NullPropagationStatementTransform (M)
   - [ ] 44. TransformArrayInitializers (M)

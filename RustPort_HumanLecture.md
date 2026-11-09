@@ -1682,6 +1682,23 @@ Two gaps showed up:
 
 The no-op red run failed 957 of 3,550 equality cases; the first port 104.
 
+### 3.56 NullCoalescingTransform (item 41, IL prefix 34)
+
+The transform turns null checks into `??` (`if.notnull`, the instruction item 38 added):
+- `stloc s(value); if (s == null) stloc s(fallback)` becomes `stloc s(value ?? fallback)`.
+  This also works with a single-use temporary in the if, and with a throw instead of the
+  fallback (a throw expression, under the new settings bit 34, `ThrowExpressions`).
+- A null guard of a parameter that the compiler hoisted in front of a constructor
+  initializer folds into the argument as `param ?? throw ...`.
+- `if (!v.HasValue) throw ...` before `v.GetValueOrDefault()` becomes
+  `value ?? throw ...` for nullable value types.
+
+The last two build the `??` tentatively to ask ILInlining's `FindLoadInNext` whether it may
+move into the next statement. Building it re-parents the operands, so a failed attempt puts
+them back into their old slots, as the managed code does through its `Children` setters.
+
+The no-op red run failed 284 of 3,550 equality cases; the port matched on its first run.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

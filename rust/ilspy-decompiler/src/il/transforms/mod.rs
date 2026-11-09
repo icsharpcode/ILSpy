@@ -23,6 +23,7 @@ pub mod inline_return_transform;
 pub mod introduce_ref_read_only_modifier_on_locals;
 pub mod ldloca_dup_init_obj_transform;
 pub mod lock_transform;
+pub mod null_coalescing_transform;
 pub mod pattern_matching_transform;
 pub mod remove_dead_variable_init;
 pub mod remove_infeasible_path_transform;
@@ -70,6 +71,7 @@ pub const SETTING_NAMES: &[&str] = &[
     "NativeIntegers",
     "UnsignedRightShift",
     "InlineArrays",
+    "ThrowExpressions",
 ];
 
 /// The values of `SETTING_NAMES`.
@@ -108,6 +110,7 @@ pub struct Settings {
     pub native_integers: bool,
     pub unsigned_right_shift: bool,
     pub inline_arrays: bool,
+    pub throw_expressions: bool,
 }
 
 impl Settings {
@@ -148,6 +151,7 @@ impl Settings {
             native_integers: bit(30),
             unsigned_right_shift: bit(31),
             inline_arrays: bit(32),
+            throw_expressions: bit(33),
         }
     }
 }
@@ -235,6 +239,7 @@ const PIPELINE: &[Leaf] = &[
     }),
     Statement(1, dynamic_is_event_assignment_transform::run),
     Statement(1, transform_assignment::run),
+    Statement(1, null_coalescing_transform::run),
 ];
 
 /// Runs the first `prefix` leaves of the pipeline.
