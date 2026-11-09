@@ -616,6 +616,11 @@ pub enum Inst {
         init: NodeId,
         body: NodeId,
     },
+    /// `lock (on_expression) body`.
+    Lock {
+        on_expression: NodeId,
+        body: NodeId,
+    },
     /// `get.pinnable.reference`: a reference to the first element of an array or string,
     /// or the result of a `GetPinnableReference` method (null for a null input).
     GetPinnableReference {
@@ -799,6 +804,10 @@ impl Inst {
             | Conv { arg, .. } => vec![*arg],
             YieldReturn { value } | Await { value, .. } => vec![*value],
             PinnedRegion { init, body, .. } => vec![*init, *body],
+            Lock {
+                on_expression,
+                body,
+            } => vec![*on_expression, *body],
             Leave { value, .. } => vec![*value],
             If {
                 condition,
@@ -921,6 +930,13 @@ impl Inst {
             PinnedRegion { init, body, .. } => {
                 [init, body].into_iter().nth(index).expect("child index")
             }
+            Lock {
+                on_expression,
+                body,
+            } => [on_expression, body]
+                .into_iter()
+                .nth(index)
+                .expect("child index"),
             Leave { value, .. }
             | StLoc { value, .. }
             | AddressOf { value, .. }
@@ -1058,6 +1074,7 @@ impl Inst {
             | TryFault { .. } => Flags::CONTROL_FLOW,
             TryCatchHandler { .. } => Flags::CONTROL_FLOW | Flags::MAY_WRITE_LOCALS,
             PinnedRegion { .. } => Flags::MAY_WRITE_LOCALS,
+            Lock { .. } => Flags::CONTROL_FLOW | Flags::SIDE_EFFECT,
             YieldReturn { .. } => Flags::MAY_BRANCH | Flags::SIDE_EFFECT,
             Await { .. } => Flags::SIDE_EFFECT,
             Dynamic { .. } => throws | Flags::SIDE_EFFECT,
@@ -1534,6 +1551,7 @@ impl Function {
             },
             Nop { .. }
             | PinnedRegion { .. }
+            | Lock { .. }
             | YieldReturn { .. }
             | Branch { .. }
             | Leave { .. }
@@ -1661,6 +1679,7 @@ impl Function {
             | TryCatchHandler { .. }
             | If { .. }
             | PinnedRegion { .. }
+            | Lock { .. }
             | YieldReturn { .. }
             | Switch {
                 result_type: None, ..

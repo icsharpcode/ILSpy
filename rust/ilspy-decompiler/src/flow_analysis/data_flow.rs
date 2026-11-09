@@ -212,6 +212,14 @@ impl<S: State> Flow<S> {
                 a.handle_store(self, f, id, variable);
                 self.visit(a, f, body);
             }
+            // `VisitLockInstruction`.
+            &Inst::Lock {
+                on_expression,
+                body,
+            } => {
+                self.visit(a, f, on_expression);
+                self.visit(a, f, body);
+            }
             Inst::LdLoc { .. } | Inst::LdLoca { .. } => a.handle_load(self, f, id),
             inst => {
                 if inst.direct_flags().0 & self.manual_flags.0 != 0 {

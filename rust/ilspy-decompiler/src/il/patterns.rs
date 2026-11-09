@@ -335,6 +335,7 @@ impl Function {
             Inst::If { .. }
             | Inst::Switch { .. }
             | Inst::PinnedRegion { .. }
+            | Inst::Lock { .. }
             | Inst::Match { .. } => index == 0,
             Inst::SwitchSection { .. }
             | Inst::TryCatchHandler { .. }

@@ -89,6 +89,7 @@ mod op {
     pub const LDC_DECIMAL: u8 = 67;
     pub const STRING_TO_INT: u8 = 68;
     pub const MATCH: u8 = 69;
+    pub const LOCK: u8 = 70;
     /// A node already written (it has two parents).
     pub const NODE_REFERENCE: u8 = 255;
 }
@@ -796,6 +797,14 @@ impl FunctionWriter<'_, '_, '_, '_> {
                 tag(op::PINNED_REGION, &mut self.out);
                 self.var(variable)?;
                 self.node(init)?;
+                self.node(body)?;
+            }
+            Inst::Lock {
+                on_expression,
+                body,
+            } => {
+                tag(op::LOCK, &mut self.out);
+                self.node(on_expression)?;
                 self.node(body)?;
             }
             Inst::YieldReturn { value } => {

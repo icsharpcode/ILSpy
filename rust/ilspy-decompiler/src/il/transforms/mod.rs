@@ -17,6 +17,7 @@ pub mod index_range_transform;
 pub mod inline_return_transform;
 pub mod introduce_ref_read_only_modifier_on_locals;
 pub mod ldloca_dup_init_obj_transform;
+pub mod lock_transform;
 pub mod pattern_matching_transform;
 pub mod remove_dead_variable_init;
 pub mod remove_infeasible_path_transform;
@@ -48,6 +49,7 @@ pub const SETTING_NAMES: &[&str] = &[
     "AssumeArrayLengthFitsIntoInt32",
     "SwitchExpressions",
     "Ranges",
+    "LockStatement",
 ];
 
 /// The values of `SETTING_NAMES`.
@@ -73,6 +75,7 @@ pub struct Settings {
     pub assume_array_length_fits_into_int32: bool,
     pub switch_expressions: bool,
     pub ranges: bool,
+    pub lock_statement: bool,
 }
 
 impl Settings {
@@ -100,6 +103,7 @@ impl Settings {
             assume_array_length_fits_into_int32: bit(17),
             switch_expressions: bit(18),
             ranges: bit(19),
+            lock_statement: bit(20),
         }
     }
 }
@@ -113,34 +117,45 @@ pub struct Context<'t, 'c, 'a> {
     pub reader: super::reader::ReaderOptions<'t>,
 }
 
+/// A pipeline leaf: a whole-function transform, or a post-order block transform of the
+/// `BlockILTransform` group with the given index. Consecutive leaves of one group run in one
+/// pass of the block driver, as the managed group does.
+enum Leaf {
+    Function(fn(&mut ReadFunction, &mut Context<'_, '_, '_>)),
+    Block(u8, block_transform::BlockTransform),
+}
+
+use Leaf::{Block, Function};
+
 /// The leaves of the IL pipeline the engine has ported, in run order. `IL_PREFIX` is its
 /// length.
-const PIPELINE: &[fn(&mut ReadFunction, &mut Context<'_, '_, '_>)] = &[
-    |r, ctx| ControlFlowSimplification::default().run(&mut r.function, ctx),
-    split_variables::run,
-    |r, ctx| il_inlining::ILInlining::default().run(r, ctx),
-    |r, _| inline_return_transform::run(&mut r.function),
-    |r, _| remove_infeasible_path_transform::run(&mut r.function),
-    super::control_flow::detect_pinned_regions::run,
-    super::control_flow::yield_return_decompiler::run,
-    super::control_flow::async_await_decompiler::run,
-    detect_catch_when_condition_blocks::run,
-    super::control_flow::exit_points::run,
-    ldloca_dup_init_obj_transform::run,
-    early_expression_transforms::run,
-    split_variables::run,
-    remove_dead_variable_init::run,
-    |r, ctx| ControlFlowSimplification::default().run(&mut r.function, ctx),
-    dynamic_call_site::run,
-    super::control_flow::switch_detection::run,
-    switch_on_string_transform::run,
-    switch_on_nullable_transform::run,
-    split_variables::run,
-    introduce_ref_read_only_modifier_on_locals::run,
-    |r, ctx| block_transform::run(r, ctx, &[super::control_flow::loop_detection::run]),
-    super::control_flow::exit_points::run,
-    pattern_matching_transform::run,
-    |r, ctx| block_transform::run(r, ctx, &[super::control_flow::condition_detection::run]),
+const PIPELINE: &[Leaf] = &[
+    Function(|r, ctx| ControlFlowSimplification::default().run(&mut r.function, ctx)),
+    Function(split_variables::run),
+    Function(|r, ctx| il_inlining::ILInlining::default().run(r, ctx)),
+    Function(|r, _| inline_return_transform::run(&mut r.function)),
+    Function(|r, _| remove_infeasible_path_transform::run(&mut r.function)),
+    Function(super::control_flow::detect_pinned_regions::run),
+    Function(super::control_flow::yield_return_decompiler::run),
+    Function(super::control_flow::async_await_decompiler::run),
+    Function(detect_catch_when_condition_blocks::run),
+    Function(super::control_flow::exit_points::run),
+    Function(ldloca_dup_init_obj_transform::run),
+    Function(early_expression_transforms::run),
+    Function(split_variables::run),
+    Function(remove_dead_variable_init::run),
+    Function(|r, ctx| ControlFlowSimplification::default().run(&mut r.function, ctx)),
+    Function(dynamic_call_site::run),
+    Function(super::control_flow::switch_detection::run),
+    Function(switch_on_string_transform::run),
+    Function(switch_on_nullable_transform::run),
+    Function(split_variables::run),
+    Function(introduce_ref_read_only_modifier_on_locals::run),
+    Block(0, super::control_flow::loop_detection::run),
+    Function(super::control_flow::exit_points::run),
+    Function(pattern_matching_transform::run),
+    Block(1, super::control_flow::condition_detection::run),
+    Block(1, lock_transform::run),
 ];
 
 /// Runs the first `prefix` leaves of the pipeline.
@@ -148,8 +163,21 @@ const PIPELINE: &[fn(&mut ReadFunction, &mut Context<'_, '_, '_>)] = &[
 /// # Panics
 /// When `prefix` exceeds `IL_PREFIX`; the FFI layer rejects such requests first.
 pub fn run_prefix(r: &mut ReadFunction, ctx: &mut Context<'_, '_, '_>, prefix: u32) {
-    for transform in &PIPELINE[..prefix as usize] {
-        transform(r, ctx);
+    let mut leaves = PIPELINE[..prefix as usize].iter().peekable();
+    while let Some(leaf) = leaves.next() {
+        match *leaf {
+            Function(transform) => transform(r, ctx),
+            Block(group, first) => {
+                let mut group_transforms = vec![first];
+                while let Some(&&Block(g, next)) = leaves.peek()
+                    && g == group
+                {
+                    group_transforms.push(next);
+                    leaves.next();
+                }
+                block_transform::run(r, ctx, &group_transforms);
+            }
+        }
     }
 }
 

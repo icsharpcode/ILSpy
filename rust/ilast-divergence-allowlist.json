@@ -466,5 +466,29 @@
     "fixture": "System.Transactions.Local.dll",
     "method": "method 0x06000268",
     "reason": "ConditionDetection inverts ifs through InvertIf, which runs ExpressionTransforms on the statement; the NullableLiftingTransform calls of ExpressionTransforms (lifted comparisons and operators over GetValueOrDefault/HasValue) are not ported yet. The managed pipeline lifts the same expressions in its later ExpressionTransforms run, so the C# output agrees."
+  },
+  {
+    "transform": "LockTransform",
+    "fixture": "YieldReturn.mcs5.dll",
+    "method": "method 0x0600000b",
+    "reason": "The lock replaces a try-finally whose finally body is the body of the inlined Mono finally method (CleanFinallyBlocks). Managed keeps that detached ILFunction alive, so the loads in the dropped finally stay counted. The engine counts the same, but the wire only carries the reachable tree, and the host recounts from it. Only the variable use counts differ, so the C# output agrees."
+  },
+  {
+    "transform": "LockTransform",
+    "fixture": "YieldReturn.mcs5.dll",
+    "method": "method 0x0600000c",
+    "reason": "The lock replaces a try-finally whose finally body is the body of the inlined Mono finally method (CleanFinallyBlocks). Managed keeps that detached ILFunction alive, so the loads in the dropped finally stay counted. The engine counts the same, but the wire only carries the reachable tree, and the host recounts from it. Only the variable use counts differ, so the C# output agrees."
+  },
+  {
+    "transform": "LockTransform",
+    "fixture": "YieldReturn.opt.mcs5.dll",
+    "method": "method 0x0600000b",
+    "reason": "The lock replaces a try-finally whose finally body is the body of the inlined Mono finally method (CleanFinallyBlocks). Managed keeps that detached ILFunction alive, so the loads in the dropped finally stay counted. The engine counts the same, but the wire only carries the reachable tree, and the host recounts from it. Only the variable use counts differ, so the C# output agrees."
+  },
+  {
+    "transform": "LockTransform",
+    "fixture": "YieldReturn.opt.mcs5.dll",
+    "method": "method 0x0600000c",
+    "reason": "The lock replaces a try-finally whose finally body is the body of the inlined Mono finally method (CleanFinallyBlocks). Managed keeps that detached ILFunction alive, so the loads in the dropped finally stay counted. The engine counts the same, but the wire only carries the reachable tree, and the host recounts from it. Only the variable use counts differ, so the C# output agrees."
   }
 ]

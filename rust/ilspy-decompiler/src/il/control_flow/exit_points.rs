@@ -30,7 +30,8 @@ pub fn get_exit(f: &Function, inst: NodeId) -> Exit {
                 None => Exit::NotYetDetermined,
             }
         }
-        // TryBlockSlot, TryCatch.HandlerSlot, TryCatchHandler.BodySlot, PinnedRegion.BodySlot.
+        // TryBlockSlot, TryCatch.HandlerSlot, TryCatchHandler.BodySlot, PinnedRegion.BodySlot,
+        // LockInstruction.BodySlot.
         Inst::TryCatch { .. } => get_exit(f, parent),
         Inst::TryFinally { try_block, .. } | Inst::TryFault { try_block, .. }
             if *try_block == inst =>
@@ -39,6 +40,7 @@ pub fn get_exit(f: &Function, inst: NodeId) -> Exit {
         }
         Inst::TryCatchHandler { body, .. } if *body == inst => get_exit(f, parent),
         Inst::PinnedRegion { body, .. } if *body == inst => get_exit(f, parent),
+        Inst::Lock { body, .. } if *body == inst => get_exit(f, parent),
         _ => Exit::None,
     }
 }

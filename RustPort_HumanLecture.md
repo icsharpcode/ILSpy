@@ -1456,6 +1456,36 @@ block then failed.
 The no-op red run failed 2,635 of 3,550 equality cases; the first port without
 ExpressionTransforms 1,978.
 
+### 3.48 The FORK review and LockTransform (items 32 and 33, IL prefix 26)
+
+**The FORK.** The review covered the 78 methods allowlisted in item 31: 62 NullableLifting,
+12 array and span initializer, 4 InlineArray. The human decided to keep them. Each group
+leaves the allowlist in the step that ports its transform, and that step only passes once
+its entries are gone. The policy stays as it is.
+
+**Pipeline leaves in groups.** LockTransform is the second leaf of the second
+`BlockILTransform`. The managed truncation gives such a group one truncated copy that runs
+every leaf it keeps on each block. The engine's pipeline was a flat list of functions, so
+two leaves would have meant two driver passes. Each leaf is now either a whole-function
+transform or a block transform tagged with its group, and consecutive leaves of one group
+run in one pass of the block driver.
+
+**The port.** `il/transforms/lock_transform.rs` matches the five compiler shapes of `lock`
+(Roslyn, the C# 4 flag forms, the C# 4 iterator form, C# 2, mcs) in the managed order. It
+walks the block backwards from the first already-transformed instruction, as the managed
+loop does. The arena, the wire (opcode 70) and the host gained the `lock` instruction, and
+`LockStatement` became settings bit 20. Its body is an exit slot for DetectExitPoints, its
+expression is the one inlining slot, and the data flow visits both in order.
+
+**Allowlisted.** Four methods: the mcs iterators `YieldReturnInLock1` and `YieldReturnInLock2`,
+each built with and without optimizations. Their finally body comes from Mono's separate finally method, which
+YieldReturnDecompiler inlines without releasing it. When the lock drops the finally, managed
+still counts its loads, because that detached function holds a reference. The engine counts
+the same. The host cannot, because it rebuilds the counts from the tree the wire sends. Only
+the variable use counts differ.
+
+The no-op red run failed 151 of 3,550 equality cases.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

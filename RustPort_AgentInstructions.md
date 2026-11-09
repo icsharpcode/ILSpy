@@ -360,11 +360,13 @@ the reasons. This file holds only the ordered steps, their gates and their rules
   - [x] 29. DetectExitPoints, second occurrence (S, ratchet only)
   - [x] 30. PatternMatchingTransform (M)
   - [x] 31. ConditionDetection, inside the second BlockILTransform (L)
-  - [ ] 32. **FORK.** Review all allowlisted divergences accumulated so far with the human
+  - [x] 32. **FORK.** Review all allowlisted divergences accumulated so far with the human
         before continuing. Decide whether any of them must be removed (algorithm aligned back
         to the original) or whether the allowlist policy needs tightening. No commit unless
         the review changes files.
-  - [ ] 33. LockTransform (M)
+        Decision: keep the 78 entries of item 31; each leaves the allowlist in the step that
+        ports its transform. Policy unchanged.
+  - [x] 33. LockTransform (M)
   - [ ] 34. UsingTransform (M)
   - [ ] 35. CachedDelegateInitialization (S)
   - [ ] 36. CachedReadOnlySpanInitialization (S)
