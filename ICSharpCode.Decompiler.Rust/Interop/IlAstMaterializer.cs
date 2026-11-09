@@ -373,6 +373,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				8 => new DynamicInvokeConstructorInstruction(binderFlags, type!, context, infos, args),
 				9 => new DynamicInvokeInstruction(binderFlags, context, infos, args),
 				10 => new DynamicIsEventInstruction(binderFlags, name, context, args[0]),
+				11 => new DynamicLogicOperatorInstruction(binderFlags, operation, context, infos[0], args[0], infos[1], args[1]),
 				_ => throw new InvalidOperationException($"Unknown dynamic instruction kind {kind}"),
 			};
 		}
@@ -631,6 +632,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				85 => ExpressionTreeCast(),
 				86 => Deconstruct(),
 				87 => DeconstructResult(),
+				88 => new UserDefinedLogicOperator(CallMethod(), Node(), Node()),
 				_ => throw new InvalidOperationException($"Unknown wire opcode {op}"),
 			};
 			inst.SetILRange(range);

@@ -107,6 +107,7 @@ mod op {
     pub const EXPRESSION_TREE_CAST: u8 = 85;
     pub const DECONSTRUCT: u8 = 86;
     pub const DECONSTRUCT_RESULT: u8 = 87;
+    pub const USER_DEFINED_LOGIC: u8 = 88;
     /// A node already written (it has two parents).
     pub const NODE_REFERENCE: u8 = 255;
 }
@@ -249,6 +250,49 @@ impl FunctionWriter<'_, '_, '_, '_> {
             let (token, state_machine) = (field.token, field.state_machine_context);
             self.member(token, state_machine);
         }
+    }
+
+    /// The method of a call (or another instruction calling a method): the member, the
+    /// lookup data of a method without token, and the lifted and range accessor flags.
+    fn call_method(&mut self, method: &crate::il::ast::MethodOperand) -> Result<(), String> {
+        self.member(method.token, method.state_machine_context);
+        if method.token == 0 {
+            // A method found by type lookup: its type, name and parameter types.
+            let m = &method.method;
+            self.ty(m.declaring.ok_or("method without a declaring type")?);
+            self.string(&m.name);
+            // A synthetic range accessor is found by the underlying parameters.
+            let params = match &method.range_accessor {
+                Some(r) => r.underlying_params.clone(),
+                None => m.params().map_err(|e| e.to_string())?,
+            };
+            self.out.len(params.len());
+            for p in params {
+                // A lifted operator is found by its non-lifted parameters.
+                let p = if method.lifted {
+                    match self.ts.data(p) {
+                        crate::typesystem::types::TypeData::Inst { args, .. }
+                            if args.len() == 1 =>
+                        {
+                            args[0]
+                        }
+                        _ => p,
+                    }
+                } else {
+                    p
+                };
+                self.ty(p);
+            }
+        }
+        // The host wraps the method with `CSharpOperators.LiftUserDefinedOperator`.
+        self.out.bool(method.lifted);
+        // The host wraps the method in a `SyntheticRangeIndexAccessor`.
+        self.out.bool(method.range_accessor.is_some());
+        if let Some(r) = &method.range_accessor {
+            self.ty(r.index_or_range_type);
+            self.out.bool(r.slicing);
+        }
+        Ok(())
     }
 
     fn stack_type(&mut self, st: StackType) {
@@ -607,43 +651,7 @@ impl FunctionWriter<'_, '_, '_, '_> {
                     _ => op::NEW_OBJ,
                 };
                 tag(t, &mut self.out);
-                self.member(c.method.token, c.method.state_machine_context);
-                if c.method.token == 0 {
-                    // A method found by type lookup: its type, name and parameter types.
-                    let m = &c.method.method;
-                    self.ty(m.declaring.ok_or("method without a declaring type")?);
-                    self.string(&m.name);
-                    // A synthetic range accessor is found by the underlying parameters.
-                    let params = match &c.method.range_accessor {
-                        Some(r) => r.underlying_params.clone(),
-                        None => m.params().map_err(|e| e.to_string())?,
-                    };
-                    self.out.len(params.len());
-                    for p in params {
-                        // A lifted operator is found by its non-lifted parameters.
-                        let p = if c.method.lifted {
-                            match self.ts.data(p) {
-                                crate::typesystem::types::TypeData::Inst { args, .. }
-                                    if args.len() == 1 =>
-                                {
-                                    args[0]
-                                }
-                                _ => p,
-                            }
-                        } else {
-                            p
-                        };
-                        self.ty(p);
-                    }
-                }
-                // The host wraps the method with `CSharpOperators.LiftUserDefinedOperator`.
-                self.out.bool(c.method.lifted);
-                // The host wraps the method in a `SyntheticRangeIndexAccessor`.
-                self.out.bool(c.method.range_accessor.is_some());
-                if let Some(r) = &c.method.range_accessor {
-                    self.ty(r.index_or_range_type);
-                    self.out.bool(r.slicing);
-                }
+                self.call_method(&c.method)?;
                 self.out.u8(u8::from(c.is_tail)
                     | u8::from(c.il_stack_was_empty) << 1
                     | u8::from(c.constrained_to.is_some()) << 2);
@@ -1025,6 +1033,16 @@ impl FunctionWriter<'_, '_, '_, '_> {
                 self.ty(ty);
                 self.node(value)?;
                 self.node(fallback)?;
+            }
+            Inst::UserDefinedLogic {
+                ref method,
+                left,
+                right,
+            } => {
+                tag(op::USER_DEFINED_LOGIC, &mut self.out);
+                self.call_method(method)?;
+                self.node(left)?;
+                self.node(right)?;
             }
             Inst::NullableUnwrap {
                 arg,

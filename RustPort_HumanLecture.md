@@ -1972,6 +1972,32 @@ module now has both, built on one helper.
 The no-op red run failed 25 of 3,550 equality cases. The port then matched every case
 outside the allowlist, which stays at 365 entries.
 
+### 3.66 UserDefinedLogicTransform (item 51, IL prefix 44)
+
+A type can overload `&&` and `||` through `op_False`/`op_BitwiseAnd` and
+`op_True`/`op_BitwiseOr`. The compiler lowers `a && b` to `op_False(a) ? a : op_BitwiseAnd(a,
+b)` and spells it out as an if, in different shapes:
+- legacy csc, as a stack slot store;
+- Roslyn, as an expression;
+- optimized Roslyn, as two returns.
+
+`&&` and `||` on dynamic operands are lowered the same way, through the dynamic `IsFalse`,
+`IsTrue`, `And` and `Or` operations. The transform folds all of these back. The statement
+transform handles the legacy and the return shapes. ExpressionTransforms handles the
+expression shape on every if, which is where the 296 allowlist entries of item 51 came from.
+
+Two instructions are new:
+- `user.logic`, wire opcode 88;
+- `dynamic.logic.operator`, a new kind of the existing dynamic instruction.
+
+In both, only the left operand always runs. The flags combine the right operand as a branch,
+inlining stops at it, and the data flow visitor joins the state after it, as for `??`. The
+call writer's method encoding moved into a helper, which `user.logic` reuses.
+
+The red run (with the ExpressionTransforms hook in place, item 51 entries removed) failed 21
+of 3,550 equality cases. The port then matched every case outside the allowlist, which
+shrinks from 365 to 69 entries.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

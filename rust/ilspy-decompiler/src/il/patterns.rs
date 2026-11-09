@@ -344,6 +344,11 @@ impl Function {
             | Inst::NullCoalescing { .. }
             | Inst::Match { .. } => index == 0,
             Inst::Deconstruct { init, .. } => index <= init.len(),
+            Inst::UserDefinedLogic { .. }
+            | Inst::Dynamic {
+                kind: super::ast::DynamicKind::LogicOperator,
+                ..
+            } => index == 0,
             Inst::SwitchSection { .. }
             | Inst::TryCatchHandler { .. }
             | Inst::Block { .. }

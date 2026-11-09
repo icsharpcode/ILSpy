@@ -547,9 +547,25 @@ fn visit_if(f: &mut Function, ctx: &mut Context<'_, '_, '_>, inst: NodeId) {
     if super::nullable_lifting_transform::run_if(f, ctx, inst) {
         return;
     }
-    // shortcut: UserDefinedLogicTransform is not ported yet; it comes with item 51.
     if transform_dynamic_add_assign_or_remove_assign(f, inst) {
         return;
+    }
+    if let Some((condition, true_inst, false_inst)) =
+        super::user_defined_logic_transform::match_if_positive_condition(f, inst)
+    {
+        let transformed = super::user_defined_logic_transform::transform(
+            f, ctx, condition, true_inst, false_inst,
+        )
+        .or_else(|| {
+            super::user_defined_logic_transform::transform_dynamic(
+                f, ctx, condition, true_inst, false_inst,
+            )
+        });
+        if let Some(transformed) = transformed {
+            f.add_il_range(transformed, f.il_range(inst));
+            f.replace(inst, transformed);
+            return;
+        }
     }
     let (condition, true_inst, false_inst) = if_parts(f, inst);
     if is_pattern_match(f, ctx, condition)

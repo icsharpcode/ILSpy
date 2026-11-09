@@ -311,6 +311,12 @@ fn non_aggressive_inline_into(
             return true;
         }
         Inst::DynamicCompoundAssign { .. } => return true,
+        // Into the left operand of a user-defined or dynamic `&&` or `||`.
+        Inst::UserDefinedLogic { .. }
+        | Inst::Dynamic {
+            kind: crate::il::ast::DynamicKind::LogicOperator,
+            ..
+        } => return true,
         // Into the `?.` operator.
         Inst::NullableUnwrap { .. } => return true,
         // Nullables into `??`.
@@ -503,6 +509,12 @@ fn can_inline_into_slot(
         | Inst::Lock { .. }
         | Inst::Using { .. }
         | Inst::NullCoalescing { .. } => index == 0,
+        // Only the left operand of a short-circuiting operator always runs.
+        Inst::UserDefinedLogic { .. }
+        | Inst::Dynamic {
+            kind: crate::il::ast::DynamicKind::LogicOperator,
+            ..
+        } => index == 0,
         // The init stores and the pattern, not the conversions and assignments.
         Inst::Deconstruct { init, .. } => index <= init.len(),
         // Only completely pure constants go into an expression tree, whose evaluation the

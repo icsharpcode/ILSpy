@@ -42,6 +42,7 @@ pub mod transform_array_initializers;
 pub mod transform_assignment;
 pub mod transform_collection_and_object_initializers;
 pub mod transform_expression_trees;
+pub mod user_defined_logic_transform;
 pub mod using_transform;
 
 /// The `DecompilerSettings` the ported transforms read, by property name. The host sends
@@ -289,6 +290,7 @@ const PIPELINE: &[Leaf] = &[
     Statement(1, deconstruction_transform::run),
     Statement(1, named_argument_transform::run),
     Statement(1, remove_unconstrained_generic_reference_type_check::run),
+    Statement(1, user_defined_logic_transform::run),
 ];
 
 /// Runs the first `prefix` leaves of the pipeline.

@@ -711,6 +711,13 @@ pub enum Inst {
         value: NodeId,
         fallback: NodeId,
     },
+    /// `user.logic op(left, right)`: a user-defined `&&` or `||` (`op_BitwiseAnd` or
+    /// `op_BitwiseOr` with `op_False` or `op_True`); `right` runs only sometimes.
+    UserDefinedLogic {
+        method: MethodOperand,
+        left: NodeId,
+        right: NodeId,
+    },
     /// `deconstruct { init: pattern: conversions: assignments: }`: a deconstruction assignment.
     Deconstruct {
         /// `Init`: stores of the values the assignments use, inlined into the deconstruction.
@@ -861,6 +868,8 @@ pub enum DynamicKind {
     InvokeConstructor,
     Invoke,
     IsEvent,
+    /// `DynamicLogicOperatorInstruction`: `&&` or `||` on dynamic operands.
+    LogicOperator,
 }
 
 /// `CSharpArgumentInfo`.
@@ -1010,6 +1019,7 @@ impl Inst {
             NullCoalescing {
                 value, fallback, ..
             } => vec![*value, *fallback],
+            UserDefinedLogic { left, right, .. } => vec![*left, *right],
             Deconstruct {
                 init,
                 pattern,
@@ -1181,6 +1191,9 @@ impl Inst {
                 .into_iter()
                 .nth(index)
                 .expect("child index"),
+            UserDefinedLogic { left, right, .. } => {
+                [left, right].into_iter().nth(index).expect("child index")
+            }
             Deconstruct {
                 init,
                 pattern,
@@ -1358,6 +1371,11 @@ impl Inst {
             LocAllocSpan { .. } | LdVirtDelegate { .. } | LdElemaInlineArray { .. } => throws,
             NullCoalescing { .. } => Flags::CONTROL_FLOW,
             NullableUnwrap { .. } => Flags::MAY_UNWRAP_NULL,
+            UserDefinedLogic { .. }
+            | Dynamic {
+                kind: DynamicKind::LogicOperator,
+                ..
+            } => throws | Flags::SIDE_EFFECT | Flags::CONTROL_FLOW,
             ExpressionTreeCast { .. } => throws,
             // Creating a lambda may throw OutOfMemoryException.
             Function { .. } => Flags::MAY_THROW | Flags::CONTROL_FLOW,
@@ -1843,6 +1861,21 @@ impl Function {
                     | self.flags(*value)
                     | Flags::combine_branches(Flags::NONE, self.flags(*fallback))
             }
+            // The right operand runs only sometimes.
+            UserDefinedLogic { left, right, .. } => {
+                inst.direct_flags()
+                    | self.flags(*left)
+                    | Flags::combine_branches(Flags::NONE, self.flags(*right))
+            }
+            Dynamic {
+                kind: DynamicKind::LogicOperator,
+                args,
+                ..
+            } => {
+                inst.direct_flags()
+                    | self.flags(args[0])
+                    | Flags::combine_branches(self.flags(args[1]), Flags::NONE)
+            }
             // The flags of a lambda body do not propagate.
             Function { .. } => inst.direct_flags(),
             // A null input of a `nullable.unwrap` inside continues after the rewrap.
@@ -1935,6 +1968,7 @@ impl Function {
             NullCoalescing { ty, .. } => ts.stack_type(*ty),
             NullableUnwrap { result, .. } => *result,
             DeconstructResult { result, .. } => *result,
+            UserDefinedLogic { method, .. } => ts.stack_type(method.method.ret),
             Deconstruct { .. } => StackType::Void,
             ExpressionTreeCast { ty, .. } => ts.stack_type(*ty),
             Function { delegate_type, .. } => match delegate_type {
@@ -2090,6 +2124,7 @@ impl Function {
             | ExpressionTreeCast { ty, .. }
             | DeconstructResult { ty, .. } => *ty,
             Deconstruct { .. } => known(ts, KnownTypeCode::Void),
+            UserDefinedLogic { method, .. } => method.method.ret,
             Function { delegate_type, .. } => {
                 delegate_type.unwrap_or_else(|| ts.intern(TypeData::UnknownSpecial))
             }

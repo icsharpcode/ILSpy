@@ -230,6 +230,23 @@ impl<S: State> Flow<S> {
                 self.state_on_nullable_rewrap.join_with(&self.state);
             }
             // `HandleBinaryWithOptionalEvaluation`: the fallback may not run.
+            &Inst::UserDefinedLogic { left, right, .. } => {
+                self.visit(a, f, left);
+                let branch_state = self.state.clone();
+                self.visit(a, f, right);
+                self.state.join_with(&branch_state);
+            }
+            Inst::Dynamic {
+                kind: crate::il::ast::DynamicKind::LogicOperator,
+                args,
+                ..
+            } => {
+                let (left, right) = (args[0], args[1]);
+                self.visit(a, f, left);
+                let branch_state = self.state.clone();
+                self.visit(a, f, right);
+                self.state.join_with(&branch_state);
+            }
             &Inst::NullCoalescing {
                 value, fallback, ..
             } => {
