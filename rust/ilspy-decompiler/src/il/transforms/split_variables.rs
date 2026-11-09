@@ -373,6 +373,7 @@ impl GroupStores {
                     load_instructions: Vec::new(),
                     store_instructions: Vec::new(),
                     address_instructions: Vec::new(),
+                    capture_scope: None,
                 });
                 self.new_variables.insert(representative, v);
                 r.variables.push(v);

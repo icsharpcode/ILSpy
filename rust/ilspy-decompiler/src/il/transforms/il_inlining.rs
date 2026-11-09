@@ -451,6 +451,12 @@ fn can_inline_into_slot(
         | Inst::Lock { .. }
         | Inst::Using { .. }
         | Inst::NullCoalescing { .. } => index == 0,
+        // Only completely pure constants go into an expression tree, whose evaluation the
+        // lambda delays.
+        Inst::Function { kind, .. } => {
+            *kind == crate::il::ast::FunctionKind::ExpressionTree
+                && f.flags(moved) == crate::il::ast::Flags::NONE
+        }
         // Not an expression containing a `nullable.unwrap` that it does not rewrap itself.
         Inst::NullableRewrap { .. } => !f.has_flag(moved, crate::il::ast::Flags::MAY_UNWRAP_NULL),
         Inst::SwitchSection { .. }

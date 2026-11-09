@@ -115,6 +115,10 @@ named_enum!(
     }
 );
 named_enum!(
+    /// `ILFunctionKind`.
+    FunctionKind { TopLevelFunction, Delegate, ExpressionTree, LocalFunction }
+);
+named_enum!(
     /// `NopKind`.
     NopKind { Normal, Pop }
 );
@@ -255,6 +259,8 @@ pub struct Variable {
     pub store_instructions: Vec<NodeId>,
     /// The connected `ldloca` instructions (`AddressInstructions`).
     pub address_instructions: Vec<NodeId>,
+    /// `CaptureScope`: the container a lambda captures the variable from.
+    pub capture_scope: Option<NodeId>,
 }
 
 impl Variable {
@@ -692,6 +698,24 @@ pub enum Inst {
         value: NodeId,
         fallback: NodeId,
     },
+    /// A lambda `ILFunction`: its own parameters (`Parameters`, as type and name) and
+    /// variables, and a body container.
+    Function {
+        kind: FunctionKind,
+        delegate_type: Option<TypeId>,
+        return_type: TypeId,
+        parameters: Vec<(TypeId, String)>,
+        variables: Vec<VarId>,
+        /// `helperVariableCount`: how many `I_n` variables the function named.
+        helper_variable_count: u32,
+        body: NodeId,
+    },
+    /// `expression.tree.cast T(arg)`: a conversion an expression tree spells out.
+    ExpressionTreeCast {
+        ty: TypeId,
+        arg: NodeId,
+        is_checked: bool,
+    },
     /// `nullable.unwrap(arg)`: the value of a nullable `arg` (a reference to it when
     /// `ref_input`); a null input jumps to the innermost enclosing `nullable.rewrap`.
     NullableUnwrap {
@@ -942,7 +966,9 @@ impl Inst {
             LocAllocSpan { arg, .. }
             | LdVirtDelegate { arg, .. }
             | NullableUnwrap { arg, .. }
-            | NullableRewrap { arg, .. } => vec![*arg],
+            | NullableRewrap { arg, .. }
+            | ExpressionTreeCast { arg, .. }
+            | Function { body: arg, .. } => vec![*arg],
             LdElemaInlineArray { array, indices, .. } => {
                 let mut c = vec![*array];
                 c.extend(indices);
@@ -1092,7 +1118,9 @@ impl Inst {
             LocAllocSpan { arg, .. }
             | LdVirtDelegate { arg, .. }
             | NullableUnwrap { arg, .. }
-            | NullableRewrap { arg, .. } => {
+            | NullableRewrap { arg, .. }
+            | ExpressionTreeCast { arg, .. }
+            | Function { body: arg, .. } => {
                 assert_eq!(index, 0, "child index out of range");
                 arg
             }
@@ -1271,6 +1299,9 @@ impl Inst {
             LocAllocSpan { .. } | LdVirtDelegate { .. } | LdElemaInlineArray { .. } => throws,
             NullCoalescing { .. } => Flags::CONTROL_FLOW,
             NullableUnwrap { .. } => Flags::MAY_UNWRAP_NULL,
+            ExpressionTreeCast { .. } => throws,
+            // Creating a lambda may throw OutOfMemoryException.
+            Function { .. } => Flags::MAY_THROW | Flags::CONTROL_FLOW,
             NullableRewrap { .. } => Flags::CONTROL_FLOW,
             YieldReturn { .. } => Flags::MAY_BRANCH | Flags::SIDE_EFFECT,
             Await { .. } => Flags::SIDE_EFFECT,
@@ -1397,6 +1428,7 @@ impl Function {
             load_instructions: Vec::new(),
             store_instructions: Vec::new(),
             address_instructions: Vec::new(),
+            capture_scope: None,
         });
         self.pending_variables.push(v);
         v
@@ -1727,6 +1759,8 @@ impl Function {
                     | self.flags(*value)
                     | Flags::combine_branches(Flags::NONE, self.flags(*fallback))
             }
+            // The flags of a lambda body do not propagate.
+            Function { .. } => inst.direct_flags(),
             // A null input of a `nullable.unwrap` inside continues after the rewrap.
             NullableRewrap { arg, .. } => {
                 let removed = Flags::MAY_UNWRAP_NULL.0 | Flags::END_POINT_UNREACHABLE.0;
@@ -1816,6 +1850,11 @@ impl Function {
             LdElemaInlineArray { .. } => StackType::Ref,
             NullCoalescing { ty, .. } => ts.stack_type(*ty),
             NullableUnwrap { result, .. } => *result,
+            ExpressionTreeCast { ty, .. } => ts.stack_type(*ty),
+            Function { delegate_type, .. } => match delegate_type {
+                Some(t) => ts.stack_type(*t),
+                None => StackType::Unknown,
+            },
             NullableRewrap { arg, ty } => match self.result_type(ts, *arg) {
                 StackType::Void => StackType::Void,
                 _ => ts.stack_type(*ty),
@@ -1961,7 +2000,11 @@ impl Function {
             | LdVirtDelegate { ty, .. }
             | NullCoalescing { ty, .. }
             | NullableUnwrap { ty, .. }
-            | NullableRewrap { ty, .. } => *ty,
+            | NullableRewrap { ty, .. }
+            | ExpressionTreeCast { ty, .. } => *ty,
+            Function { delegate_type, .. } => {
+                delegate_type.unwrap_or_else(|| ts.intern(TypeData::UnknownSpecial))
+            }
             LdElemaInlineArray { ty, .. } => by_ref(ts, *ty),
             DynamicCompoundAssign { .. } => ts.intern(TypeData::Dynamic),
             Nop { .. }

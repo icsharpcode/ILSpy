@@ -875,6 +875,7 @@ fn new_pinned_region_local(
         load_instructions: Vec::new(),
         store_instructions: Vec::new(),
         address_instructions: Vec::new(),
+        capture_scope: None,
     });
     r.variables.push(v);
     v

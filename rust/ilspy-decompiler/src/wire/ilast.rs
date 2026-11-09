@@ -103,6 +103,8 @@ mod op {
     pub const NULLABLE_UNWRAP: u8 = 81;
     pub const NULLABLE_REWRAP: u8 = 82;
     pub const LD_STR_UTF8: u8 = 83;
+    pub const FUNCTION: u8 = 84;
+    pub const EXPRESSION_TREE_CAST: u8 = 85;
     /// A node already written (it has two parents).
     pub const NODE_REFERENCE: u8 = 255;
 }
@@ -136,6 +138,7 @@ impl<'t, 'c, 'a> ModuleWriter<'t, 'c, 'a> {
     }
 
     pub fn function(&mut self, row: u32, r: &ReadFunction) -> Result<(), String> {
+        let nested = nested_variables(&r.function);
         let mut w = FunctionWriter {
             ts: self.ts,
             tables: &mut self.tables,
@@ -144,6 +147,7 @@ impl<'t, 'c, 'a> ModuleWriter<'t, 'c, 'a> {
             vars: r
                 .variables
                 .iter()
+                .chain(&nested)
                 .enumerate()
                 .map(|(i, &v)| (v, i))
                 .collect(),
@@ -152,7 +156,7 @@ impl<'t, 'c, 'a> ModuleWriter<'t, 'c, 'a> {
             containers: HashMap::new(),
             written: HashMap::new(),
         };
-        w.write(r)?;
+        w.write(r, &nested)?;
         self.count += 1;
         self.functions.uvar(u64::from(row));
         self.functions.u8(0);
@@ -219,6 +223,32 @@ impl FunctionWriter<'_, '_, '_, '_> {
         Ok(())
     }
 
+    /// One variable of a variable list.
+    fn variable(&mut self, v: VarId) {
+        let var = self.f.var(v);
+        self.out.u8(var.kind as u8);
+        self.ty(var.ty);
+        self.stack_type(var.stack_type);
+        match var.index {
+            Some(i) => {
+                self.out.u8(1);
+                self.out.ivar(i64::from(i));
+            }
+            None => self.out.u8(0),
+        }
+        self.string(&var.name);
+        self.out.u8(u8::from(var.has_generated_name)
+            | u8::from(var.initial_value_is_initialized) << 1
+            | u8::from(var.uses_initial_value) << 2
+            | u8::from(var.is_ref_read_only) << 3
+            | u8::from(var.remove_if_redundant) << 4);
+        self.out.bool(var.state_machine_field.is_some());
+        if let Some(field) = &var.state_machine_field {
+            let (token, state_machine) = (field.token, field.state_machine_context);
+            self.member(token, state_machine);
+        }
+    }
+
     fn stack_type(&mut self, st: StackType) {
         self.out.u8(st as u8);
     }
@@ -262,7 +292,7 @@ impl FunctionWriter<'_, '_, '_, '_> {
         }
     }
 
-    fn write(&mut self, r: &ReadFunction) -> Result<(), String> {
+    fn write(&mut self, r: &ReadFunction, nested: &[VarId]) -> Result<(), String> {
         let body = r.function.body.ok_or("function without body")?;
         self.out.len(r.code_size as usize);
         self.out.len(r.local_signature_length);
@@ -292,28 +322,12 @@ impl FunctionWriter<'_, '_, '_, '_> {
         }
         self.out.len(r.variables.len());
         for &v in &r.variables {
-            let var = self.f.var(v);
-            self.out.u8(var.kind as u8);
-            self.ty(var.ty);
-            self.stack_type(var.stack_type);
-            match var.index {
-                Some(i) => {
-                    self.out.u8(1);
-                    self.out.ivar(i64::from(i));
-                }
-                None => self.out.u8(0),
-            }
-            self.string(&var.name);
-            self.out.u8(u8::from(var.has_generated_name)
-                | u8::from(var.initial_value_is_initialized) << 1
-                | u8::from(var.uses_initial_value) << 2
-                | u8::from(var.is_ref_read_only) << 3
-                | u8::from(var.remove_if_redundant) << 4);
-            self.out.bool(var.state_machine_field.is_some());
-            if let Some(field) = &var.state_machine_field {
-                let (token, state_machine) = (field.token, field.state_machine_context);
-                self.member(token, state_machine);
-            }
+            self.variable(v);
+        }
+        // The variables of nested functions follow; each function lists its own.
+        self.out.len(nested.len());
+        for &v in nested {
+            self.variable(v);
         }
         self.out.len(r.warnings.len());
         for w in &r.warnings {
@@ -335,7 +349,23 @@ impl FunctionWriter<'_, '_, '_, '_> {
             self.out.ivar(i64::from(range.end));
         }
         self.out.len(self.containers.len());
-        self.node(body)
+        self.node(body)?;
+        // Capture scopes refer to containers, which are numbered by now.
+        let captures: Vec<(usize, usize)> = r
+            .variables
+            .iter()
+            .chain(nested)
+            .filter_map(|&v| {
+                let scope = self.f.var(v).capture_scope?;
+                Some((self.vars[&v], *self.containers.get(&scope)?))
+            })
+            .collect();
+        self.out.len(captures.len());
+        for (v, container) in captures {
+            self.out.len(v);
+            self.out.len(container);
+        }
+        Ok(())
     }
 
     fn nodes(&mut self, ids: &[NodeId]) -> Result<(), String> {
@@ -996,6 +1026,41 @@ impl FunctionWriter<'_, '_, '_, '_> {
                 self.out.bool(ref_input);
                 self.node(arg)?;
             }
+            Inst::Function {
+                kind,
+                delegate_type,
+                return_type,
+                ref parameters,
+                ref variables,
+                helper_variable_count,
+                body,
+            } => {
+                tag(op::FUNCTION, &mut self.out);
+                self.out.u8(kind as u8);
+                self.opt_ty(delegate_type);
+                self.ty(return_type);
+                self.out.len(parameters.len());
+                for (ty, name) in parameters {
+                    self.ty(*ty);
+                    self.string(name);
+                }
+                self.out.len(variables.len());
+                for &v in variables {
+                    self.var(v)?;
+                }
+                self.out.uvar(u64::from(helper_variable_count));
+                self.node(body)?;
+            }
+            Inst::ExpressionTreeCast {
+                ty,
+                arg,
+                is_checked,
+            } => {
+                tag(op::EXPRESSION_TREE_CAST, &mut self.out);
+                self.ty(ty);
+                self.out.bool(is_checked);
+                self.node(arg)?;
+            }
             Inst::NullableRewrap { arg, ty } => {
                 tag(op::NULLABLE_REWRAP, &mut self.out);
                 self.ty(ty);
@@ -1240,4 +1305,20 @@ pub fn read_function(
     let mut w = ModuleWriter::new(ts);
     w.function(method.row, &f)?;
     Ok(w.finish())
+}
+
+/// The variables of the nested functions (lambdas) in `f`, in tree order.
+fn nested_variables(f: &crate::il::ast::Function) -> Vec<VarId> {
+    let Some(body) = f.body else {
+        return Vec::new();
+    };
+    f.descendants_post(body)
+        .into_iter()
+        .rev()
+        .filter_map(|n| match f.inst(n) {
+            Inst::Function { variables, .. } => Some(variables.clone()),
+            _ => None,
+        })
+        .flatten()
+        .collect()
 }

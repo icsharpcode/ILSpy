@@ -37,6 +37,7 @@ pub mod switch_on_string_transform;
 pub mod transform_array_initializers;
 pub mod transform_assignment;
 pub mod transform_collection_and_object_initializers;
+pub mod transform_expression_trees;
 pub mod using_transform;
 
 /// The `DecompilerSettings` the ported transforms read, by property name. The host sends
@@ -84,6 +85,7 @@ pub const SETTING_NAMES: &[&str] = &[
     "UseObjectCreationOfGenericTypeParameter",
     "ObjectOrCollectionInitializers",
     "DictionaryInitializers",
+    "ExpressionTrees",
 ];
 
 /// The values of `SETTING_NAMES`.
@@ -130,6 +132,7 @@ pub struct Settings {
     pub use_object_creation_of_generic_type_parameter: bool,
     pub object_or_collection_initializers: bool,
     pub dictionary_initializers: bool,
+    pub expression_trees: bool,
 }
 
 impl Settings {
@@ -178,6 +181,7 @@ impl Settings {
             use_object_creation_of_generic_type_parameter: bit(38),
             object_or_collection_initializers: bit(39),
             dictionary_initializers: bit(40),
+            expression_trees: bit(41),
         }
     }
 }
@@ -270,6 +274,7 @@ const PIPELINE: &[Leaf] = &[
     Statement(1, null_propagation_transform::run_statement),
     Statement(1, transform_array_initializers::run),
     Statement(1, transform_collection_and_object_initializers::run),
+    Statement(1, transform_expression_trees::run),
 ];
 
 /// Runs the first `prefix` leaves of the pipeline.
@@ -346,6 +351,7 @@ impl ReadFunction {
             load_instructions: Vec::new(),
             store_instructions: Vec::new(),
             address_instructions: Vec::new(),
+            capture_scope: None,
         });
         self.flush_pending_variables();
         self.variables.push(v);

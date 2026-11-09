@@ -398,9 +398,14 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					awaits[i] = new AsyncDebugInfo.Await(Int(), Int());
 				asyncDebugInfo = new AsyncDebugInfo(catchHandlerOffset, ImmutableArray.Create(awaits));
 			}
-			variables = new ILVariable[Len()];
-			for (int i = 0; i < variables.Length; i++)
-				variables[i] = ReadVariable();
+			var topLevelVariables = new ILVariable[Len()];
+			for (int i = 0; i < topLevelVariables.Length; i++)
+				topLevelVariables[i] = ReadVariable();
+			// The variables of nested functions follow; each function lists its own.
+			var nestedVariables = new ILVariable[Len()];
+			for (int i = 0; i < nestedVariables.Length; i++)
+				nestedVariables[i] = ReadVariable();
+			variables = topLevelVariables.Concat(nestedVariables).ToArray();
 			var warnings = new string[Len()];
 			for (int i = 0; i < warnings.Length; i++)
 				warnings[i] = Str();
@@ -417,7 +422,15 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 			materialized = new List<ILInstruction>();
 			var body = Node();
 			var function = new ILFunction(method, codeSize, context, body, ILFunctionKind.TopLevelFunction);
-			function.Variables.AddRange(variables);
+			function.Variables.AddRange(topLevelVariables);
+			// Capture scopes refer to containers, so they follow the body.
+			for (int i = Len(); i > 0; i--)
+			{
+				var captured = Variable();
+				var scope = containers[Len()];
+				captured.CaptureScope = scope;
+				scope.Ancestors.OfType<ILFunction>().FirstOrDefault()?.CapturedVariables.Add(captured);
+			}
 			function.LocalVariableSignatureLength = localSignatureLength;
 			if (asyncReturnType != 0)
 				function.AsyncReturnType = TypeAt(asyncReturnType - 1);
@@ -613,6 +626,8 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				81 => NullableUnwrap(),
 				82 => NullableRewrap(),
 				83 => new LdStrUtf8(String()),
+				84 => LambdaFunction(),
+				85 => ExpressionTreeCast(),
 				_ => throw new InvalidOperationException($"Unknown wire opcode {op}"),
 			};
 			inst.SetILRange(range);
@@ -667,6 +682,35 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 			var targetKind = (CompoundTargetKind)U8();
 			var target = Node();
 			return new DynamicCompoundAssign(operation, binderFlags, target, infos[0], Node(), infos[1], targetKind);
+		}
+
+		ILInstruction LambdaFunction()
+		{
+			var kind = (ILFunctionKind)U8();
+			var delegateType = OptionalType();
+			var returnType = Type();
+			var parameters = new IParameter[Len()];
+			for (int i = 0; i < parameters.Length; i++)
+			{
+				var type = Type();
+				parameters[i] = new DefaultParameter(type, Str());
+			}
+			var functionVariables = new ILVariable[Len()];
+			for (int i = 0; i < functionVariables.Length; i++)
+				functionVariables[i] = Variable();
+			int helperVariableCount = Len();
+			var body = Node();
+			var function = new ILFunction(returnType, parameters, context, body, kind) { DelegateType = delegateType };
+			function.Variables.AddRange(functionVariables);
+			helperVariableCountField.SetValue(function, helperVariableCount);
+			return function;
+		}
+
+		ILInstruction ExpressionTreeCast()
+		{
+			var type = Type();
+			bool isChecked = Bool();
+			return new ExpressionTreeCast(type, Node(), isChecked);
 		}
 
 		ILInstruction NullableUnwrap()

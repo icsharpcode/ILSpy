@@ -1824,6 +1824,46 @@ the whole step; the managed collection removes at once. The statement driver now
 queued removals after each transform, before the new variables join the list. Then the
 port matched every case outside the allowlist, which shrinks from 413 to 365 entries.
 
+### 3.61 TransformExpressionTrees (item 46, IL prefix 39)
+
+For a lambda converted to `Expression<T>`, the compiler emits calls to the
+`System.Linq.Expressions.Expression` factories:
+- `Parameter` for each parameter;
+- `Add`, `Call`, `Property`, `Constant` and the other factories for the body;
+- finally `Lambda`.
+
+The transform turns these calls back into an `ILFunction` lambda (kind `ExpressionTree`,
+`.ET` in the ILAst) whose body is ordinary ILAst. Later the C# backend prints it as
+`x => x.Name`.
+
+The engine had no nested functions, so this step adds them:
+- `Inst::Function`, a lambda with its own parameters, variables, helper counter and body
+  container (wire opcode 84). Its flags do not propagate out of the body, as in the
+  managed `ILFunction`.
+- `expression.tree.cast` (opcode 85).
+- `CaptureScope` on variables. It travels after the body on the wire, because it refers
+  to containers.
+
+The variables of nested functions travel in a second list after the top-level ones, and
+each function names its own.
+
+The managed transform works in two phases. Matching builds a tree of `Func<ILInstruction>`
+builders without touching the function, and only a full match runs them. The port keeps
+that shape with boxed `FnOnce` builders over an environment that holds the function, the
+context and the transform state.
+
+The C# semantics it needs (implicit conversions for `Coalesce`, reference conversions for
+`Condition`, user-defined comparison operators) are approximated for the operand types
+expression trees produce, as a shortcut until the semantics step (item 67). One detail
+mattered: the managed resolver ignores the operators that the framework declares on `bool`,
+`char`, the numeric types and `decimal`, since C# treats them as built-in. Without that
+filter a `decimal` comparison became an `op_GreaterThan` call.
+
+The new settings bit 42 is `ExpressionTrees`.
+
+The no-op red run failed 54 of 3,550 equality cases (all ExpressionTrees fixtures). The
+port then matched every case outside the allowlist, which stays at 365 entries.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

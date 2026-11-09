@@ -254,7 +254,7 @@ fn is_comparison_operator(ctx: &mut Context<'_, '_, '_>, m: &ResolvedMethod) -> 
 
 /// `CSharpOperators.LiftUserDefinedOperator`: the lifted form of a user-defined operator,
 /// with nullable parameters and (except for comparisons) a nullable return type.
-fn lift_user_defined_operator(
+pub(crate) fn lift_user_defined_operator(
     ctx: &mut Context<'_, '_, '_>,
     operand: &MethodOperand,
 ) -> Option<MethodOperand> {

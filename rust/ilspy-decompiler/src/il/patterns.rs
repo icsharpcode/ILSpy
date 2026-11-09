@@ -349,7 +349,8 @@ impl Function {
             | Inst::BlockContainer { .. }
             | Inst::TryCatch { .. }
             | Inst::TryFinally { .. }
-            | Inst::TryFault { .. } => false,
+            | Inst::TryFault { .. }
+            | Inst::Function { .. } => false,
             _ => true,
         }
     }

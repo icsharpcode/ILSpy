@@ -331,6 +331,7 @@ impl<'r, 'c, 'a> Reader<'r, 'c, 'a> {
             load_instructions: Vec::new(),
             store_instructions: Vec::new(),
             address_instructions: Vec::new(),
+            capture_scope: None,
         })
     }
 

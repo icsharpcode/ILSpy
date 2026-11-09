@@ -291,6 +291,7 @@ mod tests {
             load_instructions: Vec::new(),
             store_instructions: Vec::new(),
             address_instructions: Vec::new(),
+            capture_scope: None,
         })
     }
 
