@@ -629,6 +629,8 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				83 => new LdStrUtf8(String()),
 				84 => LambdaFunction(),
 				85 => ExpressionTreeCast(),
+				86 => Deconstruct(),
+				87 => DeconstructResult(),
 				_ => throw new InvalidOperationException($"Unknown wire opcode {op}"),
 			};
 			inst.SetILRange(range);
@@ -705,6 +707,30 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 			function.Variables.AddRange(functionVariables);
 			helperVariableCountField.SetValue(function, helperVariableCount);
 			return function;
+		}
+
+		ILInstruction Deconstruct()
+		{
+			var init = new StLoc[Len()];
+			for (int i = 0; i < init.Length; i++)
+				init[i] = (StLoc)Node();
+			// The init collection renumbers the pattern, conversions and assignments, so it is
+			// filled once they are set.
+			var deconstruct = new DeconstructInstruction {
+				Pattern = (MatchInstruction)Node(),
+				Conversions = (Block)Node(),
+				Assignments = (Block)Node()
+			};
+			deconstruct.Init.AddRange(init);
+			return deconstruct;
+		}
+
+		ILInstruction DeconstructResult()
+		{
+			int index = Int();
+			var type = Type();
+			var resultType = (StackType)U8();
+			return new DeconstructResultInstruction(index, type, resultType, Node());
 		}
 
 		ILInstruction ExpressionTreeCast()

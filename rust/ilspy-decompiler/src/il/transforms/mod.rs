@@ -10,6 +10,8 @@ pub mod block_transform;
 pub mod cached_delegate_initialization;
 pub mod cached_read_only_span_initialization;
 pub mod copy_propagation;
+pub mod csharp_semantics;
+pub mod deconstruction_transform;
 pub mod delegate_construction;
 pub mod detect_catch_when_condition_blocks;
 pub mod dynamic_call_site;
@@ -86,6 +88,7 @@ pub const SETTING_NAMES: &[&str] = &[
     "ObjectOrCollectionInitializers",
     "DictionaryInitializers",
     "ExpressionTrees",
+    "Deconstruction",
 ];
 
 /// The values of `SETTING_NAMES`.
@@ -133,6 +136,7 @@ pub struct Settings {
     pub object_or_collection_initializers: bool,
     pub dictionary_initializers: bool,
     pub expression_trees: bool,
+    pub deconstruction: bool,
 }
 
 impl Settings {
@@ -182,6 +186,7 @@ impl Settings {
             object_or_collection_initializers: bit(39),
             dictionary_initializers: bit(40),
             expression_trees: bit(41),
+            deconstruction: bit(42),
         }
     }
 }
@@ -276,6 +281,7 @@ const PIPELINE: &[Leaf] = &[
     Statement(1, transform_collection_and_object_initializers::run),
     Statement(1, transform_expression_trees::run),
     Statement(1, index_range_transform::run),
+    Statement(1, deconstruction_transform::run),
 ];
 
 /// Runs the first `prefix` leaves of the pipeline.

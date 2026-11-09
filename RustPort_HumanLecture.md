@@ -1889,6 +1889,43 @@ so the host's lookup now includes accessors. Two inlining checks the transform n
 The no-op red run failed 19 of 3,550 equality cases (the IndexRangeTest fixtures). The port
 then matched every case outside the allowlist, which stays at 365 entries.
 
+### 3.63 DeconstructionTransform (item 48, IL prefix 41)
+
+`var (a, b) = point;` compiles to a `Deconstruct` call with `out` temporaries, and
+`var (a, b) = tuple;` to reads of `Item1` and `Item2`. Both may be nested and followed by
+conversions and assignments. The transform folds such a run of statements back into one
+`deconstruct` instruction (wire opcode 86) with four parts:
+- the init stores;
+- a pattern of `match.deconstruct` or `match.tuple` nodes over `deconstruct.result`
+  elements (opcode 87);
+- the conversions;
+- the assignments.
+
+Matching never changes the block. As in the managed transform, every rewrite waits in a
+list of delayed actions until the whole sequence matched. The port keeps those actions as
+an enum (set a variable type, add an assignment, forward a single-use element through a
+fresh variable, and so on), because the managed closures read transform state at the time
+they run.
+
+The new instruction keeps its collection (the init stores) before three fixed children.
+The arena's list operations used to handle only a collection after fixed children (or
+before one final instruction), so they now renumber any number of trailing children.
+`FindLoadInNext` gained the `FindDeconstruction` result, which lets a preceding store become
+an init store.
+
+The C# conversion approximations from item 46 moved into a shared module that also reports
+the kind of a conversion (identity, numeric, nullable, reference, boxing). The transform
+accepts a matched `conv` only as the lowering of an identity, reference or numeric
+conversion, as the managed `IsCompatibleImplicitConversion` does. These approximations
+remain a shortcut until the semantics step (item 67).
+
+The new settings bit 43 is `Deconstruction`.
+
+The no-op red run failed 53 of 3,550 equality cases. The first green run threw in the
+materializer, which filled the init collection before the pattern was set; the managed
+collection renumbers the fixed children on every insert. With that fixed the port matched
+every case outside the allowlist, which stays at 365 entries.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

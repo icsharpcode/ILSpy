@@ -343,6 +343,7 @@ impl Function {
             | Inst::Using { .. }
             | Inst::NullCoalescing { .. }
             | Inst::Match { .. } => index == 0,
+            Inst::Deconstruct { init, .. } => index <= init.len(),
             Inst::SwitchSection { .. }
             | Inst::TryCatchHandler { .. }
             | Inst::Block { .. }

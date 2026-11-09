@@ -377,6 +377,8 @@ pub(crate) enum Find {
     Stop,
     /// Not found, but the search may go on.
     Continue,
+    /// A deconstruction (with `FIND_DECONSTRUCTION`), into whose init the store may go.
+    Deconstruction(NodeId),
 }
 
 /// `FindLoadInNext`.
@@ -419,6 +421,11 @@ pub(crate) fn find_load_in_next(
         }
         return Find::Stop;
     }
+    if options & options::FIND_DECONSTRUCTION != 0
+        && matches!(f.inst(expr), Inst::Deconstruct { .. })
+    {
+        return Find::Deconstruction(expr);
+    }
     for (index, child) in f.inst(expr).children().into_iter().enumerate() {
         if !can_inline_into_slot(f, ctx, expr, index, moved) {
             return Find::Stop;
@@ -451,6 +458,8 @@ fn can_inline_into_slot(
         | Inst::Lock { .. }
         | Inst::Using { .. }
         | Inst::NullCoalescing { .. } => index == 0,
+        // The init stores and the pattern, not the conversions and assignments.
+        Inst::Deconstruct { init, .. } => index <= init.len(),
         // Only completely pure constants go into an expression tree, whose evaluation the
         // lambda delays.
         Inst::Function { kind, .. } => {

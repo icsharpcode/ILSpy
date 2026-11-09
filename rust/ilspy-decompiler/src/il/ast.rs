@@ -711,6 +711,25 @@ pub enum Inst {
         value: NodeId,
         fallback: NodeId,
     },
+    /// `deconstruct { init: pattern: conversions: assignments: }`: a deconstruction assignment.
+    Deconstruct {
+        /// `Init`: stores of the values the assignments use, inlined into the deconstruction.
+        init: Vec<NodeId>,
+        /// The `match.deconstruct` or `match.tuple` pattern.
+        pattern: NodeId,
+        /// A `DeconstructionConversions` block.
+        conversions: NodeId,
+        /// A `DeconstructionAssignments` block.
+        assignments: NodeId,
+    },
+    /// `deconstruct.result index(arg)`: element `index` of the value a deconstruction pattern
+    /// matches.
+    DeconstructResult {
+        index: i32,
+        ty: TypeId,
+        result: StackType,
+        arg: NodeId,
+    },
     /// A lambda `ILFunction`: its own parameters (`Parameters`, as type and name) and
     /// variables, and a body container.
     Function {
@@ -981,7 +1000,8 @@ impl Inst {
             | NullableUnwrap { arg, .. }
             | NullableRewrap { arg, .. }
             | ExpressionTreeCast { arg, .. }
-            | Function { body: arg, .. } => vec![*arg],
+            | Function { body: arg, .. }
+            | DeconstructResult { arg, .. } => vec![*arg],
             LdElemaInlineArray { array, indices, .. } => {
                 let mut c = vec![*array];
                 c.extend(indices);
@@ -990,6 +1010,16 @@ impl Inst {
             NullCoalescing {
                 value, fallback, ..
             } => vec![*value, *fallback],
+            Deconstruct {
+                init,
+                pattern,
+                conversions,
+                assignments,
+            } => {
+                let mut c = init.clone();
+                c.extend([*pattern, *conversions, *assignments]);
+                c
+            }
             Leave { value, .. } => vec![*value],
             If {
                 condition,
@@ -1133,7 +1163,8 @@ impl Inst {
             | NullableUnwrap { arg, .. }
             | NullableRewrap { arg, .. }
             | ExpressionTreeCast { arg, .. }
-            | Function { body: arg, .. } => {
+            | Function { body: arg, .. }
+            | DeconstructResult { arg, .. } => {
                 assert_eq!(index, 0, "child index out of range");
                 arg
             }
@@ -1150,6 +1181,21 @@ impl Inst {
                 .into_iter()
                 .nth(index)
                 .expect("child index"),
+            Deconstruct {
+                init,
+                pattern,
+                conversions,
+                assignments,
+            } => {
+                if index < init.len() {
+                    &mut init[index]
+                } else {
+                    [pattern, conversions, assignments]
+                        .into_iter()
+                        .nth(index - init.len())
+                        .expect("child index")
+                }
+            }
             Lock {
                 on_expression,
                 body,
@@ -1528,6 +1574,7 @@ impl Function {
             Inst::Switch { sections, .. } => sections,
             Inst::TryCatch { handlers, .. } => handlers,
             Inst::Call(c) | Inst::CallVirt(c) | Inst::NewObj(c) => &mut c.args,
+            Inst::Deconstruct { init, .. } => init,
             Inst::Match { sub_patterns, .. } => sub_patterns,
             Inst::Dynamic { args, .. } => args,
             Inst::NewArr { indices, .. } | Inst::LdElema { indices, .. } => indices,
@@ -1545,20 +1592,26 @@ impl Function {
         // Only the children from `index` on move; relinking all of them would make filling a
         // block quadratic.
         let (offset, trailing) = match self.inst(owner) {
-            Inst::Block { final_inst, .. } => (0, Some(*final_inst)),
+            Inst::Block { final_inst, .. } => (0, vec![*final_inst]),
+            Inst::Deconstruct {
+                pattern,
+                conversions,
+                assignments,
+                ..
+            } => (0, vec![*pattern, *conversions, *assignments]),
             Inst::Switch { .. }
             | Inst::TryCatch { .. }
             | Inst::LdElema { .. }
-            | Inst::Match { .. } => (1, None),
-            _ => (0, None),
+            | Inst::Match { .. } => (1, Vec::new()),
+            _ => (0, Vec::new()),
         };
         let len = self.list(owner).len();
         for i in index..len {
             let child = self.list(owner)[i];
             self.adopt(owner, child, offset + i);
         }
-        if let Some(t) = trailing {
-            self.adopt(owner, t, offset + len);
+        for (i, t) in trailing.into_iter().enumerate() {
+            self.adopt(owner, t, offset + len + i);
         }
         self.entry_point_changed(owner, entry);
     }
@@ -1694,6 +1747,7 @@ impl Function {
             Inst::Switch { sections, .. } => sections,
             Inst::TryCatch { handlers, .. } => handlers,
             Inst::Call(c) | Inst::CallVirt(c) | Inst::NewObj(c) => &c.args,
+            Inst::Deconstruct { init, .. } => init,
             Inst::Match { sub_patterns, .. } => sub_patterns,
             Inst::Dynamic { args, .. } => args,
             Inst::NewArr { indices, .. } | Inst::LdElema { indices, .. } => indices,
@@ -1863,6 +1917,8 @@ impl Function {
             LdElemaInlineArray { .. } => StackType::Ref,
             NullCoalescing { ty, .. } => ts.stack_type(*ty),
             NullableUnwrap { result, .. } => *result,
+            DeconstructResult { result, .. } => *result,
+            Deconstruct { .. } => StackType::Void,
             ExpressionTreeCast { ty, .. } => ts.stack_type(*ty),
             Function { delegate_type, .. } => match delegate_type {
                 Some(t) => ts.stack_type(*t),
@@ -2014,7 +2070,9 @@ impl Function {
             | NullCoalescing { ty, .. }
             | NullableUnwrap { ty, .. }
             | NullableRewrap { ty, .. }
-            | ExpressionTreeCast { ty, .. } => *ty,
+            | ExpressionTreeCast { ty, .. }
+            | DeconstructResult { ty, .. } => *ty,
+            Deconstruct { .. } => known(ts, KnownTypeCode::Void),
             Function { delegate_type, .. } => {
                 delegate_type.unwrap_or_else(|| ts.intern(TypeData::UnknownSpecial))
             }

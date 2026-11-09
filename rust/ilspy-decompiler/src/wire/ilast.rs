@@ -105,6 +105,8 @@ mod op {
     pub const LD_STR_UTF8: u8 = 83;
     pub const FUNCTION: u8 = 84;
     pub const EXPRESSION_TREE_CAST: u8 = 85;
+    pub const DECONSTRUCT: u8 = 86;
+    pub const DECONSTRUCT_RESULT: u8 = 87;
     /// A node already written (it has two parents).
     pub const NODE_REFERENCE: u8 = 255;
 }
@@ -1060,6 +1062,30 @@ impl FunctionWriter<'_, '_, '_, '_> {
                 }
                 self.out.uvar(u64::from(helper_variable_count));
                 self.node(body)?;
+            }
+            Inst::Deconstruct {
+                ref init,
+                pattern,
+                conversions,
+                assignments,
+            } => {
+                tag(op::DECONSTRUCT, &mut self.out);
+                self.nodes(init)?;
+                self.node(pattern)?;
+                self.node(conversions)?;
+                self.node(assignments)?;
+            }
+            Inst::DeconstructResult {
+                index,
+                ty,
+                result,
+                arg,
+            } => {
+                tag(op::DECONSTRUCT_RESULT, &mut self.out);
+                self.out.ivar(i64::from(index));
+                self.ty(ty);
+                self.stack_type(result);
+                self.node(arg)?;
             }
             Inst::ExpressionTreeCast {
                 ty,

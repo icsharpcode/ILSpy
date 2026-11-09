@@ -2272,130 +2272,8 @@ fn match_argument_list(env: &Env<'_, '_, '_, '_>, inst: NodeId) -> Option<Vec<No
     Some(arguments)
 }
 
-// shortcut: C# conversions and operator overload resolution are approximated below for the
-// cases expression trees produce; port them with the semantics step (item 67).
-
-/// `CSharpConversions.ImplicitConversion(from, to).IsValid` for the conversions between
-/// expression tree operands: identity, numeric, nullable, null, reference and boxing.
-fn implicit_conversion(env: &mut Env<'_, '_, '_, '_>, from: TypeId, to: TypeId) -> bool {
-    if type_erasure_equivalent(env, from, to) {
-        return true;
-    }
-    if matches!(env.ctx.ts.data(to), TypeData::Dynamic) {
-        return true;
-    }
-    if env.is_nullable(to) {
-        let to_underlying = env.underlying(to);
-        let from_underlying = env.underlying(from);
-        if type_erasure_equivalent(env, from_underlying, to_underlying)
-            || implicit_numeric(env, from_underlying, to_underlying)
-        {
-            return true;
-        }
-    }
-    if implicit_numeric(env, from, to) {
-        return true;
-    }
-    is_implicit_reference_conversion(env, from, to) || is_boxing_conversion(env, from, to)
-}
-
-/// The implicit numeric conversions (C# 10.2.3).
-fn implicit_numeric(env: &mut Env<'_, '_, '_, '_>, from: TypeId, to: TypeId) -> bool {
-    use KnownTypeCode as K;
-    let (Some(f), Some(t)) = (known(env.ctx, from), known(env.ctx, to)) else {
-        return false;
-    };
-    let targets: &[K] = match f {
-        K::SByte => &[
-            K::Int16,
-            K::Int32,
-            K::Int64,
-            K::Single,
-            K::Double,
-            K::Decimal,
-        ],
-        K::Byte => &[
-            K::Int16,
-            K::UInt16,
-            K::Int32,
-            K::UInt32,
-            K::Int64,
-            K::UInt64,
-            K::Single,
-            K::Double,
-            K::Decimal,
-        ],
-        K::Int16 => &[K::Int32, K::Int64, K::Single, K::Double, K::Decimal],
-        K::UInt16 | K::Char => &[
-            K::UInt16,
-            K::Int32,
-            K::UInt32,
-            K::Int64,
-            K::UInt64,
-            K::Single,
-            K::Double,
-            K::Decimal,
-        ],
-        K::Int32 => &[K::Int64, K::Single, K::Double, K::Decimal],
-        K::UInt32 => &[K::Int64, K::UInt64, K::Single, K::Double, K::Decimal],
-        K::Int64 | K::UInt64 => &[K::Single, K::Double, K::Decimal],
-        K::Single => &[K::Double],
-        _ => &[],
-    };
-    targets.contains(&t) && !(f == K::UInt16 && t == K::UInt16)
-}
-
-/// `CSharpConversions.IsImplicitReferenceConversion`: a reference type to a base type or an
-/// interface, `null` to a reference type, and array covariance.
-fn is_implicit_reference_conversion(
-    env: &mut Env<'_, '_, '_, '_>,
-    from: TypeId,
-    to: TypeId,
-) -> bool {
-    if env.ctx.ts.is_reference_type(to) != Some(true) {
-        return false;
-    }
-    if matches!(env.ctx.ts.data(from), TypeData::UnknownSpecial) {
-        return false;
-    }
-    if env.ctx.ts.is_reference_type(from) != Some(true) {
-        return false;
-    }
-    if let (
-        TypeData::Array {
-            elem: fe, rank: fr, ..
-        },
-        TypeData::Array {
-            elem: te, rank: tr, ..
-        },
-    ) = (env.ctx.ts.data(from).clone(), env.ctx.ts.data(to).clone())
-        && fr == tr
-    {
-        return is_implicit_reference_conversion(env, fe, te);
-    }
-    is_base_type(env, from, to)
-}
-
-/// A boxing conversion: a value type to `object`, `ValueType`, `Enum` or an interface it
-/// implements.
-fn is_boxing_conversion(env: &mut Env<'_, '_, '_, '_>, from: TypeId, to: TypeId) -> bool {
-    if env.ctx.ts.is_reference_type(from) != Some(false)
-        || env.ctx.ts.is_reference_type(to) != Some(true)
-    {
-        return false;
-    }
-    let from = env.underlying(from);
-    is_base_type(env, from, to)
-}
-
-/// Whether `to` is among the base types of `from` (`GetAllBaseTypes`).
-fn is_base_type(env: &mut Env<'_, '_, '_, '_>, from: TypeId, to: TypeId) -> bool {
-    let Ok(bases) = env.ctx.ts.all_base_types(from) else {
-        return false;
-    };
-    let to = env.ctx.ts.normalize(to);
-    bases.into_iter().any(|b| env.ctx.ts.normalize(b) == to)
-}
+// shortcut: operator overload resolution is approximated for the operand types expression
+// trees produce; port it with the semantics step (item 67).
 
 /// `CSharpResolver.ResolveBinaryOperator(...).UserDefinedOperatorMethod` for a comparison:
 /// the single user-defined operator of the operand types (or their base types) whose
@@ -2498,4 +2376,18 @@ fn is_built_in_operator_type(env: &mut Env<'_, '_, '_, '_>, t: TypeId) -> bool {
                 | K::Decimal
         )
     )
+}
+
+/// `CSharpConversions.ImplicitConversion(from, to).IsValid`.
+fn implicit_conversion(env: &mut Env<'_, '_, '_, '_>, from: TypeId, to: TypeId) -> bool {
+    super::csharp_semantics::implicit_conversion(env.ctx, from, to).is_some()
+}
+
+/// `CSharpConversions.IsImplicitReferenceConversion`.
+fn is_implicit_reference_conversion(
+    env: &mut Env<'_, '_, '_, '_>,
+    from: TypeId,
+    to: TypeId,
+) -> bool {
+    super::csharp_semantics::is_implicit_reference_conversion(env.ctx, from, to)
 }
