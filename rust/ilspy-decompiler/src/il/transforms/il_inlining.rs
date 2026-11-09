@@ -1057,3 +1057,54 @@ fn is_compound_target(f: &Function, inst: NodeId) -> bool {
             if target == inst)
     })
 }
+
+/// `ILInlining.CanInlineInto`: whether `moved` (the value of `v`) may be inlined into its
+/// load in `expr`.
+pub(crate) fn can_inline_into(
+    f: &mut Function,
+    ctx: &mut Context<'_, '_, '_>,
+    expr: NodeId,
+    v: VarId,
+    moved: NodeId,
+) -> bool {
+    matches!(
+        find_load_in_next(f, ctx, Some(expr), v, moved, options::NONE),
+        Find::Found(_)
+    )
+}
+
+/// `ILInlining.CanMoveInto`: whether `moved`, from before `stmt`, may become the replacement
+/// of `target_load`, a descendant of `stmt`.
+pub(crate) fn can_move_into(
+    f: &Function,
+    ctx: &mut Context<'_, '_, '_>,
+    moved: NodeId,
+    stmt: NodeId,
+    target_load: NodeId,
+) -> bool {
+    let mut inst = target_load;
+    while inst != stmt {
+        let parent = f.node(inst).parent.expect("a descendant of the statement");
+        let index = f.node(inst).child_index as usize;
+        if !can_inline_into_slot(f, ctx, parent, index, moved) {
+            return false;
+        }
+        // The reordering with the predecessors.
+        for predecessor in f.inst(parent).children().into_iter().take(index) {
+            if !may_reorder(f, moved, skip_named_argument_store(f, predecessor)) {
+                return false;
+            }
+        }
+        inst = parent;
+    }
+    true
+}
+
+/// `SkipNamedArgumentStore`: the value of a named-argument store, which is only read in the
+/// final instruction of its block.
+fn skip_named_argument_store(f: &Function, predecessor: NodeId) -> NodeId {
+    match f.match_stloc(predecessor) {
+        Some((v, value)) if f.var(v).kind == VariableKind::NamedArgument => value,
+        _ => predecessor,
+    }
+}

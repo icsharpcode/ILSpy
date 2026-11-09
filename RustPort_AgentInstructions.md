@@ -380,7 +380,7 @@ the reasons. This file holds only the ordered steps, their gates and their rules
   - [x] 44. TransformArrayInitializers (M)
   - [x] 45. TransformCollectionAndObjectInitializers (M)
   - [x] 46. TransformExpressionTrees (L)
-  - [ ] 47. IndexRangeTransform (M)
+  - [x] 47. IndexRangeTransform (M)
   - [ ] 48. DeconstructionTransform (M)
   - [ ] 49. NamedArgumentTransform (S)
   - [ ] 50. RemoveUnconstrainedGenericReferenceTypeCheck (S)

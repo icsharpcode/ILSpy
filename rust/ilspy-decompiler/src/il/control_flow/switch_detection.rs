@@ -607,6 +607,7 @@ pub(crate) fn inline_switch_expression_default_case_throw_helper(
             };
             let new_obj = f.add(Inst::NewObj(CallData {
                 method: MethodOperand {
+                    range_accessor: None,
                     lifted: false,
                     // Found by type lookup: the wire sends the constructor's signature.
                     token: 0,

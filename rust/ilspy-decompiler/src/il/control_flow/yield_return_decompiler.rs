@@ -888,6 +888,7 @@ impl YieldReturnDecompiler {
             .resolve_method(self.module, token, GenericContext::default())
             .map_err(|e| SymbolicAnalysisFailed(e.to_string()))?;
         r.move_next_method = Some(MethodOperand {
+            range_accessor: None,
             lifted: false,
             token,
             method,

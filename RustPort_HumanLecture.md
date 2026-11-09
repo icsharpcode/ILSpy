@@ -1864,6 +1864,31 @@ The new settings bit 42 is `ExpressionTrees`.
 The no-op red run failed 54 of 3,550 equality cases (all ExpressionTrees fixtures). The
 port then matched every case outside the allowlist, which stays at 365 entries.
 
+### 3.62 IndexRangeTransform (item 47, IL prefix 40)
+
+C# lowers `list[^i]` and `span[a..b]` to plain arithmetic:
+- `int length = list.Count; list[length - i]` for indices from the end;
+- `int start = a.GetOffset(length); span.Slice(start, b.GetOffset(length) - start)` for
+  ranges.
+
+The statement part of the transform recognizes these runs of stores and folds them back
+into one call with a `System.Index` or `System.Range` argument. It also extends a slice it
+folded earlier from a partial view of the pattern. Item 21 already ported the array part
+(`HandleLdElema`).
+
+The folded call names a `SyntheticRangeIndexAccessor`: the indexer or `Slice` method with
+an index or range parameter in place of its integers, a method that exists only in the
+decompiler. It travels as a flag on the call's method operand (the type and whether it
+slices). The host wraps the resolved underlying method in the managed class, as it already
+does for lifted operators.
+
+`Range.All` is the first property getter the engine names by lookup rather than by token,
+so the host's lookup now includes accessors. Two inlining checks the transform needs,
+`CanInlineInto` and `CanMoveInto`, joined the inlining module.
+
+The no-op red run failed 19 of 3,550 equality cases (the IndexRangeTest fixtures). The port
+then matched every case outside the allowlist, which stays at 365 entries.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

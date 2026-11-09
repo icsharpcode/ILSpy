@@ -611,7 +611,11 @@ impl FunctionWriter<'_, '_, '_, '_> {
                     let m = &c.method.method;
                     self.ty(m.declaring.ok_or("method without a declaring type")?);
                     self.string(&m.name);
-                    let params = m.params().map_err(|e| e.to_string())?;
+                    // A synthetic range accessor is found by the underlying parameters.
+                    let params = match &c.method.range_accessor {
+                        Some(r) => r.underlying_params.clone(),
+                        None => m.params().map_err(|e| e.to_string())?,
+                    };
                     self.out.len(params.len());
                     for p in params {
                         // A lifted operator is found by its non-lifted parameters.
@@ -632,6 +636,12 @@ impl FunctionWriter<'_, '_, '_, '_> {
                 }
                 // The host wraps the method with `CSharpOperators.LiftUserDefinedOperator`.
                 self.out.bool(c.method.lifted);
+                // The host wraps the method in a `SyntheticRangeIndexAccessor`.
+                self.out.bool(c.method.range_accessor.is_some());
+                if let Some(r) = &c.method.range_accessor {
+                    self.ty(r.index_or_range_type);
+                    self.out.bool(r.slicing);
+                }
                 self.out.u8(u8::from(c.is_tail)
                     | u8::from(c.il_stack_was_empty) << 1
                     | u8::from(c.constrained_to.is_some()) << 2);

@@ -499,7 +499,8 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 			static IType Oblivious(IType t) => t.ChangeNullability(Nullability.Oblivious);
 			var candidates = name == ".ctor"
 				? type.GetConstructors(m => !m.IsStatic && m.Parameters.Count == parameterTypes.Length)
-				: type.GetMethods(m => m.Name == name && m.Parameters.Count == parameterTypes.Length);
+				: type.GetMethods(m => m.Name == name && m.Parameters.Count == parameterTypes.Length)
+					.Concat(type.GetAccessors(m => m.Name == name && m.Parameters.Count == parameterTypes.Length));
 			return candidates
 				.FirstOrDefault(m => m.Parameters.Select(p => Oblivious(p.Type)).SequenceEqual(parameterTypes.Select(Oblivious)))
 				?? throw new InvalidOperationException($"No method {name} of {type} matches the sent parameter types");
@@ -912,10 +913,17 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		IMethod CallMethod()
 		{
 			var method = Method();
-			if (!Bool())
-				return method;
-			return ICSharpCode.Decompiler.CSharp.Resolver.CSharpOperators.LiftUserDefinedOperator(method)
-				?? throw new InvalidOperationException($"The operator {method} cannot be lifted");
+			if (Bool())
+			{
+				method = ICSharpCode.Decompiler.CSharp.Resolver.CSharpOperators.LiftUserDefinedOperator(method)
+					?? throw new InvalidOperationException($"The operator {method} cannot be lifted");
+			}
+			if (Bool())
+			{
+				var indexOrRangeType = Type();
+				method = new SyntheticRangeIndexAccessor(method, indexOrRangeType, slicing: Bool());
+			}
+			return method;
 		}
 
 		ILInstruction Conv()

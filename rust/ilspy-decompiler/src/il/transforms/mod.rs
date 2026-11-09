@@ -275,6 +275,7 @@ const PIPELINE: &[Leaf] = &[
     Statement(1, transform_array_initializers::run),
     Statement(1, transform_collection_and_object_initializers::run),
     Statement(1, transform_expression_trees::run),
+    Statement(1, index_range_transform::run),
 ];
 
 /// Runs the first `prefix` leaves of the pipeline.

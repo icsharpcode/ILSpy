@@ -101,6 +101,7 @@ impl Env<'_, '_, '_, '_> {
 
     fn method_operand(method: ResolvedMethod) -> MethodOperand {
         MethodOperand {
+            range_accessor: None,
             token: 0,
             method,
             state_machine_context: false,

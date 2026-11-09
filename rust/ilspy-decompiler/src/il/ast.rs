@@ -292,6 +292,16 @@ impl Variable {
     }
 }
 
+/// What makes a method a `SyntheticRangeIndexAccessor`.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct RangeAccessor {
+    /// `System.Index` or `System.Range`.
+    pub index_or_range_type: TypeId,
+    pub slicing: bool,
+    /// The parameter types of the underlying method.
+    pub underlying_params: Vec<TypeId>,
+}
+
 /// A method operand: the metadata token it was read from (resolved again by the
 /// materializer, in the function's generic context) and its resolution.
 #[derive(Clone, Debug)]
@@ -304,6 +314,9 @@ pub struct MethodOperand {
     /// The method is the lifted form of a user-defined operator
     /// (`CSharpOperators.LiftUserDefinedOperator`): parameters and return type are nullable.
     pub lifted: bool,
+    /// `SyntheticRangeIndexAccessor`: the method stands for an indexer taking a
+    /// `System.Index` or `System.Range` in place of its integer parameters.
+    pub range_accessor: Option<Box<RangeAccessor>>,
 }
 
 /// A field operand, as `MethodOperand`.

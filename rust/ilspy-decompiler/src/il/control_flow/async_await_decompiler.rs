@@ -1479,6 +1479,7 @@ impl AsyncAwaitDecompiler {
             .resolve_method(self.outer.module, token, GenericContext::default())
             .ok()
             .map(|method| MethodOperand {
+                range_accessor: None,
                 lifted: false,
                 token,
                 method,

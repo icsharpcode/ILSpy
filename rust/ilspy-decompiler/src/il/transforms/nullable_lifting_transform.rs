@@ -414,7 +414,7 @@ impl CompOrDecimal {
                         c.name == "op_Inequality" && c.params().is_ok_and(|p| p == params)
                     })?;
                     MethodOperand {
-                        // Found by lookup: the wire sends the method's signature.
+                        range_accessor: None, // Found by lookup: the wire sends the method's signature.
                         token: 0,
                         method: inequality,
                         state_machine_context: call.method.state_machine_context,
@@ -1333,7 +1333,7 @@ fn new_nullable(
     };
     f.add(Inst::NewObj(CallData {
         method: MethodOperand {
-            // Found by type lookup: the wire sends the constructor's signature.
+            range_accessor: None, // Found by type lookup: the wire sends the constructor's signature.
             token: 0,
             method: ctor,
             state_machine_context: false,

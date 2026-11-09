@@ -1470,6 +1470,7 @@ fn block_from_initializer(
     if let Some(method) = array_to_span {
         final_inst = f.add(Inst::Call(CallData {
             method: MethodOperand {
+                range_accessor: None,
                 token: 0,
                 method,
                 state_machine_context: false,
