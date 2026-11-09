@@ -1136,6 +1136,31 @@ pub(crate) fn can_move_into(
     stmt: NodeId,
     target_load: NodeId,
 ) -> bool {
+    can_move_into_skipping(f, ctx, moved, stmt, target_load, None)
+}
+
+/// `ILInlining.CanMoveIntoCallVirt`: as `can_move_into`, but `moved` may be reordered with the
+/// `this` argument of `nested_call_virt`.
+pub(crate) fn can_move_into_call_virt(
+    f: &Function,
+    ctx: &mut Context<'_, '_, '_>,
+    moved: NodeId,
+    stmt: NodeId,
+    nested_call_virt: NodeId,
+    target_load: NodeId,
+) -> bool {
+    let this_arg = f.inst(nested_call_virt).children()[0];
+    can_move_into_skipping(f, ctx, moved, stmt, target_load, Some(this_arg))
+}
+
+fn can_move_into_skipping(
+    f: &Function,
+    ctx: &mut Context<'_, '_, '_>,
+    moved: NodeId,
+    stmt: NodeId,
+    target_load: NodeId,
+    skipped: Option<NodeId>,
+) -> bool {
     let mut inst = target_load;
     while inst != stmt {
         let parent = f.node(inst).parent.expect("a descendant of the statement");
@@ -1145,6 +1170,9 @@ pub(crate) fn can_move_into(
         }
         // The reordering with the predecessors.
         for predecessor in f.inst(parent).children().into_iter().take(index) {
+            if Some(predecessor) == skipped {
+                continue;
+            }
             if !may_reorder(f, moved, skip_named_argument_store(f, predecessor)) {
                 return false;
             }

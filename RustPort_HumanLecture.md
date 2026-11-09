@@ -1953,6 +1953,25 @@ The new settings bit 44 is `NamedArguments`.
 The no-op red run failed 124 of 3,550 equality cases. The port then matched every case
 outside the allowlist, which stays at 365 entries.
 
+### 3.65 RemoveUnconstrainedGenericReferenceTypeCheck (item 50, IL prefix 43)
+
+For a constrained virtual call on a value of an unconstrained type parameter, Roslyn first
+copies a reference-type value into a temporary, so that the arguments cannot change which
+object the call goes to. The pattern is:
+- `default(T)` stored in a temporary;
+- an `== null` test on that temporary, whose branch copies the value and redirects the
+  address;
+- one store per argument;
+- the call through `ldobj.if.ref`.
+
+That form already keeps the receiver stable, so the transform drops the check. The argument
+stores then inline back into the call. This needs `CanMoveIntoCallVirt`, a variant of
+`CanMoveInto` that ignores the `this` argument when it checks reordering; the inlining
+module now has both, built on one helper.
+
+The no-op red run failed 25 of 3,550 equality cases. The port then matched every case
+outside the allowlist, which stays at 365 entries.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

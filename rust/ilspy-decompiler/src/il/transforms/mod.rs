@@ -33,6 +33,7 @@ pub mod nullable_lifting_transform;
 pub mod pattern_matching_transform;
 pub mod remove_dead_variable_init;
 pub mod remove_infeasible_path_transform;
+pub mod remove_unconstrained_generic_reference_type_check;
 pub mod split_variables;
 pub mod statement_transform;
 pub mod switch_on_nullable_transform;
@@ -287,6 +288,7 @@ const PIPELINE: &[Leaf] = &[
     Statement(1, index_range_transform::run),
     Statement(1, deconstruction_transform::run),
     Statement(1, named_argument_transform::run),
+    Statement(1, remove_unconstrained_generic_reference_type_check::run),
 ];
 
 /// Runs the first `prefix` leaves of the pipeline.
