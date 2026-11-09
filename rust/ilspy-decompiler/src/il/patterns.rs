@@ -177,6 +177,7 @@ impl Function {
             Inst::LdLoc { var } | Inst::LdLoca { var } | Inst::StLoc { var, .. } => Some(var),
             Inst::TryCatchHandler { variable, .. }
             | Inst::PinnedRegion { variable, .. }
+            | Inst::Using { variable, .. }
             | Inst::Match { variable, .. } => Some(variable),
             _ => None,
         }
@@ -336,6 +337,7 @@ impl Function {
             | Inst::Switch { .. }
             | Inst::PinnedRegion { .. }
             | Inst::Lock { .. }
+            | Inst::Using { .. }
             | Inst::Match { .. } => index == 0,
             Inst::SwitchSection { .. }
             | Inst::TryCatchHandler { .. }

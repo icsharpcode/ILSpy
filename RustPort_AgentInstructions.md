@@ -367,7 +367,7 @@ the reasons. This file holds only the ordered steps, their gates and their rules
         Decision: keep the 78 entries of item 31; each leaves the allowlist in the step that
         ports its transform. Policy unchanged.
   - [x] 33. LockTransform (M)
-  - [ ] 34. UsingTransform (M)
+  - [x] 34. UsingTransform (M)
   - [ ] 35. CachedDelegateInitialization (S)
   - [ ] 36. CachedReadOnlySpanInitialization (S)
   - [ ] 37. StatementTransform driver and ILInlining with AllowInliningOfLdloca (M)

@@ -212,6 +212,15 @@ impl<S: State> Flow<S> {
                 a.handle_store(self, f, id, variable);
                 self.visit(a, f, body);
             }
+            // `VisitUsingInstruction`: no store of the variable is recorded.
+            &Inst::Using {
+                resource_expression,
+                body,
+                ..
+            } => {
+                self.visit(a, f, resource_expression);
+                self.visit(a, f, body);
+            }
             // `VisitLockInstruction`.
             &Inst::Lock {
                 on_expression,

@@ -24,6 +24,7 @@ pub mod remove_infeasible_path_transform;
 pub mod split_variables;
 pub mod switch_on_nullable_transform;
 pub mod switch_on_string_transform;
+pub mod using_transform;
 
 /// The `DecompilerSettings` the ported transforms read, by property name. The host sends
 /// them as a bit set in this order (`Interop/RustSettings.cs` looks the names up by
@@ -50,6 +51,9 @@ pub const SETTING_NAMES: &[&str] = &[
     "SwitchExpressions",
     "Ranges",
     "LockStatement",
+    "UsingStatement",
+    "AsyncUsingAndForEachStatement",
+    "IntroduceRefModifiersOnStructs",
 ];
 
 /// The values of `SETTING_NAMES`.
@@ -76,6 +80,9 @@ pub struct Settings {
     pub switch_expressions: bool,
     pub ranges: bool,
     pub lock_statement: bool,
+    pub using_statement: bool,
+    pub async_using_and_for_each_statement: bool,
+    pub introduce_ref_modifiers_on_structs: bool,
 }
 
 impl Settings {
@@ -104,6 +111,9 @@ impl Settings {
             switch_expressions: bit(18),
             ranges: bit(19),
             lock_statement: bit(20),
+            using_statement: bit(21),
+            async_using_and_for_each_statement: bit(22),
+            introduce_ref_modifiers_on_structs: bit(23),
         }
     }
 }
@@ -156,6 +166,7 @@ const PIPELINE: &[Leaf] = &[
     Function(pattern_matching_transform::run),
     Block(1, super::control_flow::condition_detection::run),
     Block(1, lock_transform::run),
+    Block(1, using_transform::run),
 ];
 
 /// Runs the first `prefix` leaves of the pipeline.

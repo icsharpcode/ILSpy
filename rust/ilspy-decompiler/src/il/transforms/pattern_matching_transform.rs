@@ -474,7 +474,7 @@ fn match_null_check_pattern(
 }
 
 /// `NullableLiftingTransform.MatchHasValueCall(inst, v)`: `call get_HasValue(ldloca v)`.
-fn match_has_value_call_of(
+pub(crate) fn match_has_value_call_of(
     f: &Function,
     ctx: &mut Context<'_, '_, '_>,
     inst: NodeId,
@@ -486,7 +486,7 @@ fn match_has_value_call_of(
 
 /// `NullableLiftingTransform.MatchGetValueOrDefault(inst, v)`:
 /// `call GetValueOrDefault(ldloca v)`.
-fn match_get_value_or_default_of(
+pub(crate) fn match_get_value_or_default_of(
     f: &Function,
     ctx: &mut Context<'_, '_, '_>,
     inst: NodeId,

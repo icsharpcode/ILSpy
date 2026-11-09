@@ -590,10 +590,20 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				68 => StringToInt(),
 				69 => Match(),
 				70 => new LockInstruction(Node(), Node()),
+				71 => Using(),
 				_ => throw new InvalidOperationException($"Unknown wire opcode {op}"),
 			};
 			inst.SetILRange(range);
 			materialized.Add(inst);
+			return inst;
+		}
+
+		ILInstruction Using()
+		{
+			var inst = new UsingInstruction(Variable(), Node(), Node());
+			byte flags = U8();
+			inst.IsAsync = (flags & 1) != 0;
+			inst.IsRefStruct = (flags & 2) != 0;
 			return inst;
 		}
 

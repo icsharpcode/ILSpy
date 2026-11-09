@@ -1486,6 +1486,42 @@ the variable use counts differ.
 
 The no-op red run failed 151 of 3,550 equality cases.
 
+### 3.49 UsingTransform (item 34, IL prefix 27)
+
+UsingTransform is the third leaf of the second block group. It turns a store followed by a
+try-finally that disposes the stored variable into a `using` instruction, in three shapes:
+- the C# shape, with the store before the try;
+- the VB shape, with the store as the first statement of the try;
+- `await using`, whose finally awaits `DisposeAsync`.
+
+The dispose check covers:
+- null checks and type checks of reference types (including an inlined `isinst` and the
+  `match` instruction of PatternMatchingTransform);
+- nullable resources (`HasValue` and `GetValueOrDefault`);
+- boxed value types;
+- ref structs with their own `Dispose`.
+
+The arena, the wire (opcode 71) and the host gained the `using` instruction. Like
+`pinned.region`, it is a store of its variable. Settings bits 21 to 23 are `UsingStatement`,
+`AsyncUsingAndForEachStatement` and `IntroduceRefModifiersOnStructs`. ILInlining gained
+`IsUsedAsThisPointerInCall` and `IsPassedToInParameter`, which item 37 needs as well. The
+`obj?.Dispose()` shapes need `nullable.rewrap`, which the engine has not ported yet, so
+they never match.
+
+**Reference equality.** For a ref struct, the managed matcher compares the declaring type of
+the `Dispose` call with the variable's type using `==`. For interfaces this is reference
+equality. A type definition is one object, but each signature creates its own instance of a
+parameterized type. So a generic ref struct such as `ValueListBuilder<char>` never matches
+in managed. The engine's types are interned, so the port allows only type definitions.
+
+**Shifted tokens.** The `ICSharpCode.Decompiler.dll` fixture is the assembly the tests run,
+and it contains the host's interop code. The new wire reader method in the materializer
+shifted the tokens of all later methods by one. The allowlist keys methods by token, so 8
+entries no longer matched their methods. They were remapped by method name. Any host
+change that adds methods can do the same.
+
+The no-op red run failed 756 of 3,550 equality cases.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

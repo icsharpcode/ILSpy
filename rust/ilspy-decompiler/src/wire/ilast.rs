@@ -90,6 +90,7 @@ mod op {
     pub const STRING_TO_INT: u8 = 68;
     pub const MATCH: u8 = 69;
     pub const LOCK: u8 = 70;
+    pub const USING: u8 = 71;
     /// A node already written (it has two parents).
     pub const NODE_REFERENCE: u8 = 255;
 }
@@ -806,6 +807,20 @@ impl FunctionWriter<'_, '_, '_, '_> {
                 tag(op::LOCK, &mut self.out);
                 self.node(on_expression)?;
                 self.node(body)?;
+            }
+            Inst::Using {
+                variable,
+                resource_expression,
+                body,
+                is_async,
+                is_ref_struct,
+            } => {
+                tag(op::USING, &mut self.out);
+                self.var(variable)?;
+                self.node(resource_expression)?;
+                self.node(body)?;
+                self.out
+                    .u8(u8::from(is_async) | u8::from(is_ref_struct) << 1);
             }
             Inst::YieldReturn { value } => {
                 tag(op::YIELD_RETURN, &mut self.out);

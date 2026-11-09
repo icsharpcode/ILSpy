@@ -39,7 +39,8 @@ impl Inst {
             | Inst::LdLoca { var }
             | Inst::StLoc { var, .. }
             | Inst::TryCatchHandler { variable: var, .. }
-            | Inst::PinnedRegion { variable: var, .. } => *var = by.var(*var),
+            | Inst::PinnedRegion { variable: var, .. }
+            | Inst::Using { variable: var, .. } => *var = by.var(*var),
             _ => {}
         }
     }

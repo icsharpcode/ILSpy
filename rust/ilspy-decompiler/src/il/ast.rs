@@ -621,6 +621,14 @@ pub enum Inst {
         on_expression: NodeId,
         body: NodeId,
     },
+    /// `using (variable = resource_expression) body`.
+    Using {
+        variable: VarId,
+        resource_expression: NodeId,
+        body: NodeId,
+        is_async: bool,
+        is_ref_struct: bool,
+    },
     /// `get.pinnable.reference`: a reference to the first element of an array or string,
     /// or the result of a `GetPinnableReference` method (null for a null input).
     GetPinnableReference {
@@ -808,6 +816,11 @@ impl Inst {
                 on_expression,
                 body,
             } => vec![*on_expression, *body],
+            Using {
+                resource_expression,
+                body,
+                ..
+            } => vec![*resource_expression, *body],
             Leave { value, .. } => vec![*value],
             If {
                 condition,
@@ -930,6 +943,14 @@ impl Inst {
             PinnedRegion { init, body, .. } => {
                 [init, body].into_iter().nth(index).expect("child index")
             }
+            Using {
+                resource_expression,
+                body,
+                ..
+            } => [resource_expression, body]
+                .into_iter()
+                .nth(index)
+                .expect("child index"),
             Lock {
                 on_expression,
                 body,
@@ -1075,6 +1096,7 @@ impl Inst {
             TryCatchHandler { .. } => Flags::CONTROL_FLOW | Flags::MAY_WRITE_LOCALS,
             PinnedRegion { .. } => Flags::MAY_WRITE_LOCALS,
             Lock { .. } => Flags::CONTROL_FLOW | Flags::SIDE_EFFECT,
+            Using { .. } => Flags::MAY_WRITE_LOCALS | Flags::CONTROL_FLOW | Flags::SIDE_EFFECT,
             YieldReturn { .. } => Flags::MAY_BRANCH | Flags::SIDE_EFFECT,
             Await { .. } => Flags::SIDE_EFFECT,
             Dynamic { .. } => throws | Flags::SIDE_EFFECT,
@@ -1552,6 +1574,7 @@ impl Function {
             Nop { .. }
             | PinnedRegion { .. }
             | Lock { .. }
+            | Using { .. }
             | YieldReturn { .. }
             | Branch { .. }
             | Leave { .. }
@@ -1680,6 +1703,7 @@ impl Function {
             | If { .. }
             | PinnedRegion { .. }
             | Lock { .. }
+            | Using { .. }
             | YieldReturn { .. }
             | Switch {
                 result_type: None, ..

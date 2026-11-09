@@ -34,7 +34,8 @@ impl Uses {
                 Inst::LdLoca { var } => (&mut uses.addresses, var),
                 Inst::StLoc { var, .. }
                 | Inst::TryCatchHandler { variable: var, .. }
-                | Inst::PinnedRegion { variable: var, .. } => (&mut uses.stores, var),
+                | Inst::PinnedRegion { variable: var, .. }
+                | Inst::Using { variable: var, .. } => (&mut uses.stores, var),
                 _ => continue,
             };
             map.entry(var).or_default().push(n);

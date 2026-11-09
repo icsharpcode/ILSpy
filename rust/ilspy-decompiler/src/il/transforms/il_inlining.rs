@@ -354,9 +354,11 @@ fn can_inline_into_slot(
     moved: NodeId,
 ) -> bool {
     match f.inst(parent) {
-        Inst::If { .. } | Inst::Switch { .. } | Inst::PinnedRegion { .. } | Inst::Lock { .. } => {
-            index == 0
-        }
+        Inst::If { .. }
+        | Inst::Switch { .. }
+        | Inst::PinnedRegion { .. }
+        | Inst::Lock { .. }
+        | Inst::Using { .. } => index == 0,
         Inst::SwitchSection { .. }
         | Inst::TryCatch { .. }
         | Inst::TryFinally { .. }
@@ -528,4 +530,79 @@ pub(crate) fn is_readonly_reference(
             .match_ldfld(ctx.ts, addr)
             .is_some_and(|(_, field)| ctx.ts.field_return_type_is_ref_read_only(&field.field)),
     }
+}
+
+/// `ILInlining.IsUsedAsThisPointerInCall`: `ldloca` of a value-type variable used as the
+/// `this` argument of a call (through `ldobj.if.ref` and field addresses), an `await` or a
+/// `match`.
+pub(crate) fn is_used_as_this_pointer_in_call(
+    f: &Function,
+    ctx: &mut Context<'_, '_, '_>,
+    ldloca: NodeId,
+) -> bool {
+    let Inst::LdLoca { var } = *f.inst(ldloca) else {
+        return false;
+    };
+    if ctx.ts.is_reference_type(f.var(var).ty) == Some(true) {
+        return false;
+    }
+    let parent_of = |inst: NodeId| f.node(inst).parent;
+    let mut inst = ldloca;
+    if let Some(p) = parent_of(inst)
+        && matches!(f.inst(p), Inst::LdObjIfRef { .. })
+    {
+        inst = p;
+    }
+    while let Some(p) = parent_of(inst)
+        && matches!(f.inst(p), Inst::LdFlda { .. })
+    {
+        inst = p;
+    }
+    if f.node(inst).child_index != 0 {
+        return false;
+    }
+    let Some(parent) = parent_of(inst) else {
+        return false;
+    };
+    match f.inst(parent) {
+        Inst::Call(c) | Inst::CallVirt(c) => {
+            let m = &c.method.method;
+            if m.accessor_kind != 0 {
+                // A getter, unless it is the target of a property compound assignment (the
+                // engine has no compound assignments yet); C# calls no setters on temporaries.
+                return m.accessor_kind == 0x0002;
+            }
+            !m.is_static
+        }
+        Inst::Await { .. } | Inst::Match { .. } => true,
+        _ => false,
+    }
+}
+
+/// `ILInlining.IsPassedToInParameter`: `ldloca` passed to an `in` parameter of a call.
+pub(crate) fn is_passed_to_in_parameter(
+    f: &Function,
+    ctx: &mut Context<'_, '_, '_>,
+    ldloca: NodeId,
+) -> bool {
+    let Some(parent) = f.node(ldloca).parent else {
+        return false;
+    };
+    let (c, is_newobj) = match f.inst(parent) {
+        Inst::Call(c) | Inst::CallVirt(c) => (c, false),
+        Inst::NewObj(c) => (c, true),
+        _ => return false,
+    };
+    let first_param = usize::from(!(c.method.method.is_static || is_newobj));
+    let index = f.node(ldloca).child_index as usize;
+    if index < first_param {
+        return false;
+    }
+    let crate::typesystem::resolve::MethodOrigin::Def(def) = c.method.method.origin else {
+        return false;
+    };
+    let (_, params) = ctx.ts.method_signature(def);
+    params
+        .get(index - first_param)
+        .is_some_and(|p| p.ref_kind == crate::typesystem::members::RefKind::In)
 }
