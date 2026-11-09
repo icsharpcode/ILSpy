@@ -166,7 +166,7 @@ fn conv_to(
 }
 
 /// `LdObjToLdLoc`: `ldobj(ldloca v)` becomes `ldloc v`.
-fn ldobj_to_ldloc(f: &mut Function, ts: &mut TypeSystem<'_, '_>, inst: NodeId) -> bool {
+pub(crate) fn ldobj_to_ldloc(f: &mut Function, ts: &mut TypeSystem<'_, '_>, inst: NodeId) -> bool {
     let Inst::LdObj {
         target,
         ty,
@@ -197,7 +197,11 @@ fn ldobj_to_ldloc(f: &mut Function, ts: &mut TypeSystem<'_, '_>, inst: NodeId) -
 /// `AddressOfLdLocToLdLoca`: `ldobj(ldflda*(addressof(ldloc v)))` becomes
 /// `ldobj(ldflda*(ldloca v))`; a read through `addressof(ldobj(addr))` of a compatible type
 /// reads `addr` directly.
-fn address_of_ldloc_to_ldloca(f: &mut Function, ts: &mut TypeSystem<'_, '_>, inst: NodeId) {
+pub(crate) fn address_of_ldloc_to_ldloca(
+    f: &mut Function,
+    ts: &mut TypeSystem<'_, '_>,
+    inst: NodeId,
+) {
     let Inst::LdObj { target, .. } = *f.inst(inst) else {
         return;
     };

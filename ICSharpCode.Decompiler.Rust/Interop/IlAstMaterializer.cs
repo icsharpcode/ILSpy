@@ -671,14 +671,20 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 			var sign = (Sign)U8();
 			var leftType = (StackType)U8();
 			var rightType = (StackType)U8();
-			return new BinaryNumericInstruction(op, Node(), Node(), leftType, rightType, check, sign);
+			int csharpResultType = Len();
+			return new BinaryNumericInstruction(op, Node(), Node(), leftType, rightType, check, sign) {
+				CSharpResultType = csharpResultType == 0 ? null : TypeAt(csharpResultType - 1)
+			};
 		}
 
 		ILInstruction Switch()
 		{
 			bool isLifted = Bool();
+			int resultType = Len();
 			int type = Len();
 			var switchInst = new SwitchInstruction(Node()) { IsLifted = isLifted };
+			if (resultType != 0)
+				switchInst.SetResultType(TypeAt(resultType - 1));
 			if (type != 0)
 				switchInst.Type = TypeAt(type - 1);
 			foreach (var section in Nodes())
@@ -711,7 +717,11 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		ILInstruction Handler()
 		{
 			var variable = Variable();
-			return new TryCatchHandler(Node(), Node(), variable);
+			var specifier = new Interval((int)IVar(), (int)IVar());
+			var handler = new TryCatchHandler(Node(), Node(), variable);
+			if (!specifier.IsEmpty)
+				handler.AddExceptionSpecifierILRange(specifier);
+			return handler;
 		}
 
 		ILInstruction CallIndirect()
@@ -808,8 +818,9 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 			var type = Type();
 			bool delay = Bool();
 			bool isReadOnly = Bool();
+			bool withSystemIndex = Bool();
 			var array = Node();
-			return new LdElema(type, array, Nodes()) { DelayExceptions = delay, IsReadOnly = isReadOnly };
+			return new LdElema(type, array, Nodes()) { DelayExceptions = delay, IsReadOnly = isReadOnly, WithSystemIndex = withSystemIndex };
 		}
 	}
 }

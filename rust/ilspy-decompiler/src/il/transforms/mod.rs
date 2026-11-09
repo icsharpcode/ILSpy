@@ -11,7 +11,9 @@ pub mod copy_propagation;
 pub mod detect_catch_when_condition_blocks;
 pub mod dynamic_call_site;
 pub mod early_expression_transforms;
+pub mod expression_transforms;
 pub mod il_inlining;
+pub mod index_range_transform;
 pub mod inline_return_transform;
 pub mod introduce_ref_read_only_modifier_on_locals;
 pub mod ldloca_dup_init_obj_transform;
@@ -43,6 +45,9 @@ pub const SETTING_NAMES: &[&str] = &[
     "RecursivePatternMatching",
     "PatternCombinators",
     "RelationalPatterns",
+    "AssumeArrayLengthFitsIntoInt32",
+    "SwitchExpressions",
+    "Ranges",
 ];
 
 /// The values of `SETTING_NAMES`.
@@ -65,6 +70,9 @@ pub struct Settings {
     pub recursive_pattern_matching: bool,
     pub pattern_combinators: bool,
     pub relational_patterns: bool,
+    pub assume_array_length_fits_into_int32: bool,
+    pub switch_expressions: bool,
+    pub ranges: bool,
 }
 
 impl Settings {
@@ -89,6 +97,9 @@ impl Settings {
             recursive_pattern_matching: bit(14),
             pattern_combinators: bit(15),
             relational_patterns: bit(16),
+            assume_array_length_fits_into_int32: bit(17),
+            switch_expressions: bit(18),
+            ranges: bit(19),
         }
     }
 }
@@ -129,6 +140,7 @@ const PIPELINE: &[fn(&mut ReadFunction, &mut Context<'_, '_, '_>)] = &[
     |r, ctx| block_transform::run(r, ctx, &[super::control_flow::loop_detection::run]),
     super::control_flow::exit_points::run,
     pattern_matching_transform::run,
+    |r, ctx| block_transform::run(r, ctx, &[super::control_flow::condition_detection::run]),
 ];
 
 /// Runs the first `prefix` leaves of the pipeline.

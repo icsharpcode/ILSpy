@@ -215,9 +215,9 @@ public class IlAstPrefixEqualityTests
 	[Test]
 	public void EngineSettingsAreDecompilerSettings()
 	{
-		Assert.That(RustSettings.Names, Is.EqualTo(new[] { "RemoveDeadStores", "SortSwitchSections", "PatternBasedFixedStatement", "YieldReturn", "AsyncAwait", "AsyncEnumerator", "AwaitInCatchFinally", "Dynamic", "SparseIntegerSwitch", "RemoveDeadCode", "SwitchStatementOnString", "SwitchOnReadOnlySpanChar", "LiftNullables", "PatternMatching", "RecursivePatternMatching", "PatternCombinators", "RelationalPatterns" }));
-		var settings = new DecompilerSettings { RemoveDeadStores = false, SortSwitchSections = true, PatternBasedFixedStatement = false, YieldReturn = true, AsyncAwait = false, AsyncEnumerator = true, AwaitInCatchFinally = false, Dynamic = true, SparseIntegerSwitch = false, RemoveDeadCode = true, SwitchStatementOnString = false, SwitchOnReadOnlySpanChar = true, LiftNullables = false, PatternMatching = true, RecursivePatternMatching = false, PatternCombinators = true, RelationalPatterns = false };
-		Assert.That(RustSettings.Bits(settings), Is.EqualTo(0xAAAAUL));
+		Assert.That(RustSettings.Names, Is.EqualTo(new[] { "RemoveDeadStores", "SortSwitchSections", "PatternBasedFixedStatement", "YieldReturn", "AsyncAwait", "AsyncEnumerator", "AwaitInCatchFinally", "Dynamic", "SparseIntegerSwitch", "RemoveDeadCode", "SwitchStatementOnString", "SwitchOnReadOnlySpanChar", "LiftNullables", "PatternMatching", "RecursivePatternMatching", "PatternCombinators", "RelationalPatterns", "AssumeArrayLengthFitsIntoInt32", "SwitchExpressions", "Ranges" }));
+		var settings = new DecompilerSettings { RemoveDeadStores = false, SortSwitchSections = true, PatternBasedFixedStatement = false, YieldReturn = true, AsyncAwait = false, AsyncEnumerator = true, AwaitInCatchFinally = false, Dynamic = true, SparseIntegerSwitch = false, RemoveDeadCode = true, SwitchStatementOnString = false, SwitchOnReadOnlySpanChar = true, LiftNullables = false, PatternMatching = true, RecursivePatternMatching = false, PatternCombinators = true, RelationalPatterns = false, AssumeArrayLengthFitsIntoInt32 = true, SwitchExpressions = false, Ranges = true };
+		Assert.That(RustSettings.Bits(settings), Is.EqualTo(0xAAAAAUL));
 	}
 
 	static void AssertPrefixEqual(string path, DecompilerSettings settings)

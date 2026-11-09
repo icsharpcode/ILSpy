@@ -180,6 +180,7 @@ fn build_lifted_switch(
         sections,
         ty,
         is_lifted: true,
+        result_type: None,
     })
 }
 

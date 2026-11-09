@@ -97,6 +97,7 @@ impl Detection<'_> {
                 sections,
                 ty: None,
                 is_lifted: false,
+                result_type: None,
             });
             let last = *f.list(block).last().expect("analyzed block");
             if !matches!(f.inst(last), Inst::Switch { .. }) {
@@ -522,7 +523,7 @@ fn find_continue(f: &Function, cfg: &ControlFlowGraph, head: usize) -> usize {
 
 /// `HighLevelLoopTransform.MatchIncrementBlock`: simple statements and a branch to the loop
 /// head.
-fn match_increment_block(f: &Function, block: NodeId) -> Option<NodeId> {
+pub(crate) fn match_increment_block(f: &Function, block: NodeId) -> Option<NodeId> {
     let (&last, rest) = f.list(block).split_last()?;
     let head = f.match_branch(last)?;
     // `IsSimpleStatement` also accepts the compound assignments, which the arena gains with

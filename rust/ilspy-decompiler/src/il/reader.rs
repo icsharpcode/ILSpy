@@ -1475,6 +1475,7 @@ impl<'r, 'c, 'a> Reader<'r, 'c, 'a> {
                 let array = self.pop();
                 let ty = self.read_type()?;
                 let i = self.add(Inst::LdElema {
+                    with_system_index: false,
                     ty,
                     array,
                     indices: vec![index],
@@ -1719,6 +1720,7 @@ impl<'r, 'c, 'a> Reader<'r, 'c, 'a> {
         let index = self.pop();
         let array = self.pop();
         let address = self.add(Inst::LdElema {
+            with_system_index: false,
             ty,
             array,
             indices: vec![index],
@@ -1745,6 +1747,7 @@ impl<'r, 'c, 'a> Reader<'r, 'c, 'a> {
         let index = self.pop();
         let array = self.pop();
         let address = self.add(Inst::LdElema {
+            with_system_index: false,
             ty,
             array,
             indices: vec![index],
@@ -1779,6 +1782,7 @@ impl<'r, 'c, 'a> Reader<'r, 'c, 'a> {
         let value = self.pop();
         let (left_input, right_input) = (self.result_type(zero), self.result_type(value));
         let i = self.add(Inst::BinaryNumeric {
+            csharp_result_type: None,
             op: BinaryNumericOperator::Sub,
             check_overflow: false,
             sign: Sign::None,
@@ -1988,6 +1992,7 @@ impl<'r, 'c, 'a> Reader<'r, 'c, 'a> {
                     let value = indices.pop().expect("Set has a value argument");
                     let target = indices.remove(0);
                     let address = self.add(Inst::LdElema {
+                        with_system_index: false,
                         ty: elem,
                         array: target,
                         indices,
@@ -2006,6 +2011,7 @@ impl<'r, 'c, 'a> Reader<'r, 'c, 'a> {
                     let mut indices = arguments;
                     let target = indices.remove(0);
                     let address = self.add(Inst::LdElema {
+                        with_system_index: false,
                         ty: elem,
                         array: target,
                         indices,
@@ -2024,6 +2030,7 @@ impl<'r, 'c, 'a> Reader<'r, 'c, 'a> {
                     let mut indices = arguments;
                     let target = indices.remove(0);
                     let i = self.add(Inst::LdElema {
+                        with_system_index: false,
                         ty: elem,
                         array: target,
                         indices,
@@ -2512,6 +2519,7 @@ impl<'r, 'c, 'a> Reader<'r, 'c, 'a> {
             sections,
             ty: None,
             is_lifted: false,
+            result_type: None,
         }))
     }
 
@@ -2561,6 +2569,7 @@ impl<'r, 'c, 'a> Reader<'r, 'c, 'a> {
         }
         let (left_input, right_input) = (self.result_type(left), self.result_type(right));
         let i = self.add(Inst::BinaryNumeric {
+            csharp_result_type: None,
             op,
             check_overflow: check,
             sign,

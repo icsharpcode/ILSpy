@@ -348,6 +348,8 @@ pub enum Inst {
         right_input: StackType,
         left: NodeId,
         right: NodeId,
+        /// `CSharpResultType`: an improved C# type of the result, which `InferType` returns.
+        csharp_result_type: Option<TypeId>,
     },
     BitNot {
         arg: NodeId,
@@ -375,6 +377,8 @@ pub enum Inst {
         ty: Option<TypeId>,
         /// `IsLifted`: a switch on a nullable value, with a `case null` section.
         is_lifted: bool,
+        /// `SetResultType`: the type of a switch expression; `None` for a statement.
+        result_type: Option<TypeId>,
     },
     SwitchSection {
         labels: LongSet,
@@ -392,6 +396,9 @@ pub enum Inst {
         filter: NodeId,
         body: NodeId,
         variable: VarId,
+        /// `ExceptionSpecifierILRange`: the store of the exception object at the start of the
+        /// catch block.
+        exception_specifier_il_range: Interval,
     },
     TryFinally {
         try_block: NodeId,
@@ -589,6 +596,8 @@ pub enum Inst {
         indices: Vec<NodeId>,
         delay_exceptions: bool,
         is_read_only: bool,
+        /// `WithSystemIndex`: the index is a `System.Index`.
+        with_system_index: bool,
     },
     MakeRefAny {
         arg: NodeId,
@@ -1193,6 +1202,13 @@ impl Function {
         let node = self.node(old);
         let parent = node.parent.expect("replaced node has a parent");
         let index = node.child_index as usize;
+        self.set_child_at(parent, index, new);
+    }
+
+    /// `SetChild(index, new)`: puts `new` in child slot `index` (in `children()` order) of
+    /// `parent`, whatever the parent of the node there now is.
+    pub fn set_child_at(&mut self, parent: NodeId, index: usize, new: NodeId) {
+        let old = self.inst(parent).children()[index];
         let entry = self.entry_point(parent);
         self.inst_mut(parent).set_child(index, new);
         self.adopt(parent, new, index);
@@ -1315,7 +1331,18 @@ impl Function {
         let entry = self.entry_point(owner);
         // Removed items keep their (now stale) parent, as in the managed tree.
         *self.list_mut(owner) = items;
-        self.relink(owner);
+        if ops.iter().any(|&(_, connect)| connect) {
+            // `ReplaceList`: every item becomes a child of `owner`.
+            self.relink(owner);
+        } else {
+            // Removals only renumber the items that are still children of `owner`; an item
+            // that moved elsewhere keeps its new parent, as in the managed collection.
+            for (i, child) in self.inst(owner).children().into_iter().enumerate() {
+                if self.node(child).parent == Some(owner) {
+                    self.nodes[child.0 as usize].child_index = i as u32;
+                }
+            }
+        }
         if self.is_connected(owner) {
             for (node, connect) in ops {
                 if connect {
@@ -1520,8 +1547,8 @@ impl Function {
             | Rethrow
             | TryCatch { .. }
             | TryFinally { .. }
-            | TryFault { .. }
-            | Switch { .. } => StackType::Void,
+            | TryFault { .. } => StackType::Void,
+            Switch { result_type, .. } => result_type.map_or(StackType::Void, |t| ts.stack_type(t)),
             InvalidBranch { expected, .. } | InvalidExpression { expected, .. } => *expected,
             BlockContainer { expected, .. } => {
                 expected.map_or(StackType::Void, |t| ts.stack_type(t))
@@ -1635,7 +1662,9 @@ impl Function {
             | If { .. }
             | PinnedRegion { .. }
             | YieldReturn { .. }
-            | Switch { .. }
+            | Switch {
+                result_type: None, ..
+            }
             | TryCatch { .. }
             | TryFinally { .. }
             | TryFault { .. }
@@ -1643,11 +1672,19 @@ impl Function {
             | Initblk { .. }
             | Throw { .. }
             | Rethrow => known(ts, KnownTypeCode::Void),
+            Switch {
+                result_type: Some(t),
+                ..
+            } => *t,
             BlockContainer { expected, .. } => match expected {
                 Some(t) => *t,
                 None => find_stack_type(ts, StackType::Void),
             },
             Block { final_inst, .. } => self.infer_type(ts, *final_inst),
+            BinaryNumeric {
+                csharp_result_type: Some(t),
+                ..
+            } => *t,
             BinaryNumeric {
                 op,
                 left_input,
@@ -1758,6 +1795,7 @@ mod tests {
         let a = f.add(Inst::LdcI4 { value: 1 });
         let b = f.add(Inst::LdcI4 { value: 2 });
         let add = f.add(Inst::BinaryNumeric {
+            csharp_result_type: None,
             op: BinaryNumericOperator::Add,
             check_overflow: false,
             sign: Sign::None,
@@ -1962,6 +2000,7 @@ mod list_tests {
         let a = ldc(&mut f, 1);
         let b = ldc(&mut f, 2);
         let add = f.add(Inst::BinaryNumeric {
+            csharp_result_type: None,
             op: BinaryNumericOperator::Add,
             check_overflow: false,
             sign: Sign::None,

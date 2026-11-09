@@ -1397,6 +1397,65 @@ type, which does not. The type system now answers the property type itself
 
 The no-op red run failed 381 of 3,550 equality cases.
 
+### 3.47 ConditionDetection (item 31, IL prefix 25)
+
+The second `BlockILTransform` reuses the driver from item 28; at this prefix it runs
+ConditionDetection alone. Blocks reached only through one branch move into the if (or after
+the block whose unconditional exit they are). Then the ifs get:
+- the exits that read best: break, continue and return keywords against branches and
+  leaves;
+- merged common exits;
+- swapped empty then-branches;
+- `&&` short-circuits;
+- the branch order of the IL.
+
+**The step was larger than its size.** `InvertIf` runs `ExpressionTransforms` on the inverted
+statement, and almost every remaining difference after the first port came from that. The
+statement visitor skips control-flow blocks and container bodies, so only the condition and
+the non-block branches are visited, but that is still most of ExpressionTransforms. The port
+(`il/transforms/expression_transforms.rs`) covers:
+- negations pushed into comparisons and logic and/or;
+- `comp(x != 0)` of a bool;
+- the unsigned and `ldlen` comparisons;
+- conversion and box clean-ups, array index clean-ups;
+- `IndexRangeTransform.HandleLdElema` (`a[^1]`);
+- decimal field constants;
+- `ldobj.if.ref`;
+- the canonical logic and/or and the conditional operator;
+- the `match ? true : false` collapse;
+- shift masks;
+- `DetectImprovedTypeForForBitOp`;
+- the catch variable and catch-when rewrites (a try-catch can be the exit an inverted if
+  takes);
+- switch expressions.
+
+The arena and the wire gained the pieces these need:
+- the result type of a switch expression;
+- `WithSystemIndex` on `ldelema`;
+- `CSharpResultType` on binary instructions;
+- the exception specifier IL range of catch handlers.
+
+Three settings became bits 17 to 19.
+
+**Allowlisted.** Three groups of ExpressionTransforms calls stay unported. Each is a transform
+with its own step later in the plan:
+- NullableLiftingTransform: 62 methods;
+- the array and span initializer rewrites: 12 methods;
+- InlineArrayTransform: 4 methods.
+
+The 78 methods are in the allowlist, with the reason, for the FORK review. The managed
+pipeline runs the same rewrites in its later ExpressionTransforms pass, and the text oracle
+agrees.
+
+**An arena fix.** Removing items from a list re-adopted the items left (their parent was reset
+to the list's owner). The managed collection only renumbers the items that are still its
+children, so an instruction moved elsewhere keeps its new parent. ConditionDetection was the
+first transform to edit a list after moving its items out, and the walk from an exit to its
+block then failed.
+
+The no-op red run failed 2,635 of 3,550 equality cases; the first port without
+ExpressionTransforms 1,978.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

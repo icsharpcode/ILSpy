@@ -151,6 +151,7 @@ impl<'f> BlockBuilder<'f> {
                 filter,
                 body: handler_block,
                 variable,
+                exception_specifier_il_range: Interval::default(),
             });
             let (filter_range, handler_range) =
                 (self.f.il_range(filter), self.f.il_range(handler_block));
@@ -475,6 +476,7 @@ impl<'f> BlockBuilder<'f> {
                 sections,
                 ty: None,
                 is_lifted: false,
+                result_type: None,
             });
             self.f.add_il_range(switch, Interval::new(start, start + 1));
             let note = self.f.add(Inst::InvalidExpression {

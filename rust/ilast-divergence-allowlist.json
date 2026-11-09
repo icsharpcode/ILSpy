@@ -1,1 +1,470 @@
-[]
+[
+  {
+    "transform": "ConditionDetection",
+    "fixture": "ICSharpCode.Decompiler.dll",
+    "method": "method 0x060005fa",
+    "reason": "ConditionDetection inverts ifs through InvertIf, which runs ExpressionTransforms on the statement; the NullableLiftingTransform calls of ExpressionTransforms (lifted comparisons and operators over GetValueOrDefault/HasValue) are not ported yet. The managed pipeline lifts the same expressions in its later ExpressionTransforms run, so the C# output agrees."
+  },
+  {
+    "transform": "ConditionDetection",
+    "fixture": "ICSharpCode.Decompiler.dll",
+    "method": "method 0x06000a49",
+    "reason": "ConditionDetection inverts ifs through InvertIf, which runs ExpressionTransforms on the statement; the NullableLiftingTransform calls of ExpressionTransforms (lifted comparisons and operators over GetValueOrDefault/HasValue) are not ported yet. The managed pipeline lifts the same expressions in its later ExpressionTransforms run, so the C# output agrees."
+  },
+  {
+    "transform": "ConditionDetection",
+    "fixture": "ICSharpCode.Decompiler.dll",
+    "method": "method 0x060019dd",
+    "reason": "ConditionDetection inverts ifs through InvertIf, which runs ExpressionTransforms on the statement; the NullableLiftingTransform calls of ExpressionTransforms (lifted comparisons and operators over GetValueOrDefault/HasValue) are not ported yet. The managed pipeline lifts the same expressions in its later ExpressionTransforms run, so the C# output agrees."
+  },
+  {
+    "transform": "ConditionDetection",
+    "fixture": "ICSharpCode.Decompiler.dll",
+    "method": "method 0x06001a60",
+    "reason": "ConditionDetection inverts ifs through InvertIf, which runs ExpressionTransforms on the statement; the NullableLiftingTransform calls of ExpressionTransforms (lifted comparisons and operators over GetValueOrDefault/HasValue) are not ported yet. The managed pipeline lifts the same expressions in its later ExpressionTransforms run, so the C# output agrees."
+  },
+  {
+    "transform": "ConditionDetection",
+    "fixture": "ICSharpCode.Decompiler.dll",
+    "method": "method 0x06001b0b",
+    "reason": "ConditionDetection inverts ifs through InvertIf, which runs ExpressionTransforms on the statement; the NullableLiftingTransform calls of ExpressionTransforms (lifted comparisons and operators over GetValueOrDefault/HasValue) are not ported yet. The managed pipeline lifts the same expressions in its later ExpressionTransforms run, so the C# output agrees."
+  },
+  {
+    "transform": "ConditionDetection",
+    "fixture": "ICSharpCode.Decompiler.dll",
+    "method": "method 0x060021b9",
+    "reason": "ConditionDetection inverts ifs through InvertIf, which runs ExpressionTransforms on the statement; the NullableLiftingTransform calls of ExpressionTransforms (lifted comparisons and operators over GetValueOrDefault/HasValue) are not ported yet. The managed pipeline lifts the same expressions in its later ExpressionTransforms run, so the C# output agrees."
+  },
+  {
+    "transform": "ConditionDetection",
+    "fixture": "ICSharpCode.Decompiler.dll",
+    "method": "method 0x06003063",
+    "reason": "ConditionDetection inverts ifs through InvertIf, which runs ExpressionTransforms on the statement; the NullableLiftingTransform calls of ExpressionTransforms (lifted comparisons and operators over GetValueOrDefault/HasValue) are not ported yet. The managed pipeline lifts the same expressions in its later ExpressionTransforms run, so the C# output agrees."
+  },
+  {
+    "transform": "ConditionDetection",
+    "fixture": "ICSharpCode.Decompiler.dll",
+    "method": "method 0x0600308c",
+    "reason": "ConditionDetection inverts ifs through InvertIf, which runs ExpressionTransforms on the statement; the NullableLiftingTransform calls of ExpressionTransforms (lifted comparisons and operators over GetValueOrDefault/HasValue) are not ported yet. The managed pipeline lifts the same expressions in its later ExpressionTransforms run, so the C# output agrees."
+  },
+  {
+    "transform": "ConditionDetection",
+    "fixture": "ICSharpCode.Decompiler.dll",
+    "method": "method 0x060030a0",
+    "reason": "ConditionDetection inverts ifs through InvertIf, which runs ExpressionTransforms on the statement; the NullableLiftingTransform calls of ExpressionTransforms (lifted comparisons and operators over GetValueOrDefault/HasValue) are not ported yet. The managed pipeline lifts the same expressions in its later ExpressionTransforms run, so the C# output agrees."
+  },
+  {
+    "transform": "ConditionDetection",
+    "fixture": "ICSharpCode.Decompiler.dll",
+    "method": "method 0x060033f8",
+    "reason": "ConditionDetection inverts ifs through InvertIf, which runs ExpressionTransforms on the statement; the NullableLiftingTransform calls of ExpressionTransforms (lifted comparisons and operators over GetValueOrDefault/HasValue) are not ported yet. The managed pipeline lifts the same expressions in its later ExpressionTransforms run, so the C# output agrees."
+  },
+  {
+    "transform": "ConditionDetection",
+    "fixture": "ICSharpCode.Decompiler.dll",
+    "method": "method 0x06003827",
+    "reason": "ConditionDetection inverts ifs through InvertIf, which runs ExpressionTransforms on the statement; the NullableLiftingTransform calls of ExpressionTransforms (lifted comparisons and operators over GetValueOrDefault/HasValue) are not ported yet. The managed pipeline lifts the same expressions in its later ExpressionTransforms run, so the C# output agrees."
+  },
+  {
+    "transform": "ConditionDetection",
+    "fixture": "ICSharpCode.Decompiler.dll",
+    "method": "method 0x060038ea",
+    "reason": "ConditionDetection inverts ifs through InvertIf, which runs ExpressionTransforms on the statement; the NullableLiftingTransform calls of ExpressionTransforms (lifted comparisons and operators over GetValueOrDefault/HasValue) are not ported yet. The managed pipeline lifts the same expressions in its later ExpressionTransforms run, so the C# output agrees."
+  },
+  {
+    "transform": "ConditionDetection",
+    "fixture": "ICSharpCode.Decompiler.dll",
+    "method": "method 0x06003a54",
+    "reason": "ConditionDetection inverts ifs through InvertIf, which runs ExpressionTransforms on the statement; the NullableLiftingTransform calls of ExpressionTransforms (lifted comparisons and operators over GetValueOrDefault/HasValue) are not ported yet. The managed pipeline lifts the same expressions in its later ExpressionTransforms run, so the C# output agrees."
+  },
+  {
+    "transform": "ConditionDetection",
+    "fixture": "LiftedOperators.dll",
+    "method": "method 0x0600000d",
+    "reason": "ConditionDetection inverts ifs through InvertIf, which runs ExpressionTransforms on the statement; the NullableLiftingTransform calls of ExpressionTransforms (lifted comparisons and operators over GetValueOrDefault/HasValue) are not ported yet. The managed pipeline lifts the same expressions in its later ExpressionTransforms run, so the C# output agrees."
+  },
+  {
+    "transform": "ConditionDetection",
+    "fixture": "LiftedOperators.dll",
+    "method": "method 0x0600001a",
+    "reason": "ConditionDetection inverts ifs through InvertIf, which runs ExpressionTransforms on the statement; the NullableLiftingTransform calls of ExpressionTransforms (lifted comparisons and operators over GetValueOrDefault/HasValue) are not ported yet. The managed pipeline lifts the same expressions in its later ExpressionTransforms run, so the C# output agrees."
+  },
+  {
+    "transform": "ConditionDetection",
+    "fixture": "LiftedOperators.dll",
+    "method": "method 0x0600001b",
+    "reason": "ConditionDetection inverts ifs through InvertIf, which runs ExpressionTransforms on the statement; the NullableLiftingTransform calls of ExpressionTransforms (lifted comparisons and operators over GetValueOrDefault/HasValue) are not ported yet. The managed pipeline lifts the same expressions in its later ExpressionTransforms run, so the C# output agrees."
+  },
+  {
+    "transform": "ConditionDetection",
+    "fixture": "LiftedOperators.opt.dll",
+    "method": "method 0x0600000d",
+    "reason": "ConditionDetection inverts ifs through InvertIf, which runs ExpressionTransforms on the statement; the NullableLiftingTransform calls of ExpressionTransforms (lifted comparisons and operators over GetValueOrDefault/HasValue) are not ported yet. The managed pipeline lifts the same expressions in its later ExpressionTransforms run, so the C# output agrees."
+  },
+  {
+    "transform": "ConditionDetection",
+    "fixture": "LiftedOperators.opt.dll",
+    "method": "method 0x0600001a",
+    "reason": "ConditionDetection inverts ifs through InvertIf, which runs ExpressionTransforms on the statement; the NullableLiftingTransform calls of ExpressionTransforms (lifted comparisons and operators over GetValueOrDefault/HasValue) are not ported yet. The managed pipeline lifts the same expressions in its later ExpressionTransforms run, so the C# output agrees."
+  },
+  {
+    "transform": "ConditionDetection",
+    "fixture": "LiftedOperators.opt.dll",
+    "method": "method 0x0600001b",
+    "reason": "ConditionDetection inverts ifs through InvertIf, which runs ExpressionTransforms on the statement; the NullableLiftingTransform calls of ExpressionTransforms (lifted comparisons and operators over GetValueOrDefault/HasValue) are not ported yet. The managed pipeline lifts the same expressions in its later ExpressionTransforms run, so the C# output agrees."
+  },
+  {
+    "transform": "ConditionDetection",
+    "fixture": "LiftedOperators.opt.net40.roslyn.dll",
+    "method": "method 0x06000041",
+    "reason": "ConditionDetection inverts ifs through InvertIf, which runs ExpressionTransforms on the statement; the NullableLiftingTransform calls of ExpressionTransforms (lifted comparisons and operators over GetValueOrDefault/HasValue) are not ported yet. The managed pipeline lifts the same expressions in its later ExpressionTransforms run, so the C# output agrees."
+  },
+  {
+    "transform": "ConditionDetection",
+    "fixture": "LiftedOperators.opt.net40.roslyn4.dll",
+    "method": "method 0x06000041",
+    "reason": "ConditionDetection inverts ifs through InvertIf, which runs ExpressionTransforms on the statement; the NullableLiftingTransform calls of ExpressionTransforms (lifted comparisons and operators over GetValueOrDefault/HasValue) are not ported yet. The managed pipeline lifts the same expressions in its later ExpressionTransforms run, so the C# output agrees."
+  },
+  {
+    "transform": "ConditionDetection",
+    "fixture": "LiftedOperators.opt.roslyn.dll",
+    "method": "method 0x0600003c",
+    "reason": "ConditionDetection inverts ifs through InvertIf, which runs ExpressionTransforms on the statement; the NullableLiftingTransform calls of ExpressionTransforms (lifted comparisons and operators over GetValueOrDefault/HasValue) are not ported yet. The managed pipeline lifts the same expressions in its later ExpressionTransforms run, so the C# output agrees."
+  },
+  {
+    "transform": "ConditionDetection",
+    "fixture": "LiftedOperators.opt.roslyn4.dll",
+    "method": "method 0x0600003c",
+    "reason": "ConditionDetection inverts ifs through InvertIf, which runs ExpressionTransforms on the statement; the NullableLiftingTransform calls of ExpressionTransforms (lifted comparisons and operators over GetValueOrDefault/HasValue) are not ported yet. The managed pipeline lifts the same expressions in its later ExpressionTransforms run, so the C# output agrees."
+  },
+  {
+    "transform": "ConditionDetection",
+    "fixture": "Microsoft.Extensions.Caching.Abstractions.dll",
+    "method": "method 0x0600002b",
+    "reason": "ConditionDetection inverts ifs through InvertIf, which runs ExpressionTransforms on the statement; the NullableLiftingTransform calls of ExpressionTransforms (lifted comparisons and operators over GetValueOrDefault/HasValue) are not ported yet. The managed pipeline lifts the same expressions in its later ExpressionTransforms run, so the C# output agrees."
+  },
+  {
+    "transform": "ConditionDetection",
+    "fixture": "Microsoft.Extensions.Caching.Abstractions.dll",
+    "method": "method 0x0600009e",
+    "reason": "ConditionDetection inverts ifs through InvertIf, which runs ExpressionTransforms on the statement; the NullableLiftingTransform calls of ExpressionTransforms (lifted comparisons and operators over GetValueOrDefault/HasValue) are not ported yet. The managed pipeline lifts the same expressions in its later ExpressionTransforms run, so the C# output agrees."
+  },
+  {
+    "transform": "ConditionDetection",
+    "fixture": "NullableTests.exe",
+    "method": "method 0x06000006",
+    "reason": "ConditionDetection inverts ifs through InvertIf, which runs ExpressionTransforms on the statement; the NullableLiftingTransform calls of ExpressionTransforms (lifted comparisons and operators over GetValueOrDefault/HasValue) are not ported yet. The managed pipeline lifts the same expressions in its later ExpressionTransforms run, so the C# output agrees."
+  },
+  {
+    "transform": "ConditionDetection",
+    "fixture": "NullableTests.mcs2.exe",
+    "method": "method 0x06000007",
+    "reason": "ConditionDetection inverts ifs through InvertIf, which runs ExpressionTransforms on the statement; the NullableLiftingTransform calls of ExpressionTransforms (lifted comparisons and operators over GetValueOrDefault/HasValue) are not ported yet. The managed pipeline lifts the same expressions in its later ExpressionTransforms run, so the C# output agrees."
+  },
+  {
+    "transform": "ConditionDetection",
+    "fixture": "NullableTests.mcs5.exe",
+    "method": "method 0x06000007",
+    "reason": "ConditionDetection inverts ifs through InvertIf, which runs ExpressionTransforms on the statement; the NullableLiftingTransform calls of ExpressionTransforms (lifted comparisons and operators over GetValueOrDefault/HasValue) are not ported yet. The managed pipeline lifts the same expressions in its later ExpressionTransforms run, so the C# output agrees."
+  },
+  {
+    "transform": "ConditionDetection",
+    "fixture": "NullableTests.opt.exe",
+    "method": "method 0x06000006",
+    "reason": "ConditionDetection inverts ifs through InvertIf, which runs ExpressionTransforms on the statement; the NullableLiftingTransform calls of ExpressionTransforms (lifted comparisons and operators over GetValueOrDefault/HasValue) are not ported yet. The managed pipeline lifts the same expressions in its later ExpressionTransforms run, so the C# output agrees."
+  },
+  {
+    "transform": "ConditionDetection",
+    "fixture": "NullableTests.opt.mcs2.exe",
+    "method": "method 0x06000007",
+    "reason": "ConditionDetection inverts ifs through InvertIf, which runs ExpressionTransforms on the statement; the NullableLiftingTransform calls of ExpressionTransforms (lifted comparisons and operators over GetValueOrDefault/HasValue) are not ported yet. The managed pipeline lifts the same expressions in its later ExpressionTransforms run, so the C# output agrees."
+  },
+  {
+    "transform": "ConditionDetection",
+    "fixture": "NullableTests.opt.mcs5.exe",
+    "method": "method 0x06000007",
+    "reason": "ConditionDetection inverts ifs through InvertIf, which runs ExpressionTransforms on the statement; the NullableLiftingTransform calls of ExpressionTransforms (lifted comparisons and operators over GetValueOrDefault/HasValue) are not ported yet. The managed pipeline lifts the same expressions in its later ExpressionTransforms run, so the C# output agrees."
+  },
+  {
+    "transform": "ConditionDetection",
+    "fixture": "System.IO.Compression.dll",
+    "method": "method 0x0600014d",
+    "reason": "ConditionDetection inverts ifs through InvertIf, which runs ExpressionTransforms on the statement; the NullableLiftingTransform calls of ExpressionTransforms (lifted comparisons and operators over GetValueOrDefault/HasValue) are not ported yet. The managed pipeline lifts the same expressions in its later ExpressionTransforms run, so the C# output agrees."
+  },
+  {
+    "transform": "ConditionDetection",
+    "fixture": "System.IO.Compression.dll",
+    "method": "method 0x060001d1",
+    "reason": "ConditionDetection inverts ifs through InvertIf, which runs ExpressionTransforms on the statement; the NullableLiftingTransform calls of ExpressionTransforms (lifted comparisons and operators over GetValueOrDefault/HasValue) are not ported yet. The managed pipeline lifts the same expressions in its later ExpressionTransforms run, so the C# output agrees."
+  },
+  {
+    "transform": "ConditionDetection",
+    "fixture": "System.IO.Pipelines.dll",
+    "method": "method 0x0600017a",
+    "reason": "ConditionDetection inverts ifs through InvertIf, which runs ExpressionTransforms on the statement; the NullableLiftingTransform calls of ExpressionTransforms (lifted comparisons and operators over GetValueOrDefault/HasValue) are not ported yet. The managed pipeline lifts the same expressions in its later ExpressionTransforms run, so the C# output agrees."
+  },
+  {
+    "transform": "ConditionDetection",
+    "fixture": "System.Linq.AsyncEnumerable.dll",
+    "method": "method 0x0600080a",
+    "reason": "ConditionDetection inverts ifs through InvertIf, which runs ExpressionTransforms on the statement; the NullableLiftingTransform calls of ExpressionTransforms (lifted comparisons and operators over GetValueOrDefault/HasValue) are not ported yet. The managed pipeline lifts the same expressions in its later ExpressionTransforms run, so the C# output agrees."
+  },
+  {
+    "transform": "ConditionDetection",
+    "fixture": "System.Linq.AsyncEnumerable.dll",
+    "method": "method 0x0600080c",
+    "reason": "ConditionDetection inverts ifs through InvertIf, which runs ExpressionTransforms on the statement; the NullableLiftingTransform calls of ExpressionTransforms (lifted comparisons and operators over GetValueOrDefault/HasValue) are not ported yet. The managed pipeline lifts the same expressions in its later ExpressionTransforms run, so the C# output agrees."
+  },
+  {
+    "transform": "ConditionDetection",
+    "fixture": "System.Linq.AsyncEnumerable.dll",
+    "method": "method 0x06000812",
+    "reason": "ConditionDetection inverts ifs through InvertIf, which runs ExpressionTransforms on the statement; the NullableLiftingTransform calls of ExpressionTransforms (lifted comparisons and operators over GetValueOrDefault/HasValue) are not ported yet. The managed pipeline lifts the same expressions in its later ExpressionTransforms run, so the C# output agrees."
+  },
+  {
+    "transform": "ConditionDetection",
+    "fixture": "System.Linq.AsyncEnumerable.dll",
+    "method": "method 0x06000814",
+    "reason": "ConditionDetection inverts ifs through InvertIf, which runs ExpressionTransforms on the statement; the NullableLiftingTransform calls of ExpressionTransforms (lifted comparisons and operators over GetValueOrDefault/HasValue) are not ported yet. The managed pipeline lifts the same expressions in its later ExpressionTransforms run, so the C# output agrees."
+  },
+  {
+    "transform": "ConditionDetection",
+    "fixture": "System.Linq.Parallel.dll",
+    "method": "method 0x06000103",
+    "reason": "ConditionDetection inverts ifs through InvertIf, which runs ExpressionTransforms on the statement; the NullableLiftingTransform calls of ExpressionTransforms (lifted comparisons and operators over GetValueOrDefault/HasValue) are not ported yet. The managed pipeline lifts the same expressions in its later ExpressionTransforms run, so the C# output agrees."
+  },
+  {
+    "transform": "ConditionDetection",
+    "fixture": "System.Linq.Parallel.dll",
+    "method": "method 0x06000104",
+    "reason": "ConditionDetection inverts ifs through InvertIf, which runs ExpressionTransforms on the statement; the NullableLiftingTransform calls of ExpressionTransforms (lifted comparisons and operators over GetValueOrDefault/HasValue) are not ported yet. The managed pipeline lifts the same expressions in its later ExpressionTransforms run, so the C# output agrees."
+  },
+  {
+    "transform": "ConditionDetection",
+    "fixture": "System.Linq.Parallel.dll",
+    "method": "method 0x06000105",
+    "reason": "ConditionDetection inverts ifs through InvertIf, which runs ExpressionTransforms on the statement; the NullableLiftingTransform calls of ExpressionTransforms (lifted comparisons and operators over GetValueOrDefault/HasValue) are not ported yet. The managed pipeline lifts the same expressions in its later ExpressionTransforms run, so the C# output agrees."
+  },
+  {
+    "transform": "ConditionDetection",
+    "fixture": "System.Linq.Parallel.dll",
+    "method": "method 0x06000106",
+    "reason": "ConditionDetection inverts ifs through InvertIf, which runs ExpressionTransforms on the statement; the NullableLiftingTransform calls of ExpressionTransforms (lifted comparisons and operators over GetValueOrDefault/HasValue) are not ported yet. The managed pipeline lifts the same expressions in its later ExpressionTransforms run, so the C# output agrees."
+  },
+  {
+    "transform": "ConditionDetection",
+    "fixture": "System.Linq.Parallel.dll",
+    "method": "method 0x06000107",
+    "reason": "ConditionDetection inverts ifs through InvertIf, which runs ExpressionTransforms on the statement; the NullableLiftingTransform calls of ExpressionTransforms (lifted comparisons and operators over GetValueOrDefault/HasValue) are not ported yet. The managed pipeline lifts the same expressions in its later ExpressionTransforms run, so the C# output agrees."
+  },
+  {
+    "transform": "ConditionDetection",
+    "fixture": "System.Linq.Parallel.dll",
+    "method": "method 0x06000108",
+    "reason": "ConditionDetection inverts ifs through InvertIf, which runs ExpressionTransforms on the statement; the NullableLiftingTransform calls of ExpressionTransforms (lifted comparisons and operators over GetValueOrDefault/HasValue) are not ported yet. The managed pipeline lifts the same expressions in its later ExpressionTransforms run, so the C# output agrees."
+  },
+  {
+    "transform": "ConditionDetection",
+    "fixture": "System.Linq.Parallel.dll",
+    "method": "method 0x06000109",
+    "reason": "ConditionDetection inverts ifs through InvertIf, which runs ExpressionTransforms on the statement; the NullableLiftingTransform calls of ExpressionTransforms (lifted comparisons and operators over GetValueOrDefault/HasValue) are not ported yet. The managed pipeline lifts the same expressions in its later ExpressionTransforms run, so the C# output agrees."
+  },
+  {
+    "transform": "ConditionDetection",
+    "fixture": "System.Linq.Parallel.dll",
+    "method": "method 0x0600010a",
+    "reason": "ConditionDetection inverts ifs through InvertIf, which runs ExpressionTransforms on the statement; the NullableLiftingTransform calls of ExpressionTransforms (lifted comparisons and operators over GetValueOrDefault/HasValue) are not ported yet. The managed pipeline lifts the same expressions in its later ExpressionTransforms run, so the C# output agrees."
+  },
+  {
+    "transform": "ConditionDetection",
+    "fixture": "System.Net.Http.dll",
+    "method": "method 0x06000518",
+    "reason": "ConditionDetection inverts ifs through InvertIf, which runs ExpressionTransforms on the statement; the array and span initializer rewrites ExpressionTransforms calls (TransformArrayInitializers, UTF-8 string literals) are not ported yet. The managed pipeline applies them in its later ExpressionTransforms run, so the C# output agrees."
+  },
+  {
+    "transform": "ConditionDetection",
+    "fixture": "System.Net.Http.dll",
+    "method": "method 0x060006ec",
+    "reason": "ConditionDetection inverts ifs through InvertIf, which runs ExpressionTransforms on the statement; the NullableLiftingTransform calls of ExpressionTransforms (lifted comparisons and operators over GetValueOrDefault/HasValue) are not ported yet. The managed pipeline lifts the same expressions in its later ExpressionTransforms run, so the C# output agrees."
+  },
+  {
+    "transform": "ConditionDetection",
+    "fixture": "System.Net.Http.dll",
+    "method": "method 0x06000703",
+    "reason": "ConditionDetection inverts ifs through InvertIf, which runs ExpressionTransforms on the statement; the NullableLiftingTransform calls of ExpressionTransforms (lifted comparisons and operators over GetValueOrDefault/HasValue) are not ported yet. The managed pipeline lifts the same expressions in its later ExpressionTransforms run, so the C# output agrees."
+  },
+  {
+    "transform": "ConditionDetection",
+    "fixture": "System.Net.Mail.dll",
+    "method": "method 0x06000367",
+    "reason": "ConditionDetection inverts ifs through InvertIf, which runs ExpressionTransforms on the statement; the array and span initializer rewrites ExpressionTransforms calls (TransformArrayInitializers, UTF-8 string literals) are not ported yet. The managed pipeline applies them in its later ExpressionTransforms run, so the C# output agrees."
+  },
+  {
+    "transform": "ConditionDetection",
+    "fixture": "System.Net.NetworkInformation.dll",
+    "method": "method 0x0600014c",
+    "reason": "ConditionDetection inverts ifs through InvertIf, which runs ExpressionTransforms on the statement; the NullableLiftingTransform calls of ExpressionTransforms (lifted comparisons and operators over GetValueOrDefault/HasValue) are not ported yet. The managed pipeline lifts the same expressions in its later ExpressionTransforms run, so the C# output agrees."
+  },
+  {
+    "transform": "ConditionDetection",
+    "fixture": "System.Net.Primitives.dll",
+    "method": "method 0x06000114",
+    "reason": "ConditionDetection inverts ifs through InvertIf, which runs ExpressionTransforms on the statement; the array and span initializer rewrites ExpressionTransforms calls (TransformArrayInitializers, UTF-8 string literals) are not ported yet. The managed pipeline applies them in its later ExpressionTransforms run, so the C# output agrees."
+  },
+  {
+    "transform": "ConditionDetection",
+    "fixture": "System.Net.ServerSentEvents.dll",
+    "method": "method 0x06000034",
+    "reason": "ConditionDetection inverts ifs through InvertIf, which runs ExpressionTransforms on the statement; the array and span initializer rewrites ExpressionTransforms calls (TransformArrayInitializers, UTF-8 string literals) are not ported yet. The managed pipeline applies them in its later ExpressionTransforms run, so the C# output agrees."
+  },
+  {
+    "transform": "ConditionDetection",
+    "fixture": "System.Net.Sockets.dll",
+    "method": "method 0x0600022f",
+    "reason": "ConditionDetection inverts ifs through InvertIf, which runs ExpressionTransforms on the statement; the NullableLiftingTransform calls of ExpressionTransforms (lifted comparisons and operators over GetValueOrDefault/HasValue) are not ported yet. The managed pipeline lifts the same expressions in its later ExpressionTransforms run, so the C# output agrees."
+  },
+  {
+    "transform": "ConditionDetection",
+    "fixture": "System.Private.CoreLib.dll",
+    "method": "method 0x060005c3",
+    "reason": "ConditionDetection inverts ifs through InvertIf, which runs ExpressionTransforms on the statement; its InlineArrayTransform.RunOnExpression call is not ported yet. The managed pipeline applies it in its later ExpressionTransforms run, so the C# output agrees."
+  },
+  {
+    "transform": "ConditionDetection",
+    "fixture": "System.Private.CoreLib.dll",
+    "method": "method 0x060017b9",
+    "reason": "ConditionDetection inverts ifs through InvertIf, which runs ExpressionTransforms on the statement; the array and span initializer rewrites ExpressionTransforms calls (TransformArrayInitializers, UTF-8 string literals) are not ported yet. The managed pipeline applies them in its later ExpressionTransforms run, so the C# output agrees."
+  },
+  {
+    "transform": "ConditionDetection",
+    "fixture": "System.Private.CoreLib.dll",
+    "method": "method 0x0600180d",
+    "reason": "ConditionDetection inverts ifs through InvertIf, which runs ExpressionTransforms on the statement; its InlineArrayTransform.RunOnExpression call is not ported yet. The managed pipeline applies it in its later ExpressionTransforms run, so the C# output agrees."
+  },
+  {
+    "transform": "ConditionDetection",
+    "fixture": "System.Private.CoreLib.dll",
+    "method": "method 0x0600180e",
+    "reason": "ConditionDetection inverts ifs through InvertIf, which runs ExpressionTransforms on the statement; its InlineArrayTransform.RunOnExpression call is not ported yet. The managed pipeline applies it in its later ExpressionTransforms run, so the C# output agrees."
+  },
+  {
+    "transform": "ConditionDetection",
+    "fixture": "System.Private.CoreLib.dll",
+    "method": "method 0x0600180f",
+    "reason": "ConditionDetection inverts ifs through InvertIf, which runs ExpressionTransforms on the statement; its InlineArrayTransform.RunOnExpression call is not ported yet. The managed pipeline applies it in its later ExpressionTransforms run, so the C# output agrees."
+  },
+  {
+    "transform": "ConditionDetection",
+    "fixture": "System.Private.CoreLib.dll",
+    "method": "method 0x06003a00",
+    "reason": "ConditionDetection inverts ifs through InvertIf, which runs ExpressionTransforms on the statement; the array and span initializer rewrites ExpressionTransforms calls (TransformArrayInitializers, UTF-8 string literals) are not ported yet. The managed pipeline applies them in its later ExpressionTransforms run, so the C# output agrees."
+  },
+  {
+    "transform": "ConditionDetection",
+    "fixture": "System.Private.CoreLib.dll",
+    "method": "method 0x06003a02",
+    "reason": "ConditionDetection inverts ifs through InvertIf, which runs ExpressionTransforms on the statement; the array and span initializer rewrites ExpressionTransforms calls (TransformArrayInitializers, UTF-8 string literals) are not ported yet. The managed pipeline applies them in its later ExpressionTransforms run, so the C# output agrees."
+  },
+  {
+    "transform": "ConditionDetection",
+    "fixture": "System.Private.CoreLib.dll",
+    "method": "method 0x060042fd",
+    "reason": "ConditionDetection inverts ifs through InvertIf, which runs ExpressionTransforms on the statement; the NullableLiftingTransform calls of ExpressionTransforms (lifted comparisons and operators over GetValueOrDefault/HasValue) are not ported yet. The managed pipeline lifts the same expressions in its later ExpressionTransforms run, so the C# output agrees."
+  },
+  {
+    "transform": "ConditionDetection",
+    "fixture": "System.Private.CoreLib.dll",
+    "method": "method 0x06004877",
+    "reason": "ConditionDetection inverts ifs through InvertIf, which runs ExpressionTransforms on the statement; the array and span initializer rewrites ExpressionTransforms calls (TransformArrayInitializers, UTF-8 string literals) are not ported yet. The managed pipeline applies them in its later ExpressionTransforms run, so the C# output agrees."
+  },
+  {
+    "transform": "ConditionDetection",
+    "fixture": "System.Private.CoreLib.dll",
+    "method": "method 0x060048a8",
+    "reason": "ConditionDetection inverts ifs through InvertIf, which runs ExpressionTransforms on the statement; the array and span initializer rewrites ExpressionTransforms calls (TransformArrayInitializers, UTF-8 string literals) are not ported yet. The managed pipeline applies them in its later ExpressionTransforms run, so the C# output agrees."
+  },
+  {
+    "transform": "ConditionDetection",
+    "fixture": "System.Reflection.Metadata.dll",
+    "method": "method 0x06000122",
+    "reason": "ConditionDetection inverts ifs through InvertIf, which runs ExpressionTransforms on the statement; the array and span initializer rewrites ExpressionTransforms calls (TransformArrayInitializers, UTF-8 string literals) are not ported yet. The managed pipeline applies them in its later ExpressionTransforms run, so the C# output agrees."
+  },
+  {
+    "transform": "ConditionDetection",
+    "fixture": "System.Runtime.Numerics.dll",
+    "method": "method 0x0600002a",
+    "reason": "ConditionDetection inverts ifs through InvertIf, which runs ExpressionTransforms on the statement; the array and span initializer rewrites ExpressionTransforms calls (TransformArrayInitializers, UTF-8 string literals) are not ported yet. The managed pipeline applies them in its later ExpressionTransforms run, so the C# output agrees."
+  },
+  {
+    "transform": "ConditionDetection",
+    "fixture": "System.Security.Cryptography.dll",
+    "method": "method 0x060001da",
+    "reason": "ConditionDetection inverts ifs through InvertIf, which runs ExpressionTransforms on the statement; the NullableLiftingTransform calls of ExpressionTransforms (lifted comparisons and operators over GetValueOrDefault/HasValue) are not ported yet. The managed pipeline lifts the same expressions in its later ExpressionTransforms run, so the C# output agrees."
+  },
+  {
+    "transform": "ConditionDetection",
+    "fixture": "System.Security.Cryptography.dll",
+    "method": "method 0x06000699",
+    "reason": "ConditionDetection inverts ifs through InvertIf, which runs ExpressionTransforms on the statement; the NullableLiftingTransform calls of ExpressionTransforms (lifted comparisons and operators over GetValueOrDefault/HasValue) are not ported yet. The managed pipeline lifts the same expressions in its later ExpressionTransforms run, so the C# output agrees."
+  },
+  {
+    "transform": "ConditionDetection",
+    "fixture": "System.Security.Cryptography.dll",
+    "method": "method 0x060015f9",
+    "reason": "ConditionDetection inverts ifs through InvertIf, which runs ExpressionTransforms on the statement; the NullableLiftingTransform calls of ExpressionTransforms (lifted comparisons and operators over GetValueOrDefault/HasValue) are not ported yet. The managed pipeline lifts the same expressions in its later ExpressionTransforms run, so the C# output agrees."
+  },
+  {
+    "transform": "ConditionDetection",
+    "fixture": "System.Security.Cryptography.dll",
+    "method": "method 0x060015fa",
+    "reason": "ConditionDetection inverts ifs through InvertIf, which runs ExpressionTransforms on the statement; the NullableLiftingTransform calls of ExpressionTransforms (lifted comparisons and operators over GetValueOrDefault/HasValue) are not ported yet. The managed pipeline lifts the same expressions in its later ExpressionTransforms run, so the C# output agrees."
+  },
+  {
+    "transform": "ConditionDetection",
+    "fixture": "System.Security.Cryptography.dll",
+    "method": "method 0x060015fd",
+    "reason": "ConditionDetection inverts ifs through InvertIf, which runs ExpressionTransforms on the statement; the NullableLiftingTransform calls of ExpressionTransforms (lifted comparisons and operators over GetValueOrDefault/HasValue) are not ported yet. The managed pipeline lifts the same expressions in its later ExpressionTransforms run, so the C# output agrees."
+  },
+  {
+    "transform": "ConditionDetection",
+    "fixture": "System.Security.Cryptography.dll",
+    "method": "method 0x060018cb",
+    "reason": "ConditionDetection inverts ifs through InvertIf, which runs ExpressionTransforms on the statement; the NullableLiftingTransform calls of ExpressionTransforms (lifted comparisons and operators over GetValueOrDefault/HasValue) are not ported yet. The managed pipeline lifts the same expressions in its later ExpressionTransforms run, so the C# output agrees."
+  },
+  {
+    "transform": "ConditionDetection",
+    "fixture": "System.Text.Json.dll",
+    "method": "method 0x060004a4",
+    "reason": "ConditionDetection inverts ifs through InvertIf, which runs ExpressionTransforms on the statement; the array and span initializer rewrites ExpressionTransforms calls (TransformArrayInitializers, UTF-8 string literals) are not ported yet. The managed pipeline applies them in its later ExpressionTransforms run, so the C# output agrees."
+  },
+  {
+    "transform": "ConditionDetection",
+    "fixture": "System.Text.Json.dll",
+    "method": "method 0x06000b56",
+    "reason": "ConditionDetection inverts ifs through InvertIf, which runs ExpressionTransforms on the statement; the NullableLiftingTransform calls of ExpressionTransforms (lifted comparisons and operators over GetValueOrDefault/HasValue) are not ported yet. The managed pipeline lifts the same expressions in its later ExpressionTransforms run, so the C# output agrees."
+  },
+  {
+    "transform": "ConditionDetection",
+    "fixture": "System.Text.RegularExpressions.dll",
+    "method": "method 0x06000295",
+    "reason": "ConditionDetection inverts ifs through InvertIf, which runs ExpressionTransforms on the statement; the NullableLiftingTransform calls of ExpressionTransforms (lifted comparisons and operators over GetValueOrDefault/HasValue) are not ported yet. The managed pipeline lifts the same expressions in its later ExpressionTransforms run, so the C# output agrees."
+  },
+  {
+    "transform": "ConditionDetection",
+    "fixture": "System.Text.RegularExpressions.dll",
+    "method": "method 0x06000318",
+    "reason": "ConditionDetection inverts ifs through InvertIf, which runs ExpressionTransforms on the statement; the NullableLiftingTransform calls of ExpressionTransforms (lifted comparisons and operators over GetValueOrDefault/HasValue) are not ported yet. The managed pipeline lifts the same expressions in its later ExpressionTransforms run, so the C# output agrees."
+  },
+  {
+    "transform": "ConditionDetection",
+    "fixture": "System.Text.RegularExpressions.dll",
+    "method": "method 0x0600040d",
+    "reason": "ConditionDetection inverts ifs through InvertIf, which runs ExpressionTransforms on the statement; the NullableLiftingTransform calls of ExpressionTransforms (lifted comparisons and operators over GetValueOrDefault/HasValue) are not ported yet. The managed pipeline lifts the same expressions in its later ExpressionTransforms run, so the C# output agrees."
+  },
+  {
+    "transform": "ConditionDetection",
+    "fixture": "System.Transactions.Local.dll",
+    "method": "method 0x06000268",
+    "reason": "ConditionDetection inverts ifs through InvertIf, which runs ExpressionTransforms on the statement; the NullableLiftingTransform calls of ExpressionTransforms (lifted comparisons and operators over GetValueOrDefault/HasValue) are not ported yet. The managed pipeline lifts the same expressions in its later ExpressionTransforms run, so the C# output agrees."
+  }
+]

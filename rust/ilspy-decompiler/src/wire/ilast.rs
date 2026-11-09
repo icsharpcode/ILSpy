@@ -407,6 +407,7 @@ impl FunctionWriter<'_, '_, '_, '_> {
                 right_input,
                 left,
                 right,
+                csharp_result_type,
             } => {
                 tag(op::BINARY_NUMERIC, &mut self.out);
                 self.out.u8(o as u8);
@@ -414,6 +415,7 @@ impl FunctionWriter<'_, '_, '_, '_> {
                 self.out.u8(sign as u8);
                 self.stack_type(left_input);
                 self.stack_type(right_input);
+                self.opt_ty(csharp_result_type);
                 self.node(left)?;
                 self.node(right)?;
             }
@@ -455,9 +457,11 @@ impl FunctionWriter<'_, '_, '_, '_> {
                 sections,
                 ty,
                 is_lifted,
+                result_type,
             } => {
                 tag(op::SWITCH, &mut self.out);
                 self.out.bool(is_lifted);
+                self.opt_ty(result_type);
                 // The type as its index + 1, 0 when unknown.
                 match ty {
                     Some(t) => {
@@ -499,9 +503,12 @@ impl FunctionWriter<'_, '_, '_, '_> {
                 filter,
                 body,
                 variable,
+                exception_specifier_il_range,
             } => {
                 tag(op::TRY_CATCH_HANDLER, &mut self.out);
                 self.var(variable)?;
+                self.out.ivar(i64::from(exception_specifier_il_range.start));
+                self.out.ivar(i64::from(exception_specifier_il_range.end));
                 self.node(filter)?;
                 self.node(body)?;
             }
@@ -930,11 +937,13 @@ impl FunctionWriter<'_, '_, '_, '_> {
                 indices,
                 delay_exceptions,
                 is_read_only,
+                with_system_index,
             } => {
                 tag(op::LD_ELEMA, &mut self.out);
                 self.ty(ty.ty);
                 self.out.bool(delay_exceptions);
                 self.out.bool(is_read_only);
+                self.out.bool(with_system_index);
                 self.node(array)?;
                 self.nodes(&indices)?;
             }

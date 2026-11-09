@@ -133,6 +133,7 @@ impl<S: State> Flow<S> {
                         filter,
                         body,
                         variable,
+                        ..
                     } = f.inst(handler)
                     else {
                         panic!("catch handler expected");

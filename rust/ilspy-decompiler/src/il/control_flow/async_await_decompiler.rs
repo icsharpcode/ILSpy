@@ -1234,6 +1234,7 @@ impl AsyncAwaitDecompiler {
             filter,
             body,
             variable,
+            ..
         } = *f.inst(handler)
         else {
             unreachable!("handler");

@@ -3,6 +3,7 @@
 pub mod async_await_decompiler;
 pub mod await_in_catch_transform;
 pub mod await_in_finally_transform;
+pub mod condition_detection;
 pub mod control_flow_graph;
 pub mod control_flow_simplification;
 pub mod detect_pinned_regions;
