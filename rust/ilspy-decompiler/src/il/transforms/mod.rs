@@ -230,10 +230,11 @@ const PIPELINE: &[Leaf] = &[
             il_inlining::options::ALLOW_INLINING_OF_LDLOCA,
         )
     }),
-    Statement(1, |r, ctx, _, sc, block, pos| {
-        expression_transforms::run_statement(&mut r.function, ctx, sc, block, pos)
+    Statement(1, |r, ctx, _, _, block, pos| {
+        expression_transforms::run_statement(&mut r.function, ctx, block, pos)
     }),
     Statement(1, dynamic_is_event_assignment_transform::run),
+    Statement(1, transform_assignment::run),
 ];
 
 /// Runs the first `prefix` leaves of the pipeline.

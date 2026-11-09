@@ -373,7 +373,7 @@ the reasons. This file holds only the ordered steps, their gates and their rules
   - [x] 37. StatementTransform driver and ILInlining with AllowInliningOfLdloca (M)
   - [x] 38. ExpressionTransforms (L)
   - [x] 39. DynamicIsEventAssignmentTransform (S)
-  - [ ] 40. TransformAssignment (L)
+  - [x] 40. TransformAssignment (L)
   - [ ] 41. NullCoalescingTransform (M)
   - [ ] 42. NullableLiftingStatementTransform (M)
   - [ ] 43. NullPropagationStatementTransform (M)

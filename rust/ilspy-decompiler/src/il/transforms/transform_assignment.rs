@@ -5,6 +5,7 @@ use crate::il::ast::{
     BinaryNumericOperator, BlockKind, CompoundEvalMode, CompoundTargetKind, ConversionKind,
     DynamicKind, Function, Inst, MethodOperand, NodeId, VarId, VariableKind, conversion_kind,
 };
+use crate::il::reader::ReadFunction;
 use crate::il::semantic_helper::is_pure;
 use crate::il::types::{Sign, StackType};
 use crate::typesystem::compilation::TypeKind;
@@ -13,7 +14,9 @@ use crate::typesystem::resolve::{MethodOrigin, ResolvedMethod};
 use crate::typesystem::types::{TypeData, TypeId};
 
 use super::Context;
+use super::block_transform::BlockTransformContext;
 use super::il_inlining::known;
+use super::statement_transform::StatementTransformContext;
 
 /// The `MethodSemanticsAttributes` of a property setter and getter.
 const SETTER: u16 = 0x0001;
@@ -43,6 +46,10 @@ fn property_accessor(ctx: &mut Context<'_, '_, '_>, m: &ResolvedMethod) -> Optio
 
 /// `IsSameMember(call.Method, (call.Method.AccessorOwner as IProperty)?.Setter)`.
 fn is_property_setter(ctx: &mut Context<'_, '_, '_>, m: &ResolvedMethod) -> bool {
+    // An unresolved `set_X` is guessed to be the setter of a fake property.
+    if m.origin == MethodOrigin::Fake {
+        return m.accessor_kind == SETTER;
+    }
     property_accessor(ctx, m).is_some_and(|(_, s)| s == SETTER)
 }
 
@@ -244,14 +251,16 @@ fn matching_getter_and_setter_calls(
     Some(finalize)
 }
 
-/// `IsMatchingCompoundLoad` without a previous instruction: `load` reads what `store`
-/// writes. Returns the target, its kind and the adjustment to make.
+/// `IsMatchingCompoundLoad`: `load` reads what `store` writes. Returns the target, its kind
+/// and the adjustment to make. `previous` is the instruction before the load, if the caller
+/// knows it.
 fn is_matching_compound_load(
     f: &mut Function,
     ctx: &mut Context<'_, '_, '_>,
     load: NodeId,
     store: NodeId,
     forbidden: Option<VarId>,
+    previous: Option<NodeId>,
 ) -> Option<(NodeId, CompoundTargetKind, FinalizeMatch)> {
     if let (
         &Inst::LdObj { target, .. },
@@ -267,13 +276,17 @@ fn is_matching_compound_load(
         if forbidden.is_some_and(|v| f.is_used_within(v, target)) {
             return None;
         }
-        // The duplicated address computation of Roslyn needs the instruction before the
-        // load, which this caller never has.
-        return f.structurally_equal(target, store_target).then_some((
-            target,
-            CompoundTargetKind::Address,
-            FinalizeMatch::None,
-        ));
+        if f.structurally_equal(target, store_target) {
+            return Some((target, CompoundTargetKind::Address, FinalizeMatch::None));
+        }
+        // S_0 as the target lets inlining remove it later (the previous instruction lies
+        // before the transform's starting instruction).
+        return is_duplicated_address_computation(f, store_target, target, forbidden, previous)
+            .then_some((
+                store_target,
+                CompoundTargetKind::Address,
+                FinalizeMatch::None,
+            ));
     }
     if let Some(finalize) = matching_getter_and_setter_calls(f, ctx, load, store) {
         if forbidden.is_some_and(|v| f.is_used_within(v, load)) {
@@ -779,7 +792,7 @@ pub fn handle_compound_assign(
             return false;
         }
         let Some((target, target_kind, finalize)) =
-            is_matching_compound_load(f, ctx, left, store, forbidden)
+            is_matching_compound_load(f, ctx, left, store, forbidden, None)
         else {
             return false;
         };
@@ -866,7 +879,7 @@ pub fn handle_compound_assign(
             return false;
         };
         let Some((target, target_kind, finalize)) =
-            is_matching_compound_load(f, ctx, load, store, forbidden)
+            is_matching_compound_load(f, ctx, load, store, forbidden, None)
         else {
             return false;
         };
@@ -893,7 +906,7 @@ pub fn handle_compound_assign(
     {
         let (arg_infos, args) = (arg_infos.clone(), args.clone());
         let Some((target, target_kind, finalize)) =
-            is_matching_compound_load(f, ctx, args[0], store, forbidden)
+            is_matching_compound_load(f, ctx, args[0], store, forbidden, None)
         else {
             return false;
         };
@@ -960,5 +973,690 @@ fn to_compound_operation(operation: i32) -> i32 {
         42 => 73, // Subtract => SubtractAssign
         43 => 76, // SubtractChecked => SubtractAssignChecked
         other => other,
+    }
+}
+
+/// `IsDuplicatedAddressComputation`: Roslyn sometimes computes the address twice:
+/// ```text
+/// stloc S_0(ldloc refParam)
+/// stloc V_0(ldobj System.Int32(ldloc refParam))
+/// stobj System.Int32(ldloc S_0, binary.add.i4(ldloc V_0, ldc.i4 1))
+/// ```
+fn is_duplicated_address_computation(
+    f: &Function,
+    mut store_target: NodeId,
+    mut load_target: NodeId,
+    forbidden: Option<VarId>,
+    previous: Option<NodeId>,
+) -> bool {
+    while let (
+        Inst::LdFlda {
+            target: st,
+            field: sf,
+            ..
+        },
+        Inst::LdFlda {
+            target: lt,
+            field: lf,
+            ..
+        },
+    ) = (f.inst(store_target), f.inst(load_target))
+    {
+        if !(sf.field.origin == lf.field.origin && sf.field.declaring == lf.field.declaring) {
+            return false;
+        }
+        (store_target, load_target) = (*st, *lt);
+    }
+    let Some(s) = f.match_ldloc(store_target) else {
+        return false;
+    };
+    let var = f.var(s);
+    if !(var.kind == VariableKind::StackSlot && var.is_single_definition() && Some(s) != forbidden)
+    {
+        return false;
+    }
+    // `SingleOrDefault()` of the stores, compared with the previous instruction.
+    let single_store = match var.store_instructions[..] {
+        [only] => Some(only),
+        _ => None,
+    };
+    if single_store != previous {
+        return false;
+    }
+    previous
+        .and_then(|p| f.match_stloc(p))
+        .is_some_and(|(_, value)| f.structurally_equal(value, load_target))
+}
+
+/// `IStatementTransform.Run` of `TransformAssignment`.
+pub fn run(
+    r: &mut ReadFunction,
+    ctx: &mut Context<'_, '_, '_>,
+    _bc: &mut BlockTransformContext,
+    sc: &mut StatementTransformContext,
+    block: NodeId,
+    pos: usize,
+) {
+    if ctx.settings.make_assignment_expressions
+        && (transform_inline_assignment_stobj_or_call(r, ctx, block, pos)
+            || transform_inline_assignment_local(&mut r.function, ctx, block, pos))
+    {
+        // Both create a top-level stloc, which may be inlined.
+        sc.request_rerun();
+        return;
+    }
+    let f = &mut r.function;
+    if ctx.settings.introduce_increment_and_decrement
+        && (transform_post_inc_dec_operator_with_inline_store(f, ctx, block, pos)
+            || transform_post_inc_dec_operator(f, ctx, block, pos)
+            || transform_pre_inc_dec_operator_with_inline_store(f, ctx, block, pos))
+    {
+        // The new top-level stloc may be inlined.
+        sc.request_rerun();
+    }
+}
+
+/// `SwapSign`: the integer type of the same size and the opposite sign.
+fn swap_sign(ctx: &mut Context<'_, '_, '_>, t: TypeId) -> TypeId {
+    use crate::il::types::PrimitiveType as P;
+    let code = match ctx.ts.primitive_type(t) {
+        P::I1 => KnownTypeCode::Byte,
+        P::I2 => KnownTypeCode::UInt16,
+        P::I4 => KnownTypeCode::UInt32,
+        P::I8 => KnownTypeCode::UInt64,
+        P::U1 => KnownTypeCode::SByte,
+        P::U2 => KnownTypeCode::Int16,
+        P::U4 => KnownTypeCode::Int32,
+        P::U8 => KnownTypeCode::Int64,
+        P::I => KnownTypeCode::UIntPtr,
+        P::U => KnownTypeCode::IntPtr,
+        _ => panic!("ArgumentException: type must have an opposing sign"),
+    };
+    ctx.ts.known_type(code)
+}
+
+/// `MatchLdcI(1) || MatchLdcF4(1) || MatchLdcF8(1)`.
+fn is_one(f: &Function, inst: NodeId) -> bool {
+    f.match_ldc_i(inst) == Some(1)
+        || matches!(*f.inst(inst), Inst::LdcF4 { bits } if f32::from_bits(bits) == 1.0)
+        || matches!(*f.inst(inst), Inst::LdcF8 { bits } if f64::from_bits(bits) == 1.0)
+}
+
+/// A new numeric compound assignment from `binary` (`new NumericCompoundAssign(binary, ...)`).
+fn new_numeric_compound_assign(
+    f: &mut Function,
+    binary: NodeId,
+    target: NodeId,
+    target_kind: CompoundTargetKind,
+    ty: TypeId,
+    eval_mode: CompoundEvalMode,
+) -> NodeId {
+    let Inst::BinaryNumeric {
+        op,
+        check_overflow,
+        sign,
+        left_input,
+        right_input,
+        right,
+        ..
+    } = *f.inst(binary)
+    else {
+        unreachable!("a binary instruction");
+    };
+    let compound = f.add(Inst::NumericCompoundAssign {
+        op,
+        check_overflow,
+        sign,
+        left_input,
+        right_input,
+        underlying_result: crate::il::ast::binary_result_type(op, left_input, right_input),
+        is_lifted: false,
+        ty,
+        eval_mode,
+        target_kind,
+        target,
+        value: right,
+    });
+    f.add_il_range(compound, f.il_range(binary));
+    compound
+}
+
+/// `new UserDefinedCompoundAssign(method, evalMode, target, targetKind, new LdcI4(1))`.
+fn new_user_defined_increment(
+    f: &mut Function,
+    method: MethodOperand,
+    target: NodeId,
+    target_kind: CompoundTargetKind,
+    eval_mode: CompoundEvalMode,
+) -> NodeId {
+    let one = f.add(Inst::LdcI4 { value: 1 });
+    f.add(Inst::UserDefinedCompoundAssign {
+        method,
+        eval_mode,
+        target_kind,
+        target,
+        value: one,
+    })
+}
+
+fn new_stloc(f: &mut Function, var: VarId, value: NodeId) -> NodeId {
+    f.add(Inst::StLoc {
+        var,
+        value,
+        il_stack_was_empty: false,
+        is_stack_adjustment: false,
+    })
+}
+
+/// The increment or decrement in the value of an inc/dec pattern: the binary instruction
+/// and its operand, or the user-defined operator call and its operand.
+enum IncDec {
+    Binary {
+        binary: NodeId,
+        operand: NodeId,
+    },
+    Operator {
+        method: MethodOperand,
+        operand: NodeId,
+    },
+}
+
+/// The shared head of `TransformPreIncDecOperatorWithInlineStore` and
+/// `TransformPostIncDecOperatorWithInlineStore`: a `+ 1` / `- 1` (after a small-integer
+/// conversion) or `op_Increment` / `op_Decrement` call; `target_type` may get the opposite
+/// sign for the conversion.
+fn match_inc_dec(
+    f: &Function,
+    ctx: &mut Context<'_, '_, '_>,
+    value: NodeId,
+    target_type: &mut TypeId,
+) -> Option<IncDec> {
+    let (unwrapped, conv) = unwrap_small_integer_conv(f, value);
+    if let Inst::BinaryNumeric {
+        op, left, right, ..
+    } = *f.inst(unwrapped)
+        && is_one(f, right)
+    {
+        if !matches!(op, BinaryNumericOperator::Add | BinaryNumericOperator::Sub) {
+            return None;
+        }
+        if let Some(conv) = conv
+            && let Inst::Conv { target, .. } = *f.inst(conv)
+        {
+            let primitive = ctx.ts.primitive_type(*target_type);
+            if primitive.size() == target.size() && primitive.sign() != target.sign() {
+                *target_type = swap_sign(ctx, *target_type);
+            }
+        }
+        if !validate_compound_assign(f, ctx, unwrapped, conv, *target_type) {
+            return None;
+        }
+        return Some(IncDec::Binary {
+            binary: unwrapped,
+            operand: left,
+        });
+    }
+    if let Inst::Call(c) = f.inst(value) {
+        let method = c.method.method.clone();
+        if ctx.ts.method_is_operator(&method) && c.args.len() == 1 {
+            if !matches!(method.name.as_str(), "op_Increment" | "op_Decrement") {
+                return None;
+            }
+            return Some(IncDec::Operator {
+                method: c.method.clone(),
+                operand: c.args[0],
+            });
+        }
+    }
+    None
+}
+
+/// `TransformPreIncDecOperatorWithInlineStore`:
+/// `stloc l(stloc target(binary.add(ldloc target, ldc.i4 1)))` becomes
+/// `stloc l(compound.op.new(ldloca target, ldc.i4 1))`.
+fn transform_pre_inc_dec_operator_with_inline_store(
+    f: &mut Function,
+    ctx: &mut Context<'_, '_, '_>,
+    block: NodeId,
+    pos: usize,
+) -> bool {
+    let store = f.list(block)[pos];
+    let Some((target_type1, value1)) = is_compound_store(f, ctx, store) else {
+        return false;
+    };
+    let Some((target_type2, value2)) = is_compound_store(f, ctx, value1) else {
+        return false;
+    };
+    if target_type1 != target_type2 {
+        return false;
+    }
+    let mut target_type = target_type1;
+    let Some(inc_dec) = match_inc_dec(f, ctx, value2, &mut target_type) else {
+        return false;
+    };
+    let operand = match &inc_dec {
+        IncDec::Binary { operand, .. } | IncDec::Operator { operand, .. } => *operand,
+    };
+    let (Some((outer_var, _)), Some(_)) = (f.match_stloc(store), f.match_stloc(value1)) else {
+        return false;
+    };
+    if !matches!(f.inst(operand), Inst::LdLoc { .. }) {
+        return false;
+    }
+    if !matches!(
+        f.var(outer_var).kind,
+        VariableKind::Local | VariableKind::StackSlot
+    ) {
+        return false;
+    }
+    let Some((target, target_kind, finalize)) =
+        is_matching_compound_load(f, ctx, operand, value1, None, None)
+    else {
+        return false;
+    };
+    let outer_type = f.var(outer_var).ty;
+    if is_implicit_truncation(f, ctx, value1, outer_type, false) {
+        return false;
+    }
+    finalize.apply(f, ctx);
+    let compound = match inc_dec {
+        IncDec::Binary { binary, .. } => new_numeric_compound_assign(
+            f,
+            binary,
+            target,
+            target_kind,
+            target_type,
+            CompoundEvalMode::EvaluatesToNewValue,
+        ),
+        IncDec::Operator { method, .. } => new_user_defined_increment(
+            f,
+            method,
+            target,
+            target_kind,
+            CompoundEvalMode::EvaluatesToNewValue,
+        ),
+    };
+    let new_store = new_stloc(f, outer_var, compound);
+    f.set_child_at(block, pos, new_store);
+    true
+}
+
+/// `TransformPostIncDecOperatorWithInlineStore`:
+/// `stobj(target, binary.add(stloc l(ldobj(target)), ldc.i4 1))` becomes
+/// `stloc l(compound.op.old(target, ldc.i4 1))`.
+fn transform_post_inc_dec_operator_with_inline_store(
+    f: &mut Function,
+    ctx: &mut Context<'_, '_, '_>,
+    block: NodeId,
+    pos: usize,
+) -> bool {
+    let store = f.list(block)[pos];
+    let Some((mut target_type, value)) = is_compound_store(f, ctx, store) else {
+        return false;
+    };
+    let Some(inc_dec) = match_inc_dec(f, ctx, value, &mut target_type) else {
+        return false;
+    };
+    let operand = match &inc_dec {
+        IncDec::Binary { operand, .. } | IncDec::Operator { operand, .. } => *operand,
+    };
+    let Some((v, stored)) = f.match_stloc(operand) else {
+        return false;
+    };
+    if !matches!(f.var(v).kind, VariableKind::Local | VariableKind::StackSlot) {
+        return false;
+    }
+    let Some((target, target_kind, finalize)) =
+        is_matching_compound_load(f, ctx, stored, store, Some(v), None)
+    else {
+        return false;
+    };
+    let var_type = f.var(v).ty;
+    if is_implicit_truncation(f, ctx, stored, var_type, false) {
+        return false;
+    }
+    finalize.apply(f, ctx);
+    let compound = match inc_dec {
+        IncDec::Binary { binary, .. } => new_numeric_compound_assign(
+            f,
+            binary,
+            target,
+            target_kind,
+            target_type,
+            CompoundEvalMode::EvaluatesToOldValue,
+        ),
+        IncDec::Operator { method, .. } => new_user_defined_increment(
+            f,
+            method,
+            target,
+            target_kind,
+            CompoundEvalMode::EvaluatesToOldValue,
+        ),
+    };
+    let new_store = new_stloc(f, v, compound);
+    f.set_child_at(block, pos, new_store);
+    true
+}
+
+/// `TransformPostIncDecOperator`: `stloc tmp(ldobj(target)); stobj(target,
+/// binary.add(ldloc tmp, ldc.i4 1))` becomes `stloc tmp(compound.op.old(target, ldc.i4 1))`
+/// (or just the compound assignment when `tmp` is unused).
+fn transform_post_inc_dec_operator(
+    f: &mut Function,
+    ctx: &mut Context<'_, '_, '_>,
+    block: NodeId,
+    i: usize,
+) -> bool {
+    let list = f.list(block);
+    let inst = list[i];
+    let (Some((tmp, inst_value)), Some(&store)) = (f.match_stloc(inst), list.get(i + 1)) else {
+        return false;
+    };
+    let previous = i.checked_sub(1).map(|p| list[p]);
+    let Some((mut target_type, value)) = is_compound_store(f, ctx, store) else {
+        return false;
+    };
+    let truncation = check_implicit_truncation(f, ctx, inst_value, target_type, false);
+    if truncation == Truncation::ValueChanged {
+        // `stloc tmp` truncates the value.
+        return false;
+    }
+    if truncation == Truncation::ValueChangedDueToSignMismatch {
+        // Only a stobj of exactly the target type can change its sign.
+        let stobj_of_target =
+            matches!(*f.inst(store), Inst::StObj { ty, .. } if ty.ty == target_type);
+        if !stobj_of_target {
+            return false;
+        }
+    }
+    let Some((target, target_kind, finalize)) =
+        is_matching_compound_load(f, ctx, inst_value, store, Some(tmp), previous)
+    else {
+        return false;
+    };
+    let (unwrapped, conv) = unwrap_small_integer_conv(f, value);
+    let compound = if let Inst::BinaryNumeric {
+        op,
+        check_overflow,
+        left,
+        right,
+        ..
+    } = *f.inst(unwrapped)
+    {
+        if !matches!(op, BinaryNumericOperator::Add | BinaryNumericOperator::Sub) {
+            return false;
+        }
+        if f.match_ldloc(left) != Some(tmp) {
+            return false;
+        }
+        if let TypeData::Pointer(element) = *ctx.ts.data(target_type) {
+            let one = match pointer_offset_detect(f, ctx, right, element, check_overflow, false) {
+                Some(PointerOffset::Inst(n)) => f.match_ldc_i(n) == Some(1),
+                Some(PointerOffset::Constant(c)) => c == 1,
+                None => false,
+            };
+            if !one {
+                return false;
+            }
+        } else if !is_one(f, right) {
+            return false;
+        }
+        if truncation == Truncation::ValueChangedDueToSignMismatch {
+            // The sign change skips the implicit truncation.
+            target_type = swap_sign(ctx, target_type);
+            if let Inst::StObj { ty, .. } = f.inst_mut(store) {
+                ty.ty = target_type;
+            }
+        }
+        if !validate_compound_assign(f, ctx, unwrapped, conv, target_type) {
+            return false;
+        }
+        finalize.apply(f, ctx);
+        new_numeric_compound_assign(
+            f,
+            unwrapped,
+            target,
+            target_kind,
+            target_type,
+            CompoundEvalMode::EvaluatesToOldValue,
+        )
+    } else if let Inst::Call(c) = f.inst(value)
+        && c.args.len() == 1
+        && ctx.ts.method_is_operator(&c.method.method.clone())
+    {
+        let (method, operand) = (c.method.clone(), c.args[0]);
+        if f.match_ldloc(operand) != Some(tmp) {
+            return false;
+        }
+        if !is_increment_or_decrement(ctx, &method.method) {
+            return false;
+        }
+        finalize.apply(f, ctx);
+        new_user_defined_increment(
+            f,
+            method,
+            target,
+            target_kind,
+            CompoundEvalMode::EvaluatesToOldValue,
+        )
+    } else {
+        return false;
+    };
+    f.set_child_at(inst, 0, compound);
+    f.remove_at(block, i + 1);
+    let var = f.var(tmp);
+    if var.is_single_definition() && var.load_count() == 0 {
+        // A dead store: a statement-level post-increment.
+        f.replace(inst, compound);
+    }
+    true
+}
+
+/// `TransformInlineAssignmentLocal`: `stloc s(value); stloc l(ldloc s)` without truncation
+/// becomes `stloc s(stloc l(value))`.
+fn transform_inline_assignment_local(
+    f: &mut Function,
+    ctx: &mut Context<'_, '_, '_>,
+    block: NodeId,
+    pos: usize,
+) -> bool {
+    let list = f.list(block);
+    let (Some(&inst), Some(&next)) = (list.get(pos), list.get(pos + 1)) else {
+        return false;
+    };
+    let (Some((stack_var, value)), Some((var, next_value))) =
+        (f.match_stloc(inst), f.match_stloc(next))
+    else {
+        return false;
+    };
+    if f.var(stack_var).kind != VariableKind::StackSlot {
+        return false;
+    }
+    if !matches!(
+        f.var(var).kind,
+        VariableKind::Local | VariableKind::Parameter
+    ) {
+        return false;
+    }
+    if f.match_ldloc(next_value) != Some(stack_var) {
+        return false;
+    }
+    let (stack_type, var_type) = (f.var(stack_var).ty, f.var(var).ty);
+    if is_implicit_truncation(f, ctx, value, stack_type, false)
+        || is_implicit_truncation(f, ctx, value, var_type, false)
+    {
+        return false;
+    }
+    // Ref locals must be initialized where they are declared, which this transform cannot
+    // ensure.
+    if f.var(var).stack_type == StackType::Ref {
+        return false;
+    }
+    f.remove_at(block, pos);
+    let inner = new_stloc(f, var, value);
+    let inline_assignment = new_stloc(f, stack_var, inner);
+    f.replace(next, inline_assignment);
+    true
+}
+
+/// The index of `inst` in the list of `block` (`Instructions.Remove`).
+fn remove_from_block(f: &mut Function, block: NodeId, inst: NodeId) {
+    if let Some(index) = f.list(block).iter().position(|&i| i == inst) {
+        f.remove_at(block, index);
+    }
+}
+
+/// `TransformInlineAssignmentStObjOrCall`: `stloc s(value); [stloc l(ldloc s);]
+/// stobj(target, ldloc s)` becomes `stloc l(stobj(target, value))`, and a setter call
+/// `set_P(..., ldloc s)` becomes `stloc l(Block CallInlineAssign { set_P(..., stloc i(value));
+/// final: ldloc i })`.
+fn transform_inline_assignment_stobj_or_call(
+    r: &mut ReadFunction,
+    ctx: &mut Context<'_, '_, '_>,
+    block: NodeId,
+    pos: usize,
+) -> bool {
+    let f = &mut r.function;
+    let list = f.list(block).to_vec();
+    let Some((s, value)) = list.get(pos).and_then(|&i| f.match_stloc(i)) else {
+        return false;
+    };
+    let inst = list[pos];
+    // It can be a compiler-generated local.
+    if !matches!(f.var(s).kind, VariableKind::StackSlot | VariableKind::Local) {
+        return false;
+    }
+    let s_type = f.var(s).ty;
+    if is_implicit_truncation(f, ctx, value, s_type, false) {
+        // `stloc s` truncates.
+        return false;
+    }
+    let Some(&next1) = list.get(pos + 1) else {
+        return false;
+    };
+    let (local, local_store, next_pos) = if let Some((l, l_value)) = f.match_stloc(next1) {
+        // With an extra local, `s` goes away: it has no other uses.
+        if f.var(l).kind != VariableKind::Local || f.match_ldloc(l_value) != Some(s) {
+            return false;
+        }
+        if !(f.var(s).is_single_definition() && f.var(s).load_count() == 2) {
+            return false;
+        }
+        (l, Some(next1), pos + 2)
+    } else {
+        // An inline assignment would leave a dead store.
+        if f.var(s).load_count() == 1 && f.var(s).address_count() == 0 {
+            return false;
+        }
+        (s, None, pos + 1)
+    };
+    let Some(&next) = list.get(next_pos) else {
+        return false;
+    };
+    match *f.inst(next) {
+        Inst::StObj {
+            target,
+            value: stored,
+            ty,
+            unaligned,
+            ..
+        } => {
+            // unaligned.stobj has no C# form.
+            if unaligned > 0 || f.match_ldloc(stored) != Some(s) {
+                return false;
+            }
+            if !is_pure(f.flags(target)) || f.is_used_within(s, target) {
+                return false;
+            }
+            let pointer_type = f.infer_type(ctx.ts, target);
+            let mut new_type = ty.ty;
+            if let TypeData::ByRef(element) | TypeData::Pointer(element) =
+                *ctx.ts.data(pointer_type)
+                && ctx.ts.is_compatible_type_for_memory_access(element, ty.ty)
+            {
+                new_type = element;
+            }
+            match check_implicit_truncation(f, ctx, value, new_type, false) {
+                // stobj truncates.
+                Truncation::ValueChanged => return false,
+                // The opposite sign skips the truncation.
+                Truncation::ValueChangedDueToSignMismatch => new_type = swap_sign(ctx, new_type),
+                Truncation::ValuePreserved => {}
+            }
+            if let Inst::StObj { ty, .. } = f.inst_mut(next) {
+                ty.ty = new_type;
+            }
+            if let Some(ls) = local_store {
+                remove_from_block(f, block, ls);
+            }
+            remove_from_block(f, block, next);
+            f.set_child_at(next, 1, value);
+            let inline_assignment = new_stloc(f, local, next);
+            f.replace(inst, inline_assignment);
+            // The caller's rerun runs HandleCompoundAssign on the stobj where it applies.
+            true
+        }
+        Inst::Call(_) | Inst::CallVirt(_) => {
+            let (call_method, args) = match f.inst(next) {
+                Inst::Call(c) | Inst::CallVirt(c) => (c.method.method.clone(), c.args.clone()),
+                _ => unreachable!("a call"),
+            };
+            if f.result_type(ctx.ts, next) != StackType::Void || args.is_empty() {
+                return false;
+            }
+            if !is_property_setter(ctx, &call_method) {
+                return false;
+            }
+            let params = call_method.params().unwrap_or_default();
+            let is_indexer = match call_method.origin {
+                MethodOrigin::Def(id) => {
+                    let (owner, _) = property_accessor(ctx, &call_method).expect("a setter");
+                    ctx.ts
+                        .property_symbol_kind(id.module, owner & 0x00FF_FFFF)
+                        .ok()
+                        == Some(crate::typesystem::members::SymbolKind::Indexer)
+                }
+                // A guessed fake property is an indexer when the setter has more parameters.
+                _ => params.len() > 1,
+            };
+            // A parameterized property has no C# property syntax, so no expression form.
+            if !(is_indexer || params.len() == 1) {
+                return false;
+            }
+            let (&last, rest) = args.split_last().expect("arguments");
+            if f.match_ldloc(last) != Some(s) {
+                return false;
+            }
+            for &arg in rest {
+                if !is_pure(f.flags(arg)) || f.is_used_within(s, arg) {
+                    return false;
+                }
+            }
+            let value_type = *params.last().expect("a setter parameter");
+            if is_implicit_truncation(f, ctx, value, value_type, false) {
+                // The setter call truncates.
+                return false;
+            }
+            if let Some(ls) = local_store {
+                remove_from_block(f, block, ls);
+            }
+            remove_from_block(f, block, next);
+            let new_var = r.register_variable(ctx, VariableKind::StackSlot, value_type);
+            let f = &mut r.function;
+            let inner = new_stloc(f, new_var, value);
+            f.set_child_at(next, args.len() - 1, inner);
+            let load = f.add(Inst::LdLoc { var: new_var });
+            let inline_block = f.add(Inst::Block {
+                kind: BlockKind::CallInlineAssign,
+                instructions: vec![next],
+                final_inst: load,
+            });
+            let inline_assignment = new_stloc(f, local, inline_block);
+            f.replace(inst, inline_assignment);
+            // ExpressionTransforms does not look into inline blocks.
+            handle_compound_assign(f, ctx, next);
+            true
+        }
+        _ => false,
     }
 }

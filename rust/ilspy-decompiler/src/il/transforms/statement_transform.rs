@@ -68,6 +68,10 @@ pub fn run(
         }
         for transform in children {
             transform(r, ctx, bc, &mut sc, block, pos as usize);
+            // A request from a transform that runs without the statement context.
+            if std::mem::take(&mut ctx.rerun_requested) {
+                sc.request_rerun();
+            }
             if sc.rerun_current_position {
                 sc.rerun_current_position = false;
                 sc.request_rerun_at(pos as usize);

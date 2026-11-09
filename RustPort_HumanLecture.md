@@ -1653,6 +1653,35 @@ statement.
 
 The no-op red run failed 16 of 3,550 equality cases; the port passed on its first run.
 
+### 3.55 TransformAssignment (item 40, IL prefix 33)
+
+Item 38 already brought `HandleCompoundAssign`, the part ExpressionTransforms calls. As a
+statement transform, TransformAssignment adds the rest:
+- inline assignments into fields and array elements (`stloc l(stobj(target, value))`),
+  into setter calls (a `CallInlineAssign` block around the call, with a new stack slot for
+  the value) and into locals (`stloc s(stloc l(value))`);
+- the increment and decrement operators: post-increment with an inline store, the plain
+  post-increment (`stloc tmp(x); x = tmp + 1`), and pre-increment with an inline store.
+
+The plain post-increment needs the instruction before the load. Roslyn sometimes computes an
+address twice (`stloc S_0(ldloc ref); ... stobj(ldloc S_0, ...)`), and
+`IsMatchingCompoundLoad` accepts that duplicated computation only when it knows the store of
+`S_0`. A sign mismatch can be repaired by giving the target the opposite sign (`SwapSign`), as
+the managed transform does.
+
+Rerun requests from transforms that run without the statement context, such as
+HandleCompoundAssign inside an inline assignment, now go to the statement driver after
+every child, not only after ExpressionTransforms.
+
+Two gaps showed up:
+- `NonAggressiveInlineInto` always inlines compound assignments into the next statement.
+  Without that case `a[this._size++] = x` kept its temporaries.
+- An unresolved `set_X` is guessed to be the setter of a fake property (with more than one
+  parameter, an indexer), as `MetadataModule.GuessFakeMethodAccessor` does. Inline
+  assignments and compound stores into such setters depend on it.
+
+The no-op red run failed 957 of 3,550 equality cases; the first port 104.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

@@ -34,18 +34,9 @@ pub fn run_on_single_statement(f: &mut Function, ctx: &mut Context<'_, '_, '_>, 
 }
 
 /// `IStatementTransform.Run` of `ExpressionTransforms`: the statement at `pos`.
-pub fn run_statement(
-    f: &mut Function,
-    ctx: &mut Context<'_, '_, '_>,
-    sc: &mut super::statement_transform::StatementTransformContext,
-    block: NodeId,
-    pos: usize,
-) {
+pub fn run_statement(f: &mut Function, ctx: &mut Context<'_, '_, '_>, block: NodeId, pos: usize) {
     let statement = f.list(block)[pos];
     visit(f, ctx, statement);
-    if std::mem::take(&mut ctx.rerun_requested) {
-        sc.request_rerun();
-    }
 }
 
 /// `Default`: the children in order, each looked up when its turn comes.
