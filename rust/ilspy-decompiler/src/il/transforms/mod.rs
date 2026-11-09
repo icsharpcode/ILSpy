@@ -26,6 +26,7 @@ pub mod inline_return_transform;
 pub mod introduce_ref_read_only_modifier_on_locals;
 pub mod ldloca_dup_init_obj_transform;
 pub mod lock_transform;
+pub mod named_argument_transform;
 pub mod null_coalescing_transform;
 pub mod null_propagation_transform;
 pub mod nullable_lifting_transform;
@@ -89,6 +90,7 @@ pub const SETTING_NAMES: &[&str] = &[
     "DictionaryInitializers",
     "ExpressionTrees",
     "Deconstruction",
+    "NamedArguments",
 ];
 
 /// The values of `SETTING_NAMES`.
@@ -137,6 +139,7 @@ pub struct Settings {
     pub dictionary_initializers: bool,
     pub expression_trees: bool,
     pub deconstruction: bool,
+    pub named_arguments: bool,
 }
 
 impl Settings {
@@ -187,6 +190,7 @@ impl Settings {
             dictionary_initializers: bit(40),
             expression_trees: bit(41),
             deconstruction: bit(42),
+            named_arguments: bit(43),
         }
     }
 }
@@ -282,6 +286,7 @@ const PIPELINE: &[Leaf] = &[
     Statement(1, transform_expression_trees::run),
     Statement(1, index_range_transform::run),
     Statement(1, deconstruction_transform::run),
+    Statement(1, named_argument_transform::run),
 ];
 
 /// Runs the first `prefix` leaves of the pipeline.

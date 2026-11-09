@@ -1926,6 +1926,33 @@ materializer, which filled the init collection before the pattern was set; the m
 collection renumbers the fixed children on every insert. With that fixed the port matched
 every case outside the allowlist, which stays at 365 entries.
 
+### 3.64 NamedArgumentTransform (item 49, IL prefix 42)
+
+C# evaluates arguments left to right, but a named argument can be written in another
+position: `M(b: F(), a: G())` evaluates `F()` first. When a stored value would have to be
+inlined into an argument after others that it may not be reordered with, the transform
+introduces a named argument instead. The argument moves into a store at the front of a
+`CallWithNamedArgs` block (after the `this_arg` store of an instance call), and the stored
+value then inlines as usual.
+
+The transform itself is one line, an inlining with the `IntroduceNamedArguments` option. The
+work is in ILInlining:
+- a `NamedArgument` result of `FindLoadInNext`;
+- the two searches that produce it, into a call whose argument can be named or into an
+  existing named-argument block;
+- the introduction of the named argument before the inlining.
+
+The managed checks for whether an argument can be named carry over: not before the this
+pointer, operators, accessors other than indexers, varargs, delegate or anonymous type
+constructors, and parameter names that are not valid identifiers. The `this_arg` variable
+is the first one a transform registers under a given name in code that sees only the
+function, so `Function` gained a named registration.
+
+The new settings bit 44 is `NamedArguments`.
+
+The no-op red run failed 124 of 3,550 equality cases. The port then matched every case
+outside the allowlist, which stays at 365 entries.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

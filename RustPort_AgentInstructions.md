@@ -382,7 +382,7 @@ the reasons. This file holds only the ordered steps, their gates and their rules
   - [x] 46. TransformExpressionTrees (L)
   - [x] 47. IndexRangeTransform (M)
   - [x] 48. DeconstructionTransform (M)
-  - [ ] 49. NamedArgumentTransform (S)
+  - [x] 49. NamedArgumentTransform (S)
   - [ ] 50. RemoveUnconstrainedGenericReferenceTypeCheck (S)
   - [ ] 51. UserDefinedLogicTransform (S)
   - [ ] 52. InterpolatedStringTransform (M)

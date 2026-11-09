@@ -138,8 +138,10 @@ fn do_inline(
     options: u32,
     ctx: &mut Context<'_, '_, '_>,
 ) -> bool {
-    let Find::Found(load) = find_load_in_next(f, ctx, next, v, inlined, options) else {
-        return false;
+    let (load, named_argument) = match find_load_in_next(f, ctx, next, v, inlined, options) {
+        Find::Found(load) => (load, None),
+        Find::NamedArgument { load, call_arg } => (load, Some(call_arg)),
+        _ => return false,
     };
     // A pointer-typed stackalloc is valid C# only as a local initializer or as the pointer
     // argument of the Span<T> / ReadOnlySpan<T> constructor.
@@ -167,17 +169,34 @@ fn do_inline(
         let aggressive = options & options::AGGRESSIVE != 0;
         if !aggressive
             && f.var(v).kind != VariableKind::StackSlot
-            && !non_aggressive_inline_into(
-                f,
-                ctx,
-                next.expect("load found in next"),
-                load,
-                inlined,
-                v,
-            )
+            && match named_argument {
+                // A named argument inlines what was not on the IL stack top level.
+                Some(_) => f
+                    .node(inlined)
+                    .parent
+                    .and_then(|p| match *f.inst(p) {
+                        Inst::StLoc {
+                            il_stack_was_empty, ..
+                        } => Some(il_stack_was_empty),
+                        _ => None,
+                    })
+                    .expect("the inlined value of a store"),
+                None => !non_aggressive_inline_into(
+                    f,
+                    ctx,
+                    next.expect("load found in next"),
+                    load,
+                    inlined,
+                    v,
+                ),
+            }
         {
             return false;
         }
+    }
+    if let Some(call_arg) = named_argument {
+        // Evaluated early now, the argument inlines as usual.
+        super::named_argument_transform::introduce_named_argument(f, ctx, call_arg);
     }
     f.add_il_range(inlined, f.il_range(load));
     let result = if is_address {
@@ -379,6 +398,12 @@ pub(crate) enum Find {
     Continue,
     /// A deconstruction (with `FIND_DECONSTRUCTION`), into whose init the store may go.
     Deconstruction(NodeId),
+    /// A load in a call argument that a named argument can evaluate early (with
+    /// `INTRODUCE_NAMED_ARGUMENTS`): the load and the argument.
+    NamedArgument {
+        load: NodeId,
+        call_arg: NodeId,
+    },
 }
 
 /// `FindLoadInNext`.
@@ -421,6 +446,15 @@ pub(crate) fn find_load_in_next(
         }
         return Find::Stop;
     }
+    if matches!(
+        f.inst(expr),
+        Inst::Block {
+            kind: BlockKind::CallWithNamedArgs,
+            ..
+        }
+    ) {
+        return super::named_argument_transform::can_extend_named_argument(f, ctx, expr, v, moved);
+    }
     if options & options::FIND_DECONSTRUCTION != 0
         && matches!(f.inst(expr), Inst::Deconstruct { .. })
     {
@@ -432,6 +466,17 @@ pub(crate) fn find_load_in_next(
         }
         let r = find_load_in_next(f, ctx, Some(child), v, moved, options);
         if r != Find::Continue {
+            if r == Find::Stop
+                && options & options::INTRODUCE_NAMED_ARGUMENTS != 0
+                && matches!(
+                    f.inst(expr),
+                    Inst::Call(_) | Inst::CallVirt(_) | Inst::NewObj(_)
+                )
+            {
+                return super::named_argument_transform::can_introduce_named_argument(
+                    f, ctx, expr, child, v, moved,
+                );
+            }
             return r;
         }
     }

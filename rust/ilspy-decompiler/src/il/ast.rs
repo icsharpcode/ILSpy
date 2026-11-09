@@ -1469,8 +1469,25 @@ impl Function {
         kind: VariableKind,
         ty: TypeId,
     ) -> VarId {
-        let name = format!("I_{}", self.helper_variable_count);
-        self.helper_variable_count += 1;
+        self.register_variable_named(ts, kind, ty, None)
+    }
+
+    /// `RegisterVariable` with a name; without one the variable is named `I_n`.
+    pub fn register_variable_named(
+        &mut self,
+        ts: &mut TypeSystem<'_, '_>,
+        kind: VariableKind,
+        ty: TypeId,
+        name: Option<&str>,
+    ) -> VarId {
+        let (name, has_generated_name) = match name {
+            Some(n) => (n.to_owned(), false),
+            None => {
+                let n = format!("I_{}", self.helper_variable_count);
+                self.helper_variable_count += 1;
+                (n, true)
+            }
+        };
         let stack_type = ts.stack_type(ty);
         let v = self.add_var(Variable {
             kind,
@@ -1478,7 +1495,7 @@ impl Function {
             stack_type,
             index: None,
             name,
-            has_generated_name: true,
+            has_generated_name,
             initial_value_is_initialized: false,
             uses_initial_value: false,
             is_ref_read_only: false,

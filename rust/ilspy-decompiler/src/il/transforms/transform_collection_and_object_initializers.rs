@@ -201,7 +201,7 @@ fn is_generated_name(name: &str) -> bool {
 }
 
 /// `IsAnonymousType` of a type definition.
-fn is_anonymous_type(ctx: &mut Context<'_, '_, '_>, def: TypeDefId) -> bool {
+pub(crate) fn is_anonymous_type(ctx: &mut Context<'_, '_, '_>, def: TypeDefId) -> bool {
     let Ok(info) = ctx.ts.comp.type_def(def) else {
         return false;
     };
