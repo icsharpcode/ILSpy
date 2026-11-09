@@ -15,6 +15,7 @@ use crate::typesystem::resolve::FieldOrigin;
 use crate::typesystem::types::{TypeId, TypeSystem};
 
 use super::Context;
+use super::il_inlining::is_catch_when_block;
 
 const CALL_SITE_TYPE_NAME: &str = "System.Runtime.CompilerServices.CallSite";
 const CSHARP_BINDER_TYPE_NAME: &str = "Microsoft.CSharp.RuntimeBinder.Binder";
@@ -661,19 +662,6 @@ fn handle_simple_array_initializer(
         values.push(None);
     }
     Some(values)
-}
-
-/// `ILInlining.IsCatchWhenBlock`: the block is in the filter of a catch handler.
-fn is_catch_when_block(f: &Function, block: NodeId) -> bool {
-    let Some(container) = std::iter::once(block)
-        .chain(f.ancestors(block))
-        .find(|&n| matches!(f.inst(n), Inst::BlockContainer { .. }))
-    else {
-        return false;
-    };
-    f.node(container).parent.is_some_and(
-        |p| matches!(*f.inst(p), Inst::TryCatchHandler { filter, .. } if filter == container),
-    )
 }
 
 /// `MakeDynamicInstruction`: the instruction replacing the invoke, and the invoke's

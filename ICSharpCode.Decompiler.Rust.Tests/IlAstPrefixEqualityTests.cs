@@ -20,6 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 using System.Runtime.CompilerServices;
@@ -184,7 +185,50 @@ public class IlAstPrefixEqualityTests
 			blockContext.Block = block;
 			blockContext.IndexOfFirstAlreadyTransformedInstruction = block.Instructions.Count;
 			foreach (var transform in transforms)
-				transform.Run(block, blockContext);
+			{
+				if (transform is StatementTransform statement)
+					RunStatementTransforms(statement, block, blockContext);
+				else
+					transform.Run(block, blockContext);
+			}
+		}
+	}
+
+	static readonly FieldInfo rerunPosition = typeof(StatementTransformContext).GetField("rerunPosition", BindingFlags.NonPublic | BindingFlags.Instance)!;
+	static readonly FieldInfo rerunCurrentPosition = typeof(StatementTransformContext).GetField("rerunCurrentPosition", BindingFlags.NonPublic | BindingFlags.Instance)!;
+
+	/// <summary>
+	/// <c>StatementTransform.Run</c> as a Release build runs it: without the Debug-only
+	/// invariant checks, which can throw on trees a Release build accepts.
+	/// </summary>
+	static void RunStatementTransforms(StatementTransform statement, Block block, BlockTransformContext blockContext)
+	{
+		var children = IlTransformPrefix.Children(statement);
+		var context = new StatementTransformContext(blockContext);
+		if (blockContext.IndexOfFirstAlreadyTransformedInstruction == 0)
+			return;
+		rerunPosition.SetValue(context, blockContext.IndexOfFirstAlreadyTransformedInstruction - 1);
+		int pos = 0;
+		while (pos >= 0)
+		{
+			if (rerunPosition.GetValue(context) is int rerun)
+			{
+				pos = rerun;
+				rerunPosition.SetValue(context, null);
+			}
+			foreach (var transform in children)
+			{
+				transform.Run(block, pos, context);
+				if ((bool)rerunCurrentPosition.GetValue(context)!)
+				{
+					rerunCurrentPosition.SetValue(context, false);
+					context.RequestRerun(pos);
+				}
+				if (rerunPosition.GetValue(context) != null)
+					break;
+			}
+			if (rerunPosition.GetValue(context) == null)
+				pos--;
 		}
 	}
 
@@ -215,8 +259,8 @@ public class IlAstPrefixEqualityTests
 	[Test]
 	public void EngineSettingsAreDecompilerSettings()
 	{
-		Assert.That(RustSettings.Names, Is.EqualTo(new[] { "RemoveDeadStores", "SortSwitchSections", "PatternBasedFixedStatement", "YieldReturn", "AsyncAwait", "AsyncEnumerator", "AwaitInCatchFinally", "Dynamic", "SparseIntegerSwitch", "RemoveDeadCode", "SwitchStatementOnString", "SwitchOnReadOnlySpanChar", "LiftNullables", "PatternMatching", "RecursivePatternMatching", "PatternCombinators", "RelationalPatterns", "AssumeArrayLengthFitsIntoInt32", "SwitchExpressions", "Ranges", "LockStatement", "UsingStatement", "AsyncUsingAndForEachStatement", "IntroduceRefModifiersOnStructs", "AnonymousMethods", "ArrayInitializers" }));
-		var settings = new DecompilerSettings { RemoveDeadStores = false, SortSwitchSections = true, PatternBasedFixedStatement = false, YieldReturn = true, AsyncAwait = false, AsyncEnumerator = true, AwaitInCatchFinally = false, Dynamic = true, SparseIntegerSwitch = false, RemoveDeadCode = true, SwitchStatementOnString = false, SwitchOnReadOnlySpanChar = true, LiftNullables = false, PatternMatching = true, RecursivePatternMatching = false, PatternCombinators = true, RelationalPatterns = false, AssumeArrayLengthFitsIntoInt32 = true, SwitchExpressions = false, Ranges = true, LockStatement = false, UsingStatement = true, AsyncUsingAndForEachStatement = false, IntroduceRefModifiersOnStructs = true, AnonymousMethods = false, ArrayInitializers = true };
+		Assert.That(RustSettings.Names, Is.EqualTo(new[] { "RemoveDeadStores", "SortSwitchSections", "PatternBasedFixedStatement", "YieldReturn", "AsyncAwait", "AsyncEnumerator", "AwaitInCatchFinally", "Dynamic", "SparseIntegerSwitch", "RemoveDeadCode", "SwitchStatementOnString", "SwitchOnReadOnlySpanChar", "LiftNullables", "PatternMatching", "RecursivePatternMatching", "PatternCombinators", "RelationalPatterns", "AssumeArrayLengthFitsIntoInt32", "SwitchExpressions", "Ranges", "LockStatement", "UsingStatement", "AsyncUsingAndForEachStatement", "IntroduceRefModifiersOnStructs", "AnonymousMethods", "ArrayInitializers", "AggressiveInlining" }));
+		var settings = new DecompilerSettings { RemoveDeadStores = false, SortSwitchSections = true, PatternBasedFixedStatement = false, YieldReturn = true, AsyncAwait = false, AsyncEnumerator = true, AwaitInCatchFinally = false, Dynamic = true, SparseIntegerSwitch = false, RemoveDeadCode = true, SwitchStatementOnString = false, SwitchOnReadOnlySpanChar = true, LiftNullables = false, PatternMatching = true, RecursivePatternMatching = false, PatternCombinators = true, RelationalPatterns = false, AssumeArrayLengthFitsIntoInt32 = true, SwitchExpressions = false, Ranges = true, LockStatement = false, UsingStatement = true, AsyncUsingAndForEachStatement = false, IntroduceRefModifiersOnStructs = true, AnonymousMethods = false, ArrayInitializers = true, AggressiveInlining = false };
 		Assert.That(RustSettings.Bits(settings), Is.EqualTo(0x2AAAAAAUL));
 	}
 

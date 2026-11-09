@@ -1,12 +1,16 @@
 //! `IL/Transforms/ILInlining.cs`: moves the value of a single-use `stloc` into the one
 //! instruction after it that loads the variable, where evaluation order allows it.
 
-use crate::il::ast::{BlockKind, ComparisonKind, Function, Inst, NodeId, VarId, VariableKind};
+use crate::il::ast::{
+    AwaiterMethod, BlockKind, ComparisonKind, ComparisonLiftingKind, Function, Inst, NodeId, VarId,
+    VariableKind,
+};
 use crate::il::reader::ReadFunction;
 use crate::il::semantic_helper::{is_pure, may_reorder};
 use crate::il::types::StackType;
 use crate::typesystem::known::KnownTypeCode;
-use crate::typesystem::types::TypeId;
+use crate::typesystem::resolve::{MethodOrigin, ResolvedMethod};
+use crate::typesystem::types::{TypeData, TypeId};
 
 use super::Context;
 use super::split_variables::remove_dead_variables;
@@ -156,22 +160,37 @@ fn do_inline(
     }
     let is_address = matches!(f.inst(load), Inst::LdLoca { .. });
     if is_address {
-        // shortcut: `IsGeneratedTemporaryForAddressOf` is not ported, so `ldloca` is never
-        // inlined; port it with the first pipeline step that sets AllowInliningOfLdloca.
-        if options & options::ALLOW_INLINING_OF_LDLOCA == 0 {
+        if !is_generated_temporary_for_address_of(f, ctx, load, inlined, options) {
             return false;
         }
-        unimplemented!("inlining of ldloca");
-    }
-    let aggressive = options & options::AGGRESSIVE != 0;
-    if !aggressive
-        && f.var(v).kind != VariableKind::StackSlot
-        && !non_aggressive_inline_into(f, ctx, next.expect("load found in next"), load, inlined, v)
-    {
-        return false;
+    } else {
+        let aggressive = options & options::AGGRESSIVE != 0;
+        if !aggressive
+            && f.var(v).kind != VariableKind::StackSlot
+            && !non_aggressive_inline_into(
+                f,
+                ctx,
+                next.expect("load found in next"),
+                load,
+                inlined,
+                v,
+            )
+        {
+            return false;
+        }
     }
     f.add_il_range(inlined, f.il_range(load));
-    f.replace(load, inlined);
+    let result = if is_address {
+        // The compiler-generated temporary keeps its semantics as `addressof`.
+        let ty = f.var(v).ty;
+        f.add(Inst::AddressOf {
+            value: inlined,
+            ty: crate::il::ast::TypeOperand { token: 0, ty },
+        })
+    } else {
+        inlined
+    };
+    f.replace(load, result);
     true
 }
 
@@ -236,8 +255,43 @@ fn non_aggressive_inline_into(
     if is_nullable_ctor(f, ctx, parent) {
         parent = f.node(parent).parent.expect("nullable ctor has a parent");
     }
+    // shortcut: of the liftable instructions only `comp` exists in the engine yet; add the
+    // others when NullableLiftingTransform creates them.
+    if let Inst::Comp { lifting, .. } = f.inst(parent)
+        && *lifting != ComparisonLiftingKind::None
+    {
+        // Into lifted operators.
+        return true;
+    }
     match f.inst(parent) {
         Inst::Leave { .. } | Inst::YieldReturn { .. } => return true,
+        // Size expressions into `localloc.span`, and `fixed` initializers.
+        Inst::GetPinnableReference { .. } => return true,
+        Inst::LdElema {
+            with_system_index: true,
+            ..
+        } => return true,
+        // The string switch value.
+        Inst::StringToInt { .. }
+            if f.node(parent).child_index == 0
+                && f.node(parent)
+                    .parent
+                    .is_some_and(|p| matches!(f.inst(p), Inst::Switch { .. })) =>
+        {
+            return true;
+        }
+        &Inst::Match {
+            is_deconstruct_tuple,
+            check_type,
+            variable,
+            ..
+        } => {
+            if is_deconstruct_tuple
+                || (check_type && ctx.ts.is_reference_type(f.var(variable).ty) != Some(true))
+            {
+                return true;
+            }
+        }
         Inst::Switch { .. } => {
             // Keep the variable's type on the switch when inlining into its value slot.
             if f.var(v).kind != VariableKind::StackSlot && f.node(load).child_index == 0 {
@@ -532,6 +586,14 @@ pub(crate) fn is_readonly_reference(
     }
 }
 
+/// The method `IsUsedAsThisPointerInCall` reports, with the constrained type of the call.
+enum ThisCallMethod {
+    None,
+    Method(ResolvedMethod, Option<TypeId>),
+    /// The `GetAwaiter` of a dynamic await, declared on `dynamic`.
+    DynamicAwaiter,
+}
+
 /// `ILInlining.IsUsedAsThisPointerInCall`: `ldloca` of a value-type variable used as the
 /// `this` argument of a call (through `ldobj.if.ref` and field addresses), an `await` or a
 /// `match`.
@@ -540,11 +602,20 @@ pub(crate) fn is_used_as_this_pointer_in_call(
     ctx: &mut Context<'_, '_, '_>,
     ldloca: NodeId,
 ) -> bool {
+    used_as_this_pointer_in_call(f, ctx, ldloca).is_some()
+}
+
+/// `IsUsedAsThisPointerInCall(ldloca, out method, out constrainedType)`.
+fn used_as_this_pointer_in_call(
+    f: &Function,
+    ctx: &mut Context<'_, '_, '_>,
+    ldloca: NodeId,
+) -> Option<ThisCallMethod> {
     let Inst::LdLoca { var } = *f.inst(ldloca) else {
-        return false;
+        return None;
     };
     if ctx.ts.is_reference_type(f.var(var).ty) == Some(true) {
-        return false;
+        return None;
     }
     let parent_of = |inst: NodeId| f.node(inst).parent;
     let mut inst = ldloca;
@@ -559,24 +630,225 @@ pub(crate) fn is_used_as_this_pointer_in_call(
         inst = p;
     }
     if f.node(inst).child_index != 0 {
-        return false;
+        return None;
     }
-    let Some(parent) = parent_of(inst) else {
-        return false;
-    };
+    let parent = parent_of(inst)?;
     match f.inst(parent) {
         Inst::Call(c) | Inst::CallVirt(c) => {
             let m = &c.method.method;
-            if m.accessor_kind != 0 {
+            let used = if m.accessor_kind != 0 {
                 // A getter, unless it is the target of a property compound assignment (the
                 // engine has no compound assignments yet); C# calls no setters on temporaries.
-                return m.accessor_kind == 0x0002;
-            }
-            !m.is_static
+                m.accessor_kind == 0x0002
+            } else {
+                !m.is_static
+            };
+            used.then(|| ThisCallMethod::Method(m.clone(), c.constrained_to.map(|t| t.ty)))
         }
-        Inst::Await { .. } | Inst::Match { .. } => true,
-        _ => false,
+        Inst::Await { get_awaiter, .. } => Some(match get_awaiter {
+            Some(AwaiterMethod::Method(m)) => ThisCallMethod::Method(m.method.clone(), None),
+            Some(AwaiterMethod::Dynamic(_)) => ThisCallMethod::DynamicAwaiter,
+            None => ThisCallMethod::None,
+        }),
+        Inst::Match { method, .. } => Some(match method {
+            Some(m) => ThisCallMethod::Method(m.method.clone(), None),
+            None => ThisCallMethod::None,
+        }),
+        _ => None,
     }
+}
+
+/// `IsUsedAsThisPointerInFieldRead`: mcs reads fields of rvalues through temporaries.
+fn is_used_as_this_pointer_in_field_read(
+    f: &Function,
+    ctx: &mut Context<'_, '_, '_>,
+    ldloca: NodeId,
+) -> bool {
+    let Inst::LdLoca { var } = *f.inst(ldloca) else {
+        return false;
+    };
+    if ctx.ts.is_reference_type(f.var(var).ty) == Some(true) {
+        return false;
+    }
+    let mut inst = ldloca;
+    while let Some(p) = f.node(inst).parent
+        && matches!(f.inst(p), Inst::LdFlda { .. })
+    {
+        inst = p;
+    }
+    inst != ldloca
+        && f.node(inst)
+            .parent
+            .is_some_and(|p| matches!(f.inst(p), Inst::LdObj { .. }))
+}
+
+/// `MethodRequiresCopyForReadonlyLValue`.
+fn method_requires_copy_for_readonly_lvalue(
+    ctx: &mut Context<'_, '_, '_>,
+    method: &ThisCallMethod,
+) -> bool {
+    let (m, constrained_to) = match method {
+        ThisCallMethod::None => return true,
+        // `dynamic` is a reference type, which is never copied.
+        ThisCallMethod::DynamicAwaiter => return false,
+        ThisCallMethod::Method(m, constrained_to) => (m, *constrained_to),
+    };
+    if let Some(t) = constrained_to.or(m.declaring)
+        && ctx.ts.is_reference_type(t) == Some(true)
+    {
+        return false;
+    }
+    // No copies for calls on readonly structs and readonly members (`ThisIsRefReadOnly`).
+    if let MethodOrigin::Def(id) = m.origin {
+        let owner = ctx.ts.accessor_owner(id).map(|(o, _)| o);
+        if ctx.ts.method_flags(id, owner).this_read_only {
+            return false;
+        }
+    }
+    true
+}
+
+/// `ExpressionClassification`.
+#[allow(clippy::enum_variant_names)]
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum ExpressionClassification {
+    RValue,
+    MutableLValue,
+    ReadonlyLValue,
+}
+
+/// `ClassifyExpression`: whether the C# of `inst` is an l-value that can mutate a value type.
+fn classify_expression(
+    f: &Function,
+    ctx: &mut Context<'_, '_, '_>,
+    inst: NodeId,
+) -> ExpressionClassification {
+    use ExpressionClassification::*;
+    let lvalue = |readonly: bool| {
+        if readonly {
+            ReadonlyLValue
+        } else {
+            MutableLValue
+        }
+    };
+    match f.inst(inst) {
+        &Inst::LdLoc { var } | &Inst::StLoc { var, .. } => {
+            let v = f.var(var);
+            lvalue(
+                v.is_ref_read_only
+                    || matches!(
+                        v.kind,
+                        VariableKind::ForeachLocal | VariableKind::UsingLocal
+                    ),
+            )
+        }
+        &Inst::LdObj { target, .. } | &Inst::StObj { target, .. } => {
+            lvalue(is_readonly_reference(f, ctx, target))
+        }
+        // Multi-dimensional array getters are l-values.
+        Inst::Call(c) => match c.method.method.declaring.map(|t| ctx.ts.data(t)) {
+            Some(TypeData::Array { .. }) => MutableLValue,
+            _ => RValue,
+        },
+        _ => RValue,
+    }
+}
+
+/// `IsPassedToReadOnlySpanCtor`: `ldloca` as the argument of `new ReadOnlySpan<T>(ref x)`.
+fn is_passed_to_read_only_span_ctor(
+    f: &Function,
+    ctx: &mut Context<'_, '_, '_>,
+    ldloca: NodeId,
+) -> bool {
+    let Some(parent) = f.node(ldloca).parent else {
+        return false;
+    };
+    let Inst::NewObj(c) = f.inst(parent) else {
+        return false;
+    };
+    let m = &c.method.method;
+    m.name == ".ctor"
+        && m.params().is_ok_and(|p| p.len() == 1)
+        && m.declaring
+            .is_some_and(|d| known(ctx, d) == Some(KnownTypeCode::ReadOnlySpanOfT))
+}
+
+/// `IsPassedToInlineArrayAsSpan`: `ldloca` passed to the compiler's
+/// `<PrivateImplementationDetails>.InlineArrayAs(ReadOnly)Span(ref buffer, length)`.
+fn is_passed_to_inline_array_as_span(
+    f: &Function,
+    ctx: &mut Context<'_, '_, '_>,
+    ldloca: NodeId,
+) -> bool {
+    let Some(parent) = f.node(ldloca).parent else {
+        return false;
+    };
+    let Inst::Call(c) = f.inst(parent) else {
+        return false;
+    };
+    let m = &c.method.method;
+    let span_return = matches!(
+        known(ctx, m.ret),
+        Some(KnownTypeCode::SpanOfT | KnownTypeCode::ReadOnlySpanOfT)
+    );
+    let params_match = match m.params().as_deref() {
+        Ok(&[arg, length]) => {
+            matches!(ctx.ts.data(arg), TypeData::ByRef(_))
+                && known(ctx, length) == Some(KnownTypeCode::Int32)
+        }
+        _ => false,
+    };
+    m.declaring
+        .is_some_and(|d| ctx.ts.reflection_name(d) == "<PrivateImplementationDetails>")
+        && matches!(
+            m.name.as_str(),
+            "InlineArrayAsReadOnlySpan" | "InlineArrayAsSpan"
+        )
+        && params_match
+        && span_return
+}
+
+/// `IsGeneratedTemporaryForAddressOf`: whether `ldloca v` may become `addressof(inlined)`.
+fn is_generated_temporary_for_address_of(
+    f: &Function,
+    ctx: &mut Context<'_, '_, '_>,
+    load: NodeId,
+    inlined: NodeId,
+    options: u32,
+) -> bool {
+    use ExpressionClassification::*;
+    // No ldloca inlining in the early inlining stage.
+    if options & options::ALLOW_INLINING_OF_LDLOCA == 0 {
+        return false;
+    }
+    let aggressive = options & options::AGGRESSIVE != 0;
+    if let Some(method) = used_as_this_pointer_in_call(f, ctx, load) {
+        if aggressive {
+            return true;
+        }
+        return match classify_expression(f, ctx, inlined) {
+            RValue => true,
+            MutableLValue => false,
+            ReadonlyLValue => method_requires_copy_for_readonly_lvalue(ctx, &method),
+        };
+    }
+    // shortcut: the engine has no ldelema.inlinearray yet; add its case (always inline) with
+    // InlineArrayTransform.
+    if is_passed_to_read_only_span_ctor(f, ctx, load) {
+        // An `in` or `ref readonly` parameter takes an rvalue; the expression builder copies.
+        return true;
+    }
+    if is_passed_to_inline_array_as_span(f, ctx, load) {
+        // `InlineArrayAsReadOnlySpan(GetInlineArray())` is no valid C#.
+        return false;
+    }
+    if is_passed_to_in_parameter(f, ctx, load) {
+        return aggressive || classify_expression(f, ctx, inlined) == RValue;
+    }
+    if is_used_as_this_pointer_in_field_read(f, ctx, load) {
+        return classify_expression(f, ctx, inlined) == RValue;
+    }
+    false
 }
 
 /// `ILInlining.IsPassedToInParameter`: `ldloca` passed to an `in` parameter of a call.
@@ -605,4 +877,117 @@ pub(crate) fn is_passed_to_in_parameter(
     params
         .get(index - first_param)
         .is_some_and(|p| p.ref_kind == crate::typesystem::members::RefKind::In)
+}
+
+/// `ILInlining.IsCatchWhenBlock`: the block is in the filter of a catch handler.
+pub(crate) fn is_catch_when_block(f: &Function, block: NodeId) -> bool {
+    let Some(container) = std::iter::once(block)
+        .chain(f.ancestors(block))
+        .find(|&n| matches!(f.inst(n), Inst::BlockContainer { .. }))
+    else {
+        return false;
+    };
+    f.node(container).parent.is_some_and(
+        |p| matches!(*f.inst(p), Inst::TryCatchHandler { filter, .. } if filter == container),
+    )
+}
+
+/// `IStatementTransform.Run` of `ILInlining`: inlines into the statement at `pos` until
+/// nothing changes.
+pub fn run_statement(
+    r: &mut ReadFunction,
+    ctx: &mut Context<'_, '_, '_>,
+    block: NodeId,
+    pos: usize,
+    options: u32,
+) {
+    let options = options | options_for_block(r, ctx, block, pos);
+    while inline_one_if_possible(&mut r.function, block, pos, options, ctx) {}
+}
+
+/// `OptionsForBlock`.
+pub(crate) fn options_for_block(
+    r: &mut ReadFunction,
+    ctx: &mut Context<'_, '_, '_>,
+    block: NodeId,
+    pos: usize,
+) -> u32 {
+    let mut result = options::NONE;
+    if ctx.settings.aggressive_inlining || is_catch_when_block(&r.function, block) {
+        result |= options::AGGRESSIVE;
+    } else {
+        // The engine's functions are top-level methods, never delegates or expression trees,
+        // so `PreferExpressionsOverStatements` is false.
+        let inst = r.function.list(block)[pos];
+        if is_in_constructor_initializer(r, ctx, inst) {
+            result |= options::AGGRESSIVE;
+        }
+    }
+    if !ctx.reader.use_ref_locals_for_accurate_order_of_evaluation {
+        result |= options::ALLOW_CHANGING_ORDER_OF_EVALUATION_FOR_EXCEPTIONS;
+    }
+    result
+}
+
+/// `IsInConstructorInitializer`: `inst` and its statement end before the chained
+/// constructor call.
+pub(crate) fn is_in_constructor_initializer(
+    r: &mut ReadFunction,
+    ctx: &mut Context<'_, '_, '_>,
+    inst: NodeId,
+) -> bool {
+    let ctor_call_start = chained_constructor_call_il_offset(r, ctx);
+    let f = &r.function;
+    if f.il_range(inst).end > ctor_call_start {
+        return false;
+    }
+    let in_block = |n: NodeId| {
+        f.node(n)
+            .parent
+            .is_some_and(|p| matches!(f.inst(p), Inst::Block { .. }))
+    };
+    let Some(top_level) = std::iter::once(inst)
+        .chain(f.ancestors(inst))
+        .filter(|&n| in_block(n))
+        .last()
+    else {
+        return false;
+    };
+    f.il_range(top_level).end <= ctor_call_start
+}
+
+/// `ILFunction.ChainedConstructorCallILOffset`: the start of the first `base(...)` or
+/// `this(...)` call statement of an instance constructor, -1 otherwise. Computed once, on
+/// the tree of the first request.
+fn chained_constructor_call_il_offset(r: &mut ReadFunction, ctx: &mut Context<'_, '_, '_>) -> i32 {
+    if let Some(offset) = r.chained_constructor_call_il_offset {
+        return offset;
+    }
+    let is_instance_constructor = ctx
+        .ts
+        .member_name(crate::typesystem::inheritance::MemberDef::Method(r.method))
+        .is_ok_and(|n| n == ".ctor");
+    let f = &r.function;
+    let offset = if is_instance_constructor {
+        f.descendants_post(f.body.expect("function body"))
+            .into_iter()
+            .find(|&d| {
+                let (Inst::Call(c) | Inst::CallVirt(c)) = f.inst(d) else {
+                    return false;
+                };
+                let m = &c.method.method;
+                let is_constructor = m.name == ".ctor" || m.name == ".cctor";
+                is_constructor
+                    && m.declaring
+                        .is_some_and(|t| ctx.ts.is_reference_type(t) == Some(true))
+                    && f.node(d)
+                        .parent
+                        .is_some_and(|p| matches!(f.inst(p), Inst::Block { .. }))
+            })
+            .map_or(-1, |d| f.il_range(d).start)
+    } else {
+        -1
+    };
+    r.chained_constructor_call_il_offset = Some(offset);
+    offset
 }

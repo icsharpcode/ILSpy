@@ -1552,6 +1552,40 @@ field, which C# cannot express. `ArrayInitializers` became settings bit 25.
 The no-op red run failed 481 of 3,550 equality cases, almost all in the runtime assemblies,
 which use such span literals throughout.
 
+### 3.52 StatementTransform and ILInlining with ldloca (item 37, IL prefix 30)
+
+The last leaf of the second block group is a `StatementTransform`. Its children run on each
+statement of a block, from the last one not yet transformed down to the first. A child can
+ask for a position to be run again. The engine's pipeline gained statement leaves.
+Consecutive statement leaves of a group form one statement group, which the block driver
+runs like any other post-order transform (`il/transforms/statement_transform.rs`). The
+first child is ILInlining with `AllowInliningOfLdloca`, which brings several pieces the
+early inlining stage never needed:
+- `OptionsForBlock`: aggressive inlining in catch-when filters, in constructor initializers
+  (before the chained `base(...)`/`this(...)` call, an offset the function computes once and
+  keeps) and under `AggressiveInlining`, the new settings bit 26;
+- `IsGeneratedTemporaryForAddressOf`: an `ldloca` of a temporary becomes `addressof(value)`
+  when the temporary is the `this` of a call, an `in` argument, the argument of a
+  `ReadOnlySpan<T>` constructor or the target of an mcs field read. This depends on the
+  expression's classification (r-value, mutable or read-only l-value) and on whether the
+  method would copy a read-only `this`;
+- the parents that `NonAggressiveInlineInto` was missing: lifted comparisons, `string.to.int`
+  as a switch value, `match`, `ldelema` with `System.Index`, `get.pinnable.reference`.
+
+**The test harness.** In Debug builds, the managed `StatementTransform` checks the
+invariants of every statement after every child. On one runtime method that check reads
+past the end of a stale child list and throws, which a Release build never does. The
+reference already ran the block driver itself, without its Debug checks. Now it runs the
+statement driver the same way, as a Release build does.
+
+**Allowlisted.** Inlining shortens then-branches, so ConditionDetection inverts more ifs
+in the parent blocks. Each inverted if runs ExpressionTransforms, whose NullableLifting part
+is not ported. Eleven methods of `ICSharpCode.Decompiler.dll` joined the NullableLifting
+group, with its reason.
+
+The no-op red run failed 2,131 of 3,550 equality cases. The first port failed 1,175, mostly
+because ldloca inlining was still missing.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

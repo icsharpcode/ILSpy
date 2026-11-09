@@ -25,6 +25,7 @@ pub mod pattern_matching_transform;
 pub mod remove_dead_variable_init;
 pub mod remove_infeasible_path_transform;
 pub mod split_variables;
+pub mod statement_transform;
 pub mod switch_on_nullable_transform;
 pub mod switch_on_string_transform;
 pub mod using_transform;
@@ -59,6 +60,7 @@ pub const SETTING_NAMES: &[&str] = &[
     "IntroduceRefModifiersOnStructs",
     "AnonymousMethods",
     "ArrayInitializers",
+    "AggressiveInlining",
 ];
 
 /// The values of `SETTING_NAMES`.
@@ -90,6 +92,7 @@ pub struct Settings {
     pub introduce_ref_modifiers_on_structs: bool,
     pub anonymous_methods: bool,
     pub array_initializers: bool,
+    pub aggressive_inlining: bool,
 }
 
 impl Settings {
@@ -123,6 +126,7 @@ impl Settings {
             introduce_ref_modifiers_on_structs: bit(23),
             anonymous_methods: bit(24),
             array_initializers: bit(25),
+            aggressive_inlining: bit(26),
         }
     }
 }
@@ -138,13 +142,25 @@ pub struct Context<'t, 'c, 'a> {
 
 /// A pipeline leaf: a whole-function transform, or a post-order block transform of the
 /// `BlockILTransform` group with the given index. Consecutive leaves of one group run in one
-/// pass of the block driver, as the managed group does.
+/// pass of the block driver, as the managed group does. A statement leaf is a child of the
+/// group's `StatementTransform`; consecutive ones share it.
+#[derive(Clone, Copy)]
 enum Leaf {
     Function(fn(&mut ReadFunction, &mut Context<'_, '_, '_>)),
     Block(u8, block_transform::BlockTransform),
+    Statement(u8, statement_transform::StatementTransform),
 }
 
-use Leaf::{Block, Function};
+use Leaf::{Block, Function, Statement};
+
+impl Leaf {
+    fn group(&self) -> Option<u8> {
+        match *self {
+            Function(_) => None,
+            Block(g, _) | Statement(g, _) => Some(g),
+        }
+    }
+}
 
 /// The leaves of the IL pipeline the engine has ported, in run order. `IL_PREFIX` is its
 /// length.
@@ -178,6 +194,15 @@ const PIPELINE: &[Leaf] = &[
     Block(1, using_transform::run),
     Block(1, cached_delegate_initialization::run),
     Block(1, cached_read_only_span_initialization::run),
+    Statement(1, |r, ctx, _, _, block, pos| {
+        il_inlining::run_statement(
+            r,
+            ctx,
+            block,
+            pos,
+            il_inlining::options::ALLOW_INLINING_OF_LDLOCA,
+        )
+    }),
 ];
 
 /// Runs the first `prefix` leaves of the pipeline.
@@ -185,21 +210,27 @@ const PIPELINE: &[Leaf] = &[
 /// # Panics
 /// When `prefix` exceeds `IL_PREFIX`; the FFI layer rejects such requests first.
 pub fn run_prefix(r: &mut ReadFunction, ctx: &mut Context<'_, '_, '_>, prefix: u32) {
+    use block_transform::BlockStep;
     let mut leaves = PIPELINE[..prefix as usize].iter().peekable();
     while let Some(leaf) = leaves.next() {
-        match *leaf {
-            Function(transform) => transform(r, ctx),
-            Block(group, first) => {
-                let mut group_transforms = vec![first];
-                while let Some(&&Block(g, next)) = leaves.peek()
-                    && g == group
-                {
-                    group_transforms.push(next);
-                    leaves.next();
-                }
-                block_transform::run(r, ctx, &group_transforms);
+        let Some(group) = leaf.group() else {
+            if let Function(transform) = *leaf {
+                transform(r, ctx);
             }
+            continue;
+        };
+        let mut steps: Vec<BlockStep> = Vec::new();
+        let mut next = Some(leaf);
+        while let Some(leaf) = next {
+            match (*leaf, steps.last_mut()) {
+                (Statement(_, t), Some(BlockStep::Statements(children))) => children.push(t),
+                (Statement(_, t), _) => steps.push(BlockStep::Statements(vec![t])),
+                (Block(_, t), _) => steps.push(BlockStep::Block(t)),
+                (Function(_), _) => unreachable!("a group leaf"),
+            }
+            next = leaves.next_if(|l| l.group() == Some(group));
         }
+        block_transform::run(r, ctx, &steps);
     }
 }
 

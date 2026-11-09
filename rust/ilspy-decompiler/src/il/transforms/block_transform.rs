@@ -25,9 +25,16 @@ pub struct BlockTransformContext {
 pub type BlockTransform =
     fn(&mut ReadFunction, &mut Context<'_, '_, '_>, &mut BlockTransformContext);
 
+/// A post-order transform of a group: a block transform, or a `StatementTransform` with its
+/// children.
+pub enum BlockStep {
+    Block(BlockTransform),
+    Statements(Vec<super::statement_transform::StatementTransform>),
+}
+
 /// `BlockILTransform.Run` with `post_order` as the post-order transforms (the pipeline has no
 /// pre-order ones).
-pub fn run(r: &mut ReadFunction, ctx: &mut Context<'_, '_, '_>, post_order: &[BlockTransform]) {
+pub fn run(r: &mut ReadFunction, ctx: &mut Context<'_, '_, '_>, post_order: &[BlockStep]) {
     let body = r.function.body.expect("body");
     let containers: Vec<NodeId> = r
         .function
@@ -63,8 +70,13 @@ pub fn run(r: &mut ReadFunction, ctx: &mut Context<'_, '_, '_>, post_order: &[Bl
             bc.node = node;
             bc.block = block;
             bc.index_of_first_already_transformed_instruction = r.function.list(block).len();
-            for transform in post_order {
-                transform(r, ctx, &mut bc);
+            for step in post_order {
+                match step {
+                    BlockStep::Block(transform) => transform(r, ctx, &mut bc),
+                    BlockStep::Statements(children) => {
+                        super::statement_transform::run(r, ctx, &mut bc, children)
+                    }
+                }
             }
         }
     }
