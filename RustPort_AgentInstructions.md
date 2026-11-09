@@ -369,7 +369,7 @@ the reasons. This file holds only the ordered steps, their gates and their rules
   - [x] 33. LockTransform (M)
   - [x] 34. UsingTransform (M)
   - [x] 35. CachedDelegateInitialization (S)
-  - [ ] 36. CachedReadOnlySpanInitialization (S)
+  - [x] 36. CachedReadOnlySpanInitialization (S)
   - [ ] 37. StatementTransform driver and ILInlining with AllowInliningOfLdloca (M)
   - [ ] 38. ExpressionTransforms (L)
   - [ ] 39. DynamicIsEventAssignmentTransform (S)

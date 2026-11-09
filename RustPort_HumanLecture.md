@@ -1541,6 +1541,17 @@ port asked for the type definition, found none and rejected it.
 
 The no-op red run failed 64 of 3,550 equality cases.
 
+### 3.51 CachedReadOnlySpanInitialization (item 36, IL prefix 29)
+
+On frameworks without `RuntimeHelpers.CreateSpan`, Roslyn caches the array behind a
+`ReadOnlySpan<T>` literal in a field of `<PrivateImplementationDetails>`. The transform
+matches the load of the cache, the `if (V == null)` that fills it and the write-back. The
+load then gets the initializer and the if goes away, so the output never names the cache
+field, which C# cannot express. `ArrayInitializers` became settings bit 25.
+
+The no-op red run failed 481 of 3,550 equality cases, almost all in the runtime assemblies,
+which use such span literals throughout.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

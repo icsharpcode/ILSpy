@@ -8,6 +8,7 @@ use super::reader::ReadFunction;
 
 pub mod block_transform;
 pub mod cached_delegate_initialization;
+pub mod cached_read_only_span_initialization;
 pub mod copy_propagation;
 pub mod delegate_construction;
 pub mod detect_catch_when_condition_blocks;
@@ -57,6 +58,7 @@ pub const SETTING_NAMES: &[&str] = &[
     "AsyncUsingAndForEachStatement",
     "IntroduceRefModifiersOnStructs",
     "AnonymousMethods",
+    "ArrayInitializers",
 ];
 
 /// The values of `SETTING_NAMES`.
@@ -87,6 +89,7 @@ pub struct Settings {
     pub async_using_and_for_each_statement: bool,
     pub introduce_ref_modifiers_on_structs: bool,
     pub anonymous_methods: bool,
+    pub array_initializers: bool,
 }
 
 impl Settings {
@@ -119,6 +122,7 @@ impl Settings {
             async_using_and_for_each_statement: bit(22),
             introduce_ref_modifiers_on_structs: bit(23),
             anonymous_methods: bit(24),
+            array_initializers: bit(25),
         }
     }
 }
@@ -173,6 +177,7 @@ const PIPELINE: &[Leaf] = &[
     Block(1, lock_transform::run),
     Block(1, using_transform::run),
     Block(1, cached_delegate_initialization::run),
+    Block(1, cached_read_only_span_initialization::run),
 ];
 
 /// Runs the first `prefix` leaves of the pipeline.
