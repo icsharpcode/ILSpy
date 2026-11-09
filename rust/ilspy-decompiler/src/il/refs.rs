@@ -106,6 +106,7 @@ impl Function {
             Inst::LdLoca { var } => self.update_var_list(id, var, VarList::Address, connect),
             Inst::StLoc { var, .. }
             | Inst::TryCatchHandler { variable: var, .. }
+            | Inst::Match { variable: var, .. }
             | Inst::PinnedRegion { variable: var, .. } => {
                 self.update_var_list(id, var, VarList::Store, connect)
             }
@@ -201,6 +202,7 @@ impl Function {
             | Inst::LdLoca { var: v }
             | Inst::StLoc { var: v, .. }
             | Inst::TryCatchHandler { variable: v, .. }
+            | Inst::Match { variable: v, .. }
             | Inst::PinnedRegion { variable: v, .. } => *v = var,
             other => panic!("{other:?} has no variable"),
         }

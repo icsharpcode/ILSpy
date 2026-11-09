@@ -90,6 +90,7 @@ impl Function {
         match *self.inst(id) {
             Inst::Comp {
                 kind: ComparisonKind::Equality,
+                lifting: super::ast::ComparisonLiftingKind::None,
                 left,
                 right,
                 ..
@@ -174,9 +175,9 @@ impl Function {
     pub fn variable_of(&self, id: NodeId) -> Option<VarId> {
         match *self.inst(id) {
             Inst::LdLoc { var } | Inst::LdLoca { var } | Inst::StLoc { var, .. } => Some(var),
-            Inst::TryCatchHandler { variable, .. } | Inst::PinnedRegion { variable, .. } => {
-                Some(variable)
-            }
+            Inst::TryCatchHandler { variable, .. }
+            | Inst::PinnedRegion { variable, .. }
+            | Inst::Match { variable, .. } => Some(variable),
             _ => None,
         }
     }
@@ -331,7 +332,10 @@ impl Function {
     /// or blocks.
     pub fn slot_can_inline_into(&self, parent: NodeId, index: usize) -> bool {
         match self.inst(parent) {
-            Inst::If { .. } | Inst::Switch { .. } | Inst::PinnedRegion { .. } => index == 0,
+            Inst::If { .. }
+            | Inst::Switch { .. }
+            | Inst::PinnedRegion { .. }
+            | Inst::Match { .. } => index == 0,
             Inst::SwitchSection { .. }
             | Inst::TryCatchHandler { .. }
             | Inst::Block { .. }

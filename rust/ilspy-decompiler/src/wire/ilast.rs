@@ -88,6 +88,7 @@ mod op {
     pub const DYNAMIC: u8 = 66;
     pub const LDC_DECIMAL: u8 = 67;
     pub const STRING_TO_INT: u8 = 68;
+    pub const MATCH: u8 = 69;
     /// A node already written (it has two parents).
     pub const NODE_REFERENCE: u8 = 255;
 }
@@ -523,6 +524,7 @@ impl FunctionWriter<'_, '_, '_, '_> {
             Inst::DebugBreak => tag(op::DEBUG_BREAK, &mut self.out),
             Inst::Comp {
                 kind,
+                lifting,
                 sign,
                 input,
                 left,
@@ -530,6 +532,7 @@ impl FunctionWriter<'_, '_, '_, '_> {
             } => {
                 tag(op::COMP, &mut self.out);
                 self.out.u8(kind as u8);
+                self.out.u8(lifting as u8);
                 self.out.u8(sign as u8);
                 self.stack_type(input);
                 self.node(left)?;
@@ -676,6 +679,29 @@ impl FunctionWriter<'_, '_, '_, '_> {
             Inst::LocAlloc { arg } => {
                 tag(op::LOC_ALLOC, &mut self.out);
                 self.node(arg)?;
+            }
+            Inst::Match {
+                variable,
+                method,
+                tested_operand,
+                sub_patterns,
+                is_deconstruct_call,
+                is_deconstruct_tuple,
+                check_type,
+                check_not_null,
+            } => {
+                tag(op::MATCH, &mut self.out);
+                self.var(variable)?;
+                self.out.u8(u8::from(is_deconstruct_call)
+                    | u8::from(is_deconstruct_tuple) << 1
+                    | u8::from(check_type) << 2
+                    | u8::from(check_not_null) << 3);
+                self.out.bool(method.is_some());
+                if let Some(m) = &method {
+                    self.member(m.token, m.state_machine_context);
+                }
+                self.node(tested_operand)?;
+                self.nodes(&sub_patterns)?;
             }
             Inst::StringToInt { arg, map, ty } => {
                 tag(op::STRING_TO_INT, &mut self.out);

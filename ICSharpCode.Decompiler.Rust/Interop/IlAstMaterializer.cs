@@ -588,11 +588,26 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				66 => Dynamic(),
 				67 => new LdcDecimal(new decimal(new[] { BitConverter.ToInt32(Raw(4), 0), BitConverter.ToInt32(Raw(4), 0), BitConverter.ToInt32(Raw(4), 0), BitConverter.ToInt32(Raw(4), 0) })),
 				68 => StringToInt(),
+				69 => Match(),
 				_ => throw new InvalidOperationException($"Unknown wire opcode {op}"),
 			};
 			inst.SetILRange(range);
 			materialized.Add(inst);
 			return inst;
+		}
+
+		ILInstruction Match()
+		{
+			var variable = Variable();
+			byte flags = U8();
+			IMethod? method = Bool() ? Method() : null;
+			var testedOperand = Node();
+			return new MatchInstruction(variable, method, testedOperand, Nodes()) {
+				IsDeconstructCall = (flags & 1) != 0,
+				IsDeconstructTuple = (flags & 2) != 0,
+				CheckType = (flags & 4) != 0,
+				CheckNotNull = (flags & 8) != 0,
+			};
 		}
 
 		ILInstruction StringToInt()
@@ -607,9 +622,10 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		ILInstruction Comp()
 		{
 			var kind = (ComparisonKind)U8();
+			var lifting = (ComparisonLiftingKind)U8();
 			var sign = (Sign)U8();
 			var input = (StackType)U8();
-			return new Comp(kind, ComparisonLiftingKind.None, input, sign, Node(), Node());
+			return new Comp(kind, lifting, input, sign, Node(), Node());
 		}
 
 		string String()

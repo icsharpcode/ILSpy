@@ -358,7 +358,7 @@ the reasons. This file holds only the ordered steps, their gates and their rules
   - [x] 27. IntroduceRefReadOnlyModifierOnLocals (S)
   - [x] 28. BlockILTransform driver and LoopDetection (L)
   - [x] 29. DetectExitPoints, second occurrence (S, ratchet only)
-  - [ ] 30. PatternMatchingTransform (M)
+  - [x] 30. PatternMatchingTransform (M)
   - [ ] 31. ConditionDetection, inside the second BlockILTransform (L)
   - [ ] 32. **FORK.** Review all allowlisted divergences accumulated so far with the human
         before continuing. Decide whether any of them must be removed (algorithm aligned back

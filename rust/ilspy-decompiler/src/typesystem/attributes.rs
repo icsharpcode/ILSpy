@@ -883,6 +883,22 @@ impl TypeSystem<'_, '_> {
         .ok()
     }
 
+    /// The `ReturnType` of the property of a getter (`AccessorOwner.ReturnType`), with its
+    /// nullability, as seen through the getter's class substitution.
+    pub fn getter_property_type(&mut self, m: &ResolvedMethod) -> Option<TypeId> {
+        let super::resolve::MethodOrigin::Def(id) = m.origin else {
+            return None;
+        };
+        let (owner, semantics) = self.accessor_owner(id)?;
+        if owner >> 24 != 0x17 || semantics != 0x02 {
+            return None;
+        }
+        let (ty, _) = self
+            .property_signature(id.module, owner & 0x00FF_FFFF)
+            .ok()?;
+        Some(self.substitute(ty, m.class_args.as_deref(), None))
+    }
+
     fn is_compiler_generated_or_in_compiler_generated_class(&self, def: TypeDefId) -> bool {
         let mut current = Some(def);
         while let Some(d) = current {

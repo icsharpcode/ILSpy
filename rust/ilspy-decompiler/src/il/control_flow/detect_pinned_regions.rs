@@ -294,6 +294,7 @@ fn apply_custom_ref_pin(
         _ => {
             let null = f.add(Inst::LdNull);
             let condition = f.add(Inst::Comp {
+                lifting: crate::il::ast::ComparisonLiftingKind::None,
                 kind: ComparisonKind::Inequality,
                 sign: Sign::None,
                 input: StackType::Obj,

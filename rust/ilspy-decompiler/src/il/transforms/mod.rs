@@ -15,6 +15,7 @@ pub mod il_inlining;
 pub mod inline_return_transform;
 pub mod introduce_ref_read_only_modifier_on_locals;
 pub mod ldloca_dup_init_obj_transform;
+pub mod pattern_matching_transform;
 pub mod remove_dead_variable_init;
 pub mod remove_infeasible_path_transform;
 pub mod split_variables;
@@ -38,6 +39,10 @@ pub const SETTING_NAMES: &[&str] = &[
     "SwitchStatementOnString",
     "SwitchOnReadOnlySpanChar",
     "LiftNullables",
+    "PatternMatching",
+    "RecursivePatternMatching",
+    "PatternCombinators",
+    "RelationalPatterns",
 ];
 
 /// The values of `SETTING_NAMES`.
@@ -56,6 +61,10 @@ pub struct Settings {
     pub switch_statement_on_string: bool,
     pub switch_on_read_only_span_char: bool,
     pub lift_nullables: bool,
+    pub pattern_matching: bool,
+    pub recursive_pattern_matching: bool,
+    pub pattern_combinators: bool,
+    pub relational_patterns: bool,
 }
 
 impl Settings {
@@ -76,6 +85,10 @@ impl Settings {
             switch_statement_on_string: bit(10),
             switch_on_read_only_span_char: bit(11),
             lift_nullables: bit(12),
+            pattern_matching: bit(13),
+            recursive_pattern_matching: bit(14),
+            pattern_combinators: bit(15),
+            relational_patterns: bit(16),
         }
     }
 }
@@ -115,6 +128,7 @@ const PIPELINE: &[fn(&mut ReadFunction, &mut Context<'_, '_, '_>)] = &[
     introduce_ref_read_only_modifier_on_locals::run,
     |r, ctx| block_transform::run(r, ctx, &[super::control_flow::loop_detection::run]),
     super::control_flow::exit_points::run,
+    pattern_matching_transform::run,
 ];
 
 /// Runs the first `prefix` leaves of the pipeline.

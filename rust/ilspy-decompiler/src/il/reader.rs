@@ -153,6 +153,7 @@ fn conv(
 fn logic_not(f: &mut Function, arg: NodeId) -> NodeId {
     let zero = ldc_i4(f, 0);
     f.add(Inst::Comp {
+        lifting: crate::il::ast::ComparisonLiftingKind::None,
         kind: ComparisonKind::Equality,
         sign: Sign::None,
         input: StackType::I4,
@@ -2290,6 +2291,7 @@ impl<'r, 'c, 'a> Reader<'r, 'c, 'a> {
             let input = self.result_type(left);
             if un {
                 let c = self.add(Inst::Comp {
+                    lifting: crate::il::ast::ComparisonLiftingKind::None,
                     kind: kind.negate(),
                     sign: Sign::None,
                     input,
@@ -2299,6 +2301,7 @@ impl<'r, 'c, 'a> Reader<'r, 'c, 'a> {
                 logic_not(&mut self.f, c)
             } else {
                 self.add(Inst::Comp {
+                    lifting: crate::il::ast::ComparisonLiftingKind::None,
                     kind,
                     sign: Sign::None,
                     input,
@@ -2308,6 +2311,7 @@ impl<'r, 'c, 'a> Reader<'r, 'c, 'a> {
             }
         } else if lt.is_integer() && rt.is_integer() && !kind.is_equality_or_inequality() {
             self.add(Inst::Comp {
+                lifting: crate::il::ast::ComparisonLiftingKind::None,
                 kind,
                 sign: if un { Sign::Unsigned } else { Sign::Signed },
                 input: lt,
@@ -2316,6 +2320,7 @@ impl<'r, 'c, 'a> Reader<'r, 'c, 'a> {
             })
         } else if lt == rt {
             self.add(Inst::Comp {
+                lifting: crate::il::ast::ComparisonLiftingKind::None,
                 kind,
                 sign: Sign::None,
                 input: lt,
@@ -2335,6 +2340,7 @@ impl<'r, 'c, 'a> Reader<'r, 'c, 'a> {
             }
             let input = self.result_type(left);
             self.add(Inst::Comp {
+                lifting: crate::il::ast::ComparisonLiftingKind::None,
                 kind,
                 sign: Sign::None,
                 input,
@@ -2401,6 +2407,7 @@ impl<'r, 'c, 'a> Reader<'r, 'c, 'a> {
             StackType::Obj => {
                 let null = self.add(Inst::LdNull);
                 self.add(Inst::Comp {
+                    lifting: crate::il::ast::ComparisonLiftingKind::None,
                     kind: cmp,
                     sign: Sign::None,
                     input: StackType::Obj,
@@ -2412,6 +2419,7 @@ impl<'r, 'c, 'a> Reader<'r, 'c, 'a> {
                 let zero = ldc_i4(&mut self.f, 0);
                 let zero = self.conv(zero, PrimitiveType::I, false, Sign::None);
                 self.add(Inst::Comp {
+                    lifting: crate::il::ast::ComparisonLiftingKind::None,
                     kind: cmp,
                     sign: Sign::None,
                     input: StackType::I,
@@ -2422,6 +2430,7 @@ impl<'r, 'c, 'a> Reader<'r, 'c, 'a> {
             StackType::I8 => {
                 let zero = self.add(Inst::LdcI8 { value: 0 });
                 self.add(Inst::Comp {
+                    lifting: crate::il::ast::ComparisonLiftingKind::None,
                     kind: cmp,
                     sign: Sign::None,
                     input: StackType::I8,
@@ -2434,6 +2443,7 @@ impl<'r, 'c, 'a> Reader<'r, 'c, 'a> {
                 let zero = ldc_i4(&mut self.f, 0);
                 let zero = self.conv(zero, PrimitiveType::I, false, Sign::None);
                 self.add(Inst::Comp {
+                    lifting: crate::il::ast::ComparisonLiftingKind::None,
                     kind: cmp,
                     sign: Sign::None,
                     input: StackType::I,

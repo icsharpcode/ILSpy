@@ -1478,6 +1478,7 @@ impl YieldReturnDecompiler {
                     sign: Sign::Signed,
                     left,
                     right,
+                    ..
                 } = *f.inst(condition)
                 && f.match_ldloc(left)
                     .is_some_and(|v| self.cached_state_vars.contains(&v))

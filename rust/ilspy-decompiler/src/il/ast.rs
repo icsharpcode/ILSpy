@@ -79,6 +79,10 @@ named_enum!(
     ComparisonKind { Equality, Inequality, LessThan, LessThanOrEqual, GreaterThan, GreaterThanOrEqual }
 );
 named_enum!(
+    /// `ComparisonLiftingKind`.
+    ComparisonLiftingKind { None, CSharp, ThreeValuedLogic }
+);
+named_enum!(
     /// `BlockKind`.
     BlockKind {
         ControlFlow, ArrayInitializer, CollectionInitializer, ObjectInitializer,
@@ -400,6 +404,8 @@ pub enum Inst {
     DebugBreak,
     Comp {
         kind: ComparisonKind,
+        /// `LiftingKind`.
+        lifting: ComparisonLiftingKind,
         sign: Sign,
         input: StackType,
         left: NodeId,
@@ -486,6 +492,18 @@ pub enum Inst {
         map: Vec<(Option<Vec<u16>>, i32)>,
         /// `ExpectedType`: string or a span of char.
         ty: TypeId,
+    },
+    /// `MatchInstruction`: a pattern match of the tested operand, stored in `variable`.
+    Match {
+        variable: VarId,
+        /// The `Deconstruct` method of a positional pattern.
+        method: Option<MethodOperand>,
+        tested_operand: NodeId,
+        sub_patterns: Vec<NodeId>,
+        is_deconstruct_call: bool,
+        is_deconstruct_tuple: bool,
+        check_type: bool,
+        check_not_null: bool,
     },
     Cpblk {
         dest: NodeId,
@@ -837,6 +855,15 @@ impl Inst {
                 c.extend(indices);
                 c
             }
+            Match {
+                tested_operand,
+                sub_patterns,
+                ..
+            } => {
+                let mut c = vec![*tested_operand];
+                c.extend(sub_patterns);
+                c
+            }
         }
     }
 
@@ -989,6 +1016,17 @@ impl Inst {
                     &mut indices[index - 1]
                 }
             }
+            Match {
+                tested_operand,
+                sub_patterns,
+                ..
+            } => {
+                if index == 0 {
+                    tested_operand
+                } else {
+                    &mut sub_patterns[index - 1]
+                }
+            }
             _ => panic!("instruction has no children"),
         };
         *slot = new;
@@ -1016,6 +1054,12 @@ impl Inst {
             Dynamic { .. } => throws | Flags::SIDE_EFFECT,
             DebugBreak => Flags::SIDE_EFFECT,
             Call(_) | CallVirt(_) | NewObj(_) | CallIndirect { .. } => throws | Flags::SIDE_EFFECT,
+            Match { .. } => {
+                Flags::MAY_WRITE_LOCALS
+                    | Flags::SIDE_EFFECT
+                    | Flags::MAY_THROW
+                    | Flags::CONTROL_FLOW
+            }
             Ckfinite { .. }
             | LdVirtFtn { .. }
             | LocAlloc { .. }
@@ -1169,6 +1213,7 @@ impl Function {
             Inst::Switch { sections, .. } => sections,
             Inst::TryCatch { handlers, .. } => handlers,
             Inst::Call(c) | Inst::CallVirt(c) | Inst::NewObj(c) => &mut c.args,
+            Inst::Match { sub_patterns, .. } => sub_patterns,
             Inst::Dynamic { args, .. } => args,
             Inst::NewArr { indices, .. } | Inst::LdElema { indices, .. } => indices,
             other => panic!("{other:?} has no instruction list"),
@@ -1186,7 +1231,10 @@ impl Function {
         // block quadratic.
         let (offset, trailing) = match self.inst(owner) {
             Inst::Block { final_inst, .. } => (0, Some(*final_inst)),
-            Inst::Switch { .. } | Inst::TryCatch { .. } | Inst::LdElema { .. } => (1, None),
+            Inst::Switch { .. }
+            | Inst::TryCatch { .. }
+            | Inst::LdElema { .. }
+            | Inst::Match { .. } => (1, None),
             _ => (0, None),
         };
         let len = self.list(owner).len();
@@ -1303,7 +1351,10 @@ impl Function {
         let node = self.node(id);
         let parent = node.parent.expect("removed node has a parent");
         let offset = match self.inst(parent) {
-            Inst::Switch { .. } | Inst::TryCatch { .. } | Inst::LdElema { .. } => 1,
+            Inst::Switch { .. }
+            | Inst::TryCatch { .. }
+            | Inst::LdElema { .. }
+            | Inst::Match { .. } => 1,
             _ => 0,
         };
         self.remove_at(parent, node.child_index as usize - offset);
@@ -1317,6 +1368,7 @@ impl Function {
             Inst::Switch { sections, .. } => sections,
             Inst::TryCatch { handlers, .. } => handlers,
             Inst::Call(c) | Inst::CallVirt(c) | Inst::NewObj(c) => &c.args,
+            Inst::Match { sub_patterns, .. } => sub_patterns,
             Inst::Dynamic { args, .. } => args,
             Inst::NewArr { indices, .. } | Inst::LdElema { indices, .. } => indices,
             _ => &[],
@@ -1487,7 +1539,9 @@ impl Function {
             | LdMemberToken { .. }
             | MakeRefAny { .. }
             | RefAnyType { .. } => StackType::VT,
-            Comp { .. } | SizeOf { .. } | LdcI4 { .. } | StringToInt { .. } => StackType::I4,
+            Comp { .. } | SizeOf { .. } | LdcI4 { .. } | StringToInt { .. } | Match { .. } => {
+                StackType::I4
+            }
             Call(c) | CallVirt(c) => ts.stack_type(c.method.method.ret),
             NewObj(c) => match c.method.method.declaring {
                 Some(d) => ts.stack_type(d),
@@ -1602,7 +1656,7 @@ impl Function {
             } => find_stack_type(ts, binary_result_type(*op, *left_input, *right_input)),
             BitNot { arg } => self.infer_type(ts, *arg),
             Arglist => known(ts, KnownTypeCode::RuntimeArgumentHandle),
-            Comp { .. } => known(ts, KnownTypeCode::Boolean),
+            Comp { .. } | Match { .. } => known(ts, KnownTypeCode::Boolean),
             Call(c) | CallVirt(c) => c.method.method.ret,
             NewObj(c) => c
                 .method

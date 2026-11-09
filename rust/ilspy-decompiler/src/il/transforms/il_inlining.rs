@@ -389,6 +389,7 @@ fn can_inline_into_slot(
             input,
             left,
             right,
+            ..
         } => {
             // `comp.o` other than (in)equality becomes `Unsafe.As(ref a) op Unsafe.As(ref b)`,
             // which needs variables.

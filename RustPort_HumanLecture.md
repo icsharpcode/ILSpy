@@ -1370,6 +1370,33 @@ switch containers that LoopDetection creates end in a block, so jumps out of the
 following instruction become `leave` instructions of the new container. The no-op red run
 failed 1,487 of 3,550 equality cases; the step passed on its first run.
 
+### 3.46 PatternMatchingTransform (item 30, IL prefix 24)
+
+An `isinst` test whose result is stored in a variable becomes a type pattern,
+`match.type[T].notnull(v = x)`, when the variable is used only where the test succeeded. The
+"only where" check is dominance in the container's graph. Value types follow the same idea
+with their `isinst` and `unbox.any` pair. With recursive patterns on, property and field
+reads of the matched variable then fold into sub-patterns:
+- var patterns, null checks and constant comparisons;
+- `HasValue` checks of nullable properties, which become null patterns or C#-lifted
+  comparisons.
+
+Two pieces joined the arena and the wire:
+- the `match` instruction, a store to its variable, so the use counts treat it like
+  `stloc`;
+- the lifting kind of `comp`, so `match_logic_not` now requires an unlifted comparison, as
+  in the managed matcher.
+
+Four settings became bits 13 to 16.
+
+**One divergence on the first run.** Two methods got a property var pattern in Rust but not
+in managed. The check compares the variable's type with the property's `ReturnType`, which
+carries the property's nullability annotations; the port first used the getter's return
+type, which does not. The type system now answers the property type itself
+(`getter_property_type`), substituted by the getter's class arguments.
+
+The no-op red run failed 381 of 3,550 equality cases.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |
