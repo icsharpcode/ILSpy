@@ -16,6 +16,7 @@ pub mod dynamic_call_site;
 pub mod dynamic_is_event_assignment_transform;
 pub mod early_expression_transforms;
 pub mod expression_transforms;
+pub mod il_extraction;
 pub mod il_inlining;
 pub mod index_range_transform;
 pub mod inline_array_transform;
@@ -33,6 +34,7 @@ pub mod split_variables;
 pub mod statement_transform;
 pub mod switch_on_nullable_transform;
 pub mod switch_on_string_transform;
+pub mod transform_array_initializers;
 pub mod transform_assignment;
 pub mod using_transform;
 
@@ -75,6 +77,8 @@ pub const SETTING_NAMES: &[&str] = &[
     "InlineArrays",
     "ThrowExpressions",
     "NullPropagation",
+    "StackAllocInitializers",
+    "Utf8StringLiterals",
 ];
 
 /// The values of `SETTING_NAMES`.
@@ -115,6 +119,8 @@ pub struct Settings {
     pub inline_arrays: bool,
     pub throw_expressions: bool,
     pub null_propagation: bool,
+    pub stack_alloc_initializers: bool,
+    pub utf8_string_literals: bool,
 }
 
 impl Settings {
@@ -157,6 +163,8 @@ impl Settings {
             inline_arrays: bit(32),
             throw_expressions: bit(33),
             null_propagation: bit(34),
+            stack_alloc_initializers: bit(35),
+            utf8_string_literals: bit(36),
         }
     }
 }
@@ -247,6 +255,7 @@ const PIPELINE: &[Leaf] = &[
     Statement(1, null_coalescing_transform::run),
     Statement(1, nullable_lifting_transform::run_statement),
     Statement(1, null_propagation_transform::run_statement),
+    Statement(1, transform_array_initializers::run),
 ];
 
 /// Runs the first `prefix` leaves of the pipeline.
@@ -260,6 +269,7 @@ pub fn run_prefix(r: &mut ReadFunction, ctx: &mut Context<'_, '_, '_>, prefix: u
         let Some(group) = leaf.group() else {
             if let Function(transform) = *leaf {
                 transform(r, ctx);
+                r.flush_pending_variables();
             }
             continue;
         };
@@ -301,8 +311,8 @@ impl ReadFunction {
         let (name, has_generated_name) = match name {
             Some(n) if !n.trim().is_empty() => (n, false),
             _ => {
-                let n = format!("I_{}", self.helper_variable_count);
-                self.helper_variable_count += 1;
+                let n = format!("I_{}", self.function.helper_variable_count);
+                self.function.helper_variable_count += 1;
                 (n, true)
             }
         };
@@ -323,8 +333,14 @@ impl ReadFunction {
             store_instructions: Vec::new(),
             address_instructions: Vec::new(),
         });
+        self.flush_pending_variables();
         self.variables.push(v);
         v
+    }
+
+    /// Appends the variables `Function::register_variable` created to the variable list.
+    pub fn flush_pending_variables(&mut self) {
+        self.variables.append(&mut self.function.pending_variables);
     }
 }
 

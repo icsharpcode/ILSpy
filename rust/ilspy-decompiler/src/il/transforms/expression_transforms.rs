@@ -1057,8 +1057,15 @@ fn visit_call(f: &mut Function, ctx: &mut Context<'_, '_, '_>, inst: NodeId) {
         visit(f, ctx, replacement);
         return;
     }
-    // shortcut: TransformArrayInitializers.TransformRuntimeHelpersCreateSpanInitialization is
-    // not ported yet; it comes with TransformArrayInitializers (item 44).
+    if let Some(replacement) =
+        super::transform_array_initializers::transform_runtime_helpers_create_span_initialization(
+            f, ctx, inst,
+        )
+    {
+        f.replace(inst, replacement);
+        visit(f, ctx, replacement);
+        return;
+    }
     visit_children(f, ctx, inst);
     if ctx.settings.inline_arrays && super::inline_array_transform::run_on_expression(f, ctx, inst)
     {
@@ -1136,8 +1143,12 @@ fn visit_new_obj(f: &mut Function, ctx: &mut Context<'_, '_, '_>, inst: NodeId) 
         }
         return;
     }
-    // shortcut: TransformArrayInitializers.TransformSpanTArrayInitialization is not ported
-    // yet; it comes with TransformArrayInitializers (item 44).
+    if let Some(replacement) =
+        super::transform_array_initializers::transform_span_t_array_initialization(f, ctx, inst)
+    {
+        f.replace(inst, replacement);
+        return;
+    }
     if let Some(delegate) = transform_delegate_ctor_ld_virt_ftn_to_ld_virt_delegate(f, ctx, inst) {
         f.replace(inst, delegate);
         return;

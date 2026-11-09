@@ -68,6 +68,7 @@ pub fn run(
         }
         for transform in children {
             transform(r, ctx, bc, &mut sc, block, pos as usize);
+            r.flush_pending_variables();
             // A request from a transform that runs without the statement context.
             if std::mem::take(&mut ctx.rerun_requested) {
                 sc.request_rerun();

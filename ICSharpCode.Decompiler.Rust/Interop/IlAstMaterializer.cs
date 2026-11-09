@@ -612,6 +612,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				80 => new ThreeValuedBoolOr(Node(), Node()),
 				81 => NullableUnwrap(),
 				82 => NullableRewrap(),
+				83 => new LdStrUtf8(String()),
 				_ => throw new InvalidOperationException($"Unknown wire opcode {op}"),
 			};
 			inst.SetILRange(range);

@@ -401,6 +401,47 @@ impl TypeSystem<'_, '_> {
         }
     }
 
+    /// `MetadataModule.FindMethod(declaringType, name, signature)` for a static method without
+    /// type parameters: the method `declaring` (specialized as it is) declares with these
+    /// parameter and return types.
+    pub fn find_static_method(
+        &mut self,
+        declaring: TypeId,
+        name: &str,
+        ret: TypeId,
+        params: &[TypeId],
+    ) -> Result<Option<ResolvedMethod>> {
+        let Some(def) = self.definition(declaring) else {
+            return Ok(None);
+        };
+        let class = self.type_arguments(declaring);
+        for (m, kind) in self.definition_methods(def)? {
+            if kind == SymbolKind::Constructor
+                || m.name != name
+                || !m.is_static
+                || !m.type_args.is_empty()
+            {
+                continue;
+            }
+            let m = if class.is_empty() {
+                m
+            } else {
+                self.specialize(m, Some(class.clone()), None)
+            };
+            if m.base_params.len() == params.len()
+                && m.base_params
+                    .clone()
+                    .iter()
+                    .zip(params)
+                    .all(|(a, b)| self.same_type(*b, *a))
+                && self.same_type(m.ret, ret)
+            {
+                return Ok(Some(m));
+            }
+        }
+        Ok(None)
+    }
+
     /// `MetadataModule.FindMethod` on a type definition.
     fn find_method(
         &mut self,

@@ -71,8 +71,6 @@ pub struct ReadFunction {
     pub local_signature_length: usize,
     pub warnings: Vec<String>,
     pub sequence_point_candidates: Vec<i32>,
-    /// `ILFunction.helperVariableCount`: how many `I_n` variables `RegisterVariable` named.
-    pub helper_variable_count: u32,
     /// `IsIterator`, `StateMachineCompiledWithMono`, `StateMachineCompiledWithLegacyVisualBasic`.
     pub is_iterator: bool,
     pub state_machine_compiled_with_mono: bool,
@@ -2725,7 +2723,6 @@ impl<'r, 'c, 'a> Reader<'r, 'c, 'a> {
             async_return_type: self.async_return_type,
             warnings,
             sequence_point_candidates: self.sequence_point_candidates,
-            helper_variable_count: 0,
             method: self.method_id,
             is_iterator: false,
             state_machine_compiled_with_mono: false,

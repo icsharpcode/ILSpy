@@ -1751,6 +1751,40 @@ The no-op red run failed 488 of 3,550 equality cases. The port then matched ever
 outside the allowlist, which shrinks from 3,771 to 1,049 entries; two newly visible array
 initializer cases are allowlisted for item 44.
 
+### 3.59 TransformArrayInitializers (item 44, IL prefix 37)
+
+The compiler fills a new array element by element, or copies constant data into it with
+`RuntimeHelpers.InitializeArray`. The transform folds these back into one array initializer
+block (`new int[] { 1, 2, 3 }`):
+- one- and multi-dimensional arrays, including element stores mixed with constant data and
+  nested (jagged) arrays;
+- `stackalloc` buffers filled by `cpblk`, `initblk` or stores at increasing offsets;
+- `ReadOnlySpan<T>` over field data (`new ReadOnlySpan<T>(ptr, n)` and
+  `RuntimeHelpers.CreateSpan<T>`), which ExpressionTransforms turns into an array
+  initializer or a UTF-8 string literal (`ldstr.utf8`, the new wire opcode 83).
+
+The constant data sits in a field with an RVA. The port reads it from the PE section, sized
+like the managed `FieldValueSizeDecoder` (primitives, pointers, and the class size of a
+struct), always from the main module, as the managed code does.
+
+Two pieces of infrastructure came with this step:
+- `ILInstruction.Extract`, the opposite of inlining. It moves an expression out into a
+  store to a new stack slot; the `stackalloc` initializer uses it for a buffer that goes
+  straight into a `Span<T>` constructor.
+- `Function::register_variable`. The span rewrites run inside ExpressionTransforms, which
+  sees only the function tree, so the `I_n` counter moved into `Function`. New variables wait
+  in a pending list that the transform drivers append to the variable list after each step,
+  which keeps the managed registration order.
+
+The settings bits 36 and 37 are `StackAllocInitializers` and `Utf8StringLiterals`.
+
+The no-op red run (with the expression transform hooks already in place, item 44 entries
+removed) failed 835 of 3,550 equality cases. The first green run left 22 divergences: the
+`stackalloc` element stores keep their own type (`RewrapStore` uses the store's type, not
+the element type it is given), and buffers that feed a `Span<T>` need the extraction. After
+both fixes the port matched every case outside the allowlist, which shrinks from 1,049 to
+413 entries.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

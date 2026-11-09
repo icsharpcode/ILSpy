@@ -102,6 +102,7 @@ mod op {
     pub const THREE_VALUED_BOOL_OR: u8 = 80;
     pub const NULLABLE_UNWRAP: u8 = 81;
     pub const NULLABLE_REWRAP: u8 = 82;
+    pub const LD_STR_UTF8: u8 = 83;
     /// A node already written (it has two parents).
     pub const NODE_REFERENCE: u8 = 255;
 }
@@ -272,7 +273,7 @@ impl FunctionWriter<'_, '_, '_, '_> {
             }
             None => self.out.u8(0),
         }
-        self.out.uvar(u64::from(r.helper_variable_count));
+        self.out.uvar(u64::from(r.function.helper_variable_count));
         self.out.u8(u8::from(r.is_iterator)
             | u8::from(r.state_machine_compiled_with_mono) << 1
             | u8::from(r.state_machine_compiled_with_legacy_visual_basic) << 2);
@@ -668,6 +669,14 @@ impl FunctionWriter<'_, '_, '_, '_> {
                 tag(op::ADDRESS_OF, &mut self.out);
                 self.ty(ty.ty);
                 self.node(value)?;
+            }
+            Inst::LdStrUtf8 { value } => {
+                tag(op::LD_STR_UTF8, &mut self.out);
+                let units: Vec<u16> = value.encode_utf16().collect();
+                self.out.len(units.len());
+                for u in units {
+                    self.out.raw(&u.to_le_bytes());
+                }
             }
             Inst::LdStr { value } => {
                 tag(op::LD_STR, &mut self.out);

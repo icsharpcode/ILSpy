@@ -478,6 +478,10 @@ pub enum Inst {
     LdStr {
         value: Vec<u16>,
     },
+    /// `ldstr.utf8`: a UTF-8 string literal (`"..."u8`), a `ReadOnlySpan<byte>`.
+    LdStrUtf8 {
+        value: String,
+    },
     LdcI4 {
         value: i32,
     },
@@ -877,6 +881,7 @@ impl Inst {
             | LdLoc { .. }
             | LdLoca { .. }
             | LdStr { .. }
+            | LdStrUtf8 { .. }
             | LdcI4 { .. }
             | LdcI8 { .. }
             | LdcF4 { .. }
@@ -1333,6 +1338,11 @@ pub struct Function {
     pub is_instance_constructor: bool,
     /// `ChainedConstructorCallILOffset`, computed on first use and kept.
     pub chained_constructor_call_il_offset: Option<i32>,
+    /// `ILFunction.helperVariableCount`: how many `I_n` variables `RegisterVariable` named.
+    pub helper_variable_count: u32,
+    /// Variables `register_variable` created that the variable list does not hold yet
+    /// (`ReadFunction::flush_pending_variables`).
+    pub pending_variables: Vec<VarId>,
 }
 
 impl Function {
@@ -1359,6 +1369,37 @@ impl Function {
     pub fn add_var(&mut self, v: Variable) -> VarId {
         self.variables.push(v);
         VarId(self.variables.len() as u32 - 1)
+    }
+
+    /// `ILFunction.RegisterVariable` for code that sees only the function: a new variable
+    /// named `I_n`, which joins the variable list when the transform drivers flush it.
+    pub fn register_variable(
+        &mut self,
+        ts: &mut TypeSystem<'_, '_>,
+        kind: VariableKind,
+        ty: TypeId,
+    ) -> VarId {
+        let name = format!("I_{}", self.helper_variable_count);
+        self.helper_variable_count += 1;
+        let stack_type = ts.stack_type(ty);
+        let v = self.add_var(Variable {
+            kind,
+            ty,
+            stack_type,
+            index: None,
+            name,
+            has_generated_name: true,
+            initial_value_is_initialized: false,
+            uses_initial_value: false,
+            is_ref_read_only: false,
+            remove_if_redundant: false,
+            state_machine_field: None,
+            load_instructions: Vec::new(),
+            store_instructions: Vec::new(),
+            address_instructions: Vec::new(),
+        });
+        self.pending_variables.push(v);
+        v
     }
 
     /// Adds a node; its children become its own (their parent and child index are set).
@@ -1852,6 +1893,7 @@ impl Function {
             | LdElema { .. }
             | RefAnyValue { .. } => StackType::Ref,
             LdStr { .. } | LdNull | IsInst { .. } | Box { .. } | NewArr { .. } => StackType::Obj,
+            LdStrUtf8 { .. } => StackType::VT,
             LdcI8 { .. } => StackType::I8,
             LdcF4 { .. } => StackType::F4,
             LdcF8 { .. } => StackType::F8,
@@ -2011,6 +2053,14 @@ impl Function {
             | LdElema { ty, .. }
             | RefAnyValue { ty, .. } => by_ref(ts, ty.ty),
             LdStr { .. } => known(ts, KnownTypeCode::String),
+            LdStrUtf8 { .. } => {
+                let generic = known(ts, KnownTypeCode::ReadOnlySpanOfT);
+                let byte = known(ts, KnownTypeCode::Byte);
+                ts.intern(TypeData::Inst {
+                    generic,
+                    args: std::boxed::Box::new([byte]),
+                })
+            }
             LdcI4 { .. } | SizeOf { .. } | StringToInt { .. } => known(ts, KnownTypeCode::Int32),
             LdcI8 { .. } => known(ts, KnownTypeCode::Int64),
             LdcF4 { .. } => known(ts, KnownTypeCode::Single),
