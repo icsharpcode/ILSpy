@@ -7,7 +7,9 @@ use super::control_flow::control_flow_simplification::ControlFlowSimplification;
 use super::reader::ReadFunction;
 
 pub mod block_transform;
+pub mod cached_delegate_initialization;
 pub mod copy_propagation;
+pub mod delegate_construction;
 pub mod detect_catch_when_condition_blocks;
 pub mod dynamic_call_site;
 pub mod early_expression_transforms;
@@ -54,6 +56,7 @@ pub const SETTING_NAMES: &[&str] = &[
     "UsingStatement",
     "AsyncUsingAndForEachStatement",
     "IntroduceRefModifiersOnStructs",
+    "AnonymousMethods",
 ];
 
 /// The values of `SETTING_NAMES`.
@@ -83,6 +86,7 @@ pub struct Settings {
     pub using_statement: bool,
     pub async_using_and_for_each_statement: bool,
     pub introduce_ref_modifiers_on_structs: bool,
+    pub anonymous_methods: bool,
 }
 
 impl Settings {
@@ -114,6 +118,7 @@ impl Settings {
             using_statement: bit(21),
             async_using_and_for_each_statement: bit(22),
             introduce_ref_modifiers_on_structs: bit(23),
+            anonymous_methods: bit(24),
         }
     }
 }
@@ -167,6 +172,7 @@ const PIPELINE: &[Leaf] = &[
     Block(1, super::control_flow::condition_detection::run),
     Block(1, lock_transform::run),
     Block(1, using_transform::run),
+    Block(1, cached_delegate_initialization::run),
 ];
 
 /// Runs the first `prefix` leaves of the pipeline.

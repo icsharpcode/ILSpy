@@ -368,7 +368,7 @@ the reasons. This file holds only the ordered steps, their gates and their rules
         ports its transform. Policy unchanged.
   - [x] 33. LockTransform (M)
   - [x] 34. UsingTransform (M)
-  - [ ] 35. CachedDelegateInitialization (S)
+  - [x] 35. CachedDelegateInitialization (S)
   - [ ] 36. CachedReadOnlySpanInitialization (S)
   - [ ] 37. StatementTransform driver and ILInlining with AllowInliningOfLdloca (M)
   - [ ] 38. ExpressionTransforms (L)

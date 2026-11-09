@@ -1522,6 +1522,25 @@ change that adds methods can do the same.
 
 The no-op red run failed 756 of 3,550 equality cases.
 
+### 3.50 CachedDelegateInitialization (item 35, IL prefix 28)
+
+The compilers cache the delegates of lambdas and method groups. The cache lives in a static
+field (the older C# compilers and Mono), in a local (Roslyn), or in a stack slot (VB). The
+transform removes the `if (cache == null) cache = new D(...)` check and puts the delegate
+construction where the cache is read. It covers all seven managed shapes, including the
+discarded method-group conversion, which keeps the construction and drops the caching.
+`AnonymousMethods` became settings bit 24. The construction matcher went into its own
+module, `il/transforms/delegate_construction.rs`, where the rest of DelegateConstruction
+will follow in item 56. Without `ldvirtdelegate` and nested functions, it matches
+`newobj D(target, ldftn/ldvirtftn M)`.
+
+**Kinds of parameterized types.** The matcher accepts a delegate type, or a type of unknown
+kind. A parameterized type takes its kind from its generic type. So `Action<Hidden>` over
+an `Action` the fixture cannot resolve counts as unknown, and managed accepts it. The first
+port asked for the type definition, found none and rejected it.
+
+The no-op red run failed 64 of 3,550 equality cases.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |
