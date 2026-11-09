@@ -277,3 +277,39 @@ impl TypeSystem<'_, '_> {
         }
     }
 }
+
+impl TypeSystem<'_, '_> {
+    /// `IField.IsReadOnly`: an `initonly` field.
+    pub fn field_is_read_only(&self, field: &super::resolve::ResolvedField) -> bool {
+        let super::resolve::FieldOrigin::Def { module, row } = field.origin else {
+            return false;
+        };
+        let md = &self.comp.module(module).md;
+        md.get::<rows::Field>(row)
+            .is_ok_and(|f| f.flags & 0x0020 != 0)
+    }
+
+    /// `IField.ReturnTypeIsRefReadOnly`: a `ref readonly` field (`[IsReadOnly]`).
+    pub fn field_return_type_is_ref_read_only(
+        &self,
+        field: &super::resolve::ResolvedField,
+    ) -> bool {
+        let super::resolve::FieldOrigin::Def { module, row } = field.origin else {
+            return false;
+        };
+        let md = &self.comp.module(module).md;
+        has_compiler_attribute(md, TableId::Field, row, "IsReadOnlyAttribute")
+    }
+
+    /// `IMethod.ReturnTypeIsRefReadOnly`.
+    pub fn method_return_type_is_ref_read_only(
+        &mut self,
+        m: &super::resolve::ResolvedMethod,
+    ) -> bool {
+        let super::resolve::MethodOrigin::Def(id) = m.origin else {
+            return false;
+        };
+        let owner = self.accessor_owner(id).map(|(o, _)| o);
+        self.method_flags(id, owner).return_read_only
+    }
+}

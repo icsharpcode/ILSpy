@@ -1311,6 +1311,25 @@ just before it remove stores and copies, which leaves more variables whose uses 
 into independent groups. The no-op red run failed 1,153 of 3,550 equality cases; the step
 passed on its first run.
 
+### 3.43 IntroduceRefReadOnlyModifierOnLocals (item 27, IL prefix 21)
+
+A by-ref local becomes `ref readonly` in either of two cases:
+- C# allows one of its stores only into a readonly reference.
+- One of its stores reaches, through field addresses, a `readonly.ldelema`, whose semantics
+  a plain `ref` would change.
+
+The test is `ILInlining.IsReadonlyReference`, which the port adds next to the inlining code,
+where later inlining steps will need it as well. It needs three attributes the type system did
+not expose yet:
+- `initonly` on fields;
+- `[IsReadOnly]` on `ref readonly` fields;
+- `return_read_only` on methods.
+
+The flags already decode them, so each is a small accessor. Variables already carried
+`IsRefReadOnly` in the wire.
+
+The no-op red run failed 69 of 3,550 equality cases; the step passed on its first run.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

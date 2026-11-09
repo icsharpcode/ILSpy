@@ -355,7 +355,7 @@ the reasons. This file holds only the ordered steps, their gates and their rules
   - [x] 24. SwitchOnStringTransform (M)
   - [x] 25. SwitchOnNullableTransform (M)
   - [x] 26. SplitVariables, third occurrence (S, ratchet only)
-  - [ ] 27. IntroduceRefReadOnlyModifierOnLocals (S)
+  - [x] 27. IntroduceRefReadOnlyModifierOnLocals (S)
   - [ ] 28. BlockILTransform driver and LoopDetection (L)
   - [ ] 29. DetectExitPoints, second occurrence (S, ratchet only)
   - [ ] 30. PatternMatchingTransform (M)

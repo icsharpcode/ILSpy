@@ -12,6 +12,7 @@ pub mod dynamic_call_site;
 pub mod early_expression_transforms;
 pub mod il_inlining;
 pub mod inline_return_transform;
+pub mod introduce_ref_read_only_modifier_on_locals;
 pub mod ldloca_dup_init_obj_transform;
 pub mod remove_dead_variable_init;
 pub mod remove_infeasible_path_transform;
@@ -110,6 +111,7 @@ const PIPELINE: &[fn(&mut ReadFunction, &mut Context<'_, '_, '_>)] = &[
     switch_on_string_transform::run,
     switch_on_nullable_transform::run,
     split_variables::run,
+    introduce_ref_read_only_modifier_on_locals::run,
 ];
 
 /// Runs the first `prefix` leaves of the pipeline.
