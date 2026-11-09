@@ -26,11 +26,14 @@ using System.Runtime.CompilerServices;
 using System.Text.Json;
 
 using ICSharpCode.Decompiler.CSharp;
+using ICSharpCode.Decompiler.FlowAnalysis;
 using ICSharpCode.Decompiler.IL;
+using ICSharpCode.Decompiler.IL.ControlFlow;
 using ICSharpCode.Decompiler.IL.Transforms;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.Rust.Interop;
 using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.Decompiler.Util;
 
 using NUnit.Framework;
 
@@ -139,13 +142,49 @@ public class IlAstPrefixEqualityTests
 			// methods that the checks reject (an instruction shared by two blocks).
 			var context = new ILTransformContext(function, ts, null, settings);
 			foreach (var transform in Truncate(CSharpDecompiler.GetILTransforms(), prefix))
-				transform.Run(function, context);
+			{
+				if (transform is BlockILTransform blockTransform)
+					RunBlockTransforms(blockTransform, function, context);
+				else
+					transform.Run(function, context);
+			}
 			return IlAstReadEqualityTests.Print(function);
 		}
 		catch (Exception ex)
 		{
 			error = ex.GetType().Name + ": " + ex.Message;
 			return null;
+		}
+	}
+
+	/// <summary>
+	/// <c>BlockILTransform.Run</c> without the Debug-only invariant checks of
+	/// <c>Block.RunTransforms</c>, for the same reason as the loop above.
+	/// </summary>
+	static void RunBlockTransforms(BlockILTransform blockTransform, ILFunction function, ILTransformContext context)
+	{
+		var blockContext = new BlockTransformContext(context);
+		foreach (var container in function.Descendants.OfType<BlockContainer>().ToList())
+		{
+			var cfg = new ControlFlowGraph(container, context.CancellationToken);
+			blockContext.ControlFlowGraph = cfg;
+			IEnumerable<ControlFlowNode> Preorder(ControlFlowNode node)
+			{
+				Run(node, blockTransform.PreOrderTransforms);
+				return node.DominatorTreeChildren;
+			}
+			foreach (var node in TreeTraversal.PostOrder(cfg.GetNode(container.EntryPoint), Preorder))
+				Run(node, blockTransform.PostOrderTransforms);
+		}
+
+		void Run(ControlFlowNode node, IList<IBlockTransform> transforms)
+		{
+			var block = (Block)node.UserData;
+			blockContext.ControlFlowNode = node;
+			blockContext.Block = block;
+			blockContext.IndexOfFirstAlreadyTransformedInstruction = block.Instructions.Count;
+			foreach (var transform in transforms)
+				transform.Run(block, blockContext);
 		}
 	}
 

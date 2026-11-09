@@ -1330,6 +1330,39 @@ The flags already decode them, so each is a small accessor. Variables already ca
 
 The no-op red run failed 69 of 3,550 equality cases; the step passed on its first run.
 
+### 3.44 BlockILTransform and LoopDetection (item 28, IL prefix 22)
+
+`BlockILTransform` is the first nested group of the pipeline. For each container, it does
+three things:
+- builds the control flow graph once, before any transform runs;
+- walks the dominator tree in post-order;
+- calls the per-block transforms on each block.
+
+The Rust driver (`il/transforms/block_transform.rs`) takes the transforms as function pointers
+and carries the graph's `Visited` flags as a vector in its context, because LoopDetection
+keeps state there across blocks. The second `BlockILTransform` (item 31 on) reuses the driver.
+
+**LoopDetection** works in three steps:
+- A block with a back edge from a block it dominates heads a loop: the natural loop plus the
+  blocks dominated by the head up to a single exit point.
+- The exit point is found on the post-dominator tree of a reversed graph. When that fails,
+  the loop extends heuristically to reduce the number of exits.
+- The loop's blocks move into a new loop container. The body of a switch moves into a switch
+  container the same way.
+
+The managed recursions over the graph (dominator-tree walks, predecessor searches) became
+explicit stacks in the same visiting order, so deep graphs cannot overflow the native stack.
+
+**The equality reference.** The test's managed reference stands for a Release pipeline, but
+`BlockILTransform` runs `Block.CheckInvariant` (Debug only) before each block. On two methods,
+that check threw on a tree the switch transforms leave with an instruction shared by two
+blocks, so the reference reported an error where the engine (correctly) did not. The
+reference now drives the block transforms itself without those checks, as it already did for
+the top-level pipeline, and the allowlist stays empty.
+
+The no-op red run failed 1,670 of 3,550 equality cases; the port passed all but those two on
+its first run.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

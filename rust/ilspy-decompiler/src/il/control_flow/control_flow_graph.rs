@@ -83,6 +83,21 @@ impl ControlFlowGraph {
         cfg
     }
 
+    /// A graph of given nodes and edges (no container) with the dominator tree from `entry`
+    /// (`Dominance.ComputeDominance`); exits are not computed.
+    pub fn from_nodes(nodes: Vec<CfgNode>, entry: usize) -> Self {
+        let n = nodes.len();
+        let mut cfg = ControlFlowGraph {
+            container: NodeId(0),
+            nodes,
+            index: HashMap::new(),
+            direct_exit: BitSet::new(n),
+            reachable_exit: BitSet::new(n),
+        };
+        cfg.compute_dominance(entry);
+        cfg
+    }
+
     fn add_edge(&mut self, from: usize, to: usize) {
         self.nodes[from].successors.push(to);
         self.nodes[to].predecessors.push(from);
@@ -192,7 +207,7 @@ impl ControlFlowGraph {
         out
     }
 
-    fn find_common_dominator(&self, mut a: usize, mut b: usize) -> usize {
+    pub(crate) fn find_common_dominator(&self, mut a: usize, mut b: usize) -> usize {
         while a != b {
             while self.nodes[a].post_order_number < self.nodes[b].post_order_number {
                 a = self.nodes[a].immediate_dominator.expect("dominator");

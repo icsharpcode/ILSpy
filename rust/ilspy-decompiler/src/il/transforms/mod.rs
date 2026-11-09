@@ -6,6 +6,7 @@ use crate::typesystem::types::TypeSystem;
 use super::control_flow::control_flow_simplification::ControlFlowSimplification;
 use super::reader::ReadFunction;
 
+pub mod block_transform;
 pub mod copy_propagation;
 pub mod detect_catch_when_condition_blocks;
 pub mod dynamic_call_site;
@@ -112,6 +113,7 @@ const PIPELINE: &[fn(&mut ReadFunction, &mut Context<'_, '_, '_>)] = &[
     switch_on_nullable_transform::run,
     split_variables::run,
     introduce_ref_read_only_modifier_on_locals::run,
+    |r, ctx| block_transform::run(r, ctx, &[super::control_flow::loop_detection::run]),
 ];
 
 /// Runs the first `prefix` leaves of the pipeline.

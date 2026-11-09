@@ -1286,8 +1286,15 @@ impl Function {
         let container = self.node(block).parent.expect("block in a container");
         let index = self.node(block).child_index as usize;
         assert!(index > 0, "the entry point cannot be removed");
+        self.swap_remove_block_at(container, index);
+    }
+
+    /// `Blocks.SwapRemoveAt`: takes the block at `index` (not the entry point) out of the
+    /// container by moving the last block into its place.
+    pub fn swap_remove_block_at(&mut self, container: NodeId, index: usize) {
+        assert!(index > 0, "the entry point cannot be removed");
         let mut blocks = self.list(container).to_vec();
-        blocks.swap_remove(index);
+        let block = blocks.swap_remove(index);
         self.replace_items(container, blocks, vec![(block, false)]);
     }
 

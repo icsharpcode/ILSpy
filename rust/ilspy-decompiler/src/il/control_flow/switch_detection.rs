@@ -422,12 +422,12 @@ fn is_single_condition(f: &Function, cfg: &ControlFlowGraph, flow: &Flow, root: 
 
 /// `LoopContext`: the continue targets of the loops around a node, by depth (1 for the
 /// innermost loop). A branch to one of them becomes a `continue`.
-struct LoopContext {
+pub(crate) struct LoopContext {
     continue_depth: HashMap<usize, usize>,
 }
 
 impl LoopContext {
-    fn new(f: &Function, cfg: &ControlFlowGraph, context: usize) -> Self {
+    pub(crate) fn new(f: &Function, cfg: &ControlFlowGraph, context: usize) -> Self {
         // The loop heads: the nodes reachable from `context` that dominate it (`Analyze`, a
         // depth-first search that stops at them).
         let mut loop_heads = Vec::new();
@@ -466,13 +466,18 @@ impl LoopContext {
         LoopContext { continue_depth }
     }
 
-    fn match_continue(&self, n: usize) -> bool {
+    /// `MatchContinue(node, depth)`.
+    pub(crate) fn match_continue_depth(&self, n: usize, depth: usize) -> bool {
+        self.continue_depth.get(&n) == Some(&depth)
+    }
+
+    pub(crate) fn match_continue(&self, n: usize) -> bool {
         self.continue_depth.contains_key(&n)
     }
 
     /// `GetBreakTargets`: the successors that leave the dominator tree of `dominator` (with
     /// continue nodes cut off), once per edge; labelled continues count as breaks.
-    fn break_targets(&self, cfg: &ControlFlowGraph, dominator: usize) -> Vec<usize> {
+    pub(crate) fn break_targets(&self, cfg: &ControlFlowGraph, dominator: usize) -> Vec<usize> {
         let mut out = Vec::new();
         let mut stack = vec![dominator];
         while let Some(n) = stack.pop() {
