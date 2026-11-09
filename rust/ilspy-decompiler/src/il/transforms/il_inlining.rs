@@ -260,11 +260,19 @@ fn non_aggressive_inline_into(
     if is_nullable_ctor(f, ctx, parent) {
         parent = f.node(parent).parent.expect("nullable ctor has a parent");
     }
-    // shortcut: of the liftable instructions only `comp` exists in the engine yet; add the
-    // others when NullableLiftingTransform creates them.
-    if let Inst::Comp { lifting, .. } = f.inst(parent)
-        && *lifting != ComparisonLiftingKind::None
-    {
+    // `ILiftableInstruction.IsLifted`.
+    let lifted = match f.inst(parent) {
+        Inst::Comp { lifting, .. } => *lifting != ComparisonLiftingKind::None,
+        Inst::BinaryNumeric { is_lifted, .. } | Inst::Conv { is_lifted, .. } => *is_lifted,
+        Inst::NumericCompoundAssign { is_lifted, .. } => *is_lifted,
+        Inst::BitNot {
+            lifted_underlying, ..
+        } => lifted_underlying.is_some(),
+        Inst::ThreeValuedBoolAnd { .. } | Inst::ThreeValuedBoolOr { .. } => true,
+        Inst::Call(c) | Inst::CallVirt(c) | Inst::NewObj(c) => c.method.lifted,
+        _ => false,
+    };
+    if lifted {
         // Into lifted operators.
         return true;
     }

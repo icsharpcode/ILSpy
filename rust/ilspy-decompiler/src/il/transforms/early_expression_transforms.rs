@@ -2,7 +2,9 @@
 //! (comparisons with null, `stobj`/`ldobj` of local addresses, `AsyncHelpers.Await`, decimal
 //! constants), in a post-order visit (pre-order for `newobj`).
 
-use crate::il::ast::{AwaiterMethod, ComparisonKind, Function, Inst, NodeId};
+use crate::il::ast::{
+    AwaiterMethod, ComparisonKind, ComparisonLiftingKind, Function, Inst, NodeId,
+};
 use crate::il::reader::ReadFunction;
 use crate::il::types::{Sign, StackType};
 use crate::typesystem::known::KnownTypeCode;
@@ -65,6 +67,15 @@ pub fn fix_comparison_kind_ld_null(f: &mut Function, ts: &mut TypeSystem<'_, '_>
     else {
         return;
     };
+    if !matches!(
+        f.inst(comp),
+        Inst::Comp {
+            lifting: ComparisonLiftingKind::None,
+            ..
+        }
+    ) {
+        return;
+    }
     let new_kind = if matches!(f.inst(right), Inst::LdNull) {
         match kind {
             ComparisonKind::GreaterThan => ComparisonKind::Inequality,
@@ -157,6 +168,7 @@ fn conv_to(
     let input = f.result_type(ts, inst);
     let target = ts.primitive_type(ty);
     f.add(Inst::Conv {
+        is_lifted: false,
         arg: inst,
         input,
         input_sign: Sign::None,

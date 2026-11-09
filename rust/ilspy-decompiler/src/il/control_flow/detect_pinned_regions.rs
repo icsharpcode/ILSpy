@@ -99,6 +99,7 @@ fn new_conv(
 ) -> NodeId {
     let input = f.result_type(ctx.ts, arg);
     f.add(Inst::Conv {
+        is_lifted: false,
         arg,
         input,
         input_sign: Sign::None,

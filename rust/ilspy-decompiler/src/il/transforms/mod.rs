@@ -24,6 +24,7 @@ pub mod introduce_ref_read_only_modifier_on_locals;
 pub mod ldloca_dup_init_obj_transform;
 pub mod lock_transform;
 pub mod null_coalescing_transform;
+pub mod nullable_lifting_transform;
 pub mod pattern_matching_transform;
 pub mod remove_dead_variable_init;
 pub mod remove_infeasible_path_transform;
@@ -240,6 +241,7 @@ const PIPELINE: &[Leaf] = &[
     Statement(1, dynamic_is_event_assignment_transform::run),
     Statement(1, transform_assignment::run),
     Statement(1, null_coalescing_transform::run),
+    Statement(1, nullable_lifting_transform::run_statement),
 ];
 
 /// Runs the first `prefix` leaves of the pipeline.

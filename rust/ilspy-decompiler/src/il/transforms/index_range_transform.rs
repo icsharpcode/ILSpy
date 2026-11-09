@@ -133,6 +133,7 @@ pub fn handle_ld_elema(f: &mut Function, ctx: &mut Context<'_, '_, '_>, ldelema:
         &Inst::BinaryNumeric {
             op: BinaryNumericOperator::Sub,
             check_overflow: false,
+            is_lifted: false,
             left,
             right,
             ..
@@ -152,6 +153,7 @@ pub fn handle_ld_elema(f: &mut Function, ctx: &mut Context<'_, '_, '_>, ldelema:
             let one = f.add(Inst::LdcI4 { value: 1 });
             let new_index = f.add(Inst::NewObj(CallData {
                 method: MethodOperand {
+                    lifted: false,
                     // Found by type lookup: the wire sends the constructor's signature.
                     token: 0,
                     method: ctor,

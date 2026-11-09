@@ -1,6 +1,8 @@
 //! `IL/Instructions/PatternMatching.cs`: the `Match*` helpers of `ILInstruction`.
 
-use super::ast::{BranchTarget, ComparisonKind, Function, Inst, NodeId, VarId};
+use super::ast::{
+    BranchTarget, ComparisonKind, ComparisonLiftingKind, Function, Inst, NodeId, VarId,
+};
 
 impl Function {
     /// `MatchLdLoc`.
@@ -119,6 +121,7 @@ impl Function {
                 kind: k,
                 left,
                 right,
+                lifting: ComparisonLiftingKind::None,
                 ..
             } if k == kind => Some((left, right)),
             _ => None,

@@ -476,16 +476,20 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 			var token = Member(out var memberContext);
 			if (!token.IsNil)
 				return mainModule.ResolveMethod(token, memberContext);
-			// A constructor found by type lookup: its type and parameter types.
+			// A method found by type lookup: its type, name and parameter types.
 			var type = Type();
+			string name = Str();
 			var parameterTypes = new IType[Len()];
 			for (int i = 0; i < parameterTypes.Length; i++)
 				parameterTypes[i] = Type();
 			// shortcut: top-level nullability only, enough for the exception constructors sent so far
 			static IType Oblivious(IType t) => t.ChangeNullability(Nullability.Oblivious);
-			return type.GetConstructors(m => !m.IsStatic && m.Parameters.Count == parameterTypes.Length)
+			var candidates = name == ".ctor"
+				? type.GetConstructors(m => !m.IsStatic && m.Parameters.Count == parameterTypes.Length)
+				: type.GetMethods(m => m.Name == name && m.Parameters.Count == parameterTypes.Length);
+			return candidates
 				.FirstOrDefault(m => m.Parameters.Select(p => Oblivious(p.Type)).SequenceEqual(parameterTypes.Select(Oblivious)))
-				?? throw new InvalidOperationException($"No constructor of {type} matches the sent parameter types");
+				?? throw new InvalidOperationException($"No method {name} of {type} matches the sent parameter types");
 		}
 
 		IField Field()
@@ -531,7 +535,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				3 => Container(),
 				4 => ReadBlock(),
 				5 => Binary(),
-				6 => new BitNot(Node()),
+				6 => BitNot(),
 				7 => new Arglist(),
 				8 => new Branch(blocks[Len()]),
 				9 => new Leave(containers[Len()], Node()),
@@ -544,9 +548,9 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				16 => new TryFault(Node(), Node()),
 				17 => new DebugBreak(),
 				18 => Comp(),
-				19 => Call(new Call(Method())),
-				20 => Call(new CallVirt(Method())),
-				21 => Call(new NewObj(Method())),
+				19 => Call(new Call(CallMethod())),
+				20 => Call(new CallVirt(CallMethod())),
+				21 => Call(new NewObj(CallMethod())),
 				22 => CallIndirect(),
 				23 => new Ckfinite(Node()),
 				24 => Conv(),
@@ -604,6 +608,8 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				76 => LdElemaInlineArray(),
 				77 => NullCoalescing(),
 				78 => DynamicCompoundAssign(),
+				79 => new ThreeValuedBoolAnd(Node(), Node()),
+				80 => new ThreeValuedBoolOr(Node(), Node()),
 				_ => throw new InvalidOperationException($"Unknown wire opcode {op}"),
 			};
 			inst.SetILRange(range);
@@ -613,6 +619,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 
 		ILInstruction NumericCompoundAssign()
 		{
+			bool lifted = Bool();
 			var op = (BinaryNumericOperator)U8();
 			bool check = Bool();
 			var sign = (Sign)U8();
@@ -624,7 +631,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 			var target = Node();
 			var value = Node();
 			// The instruction copies its operator from a binary instruction.
-			var binary = new BinaryNumericInstruction(op, new Nop(), new Nop(), leftType, rightType, check, sign);
+			var binary = new BinaryNumericInstruction(op, new Nop(), new Nop(), leftType, rightType, check, sign, lifted);
 			return new NumericCompoundAssign(binary, target, targetKind, value, type, evalMode, TransformContext);
 		}
 
@@ -770,7 +777,8 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 			var leftType = (StackType)U8();
 			var rightType = (StackType)U8();
 			int csharpResultType = Len();
-			return new BinaryNumericInstruction(op, Node(), Node(), leftType, rightType, check, sign) {
+			bool lifted = Bool();
+			return new BinaryNumericInstruction(op, Node(), Node(), leftType, rightType, check, sign, lifted) {
 				CSharpResultType = csharpResultType == 0 ? null : TypeAt(csharpResultType - 1)
 			};
 		}
@@ -831,13 +839,32 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 			return new CallIndirect(isInstance, hasExplicitThis, signature, Node(), arguments);
 		}
 
+		ILInstruction BitNot()
+		{
+			if (!Bool())
+				return new BitNot(Node());
+			var underlying = (StackType)U8();
+			return new BitNot(Node(), isLifted: true, underlying);
+		}
+
+		/// <summary>The method of a call, lifted when the engine lifted a user-defined operator.</summary>
+		IMethod CallMethod()
+		{
+			var method = Method();
+			if (!Bool())
+				return method;
+			return ICSharpCode.Decompiler.CSharp.Resolver.CSharpOperators.LiftUserDefinedOperator(method)
+				?? throw new InvalidOperationException($"The operator {method} cannot be lifted");
+		}
+
 		ILInstruction Conv()
 		{
 			var input = (StackType)U8();
 			var sign = (Sign)U8();
 			var target = (PrimitiveType)U8();
 			bool check = Bool();
-			return new Conv(Node(), input, sign, target, check);
+			bool lifted = Bool();
+			return new Conv(Node(), input, sign, target, check, lifted);
 		}
 
 		ILInstruction StLoc()

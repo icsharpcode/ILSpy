@@ -761,6 +761,7 @@ fn make_dynamic_instruction(
     if callsite.kind == DynamicKind::Convert && f.result_type(ts, dynamic) == StackType::Unknown {
         // With missing references the primitive type is coerced to None.
         return Some(f.add(Inst::Conv {
+            is_lifted: false,
             arg: dynamic,
             input: StackType::Unknown,
             input_sign: Sign::None,

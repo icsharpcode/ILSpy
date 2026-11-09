@@ -295,6 +295,9 @@ pub struct MethodOperand {
     /// Read in a state machine context (`GenericContext::class_tail`): the host resolves the
     /// token with the function's class and method type parameters as class parameters.
     pub state_machine_context: bool,
+    /// The method is the lifted form of a user-defined operator
+    /// (`CSharpOperators.LiftUserDefinedOperator`): parameters and return type are nullable.
+    pub lifted: bool,
 }
 
 /// A field operand, as `MethodOperand`.
@@ -362,9 +365,12 @@ pub enum Inst {
         right: NodeId,
         /// `CSharpResultType`: an improved C# type of the result, which `InferType` returns.
         csharp_result_type: Option<TypeId>,
+        is_lifted: bool,
     },
     BitNot {
         arg: NodeId,
+        /// The underlying result type of a lifted `bitnot` (`None`: not lifted).
+        lifted_underlying: Option<StackType>,
     },
     Arglist,
     Branch {
@@ -451,6 +457,7 @@ pub enum Inst {
         input_sign: Sign,
         target: PrimitiveType,
         check_overflow: bool,
+        is_lifted: bool,
     },
     LdLoc {
         var: VarId,
@@ -645,6 +652,16 @@ pub enum Inst {
         target_kind: CompoundTargetKind,
         target: NodeId,
         value: NodeId,
+    },
+    /// `3vl.bool.and(left, right)`: `&` on `bool?`.
+    ThreeValuedBoolAnd {
+        left: NodeId,
+        right: NodeId,
+    },
+    /// `3vl.bool.or(left, right)`: `|` on `bool?`.
+    ThreeValuedBoolOr {
+        left: NodeId,
+        right: NodeId,
     },
     /// `localloc.span T(count)`: `stackalloc T[count]` as a `Span<T>`.
     LocAllocSpan {
@@ -869,8 +886,11 @@ impl Inst {
                 c.push(*final_inst);
                 c
             }
-            BinaryNumeric { left, right, .. } | Comp { left, right, .. } => vec![*left, *right],
-            BitNot { arg }
+            BinaryNumeric { left, right, .. }
+            | Comp { left, right, .. }
+            | ThreeValuedBoolAnd { left, right }
+            | ThreeValuedBoolOr { left, right } => vec![*left, *right],
+            BitNot { arg, .. }
             | Ckfinite { arg }
             | LocAlloc { arg }
             | StringToInt { arg, .. }
@@ -1006,10 +1026,13 @@ impl Inst {
                     final_inst
                 }
             }
-            BinaryNumeric { left, right, .. } | Comp { left, right, .. } => {
+            BinaryNumeric { left, right, .. }
+            | Comp { left, right, .. }
+            | ThreeValuedBoolAnd { left, right }
+            | ThreeValuedBoolOr { left, right } => {
                 [left, right].into_iter().nth(index).expect("child index")
             }
-            BitNot { arg }
+            BitNot { arg, .. }
             | Ckfinite { arg }
             | LocAlloc { arg }
             | StringToInt { arg, .. }
@@ -1749,12 +1772,24 @@ impl Function {
             }
             Block { final_inst, .. } => self.result_type(ts, *final_inst),
             BinaryNumeric {
+                is_lifted: true, ..
+            }
+            | Conv {
+                is_lifted: true, ..
+            }
+            | Comp {
+                lifting: ComparisonLiftingKind::ThreeValuedLogic,
+                ..
+            }
+            | ThreeValuedBoolAnd { .. }
+            | ThreeValuedBoolOr { .. } => StackType::VT,
+            BinaryNumeric {
                 op,
                 left_input,
                 right_input,
                 ..
             } => binary_result_type(*op, *left_input, *right_input),
-            BitNot { arg } => self.result_type(ts, *arg),
+            BitNot { arg, .. } => self.result_type(ts, *arg),
             Arglist
             | LdTypeToken { .. }
             | LdMemberToken { .. }
@@ -1890,10 +1925,23 @@ impl Function {
                 op,
                 left_input,
                 right_input,
+                is_lifted,
                 ..
-            } => find_stack_type(ts, binary_result_type(*op, *left_input, *right_input)),
-            BitNot { arg } => self.infer_type(ts, *arg),
+            } => {
+                let t = find_stack_type(ts, binary_result_type(*op, *left_input, *right_input));
+                if *is_lifted { nullable_type(ts, t) } else { t }
+            }
+            BitNot { arg, .. } => self.infer_type(ts, *arg),
             Arglist => known(ts, KnownTypeCode::RuntimeArgumentHandle),
+            Comp {
+                lifting: ComparisonLiftingKind::ThreeValuedLogic,
+                ..
+            }
+            | ThreeValuedBoolAnd { .. }
+            | ThreeValuedBoolOr { .. } => {
+                let b = known(ts, KnownTypeCode::Boolean);
+                nullable_type(ts, b)
+            }
             Comp { .. } | Match { .. } => known(ts, KnownTypeCode::Boolean),
             Call(c) | CallVirt(c) => c.method.method.ret,
             NewObj(c) => c
@@ -1905,13 +1953,16 @@ impl Function {
                 TypeData::FnPtr(f) => f.ret,
                 _ => *signature,
             },
-            Conv { target, .. } => {
+            Conv {
+                target, is_lifted, ..
+            } => {
                 let code = target.to_known();
-                if code != KnownTypeCode::None {
+                let t = if code != KnownTypeCode::None {
                     known(ts, code)
                 } else {
                     find_stack_type(ts, target.stack_type())
-                }
+                };
+                if *is_lifted { nullable_type(ts, t) } else { t }
             }
             LdLoc { var } | StLoc { var, .. } => self.var(*var).ty,
             LdLoca { var } => {
@@ -1968,6 +2019,15 @@ impl Function {
     }
 }
 
+/// `NullableType.Create`: `Nullable<t>`.
+pub fn nullable_type(ts: &mut TypeSystem<'_, '_>, t: TypeId) -> TypeId {
+    let generic = ts.known_type(KnownTypeCode::NullableOfT);
+    ts.intern(TypeData::Inst {
+        generic,
+        args: Box::new([t]),
+    })
+}
+
 /// `ICompilation.FindType(StackType)`.
 pub fn find_stack_type(ts: &mut TypeSystem<'_, '_>, st: StackType) -> TypeId {
     match st {
@@ -1996,6 +2056,7 @@ mod tests {
         let a = f.add(Inst::LdcI4 { value: 1 });
         let b = f.add(Inst::LdcI4 { value: 2 });
         let add = f.add(Inst::BinaryNumeric {
+            is_lifted: false,
             csharp_result_type: None,
             op: BinaryNumericOperator::Add,
             check_overflow: false,
@@ -2078,6 +2139,7 @@ mod tests {
         let mut f = Function::default();
         let arg = f.add(Inst::LdcI4 { value: 1 });
         let conv = f.add(Inst::Conv {
+            is_lifted: false,
             arg,
             input: StackType::I4,
             input_sign: Sign::Signed,
@@ -2201,6 +2263,7 @@ mod list_tests {
         let a = ldc(&mut f, 1);
         let b = ldc(&mut f, 2);
         let add = f.add(Inst::BinaryNumeric {
+            is_lifted: false,
             csharp_result_type: None,
             op: BinaryNumericOperator::Add,
             check_overflow: false,

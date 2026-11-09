@@ -237,7 +237,9 @@ fn visit_comp(f: &mut Function, ctx: &mut Context<'_, '_, '_>, inst: NodeId) {
         visit(f, ctx, left);
         return;
     }
-    // shortcut: NullableLiftingTransform.Run(comp) is not ported yet
+    if ctx.settings.lift_nullables {
+        super::nullable_lifting_transform::run_comp(f, ctx, inst);
+    }
     visit_children(f, ctx, inst);
     let (_, lifting, _, _, _) = comp_parts(f, inst);
     if lifting != ComparisonLiftingKind::None {
@@ -359,7 +361,7 @@ fn handle_logic_not(
 }
 
 /// `MatchLogicAnd`: `if (lhs) rhs else ldc.i4 0`.
-fn match_logic_and(f: &Function, inst: NodeId) -> Option<(NodeId, NodeId)> {
+pub(crate) fn match_logic_and(f: &Function, inst: NodeId) -> Option<(NodeId, NodeId)> {
     match *f.inst(inst) {
         Inst::If {
             condition,
@@ -372,7 +374,7 @@ fn match_logic_and(f: &Function, inst: NodeId) -> Option<(NodeId, NodeId)> {
 }
 
 /// `MatchLogicOr`: `if (lhs) ldc.i4 1 else rhs`.
-fn match_logic_or(f: &Function, inst: NodeId) -> Option<(NodeId, NodeId)> {
+pub(crate) fn match_logic_or(f: &Function, inst: NodeId) -> Option<(NodeId, NodeId)> {
     match *f.inst(inst) {
         Inst::If {
             condition,
@@ -385,7 +387,7 @@ fn match_logic_or(f: &Function, inst: NodeId) -> Option<(NodeId, NodeId)> {
 }
 
 /// `Comp.LogicNot`.
-fn logic_not(f: &mut Function, ctx: &mut Context<'_, '_, '_>, arg: NodeId) -> NodeId {
+pub(crate) fn logic_not(f: &mut Function, ctx: &mut Context<'_, '_, '_>, arg: NodeId) -> NodeId {
     let input = f.result_type(ctx.ts, arg);
     let zero = f.add(Inst::LdcI4 { value: 0 });
     f.add(Inst::Comp {
@@ -433,12 +435,21 @@ fn visit_conv(f: &mut Function, ctx: &mut Context<'_, '_, '_>, inst: NodeId) {
             input,
             input_sign,
             target: PrimitiveType::R,
+            is_lifted: inner_lifted,
             ..
         } = *f.inst(arg)
         && conversion_kind(PrimitiveType::R, input, input_sign) == ConversionKind::IntToFloat
     {
         // conv.rN(conv.r.un(...)) => conv.rN.un(...)
         let new = f.add(Inst::Conv {
+            is_lifted: inner_lifted
+                || matches!(
+                    f.inst(inst),
+                    Inst::Conv {
+                        is_lifted: true,
+                        ..
+                    }
+                ),
             arg: inner_arg,
             input,
             input_sign,
@@ -459,6 +470,7 @@ fn clean_up_array_indices(f: &mut Function, inst: NodeId) {
             input_sign,
             target,
             check_overflow,
+            is_lifted: false,
         } = *f.inst(index)
             && target.stack_type() == StackType::I
         {
@@ -530,9 +542,10 @@ fn visit_if(f: &mut Function, ctx: &mut Context<'_, '_, '_>, inst: NodeId) {
     // The condition after those changes.
     let (condition, _, _) = if_parts(f, inst);
     visit(f, ctx, condition);
-    // shortcut: NullableLiftingTransform.Run(if) and UserDefinedLogicTransform are not ported
-    // yet; they come with NullableLiftingStatementTransform (item 42) and
-    // UserDefinedLogicTransform (item 51).
+    if super::nullable_lifting_transform::run_if(f, ctx, inst) {
+        return;
+    }
+    // shortcut: UserDefinedLogicTransform is not ported yet; it comes with item 51.
     if transform_dynamic_add_assign_or_remove_assign(f, inst) {
         return;
     }
@@ -688,7 +701,12 @@ fn visit_binary_numeric(f: &mut Function, ctx: &mut Context<'_, '_, '_>, inst: N
         let left_type = f.infer_type(ctx.ts, left);
         let right_type = f.infer_type(ctx.ts, right);
         detect_improved_type_for_bit_op(f, ctx, inst, left_type, right_type);
-        // shortcut: NullableLiftingTransform.Run(bit.and) of two bools is not ported yet
+        let boolean =
+            |ctx: &mut Context<'_, '_, '_>, t| known(ctx, t) == Some(KnownTypeCode::Boolean);
+        if op == Op::BitAnd && boolean(ctx, left_type) && boolean(ctx, right_type) {
+            // e.g. `(a.GetValueOrDefault() == b.GetValueOrDefault()) & (a.HasValue & b.HasValue)`
+            super::nullable_lifting_transform::run_bit_and(f, ctx, inst);
+        }
     }
 }
 

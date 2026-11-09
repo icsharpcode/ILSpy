@@ -98,6 +98,8 @@ mod op {
     pub const LD_ELEMA_INLINE_ARRAY: u8 = 76;
     pub const NULL_COALESCING: u8 = 77;
     pub const DYNAMIC_COMPOUND_ASSIGN: u8 = 78;
+    pub const THREE_VALUED_BOOL_AND: u8 = 79;
+    pub const THREE_VALUED_BOOL_OR: u8 = 80;
     /// A node already written (it has two parents).
     pub const NODE_REFERENCE: u8 = 255;
 }
@@ -417,6 +419,7 @@ impl FunctionWriter<'_, '_, '_, '_> {
                 left,
                 right,
                 csharp_result_type,
+                is_lifted,
             } => {
                 tag(op::BINARY_NUMERIC, &mut self.out);
                 self.out.u8(o as u8);
@@ -425,11 +428,19 @@ impl FunctionWriter<'_, '_, '_, '_> {
                 self.stack_type(left_input);
                 self.stack_type(right_input);
                 self.opt_ty(csharp_result_type);
+                self.out.bool(is_lifted);
                 self.node(left)?;
                 self.node(right)?;
             }
-            Inst::BitNot { arg } => {
+            Inst::BitNot {
+                arg,
+                lifted_underlying,
+            } => {
                 tag(op::BIT_NOT, &mut self.out);
+                self.out.bool(lifted_underlying.is_some());
+                if let Some(st) = lifted_underlying {
+                    self.stack_type(st);
+                }
                 self.node(arg)?;
             }
             Inst::Arglist => tag(op::ARGLIST, &mut self.out),
@@ -563,18 +574,31 @@ impl FunctionWriter<'_, '_, '_, '_> {
                 tag(t, &mut self.out);
                 self.member(c.method.token, c.method.state_machine_context);
                 if c.method.token == 0 {
-                    // A constructor found by type lookup: its type and parameter types.
+                    // A method found by type lookup: its type, name and parameter types.
                     let m = &c.method.method;
-                    if m.name != ".ctor" {
-                        return Err(format!("method {} has no token", m.name));
-                    }
-                    self.ty(m.declaring.ok_or("constructor without a declaring type")?);
+                    self.ty(m.declaring.ok_or("method without a declaring type")?);
+                    self.string(&m.name);
                     let params = m.params().map_err(|e| e.to_string())?;
                     self.out.len(params.len());
                     for p in params {
+                        // A lifted operator is found by its non-lifted parameters.
+                        let p = if c.method.lifted {
+                            match self.ts.data(p) {
+                                crate::typesystem::types::TypeData::Inst { args, .. }
+                                    if args.len() == 1 =>
+                                {
+                                    args[0]
+                                }
+                                _ => p,
+                            }
+                        } else {
+                            p
+                        };
                         self.ty(p);
                     }
                 }
+                // The host wraps the method with `CSharpOperators.LiftUserDefinedOperator`.
+                self.out.bool(c.method.lifted);
                 self.out.u8(u8::from(c.is_tail)
                     | u8::from(c.il_stack_was_empty) << 1
                     | u8::from(c.constrained_to.is_some()) << 2);
@@ -608,12 +632,14 @@ impl FunctionWriter<'_, '_, '_, '_> {
                 input_sign,
                 target,
                 check_overflow,
+                is_lifted,
             } => {
                 tag(op::CONV, &mut self.out);
                 self.stack_type(input);
                 self.out.u8(input_sign as u8);
                 self.out.u8(target as u8);
                 self.out.bool(check_overflow);
+                self.out.bool(is_lifted);
                 self.node(arg)?;
             }
             Inst::LdLoc { var } => {
@@ -843,10 +869,8 @@ impl FunctionWriter<'_, '_, '_, '_> {
                 value,
                 ..
             } => {
-                if is_lifted {
-                    return Err("lifted compound assignments are not on the wire yet".into());
-                }
                 tag(op::NUMERIC_COMPOUND_ASSIGN, &mut self.out);
+                self.out.bool(is_lifted);
                 self.out.u8(o as u8);
                 self.out.bool(check_overflow);
                 self.out.u8(sign as u8);
@@ -899,6 +923,16 @@ impl FunctionWriter<'_, '_, '_, '_> {
                 self.out.u8(target_kind as u8);
                 self.node(target)?;
                 self.node(value)?;
+            }
+            Inst::ThreeValuedBoolAnd { left, right } | Inst::ThreeValuedBoolOr { left, right } => {
+                let t = if matches!(self.f.inst(id), Inst::ThreeValuedBoolAnd { .. }) {
+                    op::THREE_VALUED_BOOL_AND
+                } else {
+                    op::THREE_VALUED_BOOL_OR
+                };
+                tag(t, &mut self.out);
+                self.node(left)?;
+                self.node(right)?;
             }
             Inst::LocAllocSpan { arg, ty } => {
                 tag(op::LOC_ALLOC_SPAN, &mut self.out);

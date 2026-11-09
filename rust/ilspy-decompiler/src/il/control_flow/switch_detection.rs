@@ -72,6 +72,7 @@ impl Detection<'_> {
             let stack_type = f.var(var).stack_type;
             if !matches!(stack_type, StackType::I4 | StackType::I8) {
                 value = f.add(Inst::Conv {
+                    is_lifted: false,
                     arg: value,
                     input: stack_type,
                     input_sign: Sign::Signed,
@@ -606,6 +607,7 @@ pub(crate) fn inline_switch_expression_default_case_throw_helper(
             };
             let new_obj = f.add(Inst::NewObj(CallData {
                 method: MethodOperand {
+                    lifted: false,
                     // Found by type lookup: the wire sends the constructor's signature.
                     token: 0,
                     method: ctor,

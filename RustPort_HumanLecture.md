@@ -1699,6 +1699,31 @@ them back into their old slots, as the managed code does through its `Children` 
 
 The no-op red run failed 284 of 3,550 equality cases; the port matched on its first run.
 
+### 3.57 NullableLiftingTransform (item 42, IL prefix 35)
+
+C# lifts operators to nullable operands: for `int? a, b`, `a + b` is null when either side is
+null. The compiler spells that out as `HasValue` checks and `GetValueOrDefault()` calls; the
+transform folds them back into one lifted instruction:
+- `a.HasValue & b.HasValue ? new int?(a.GetValueOrDefault() + b.GetValueOrDefault()) : null`
+  becomes `binary.add.lifted(a, b)`; conversions, `~` and user-defined operators lift the
+  same way.
+- Comparisons lift too (`comp.lifted`), including the equality special cases where the
+  compiler compares the values first and the `HasValue` flags second.
+- `bool?` `&` and `|` become the three-valued `3vl.bool.and`/`3vl.bool.or`.
+
+It runs in two places, as in the managed code: as its own statement transform, and from
+ExpressionTransforms on comparisons, ifs and `bit.and` of bools. The lifted forms needed new
+wire flags (`BinaryNumeric`, `Conv`, `BitNot` and calls carry whether they are lifted), and
+the earlier ports that match operators now reject the lifted ones where the managed code
+checks `IsLifted` (compound assignments, increments, `FixComparisonKindLdNull`).
+
+The managed transform first tries NullPropagationTransform (`?.`), which is item 43. Until
+then those methods stay allowlisted under that item; the rest now match, and the allowlist
+shrinks from 4,473 to 3,771 entries.
+
+The no-op red run failed 111 of 3,550 equality cases; the port then matched every case
+outside the allowlist.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

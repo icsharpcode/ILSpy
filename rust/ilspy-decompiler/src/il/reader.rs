@@ -141,6 +141,7 @@ fn conv(
     let input = f.result_type(ts, arg);
     let needs_sign = check || (!input.is_float() && target.is_float());
     f.add(Inst::Conv {
+        is_lifted: false,
         arg,
         input,
         input_sign: if needs_sign { sign } else { Sign::None },
@@ -247,6 +248,7 @@ impl<'r, 'c, 'a> Reader<'r, 'c, 'a> {
         let token = self.read_token()?;
         let method = self.ts.resolve_method(self.module, token, self.ctx)?;
         Ok(MethodOperand {
+            lifted: false,
             token,
             method,
             state_machine_context: self.ctx.class_tail.is_some(),
@@ -1362,7 +1364,10 @@ impl<'r, 'c, 'a> Reader<'r, 'c, 'a> {
             })),
             0x66 => {
                 let arg = self.pop();
-                let i = self.add(Inst::BitNot { arg });
+                let i = self.add(Inst::BitNot {
+                    arg,
+                    lifted_underlying: None,
+                });
                 self.push(i)
             }
             0x60 => self.binary(BinaryNumericOperator::BitOr, false, Sign::None),
@@ -1782,6 +1787,7 @@ impl<'r, 'c, 'a> Reader<'r, 'c, 'a> {
         let value = self.pop();
         let (left_input, right_input) = (self.result_type(zero), self.result_type(value));
         let i = self.add(Inst::BinaryNumeric {
+            is_lifted: false,
             csharp_result_type: None,
             op: BinaryNumericOperator::Sub,
             check_overflow: false,
@@ -2569,6 +2575,7 @@ impl<'r, 'c, 'a> Reader<'r, 'c, 'a> {
         }
         let (left_input, right_input) = (self.result_type(left), self.result_type(right));
         let i = self.add(Inst::BinaryNumeric {
+            is_lifted: false,
             csharp_result_type: None,
             op,
             check_overflow: check,
@@ -2616,6 +2623,7 @@ impl<'r, 'c, 'a> Reader<'r, 'c, 'a> {
                 let method = self.ts.resolve_method(self.module, token, self.ctx)?;
                 Ok(self.add(Inst::LdMemberToken {
                     member: MemberOperand::Method(MethodOperand {
+                        lifted: false,
                         token,
                         method,
                         state_machine_context: self.ctx.class_tail.is_some(),
@@ -2635,6 +2643,7 @@ impl<'r, 'c, 'a> Reader<'r, 'c, 'a> {
                 let method = self.ts.resolve_method(self.module, token, self.ctx)?;
                 Ok(self.add(Inst::LdMemberToken {
                     member: MemberOperand::Method(MethodOperand {
+                        lifted: false,
                         token,
                         method,
                         state_machine_context: self.ctx.class_tail.is_some(),

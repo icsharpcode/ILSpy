@@ -551,11 +551,19 @@ fn is_binary_compatible_with_type(
         sign,
         check_overflow,
         right,
+        is_lifted,
         ..
     } = *f.inst(binary)
     else {
         return false;
     };
+    let mut ty = ty;
+    if is_lifted {
+        if known(ctx, ty) != Some(KnownTypeCode::NullableOfT) {
+            return false;
+        }
+        ty = nullable_underlying(ctx, ty);
+    }
     // An unknown type risks a wrong compound assignment.
     if ctx.ts.is_unknown_kind(ty) {
         return false;
@@ -611,7 +619,7 @@ fn is_binary_compatible_with_type(
         }
     }
     // The right-hand side must not need truncation for the target type.
-    !is_implicit_truncation(f, ctx, right, ty, false)
+    !is_implicit_truncation(f, ctx, right, ty, is_lifted)
 }
 
 /// `ValidateCompoundAssign`.
@@ -784,6 +792,7 @@ pub fn handle_compound_assign(
         right_input,
         left,
         right,
+        is_lifted,
         ..
     } = *f.inst(unwrapped)
     {
@@ -808,7 +817,7 @@ pub fn handle_compound_assign(
             left_input,
             right_input,
             underlying_result,
-            is_lifted: false,
+            is_lifted,
             ty: target_type,
             eval_mode: CompoundEvalMode::EvaluatesToNewValue,
             target_kind,
@@ -843,6 +852,10 @@ pub fn handle_compound_assign(
                 }
                 _ => return false,
             };
+            // Nullables would need more thought (`operatorCall.IsLifted`).
+            if call.method.lifted {
+                return false;
+            }
             (first, rhs)
         } else if is_string_concat(ctx, &method) {
             if matches!(f.inst(store), Inst::StLoc { .. }) {
@@ -1098,6 +1111,7 @@ fn new_numeric_compound_assign(
         left_input,
         right_input,
         right,
+        is_lifted,
         ..
     } = *f.inst(binary)
     else {
@@ -1110,7 +1124,7 @@ fn new_numeric_compound_assign(
         left_input,
         right_input,
         underlying_result: crate::il::ast::binary_result_type(op, left_input, right_input),
-        is_lifted: false,
+        is_lifted,
         ty,
         eval_mode,
         target_kind,
@@ -1200,6 +1214,9 @@ fn match_inc_dec(
         let method = c.method.method.clone();
         if ctx.ts.method_is_operator(&method) && c.args.len() == 1 {
             if !matches!(method.name.as_str(), "op_Increment" | "op_Decrement") {
+                return None;
+            }
+            if c.method.lifted {
                 return None;
             }
             return Some(IncDec::Operator {
@@ -1429,6 +1446,9 @@ fn transform_post_inc_dec_operator(
             return false;
         }
         if !is_increment_or_decrement(ctx, &method.method) {
+            return false;
+        }
+        if method.lifted {
             return false;
         }
         finalize.apply(f, ctx);
