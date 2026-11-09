@@ -1363,6 +1363,13 @@ the top-level pipeline, and the allowlist stays empty.
 The no-op red run failed 1,670 of 3,550 equality cases; the port passed all but those two on
 its first run.
 
+### 3.45 DetectExitPoints, second occurrence (item 29, IL prefix 23)
+
+A ratchet-only step: the second `DetectExitPoints` is the ported transform. The loop and
+switch containers that LoopDetection creates end in a block, so jumps out of them to the
+following instruction become `leave` instructions of the new container. The no-op red run
+failed 1,487 of 3,550 equality cases; the step passed on its first run.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

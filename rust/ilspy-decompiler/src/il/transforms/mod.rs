@@ -114,6 +114,7 @@ const PIPELINE: &[fn(&mut ReadFunction, &mut Context<'_, '_, '_>)] = &[
     split_variables::run,
     introduce_ref_read_only_modifier_on_locals::run,
     |r, ctx| block_transform::run(r, ctx, &[super::control_flow::loop_detection::run]),
+    super::control_flow::exit_points::run,
 ];
 
 /// Runs the first `prefix` leaves of the pipeline.
