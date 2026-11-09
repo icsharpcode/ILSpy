@@ -114,9 +114,11 @@ fn visit(f: &mut Function, ctx: &mut Context<'_, '_, '_>, inst: NodeId) {
         Inst::Call(_) => visit_call(f, ctx, inst),
         Inst::CallVirt(_) => {
             visit_children(f, ctx, inst);
-            // shortcut: TransformCollectionAndObjectInitializers.HandleEmptyWith is not ported
-            // yet; it comes with that transform (item 45).
-            super::transform_assignment::handle_compound_assign(f, ctx, inst);
+            if !super::transform_assignment::handle_compound_assign(f, ctx, inst) {
+                super::transform_collection_and_object_initializers::handle_empty_with(
+                    f, ctx, inst,
+                );
+            }
         }
         Inst::NewObj(_) => visit_new_obj(f, ctx, inst),
         Inst::Dynamic {
@@ -1071,9 +1073,9 @@ fn visit_call(f: &mut Function, ctx: &mut Context<'_, '_, '_>, inst: NodeId) {
     {
         return;
     }
-    // shortcut: TransformCollectionAndObjectInitializers.HandleEmptyWith, which runs when no
-    // compound assignment is made, is not ported yet; it comes with that transform (item 45).
-    super::transform_assignment::handle_compound_assign(f, ctx, inst);
+    if !super::transform_assignment::handle_compound_assign(f, ctx, inst) {
+        super::transform_collection_and_object_initializers::handle_empty_with(f, ctx, inst);
+    }
 }
 
 /// `call Nullable<T>.GetValueOrDefault(a, b)` with a pure `b` becomes `a ?? b`.

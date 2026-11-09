@@ -378,7 +378,7 @@ the reasons. This file holds only the ordered steps, their gates and their rules
   - [x] 42. NullableLiftingStatementTransform (M)
   - [x] 43. NullPropagationStatementTransform (M)
   - [x] 44. TransformArrayInitializers (M)
-  - [ ] 45. TransformCollectionAndObjectInitializers (M)
+  - [x] 45. TransformCollectionAndObjectInitializers (M)
   - [ ] 46. TransformExpressionTrees (L)
   - [ ] 47. IndexRangeTransform (M)
   - [ ] 48. DeconstructionTransform (M)

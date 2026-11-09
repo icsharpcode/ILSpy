@@ -910,6 +910,52 @@ impl TypeSystem<'_, '_> {
         false
     }
 
+    /// `IsCompilerGenerated()` of a type definition.
+    pub fn type_is_compiler_generated(&self, def: TypeDefId) -> bool {
+        self.has_compiler_generated(def.module, TableId::TypeDef, def.row)
+    }
+
+    /// `IProperty.ReturnType` of property `row`, seen through the class substitution
+    /// `class_args`.
+    pub fn property_type(
+        &mut self,
+        module: ModuleId,
+        row: u32,
+        class_args: Option<&[TypeId]>,
+    ) -> Option<TypeId> {
+        let (ty, _) = self.property_signature(module, row).ok()?;
+        Some(self.substitute(ty, class_args, None))
+    }
+
+    /// `TransformDisplayClassUsage.IsPotentialClosure(decompiledTypeDefinition,
+    /// potentialDisplayClass)`: a compiler-generated struct, or class deriving only from
+    /// `object`, in the type tree of the decompiled type.
+    pub fn is_potential_closure_type(
+        &mut self,
+        decompiled: Option<TypeDefId>,
+        display: TypeDefId,
+    ) -> bool {
+        match self.comp.type_def(display).map(|i| i.kind) {
+            Ok(TypeKind::Struct) => {}
+            Ok(TypeKind::Class) => {
+                let Ok(bases) = self.direct_base_types(display) else {
+                    return false;
+                };
+                let object = |ts: &Self, t: TypeId| {
+                    ts.definition(t)
+                        .and_then(|d| ts.comp.type_def(d).ok())
+                        .is_some_and(|i| i.known == KnownTypeCode::Object)
+                };
+                if !bases.iter().all(|&b| object(self, b)) {
+                    return false;
+                }
+            }
+            _ => return false,
+        }
+        self.is_potential_closure(decompiled, display)
+            .unwrap_or(false)
+    }
+
     /// `TransformDisplayClassUsage.IsPotentialClosure` for a struct display class.
     fn is_potential_closure(
         &mut self,

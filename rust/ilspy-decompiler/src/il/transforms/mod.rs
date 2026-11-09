@@ -36,6 +36,7 @@ pub mod switch_on_nullable_transform;
 pub mod switch_on_string_transform;
 pub mod transform_array_initializers;
 pub mod transform_assignment;
+pub mod transform_collection_and_object_initializers;
 pub mod using_transform;
 
 /// The `DecompilerSettings` the ported transforms read, by property name. The host sends
@@ -79,6 +80,10 @@ pub const SETTING_NAMES: &[&str] = &[
     "NullPropagation",
     "StackAllocInitializers",
     "Utf8StringLiterals",
+    "WithExpressions",
+    "UseObjectCreationOfGenericTypeParameter",
+    "ObjectOrCollectionInitializers",
+    "DictionaryInitializers",
 ];
 
 /// The values of `SETTING_NAMES`.
@@ -121,6 +126,10 @@ pub struct Settings {
     pub null_propagation: bool,
     pub stack_alloc_initializers: bool,
     pub utf8_string_literals: bool,
+    pub with_expressions: bool,
+    pub use_object_creation_of_generic_type_parameter: bool,
+    pub object_or_collection_initializers: bool,
+    pub dictionary_initializers: bool,
 }
 
 impl Settings {
@@ -165,6 +174,10 @@ impl Settings {
             null_propagation: bit(34),
             stack_alloc_initializers: bit(35),
             utf8_string_literals: bit(36),
+            with_expressions: bit(37),
+            use_object_creation_of_generic_type_parameter: bit(38),
+            object_or_collection_initializers: bit(39),
+            dictionary_initializers: bit(40),
         }
     }
 }
@@ -256,6 +269,7 @@ const PIPELINE: &[Leaf] = &[
     Statement(1, nullable_lifting_transform::run_statement),
     Statement(1, null_propagation_transform::run_statement),
     Statement(1, transform_array_initializers::run),
+    Statement(1, transform_collection_and_object_initializers::run),
 ];
 
 /// Runs the first `prefix` leaves of the pipeline.
@@ -336,6 +350,18 @@ impl ReadFunction {
         self.flush_pending_variables();
         self.variables.push(v);
         v
+    }
+
+    /// Applies what transforms queued for the variable list, in the order the managed
+    /// collection sees it: first the removals (`RecombineVariables`; `Remove` swap-removes),
+    /// then the variables `Function::register_variable` created.
+    pub fn apply_variable_changes(&mut self, removed: &mut Vec<super::ast::VarId>) {
+        for v in std::mem::take(removed) {
+            if let Some(i) = self.variables.iter().position(|&x| x == v) {
+                self.variables.swap_remove(i);
+            }
+        }
+        self.flush_pending_variables();
     }
 
     /// Appends the variables `Function::register_variable` created to the variable list.

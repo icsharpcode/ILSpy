@@ -1785,6 +1785,45 @@ the element type it is given), and buffers that feed a `Span<T>` need the extrac
 both fixes the port matched every case outside the allowlist, which shrinks from 1,049 to
 413 entries.
 
+### 3.60 TransformCollectionAndObjectInitializers (item 45, IL prefix 38)
+
+After `stloc v(newobj T(...))` the compiler emits one statement per initializer item. The
+transform collects them into an initializer block:
+- `Add` calls on a collection;
+- property setters and field stores, also nested (`{ A = { B = 1 } }`);
+- indexers, also in dictionary initializers, whose index values sit in single-assigned
+  locals first.
+
+It keeps the access path of each item (the chain of members from `v`) and a stack of the
+members already initialized at each level, so that no member is set twice and a collection
+level takes only `Add` calls. Indices compare with the structural `ILInstruction.Match`
+that `structurally_equal` already ports. `<Clone>$` of a record becomes a `with` initializer
+block, from ExpressionTransforms (`HandleEmptyWith`); the transform then extends it with the
+assignments that follow.
+
+Several checks rely on the C# resolver, which the IL pipeline the tests compare creates
+without a current type or using scope:
+- An extension `Add` method never applies, since there are no extension methods without a
+  using scope.
+- A setter counts as accessible only when it is public, or internal to the main module.
+  InternalsVisibleTo is a shortcut until the semantics step, item 67.
+- A generic `Add` method needs C# type inference from its own parameter types. The port
+  checks that every type parameter occurs in a parameter, which is when that inference
+  succeeds (also a shortcut for item 67).
+
+The type system gained `IsRecord`, anonymous type detection, tuple-compatible types and the
+full `IsPotentialClosure`.
+
+The new settings bits 38 to 41 are `WithExpressions`, `UseObjectCreationOfGenericTypeParameter`,
+`ObjectOrCollectionInitializers` and `DictionaryInitializers`.
+
+The no-op red run (with the `HandleEmptyWith` hook in place, item 45 entries removed) failed
+507 of 3,550 equality cases. The first green run left one divergence: two variables in
+swapped order. The block driver applied TransformAssignment's variable removals only after
+the whole step; the managed collection removes at once. The statement driver now applies
+queued removals after each transform, before the new variables join the list. Then the
+port matched every case outside the allowlist, which shrinks from 413 to 365 entries.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |
