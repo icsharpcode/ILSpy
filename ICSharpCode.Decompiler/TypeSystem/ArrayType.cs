@@ -29,16 +29,19 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	/// </summary>
 	public sealed class ArrayType : TypeWithElementType, ICompilationProvider
 	{
+		public const int MaxArrayRank = 32;
+
 		readonly int dimensions;
+		readonly int originalDimensions;
 		readonly ICompilation compilation;
 		readonly Nullability nullability;
 
-		public ArrayType(ICompilation compilation, IType elementType, int dimensions = 1, Nullability nullability = Nullability.Oblivious) : base(elementType)
+		public ArrayType(ICompilation compilation, IType elementType, int dimensions = 1, Nullability nullability = Nullability.Oblivious, int? originalDimensions = null) : base(elementType)
 		{
 			if (compilation == null)
 				throw new ArgumentNullException(nameof(compilation));
-			if (dimensions <= 0)
-				throw new ArgumentOutOfRangeException(nameof(dimensions), dimensions, "dimensions must be positive");
+			this.originalDimensions = originalDimensions ?? dimensions;
+			dimensions = Math.Min(Math.Max(dimensions, 1), MaxArrayRank);
 			this.compilation = compilation;
 			this.dimensions = dimensions;
 			this.nullability = nullability;
@@ -60,6 +63,11 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			get { return dimensions; }
 		}
 
+		/// <summary>
+		/// Gets the rank from metadata before it was clamped to the range supported by the CLR.
+		/// </summary>
+		public int OriginalDimensions => originalDimensions;
+
 		public override Nullability Nullability => nullability;
 
 		public override IType ChangeNullability(Nullability nullability)
@@ -67,7 +75,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			if (nullability == this.nullability)
 				return this;
 			else
-				return new ArrayType(compilation, elementType, dimensions, nullability);
+				return new ArrayType(compilation, elementType, dimensions, nullability, originalDimensions);
 		}
 
 		public override string NameSuffix {

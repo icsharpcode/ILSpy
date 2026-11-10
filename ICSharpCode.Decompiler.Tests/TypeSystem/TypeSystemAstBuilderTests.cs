@@ -16,6 +16,10 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System.IO;
+
+using ICSharpCode.Decompiler.CSharp;
+using ICSharpCode.Decompiler.CSharp.OutputVisitor;
 using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.Semantics;
 using ICSharpCode.Decompiler.TypeSystem;
@@ -56,6 +60,17 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 			var expr = builder.ConvertConstantValue(rr);
 
 			Assert.That(expr, Is.InstanceOf<ArrayCreateExpression>());
+		}
+
+		[Test]
+		public void ConvertType_ClampedArrayRankIncludesWarning()
+		{
+			var type = new ArrayType(compilation, compilation.FindType(KnownTypeCode.Int32), dimensions: 33);
+			var astType = new TypeSystemAstBuilder().ConvertType(type);
+			StringWriter output = new();
+			astType.AcceptVisitor(new CSharpOutputVisitor(new TextWriterTokenWriter(output), FormattingOptionsFactory.CreateMono()));
+			Assert.That(output.ToString(),
+				Does.Contain("invalid array rank: 33, clamped to 32"));
 		}
 	}
 }
