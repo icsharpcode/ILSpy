@@ -2429,6 +2429,48 @@ itself. The gates ran with the new default: every test project passed, including
 except one test, `Ctrl_A_Then_Delete_Drops_The_Selection_History_And_Tab`, which hangs on this
 machine on master as well (a font fallback loop in Avalonia) and was excluded.
 
+### 3.84 Semantics (item 67)
+
+`src/semantics/` is a 1:1 port of the managed C# semantics the expression builder will need:
+`CSharpConversions` (`conversions.rs`), `Conversion` (`conversion.rs`), `TypeInference`
+(`type_inference.rs`), `OverloadResolution` with constraint validation
+(`overload_resolution.rs`) and `MethodGroupResolveResult.PerformOverloadResolution`. The
+resolve results they consume are a `ResolveResult` enum. Anonymous functions are a `Lambda`
+trait, because their body only exists in the caller. `Method` is the `IMethod` view overload
+resolution needs: the definition's parameters and type parameters plus the substitution. It
+is built from a metadata method or created without metadata (`FakeMethod`). Two methods are
+equal when they are the same definition under the same substitution. `Conversions` borrows
+the type system mutably and caches type-to-type implicit conversions, like the managed
+instance does.
+
+The type system gained what the algorithms ask for. `TypeData` has `Null`, `NoType` and
+`Intersection`, each with a wire tag the host decodes to the managed special type. Type
+parameters can now exist without metadata (`TypeParamOwner::Synthetic`,
+`TypeSystem::new_type_parameter`), with constraints set after creation so they can refer to
+each other. Arrays report their base types (`System.Array`, and `IList<T>` and
+`IReadOnlyList<T>` for one dimension). `normalize_with` takes the settings of a
+`NormalizeTypeVisitor`, so type erasure and the type-merging key are the managed visitors.
+The tuple element helper moved from the deconstruction transform into the type system.
+
+The IL transforms used an approximation of the implicit conversions (`csharp_semantics.rs`).
+Its identity test compared member-lookup normalizations, which replace type parameters with
+dummies. It is now a thin facade over `Conversions`, so the transforms see the same
+conversions as the managed transforms, and the IL prefix tests still pass.
+
+The gate is the four managed suites, ported as cargo tests by C#-type-syntax helpers in
+`tests/common/csharp.rs` (`ty(ts, "List<string>[]")`): `ConversionTests` (129 tests),
+`ExplicitConversionTest` (66), `TypeInferenceTests` (65) and `OverloadResolutionTests` (21).
+The managed suites are larger than the counts in the plan, and every test was ported. 273
+pass. The 8 ignored ones are `[Ignore]`d in the managed suites with the same reasons. Two
+port bugs showed up as red tests and were fixed. First, a default literal was not a
+compile-time constant (the managed `DefaultLiteralResolveResult` is a null constant). Second,
+the all-results inference fixed to one candidate instead of their intersection, which is
+why `Intersection` exists.
+
+The plan also lists member lookup and the parts of `CSharpResolver` the expression builder
+uses. Which parts those are is only known once the builder exists, and no gate test covers
+them. They come with item 68, where the first caller needs them.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

@@ -44,6 +44,12 @@ pub enum TypeParamOwner {
     },
     DummyType,
     DummyMethod,
+    /// A type parameter without metadata (`DefaultTypeParameter`): its constraints are the
+    /// type system's synthetic type parameter `id` (`TypeSystem::new_type_parameter`).
+    Synthetic {
+        id: u32,
+        method: bool,
+    },
 }
 
 impl TypeParamOwner {
@@ -53,6 +59,7 @@ impl TypeParamOwner {
             TypeParamOwner::Method(_)
                 | TypeParamOwner::ContextMethod { .. }
                 | TypeParamOwner::DummyMethod
+                | TypeParamOwner::Synthetic { method: true, .. }
         )
     }
 }
@@ -128,6 +135,14 @@ pub enum TypeData {
         inner: TypeId,
         nullability: Nullability,
     },
+    /// `SpecialType.NullType`, the type of the `null` literal.
+    Null,
+    /// `SpecialType.NoType`, the type of expressions without one (lambdas, method groups,
+    /// `throw` expressions).
+    NoType,
+    /// `IntersectionType`: at least two distinct types (type inference reports every
+    /// candidate of an ambiguous search as one).
+    Intersection(Box<[TypeId]>),
 }
 
 /// The type parameters in scope, as `(owner, count)`.
@@ -186,6 +201,8 @@ pub struct TypeSystem<'c, 'a> {
     /// Per module: method row to `(owner token, semantics)` of C# accessors.
     pub(super) accessor_owners: HashMap<ModuleId, HashMap<u32, (u32, u16)>>,
     explicit_contexts: Vec<ExplicitContext>,
+    /// The type parameters of `TypeParamOwner::Synthetic`, by id.
+    synthetic_type_parameters: Vec<super::members::TypeParamInfo>,
 }
 
 impl<'c, 'a> TypeSystem<'c, 'a> {
@@ -197,7 +214,46 @@ impl<'c, 'a> TypeSystem<'c, 'a> {
             known: HashMap::new(),
             accessor_owners: HashMap::new(),
             explicit_contexts: Vec::new(),
+            synthetic_type_parameters: Vec::new(),
         }
+    }
+
+    /// `new DefaultTypeParameter(compilation, ownerType, index, name, ...)`: a type parameter
+    /// of a method (`method`) or a class without metadata. `info.constraints` are the declared
+    /// constraints; like `DefaultTypeParameter`, `System.ValueType` (with the value type
+    /// constraint) or `System.Object` (without a non-interface constraint) is added. Use
+    /// `set_type_parameter_constraints` for constraints that refer to the parameter itself.
+    pub fn new_type_parameter(
+        &mut self,
+        method: bool,
+        index: u32,
+        mut info: super::members::TypeParamInfo,
+    ) -> TypeId {
+        let id = self.synthetic_type_parameters.len() as u32;
+        let declared = std::mem::take(&mut info.constraints);
+        self.synthetic_type_parameters.push(info);
+        self.set_type_parameter_constraints(id, declared);
+        self.intern(TypeData::TypeParam {
+            owner: TypeParamOwner::Synthetic { id, method },
+            index,
+        })
+    }
+
+    /// Replaces the declared constraints of synthetic type parameter `id`.
+    pub fn set_type_parameter_constraints(&mut self, id: u32, mut constraints: Vec<TypeId>) {
+        let has_non_interface = constraints.iter().any(|&c| !self.is_interface(c));
+        let value_type = self.synthetic_type_parameters[id as usize].value_type;
+        if value_type {
+            constraints.push(self.known_type(KnownTypeCode::ValueType));
+        } else if !has_non_interface {
+            constraints.push(self.known_type(KnownTypeCode::Object));
+        }
+        self.synthetic_type_parameters[id as usize].constraints = constraints;
+    }
+
+    /// The synthetic type parameter `id`.
+    pub fn synthetic_type_parameter(&self, id: u32) -> &super::members::TypeParamInfo {
+        &self.synthetic_type_parameters[id as usize]
     }
 
     /// The explicit context with these type parameters, added on first use.
@@ -676,7 +732,7 @@ impl<'c, 'a> TypeSystem<'c, 'a> {
             TypeData::Annotated { inner, .. } | TypeData::Modified { inner, .. } => {
                 self.is_reference_type(inner)
             }
-            TypeData::Array { .. } | TypeData::Dynamic => Some(true),
+            TypeData::Array { .. } | TypeData::Dynamic | TypeData::Null => Some(true),
             TypeData::Pinned(e) => self.is_reference_type(e),
             TypeData::Tuple { .. } | TypeData::NInt | TypeData::NUInt | TypeData::FnPtr(_) => {
                 Some(false)
@@ -686,7 +742,11 @@ impl<'c, 'a> TypeSystem<'c, 'a> {
             TypeData::TypeParam { owner, index } => {
                 self.type_parameter_is_reference_type(owner, index)
             }
-            TypeData::UnknownSpecial | TypeData::Unbound | TypeData::ArgList => None,
+            TypeData::UnknownSpecial | TypeData::Unbound | TypeData::ArgList | TypeData::NoType => {
+                None
+            }
+            // The first member that knows.
+            TypeData::Intersection(types) => types.iter().find_map(|&t| self.is_reference_type(t)),
         }
     }
 
@@ -775,6 +835,13 @@ impl<'c, 'a> TypeSystem<'c, 'a> {
             TypeData::NUInt => "nuint".to_owned(),
             TypeData::Tuple { underlying, .. } => self.reflection_name(*underlying),
             TypeData::Annotated { inner, .. } => self.reflection_name(*inner),
+            TypeData::Null => "null".to_owned(),
+            TypeData::NoType => "?".to_owned(),
+            TypeData::Intersection(types) => types
+                .iter()
+                .map(|&t| self.reflection_name(t))
+                .collect::<Vec<_>>()
+                .join(" & "),
         }
     }
 }

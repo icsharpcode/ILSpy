@@ -15,6 +15,62 @@ pub const REF_REF: u8 = 2;
 pub const REF_IN: u8 = 3;
 pub const REF_READONLY: u8 = 4;
 
+/// The settings of a `NormalizeTypeVisitor`.
+#[derive(Clone, Copy, Debug)]
+pub struct Normalization {
+    pub class_dummy: bool,
+    pub method_dummy: bool,
+    pub dynamic_and_object: bool,
+    pub intptr_to_nint: bool,
+    pub tuple_to_underlying: bool,
+    pub remove_tuple_names: bool,
+    pub remove_modopt: bool,
+    pub remove_modreq: bool,
+    pub remove_nullability: bool,
+}
+
+impl Normalization {
+    /// The default `NormalizeTypeVisitor`.
+    pub const MEMBER_LOOKUP: Normalization = Normalization {
+        class_dummy: true,
+        method_dummy: true,
+        dynamic_and_object: true,
+        intptr_to_nint: true,
+        tuple_to_underlying: true,
+        remove_tuple_names: true,
+        remove_modopt: true,
+        remove_modreq: true,
+        remove_nullability: true,
+    };
+
+    /// The visitor of `ParameterListComparer`.
+    pub const PARAMETER_LIST: Normalization = Normalization {
+        class_dummy: false,
+        ..Self::MEMBER_LOOKUP
+    };
+
+    /// `NormalizeTypeVisitor.TypeErasure`.
+    pub const TYPE_ERASURE: Normalization = Normalization {
+        class_dummy: false,
+        method_dummy: false,
+        remove_tuple_names: false,
+        ..Self::MEMBER_LOOKUP
+    };
+
+    /// `NormalizeTypeVisitor.KeyForTypeMerging`.
+    pub const KEY_FOR_TYPE_MERGING: Normalization = Normalization {
+        class_dummy: false,
+        method_dummy: false,
+        dynamic_and_object: true,
+        intptr_to_nint: false,
+        tuple_to_underlying: false,
+        remove_tuple_names: true,
+        remove_modopt: false,
+        remove_modreq: false,
+        remove_nullability: true,
+    };
+}
+
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct FnPtrType {
     /// `SignatureCallingConvention` (0 default, 1 cdecl, 2 stdcall, 3 thiscall, 4 fastcall,
@@ -167,69 +223,120 @@ impl TypeSystem<'_, '_> {
         }))))
     }
 
-    /// The `NormalizeTypeVisitor` member lookup uses: type parameters become dummies of their
+    /// The `NormalizeTypeVisitor` member lookup uses (`Normalization::MEMBER_LOOKUP`): type
+    /// parameters become dummies of their
     /// owner kind, unknown types forget whether they are reference types, modifiers,
     /// nullability and tuple names go, `object` becomes `dynamic` and `IntPtr`/`UIntPtr`
     /// become `nint`/`nuint`.
     pub fn normalize(&mut self, t: TypeId) -> TypeId {
-        self.normalize_with(t, true)
+        self.normalize_with(t, Normalization::MEMBER_LOOKUP)
     }
 
     /// The `ParameterListComparer` visitor: as `normalize`, but class type parameters stay.
     pub fn normalize_parameter(&mut self, t: TypeId) -> TypeId {
-        self.normalize_with(t, false)
+        self.normalize_with(t, Normalization::PARAMETER_LIST)
     }
 
-    fn normalize_with(&mut self, t: TypeId, class_dummy: bool) -> TypeId {
+    /// `type.AcceptVisitor(normalizeTypeVisitor)` for a `NormalizeTypeVisitor` with the
+    /// settings `n`.
+    pub fn normalize_with(&mut self, t: TypeId, n: Normalization) -> TypeId {
         let data = self.data(t).clone();
         let normalized = match data {
-            TypeData::TypeParam { owner, .. } if !owner.is_method() && !class_dummy => return t,
-            TypeData::TypeParam { owner, index } => TypeData::TypeParam {
-                owner: if owner.is_method() {
-                    TypeParamOwner::DummyMethod
-                } else {
-                    TypeParamOwner::DummyType
-                },
-                index,
-            },
+            TypeData::TypeParam { owner, index }
+                if (owner.is_method() && n.method_dummy)
+                    || (!owner.is_method() && n.class_dummy) =>
+            {
+                TypeData::TypeParam {
+                    owner: if owner.is_method() {
+                        TypeParamOwner::DummyMethod
+                    } else {
+                        TypeParamOwner::DummyType
+                    },
+                    index,
+                }
+            }
             TypeData::Unknown { name, .. } => TypeData::Unknown {
                 name,
                 is_reference_type: None,
             },
             TypeData::Def(def) => match self.comp.type_def(def).map(|i| i.known) {
-                Ok(KnownTypeCode::Object) => TypeData::Dynamic,
-                Ok(KnownTypeCode::IntPtr) => TypeData::NInt,
-                Ok(KnownTypeCode::UIntPtr) => TypeData::NUInt,
+                Ok(KnownTypeCode::Object) if n.dynamic_and_object => TypeData::Dynamic,
+                Ok(KnownTypeCode::IntPtr) if n.intptr_to_nint => TypeData::NInt,
+                Ok(KnownTypeCode::UIntPtr) if n.intptr_to_nint => TypeData::NUInt,
                 _ => return t,
             },
-            TypeData::Modified { inner, .. } | TypeData::Annotated { inner, .. } => {
-                return self.normalize_with(inner, class_dummy);
+            TypeData::Modified {
+                modifier,
+                inner,
+                required,
+            } => {
+                if (required && n.remove_modreq) || (!required && n.remove_modopt) {
+                    return self.normalize_with(inner, n);
+                }
+                TypeData::Modified {
+                    modifier,
+                    inner: self.normalize_with(inner, n),
+                    required,
+                }
             }
-            TypeData::Tuple { underlying, .. } => {
-                return self.normalize_with(underlying, class_dummy);
+            TypeData::Annotated { inner, nullability } => {
+                if n.remove_nullability {
+                    return self.normalize_with(inner, n);
+                }
+                let inner = self.normalize_with(inner, n);
+                return self.change_nullability(inner, nullability);
+            }
+            TypeData::Tuple {
+                underlying,
+                elements,
+                names,
+            } => {
+                if n.tuple_to_underlying {
+                    return self.normalize_with(underlying, n);
+                }
+                let elements: Vec<TypeId> = elements
+                    .iter()
+                    .map(|e| self.normalize_with(*e, n))
+                    .collect();
+                let names = if n.remove_tuple_names {
+                    vec![None; elements.len()].into()
+                } else {
+                    names
+                };
+                let assembly = self.definition(t).map(|d| d.module);
+                TypeData::Tuple {
+                    underlying: self.tuple_underlying(&elements, assembly),
+                    elements: elements.into(),
+                    names,
+                }
             }
             TypeData::Inst { generic, args } => TypeData::Inst {
-                generic: self.normalize_with(generic, class_dummy),
-                args: args
-                    .iter()
-                    .map(|a| self.normalize_with(*a, class_dummy))
-                    .collect(),
+                generic: self.normalize_with(generic, n),
+                args: args.iter().map(|a| self.normalize_with(*a, n)).collect(),
             },
-            TypeData::Array { elem, rank, .. } => TypeData::Array {
-                elem: self.normalize_with(elem, class_dummy),
+            TypeData::Array {
+                elem,
                 rank,
-                nullability: Nullability::Oblivious,
+                nullability,
+            } => TypeData::Array {
+                elem: self.normalize_with(elem, n),
+                rank,
+                nullability: if n.remove_nullability {
+                    Nullability::Oblivious
+                } else {
+                    nullability
+                },
             },
-            TypeData::Pointer(e) => TypeData::Pointer(self.normalize_with(e, class_dummy)),
-            TypeData::ByRef(e) => TypeData::ByRef(self.normalize_with(e, class_dummy)),
-            TypeData::Pinned(e) => TypeData::Pinned(self.normalize_with(e, class_dummy)),
+            TypeData::Pointer(e) => TypeData::Pointer(self.normalize_with(e, n)),
+            TypeData::ByRef(e) => TypeData::ByRef(self.normalize_with(e, n)),
+            TypeData::Pinned(e) => TypeData::Pinned(self.normalize_with(e, n)),
             TypeData::FnPtr(f) => {
                 let mut f = *f;
-                f.ret = self.normalize_with(f.ret, class_dummy);
+                f.ret = self.normalize_with(f.ret, n);
                 f.params = f
                     .params
                     .iter()
-                    .map(|p| self.normalize_with(*p, class_dummy))
+                    .map(|p| self.normalize_with(*p, n))
                     .collect();
                 TypeData::FnPtr(Box::new(f))
             }

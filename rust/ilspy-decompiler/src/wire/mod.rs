@@ -33,6 +33,9 @@ mod tag {
     pub const NUINT: u8 = 15;
     pub const TUPLE: u8 = 16;
     pub const ANNOTATED: u8 = 17;
+    pub const NULL: u8 = 18;
+    pub const NO_TYPE: u8 = 19;
+    pub const INTERSECTION: u8 = 20;
 }
 
 #[derive(Default)]
@@ -151,6 +154,10 @@ impl Tables {
                     }
                     TypeParamOwner::DummyType => e.u8(2),
                     TypeParamOwner::DummyMethod => e.u8(3),
+                    // shortcut: a synthetic type parameter goes over the wire as the dummy
+                    // parameter at its index; upgrade when engine-created type parameters
+                    // reach the host.
+                    TypeParamOwner::Synthetic { method, .. } => e.u8(if method { 3 } else { 2 }),
                 }
                 e.uvar(u64::from(index));
             }
@@ -198,6 +205,13 @@ impl Tables {
                 e.raw(&f.ref_kinds);
             }
             TypeData::ArgList => e.u8(tag::ARG_LIST),
+            TypeData::Null => e.u8(tag::NULL),
+            TypeData::NoType => e.u8(tag::NO_TYPE),
+            TypeData::Intersection(types) => {
+                let list: Vec<u32> = types.iter().map(|&x| self.ty(ts, x)).collect();
+                e.u8(tag::INTERSECTION);
+                self.list(&mut e, &list);
+            }
             TypeData::Modified {
                 modifier,
                 inner,

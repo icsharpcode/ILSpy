@@ -6,6 +6,7 @@
 pub mod flow_analysis;
 pub mod il;
 pub mod metadata;
+pub mod semantics;
 pub mod typesystem;
 pub mod util;
 pub mod wire;

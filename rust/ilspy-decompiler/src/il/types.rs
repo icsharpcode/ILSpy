@@ -213,7 +213,7 @@ impl PrimitiveType {
 impl TypeSystem<'_, '_> {
     /// `IType.Kind` for the kinds stack-type logic distinguishes; `None` for definitions and
     /// parameterized types, whose kind comes from their definition.
-    fn skip_modifiers(&self, t: TypeId) -> TypeId {
+    pub fn skip_modifiers(&self, t: TypeId) -> TypeId {
         match self.data(t) {
             TypeData::Modified { inner, .. } => self.skip_modifiers(*inner),
             _ => t,

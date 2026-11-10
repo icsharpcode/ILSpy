@@ -2393,7 +2393,7 @@ fn is_built_in_operator_type(env: &mut Env<'_, '_, '_, '_>, t: TypeId) -> bool {
 
 /// `CSharpConversions.ImplicitConversion(from, to).IsValid`.
 fn implicit_conversion(env: &mut Env<'_, '_, '_, '_>, from: TypeId, to: TypeId) -> bool {
-    super::csharp_semantics::implicit_conversion(env.ctx, from, to).is_some()
+    super::csharp_semantics::implicit_conversion(env.ctx, from, to).is_valid()
 }
 
 /// `CSharpConversions.IsImplicitReferenceConversion`.

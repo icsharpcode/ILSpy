@@ -409,7 +409,7 @@ the reasons. This file holds only the ordered steps, their gates and their rules
 
 ### Phase 3: semantics, C# AST and AST transforms in Rust, seam 2
 
-- [ ] **67. Semantics.** Size L. Subject: `Port the C# resolver, conversions and overload resolution to Rust`.
+- [x] **67. Semantics.** Size L. Subject: `Port the C# resolver, conversions and overload resolution to Rust`.
   - `semantics/`: `ResolveResult` enum, `conversions.rs`, `overload_resolution.rs`,
     `type_inference.rs`, `member_lookup.rs`, the parts of `CSharpResolver` the expression
     builder uses. Pure spec algorithms, ported 1:1.

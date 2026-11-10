@@ -35,7 +35,7 @@ use crate::typesystem::types::{TypeData, TypeId};
 
 use super::Context;
 use super::block_transform::BlockTransformContext;
-use super::csharp_semantics::{ImplicitConversion, implicit_conversion, type_erasure_equivalent};
+use super::csharp_semantics::{implicit_conversion, type_erasure_equivalent};
 use super::il_inlining::{Find, find_load_in_next, options};
 use super::statement_transform::StatementTransformContext;
 
@@ -222,42 +222,7 @@ fn is_before(f: &Function, a: NodeId, b: NodeId) -> bool {
 /// `TupleType.GetTupleElementTypes`: the element types of a tuple or `System.ValueTuple`
 /// type, flattening `Rest`; None for other types.
 fn tuple_element_types(ctx: &mut Context<'_, '_, '_>, t: TypeId) -> Option<Vec<TypeId>> {
-    let mut output = Vec::new();
-    collect_tuple_element_types(ctx, t, &mut output).then_some(output)
-}
-
-fn collect_tuple_element_types(
-    ctx: &mut Context<'_, '_, '_>,
-    t: TypeId,
-    output: &mut Vec<TypeId>,
-) -> bool {
-    if let TypeData::Tuple { elements, .. } = ctx.ts.data(t) {
-        output.extend(elements.iter());
-        return true;
-    }
-    let Some(def) = ctx.ts.definition(t) else {
-        return false;
-    };
-    let Ok(info) = ctx.ts.comp.type_def(def) else {
-        return false;
-    };
-    if !matches!(info.kind, TypeKind::Class | TypeKind::Struct)
-        || info.full_name.top.ns != "System"
-        || info.full_name.name() != "ValueTuple"
-    {
-        return false;
-    }
-    let tpc = info.type_parameter_count as usize;
-    let args = ctx.ts.type_arguments(t);
-    if tpc > 0 && tpc < TUPLE_REST {
-        output.extend(args);
-        true
-    } else if tpc == TUPLE_REST && args.len() == TUPLE_REST {
-        output.extend(&args[..TUPLE_REST - 1]);
-        collect_tuple_element_types(ctx, args[TUPLE_REST - 1], output)
-    } else {
-        false
-    }
+    ctx.ts.tuple_element_types(t)
 }
 
 /// `TupleType.FromUnderlyingType`: the tuple type (and its element types) of a tuple-compatible
@@ -1525,9 +1490,10 @@ fn is_compatible_implicit_conversion(
     info: ConversionInfo,
 ) -> bool {
     let input_type = info.input_type.expect("an input type");
-    let Some(c) = implicit_conversion(ctx, input_type, target_type) else {
+    let c = implicit_conversion(ctx, input_type, target_type);
+    if !c.is_valid() {
         return false;
-    };
+    }
     let conv = info.conv.map(|n| match *f.inst(n) {
         Inst::Conv {
             input,
@@ -1537,24 +1503,22 @@ fn is_compatible_implicit_conversion(
         } => (conversion_kind(target, input, input_sign), input_sign),
         _ => unreachable!("a conv"),
     });
-    match c {
-        ImplicitConversion::Identity | ImplicitConversion::Reference => {
-            conv.is_none_or(|(kind, _)| kind == ConversionKind::Nop)
+    if c.is_identity() || c.is_reference() {
+        conv.is_none_or(|(kind, _)| kind == ConversionKind::Nop)
+    } else if c.is_numeric() {
+        let Some((kind, input_sign)) = conv else {
+            return false;
+        };
+        let sign = ctx.ts.type_sign(input_type);
+        match kind {
+            ConversionKind::IntToFloat => sign == input_sign,
+            ConversionKind::FloatPrecisionChange => true,
+            ConversionKind::SignExtend => sign == Sign::Signed,
+            ConversionKind::ZeroExtend => sign == Sign::Unsigned,
+            _ => false,
         }
-        ImplicitConversion::Numeric => {
-            let Some((kind, input_sign)) = conv else {
-                return false;
-            };
-            let sign = ctx.ts.type_sign(input_type);
-            match kind {
-                ConversionKind::IntToFloat => sign == input_sign,
-                ConversionKind::FloatPrecisionChange => true,
-                ConversionKind::SignExtend => sign == Sign::Signed,
-                ConversionKind::ZeroExtend => sign == Sign::Unsigned,
-                _ => false,
-            }
-        }
-        _ => false,
+    } else {
+        false
     }
 }
 

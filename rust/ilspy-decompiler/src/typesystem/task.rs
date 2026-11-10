@@ -41,7 +41,7 @@ impl TypeSystem<'_, '_> {
     /// `TaskType.IsCustomTask`: a type with at most one type parameter and an
     /// `[AsyncMethodBuilder(typeof(...))]` attribute. The builder type, `Some(None)` for a
     /// null argument.
-    fn custom_task_builder(&mut self, def: TypeDefId) -> Option<Option<TypeId>> {
+    pub(crate) fn custom_task_builder(&mut self, def: TypeDefId) -> Option<Option<TypeId>> {
         if self
             .comp
             .type_def(def)
@@ -69,7 +69,8 @@ impl TypeSystem<'_, '_> {
         })
     }
 
-    fn is_known(&self, t: TypeId, code: KnownTypeCode) -> bool {
+    /// `IType.IsKnownType(code)`: for a generic known type, any parameterization.
+    pub fn is_known(&self, t: TypeId, code: KnownTypeCode) -> bool {
         self.definition(t)
             .and_then(|d| self.comp.type_def(d).ok())
             .is_some_and(|i| i.known == code)

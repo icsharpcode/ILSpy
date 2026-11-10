@@ -11,6 +11,7 @@ use super::attrs::{
 };
 use super::attrvalue::ArgValue;
 use super::compilation::{ModuleId, TypeDefId, TypeKind, is_known_type_name};
+use super::known::KnownTypeCode;
 use super::members::{MethodDefId, SymbolKind, method_accessibility, method_modifiers};
 use super::resolve::{MethodOrigin, ResolvedMethod};
 use super::types::{TypeData, TypeId, TypeParamOwner, TypeSystem};
@@ -100,6 +101,9 @@ impl TypeSystem<'_, '_> {
                     TypeParamOwner::DummyType | TypeParamOwner::DummyMethod => {
                         return Ok(Vec::new());
                     }
+                    TypeParamOwner::Synthetic { id, .. } => {
+                        return Ok(self.synthetic_type_parameter(id).constraints.clone());
+                    }
                 };
                 let tps = self.type_parameters(module, table, row)?;
                 Ok(tps
@@ -107,8 +111,30 @@ impl TypeSystem<'_, '_> {
                     .map(|tp| tp.constraints.clone())
                     .unwrap_or_default())
             }
-            // shortcut: arrays, pointers and the special types report no base types; upgrade
-            // when member lookup on them is ported.
+            // `ArrayType.DirectBaseTypes`: System.Array, and for a single-dimensional array of
+            // a non-pointer type IList<T> and IReadOnlyList<T>.
+            TypeData::Array { elem, rank, .. } => {
+                let mut bases = Vec::new();
+                let array = self.known_type(KnownTypeCode::Array);
+                if self.definition(array).is_some() {
+                    bases.push(array);
+                }
+                if rank == 1 && !matches!(self.data(elem), TypeData::Pointer(_)) {
+                    for code in [KnownTypeCode::IListOfT, KnownTypeCode::IReadOnlyListOfT] {
+                        let generic = self.known_type(code);
+                        if self.definition(generic).is_some() {
+                            bases.push(self.intern(TypeData::Inst {
+                                generic,
+                                args: [elem].into(),
+                            }));
+                        }
+                    }
+                }
+                Ok(bases)
+            }
+            TypeData::Intersection(types) => Ok(types.to_vec()),
+            // shortcut: pointers and the special types report no base types; upgrade when
+            // member lookup on them is ported.
             _ => Ok(Vec::new()),
         }
     }

@@ -912,6 +912,9 @@ fn type_name(ts: &mut TypeSystem<'_, '_>, t: TypeId) -> Option<String> {
                     (m.module, TableId::MethodDef, m.row)
                 }
                 TypeParamOwner::DummyType | TypeParamOwner::DummyMethod => return None,
+                TypeParamOwner::Synthetic { id, .. } => {
+                    return Some(ts.synthetic_type_parameter(id).name.clone());
+                }
             };
             let tps = ts.type_parameters(module, table, row).ok()?;
             return tps.get(index as usize).map(|tp| tp.name.clone());

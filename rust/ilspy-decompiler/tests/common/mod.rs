@@ -12,6 +12,8 @@
 
 #![allow(dead_code)]
 
+pub mod csharp;
+
 use std::path::{Path, PathBuf};
 
 use ilspy_decompiler::metadata::Metadata;

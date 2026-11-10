@@ -245,6 +245,12 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				}
 				case 17:
 					return Type().ChangeNullability((Nullability)U8());
+				case 18:
+					return SpecialType.NullType;
+				case 19:
+					return SpecialType.NoType;
+				case 20:
+					return IntersectionType.Create(TypeList());
 				default:
 					throw new InvalidOperationException("Unknown wire type tag");
 			}

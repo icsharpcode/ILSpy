@@ -81,13 +81,20 @@ impl TypeSystem<'_, '_> {
         Ok(tps)
     }
 
-    fn type_parameter_info(&mut self, owner: TypeParamOwner, index: u32) -> Option<TypeParamInfo> {
+    pub fn type_parameter_info(
+        &mut self,
+        owner: TypeParamOwner,
+        index: u32,
+    ) -> Option<TypeParamInfo> {
         let (module, table, row) = match owner {
             TypeParamOwner::Type(def) => (def.module, TableId::TypeDef, def.row),
             TypeParamOwner::Method(m) | TypeParamOwner::ContextMethod { method: m, .. } => {
                 (m.module, TableId::MethodDef, m.row)
             }
             TypeParamOwner::DummyType | TypeParamOwner::DummyMethod => return None,
+            TypeParamOwner::Synthetic { id, .. } => {
+                return Some(self.synthetic_type_parameter(id).clone());
+            }
         };
         self.type_parameters(module, table, row)
             .ok()?
