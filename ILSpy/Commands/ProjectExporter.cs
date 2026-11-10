@@ -91,7 +91,8 @@ namespace ICSharpCode.ILSpy.Commands
 				if (options.GeneratePdb && solution.Success)
 				{
 					await Task.Run(() => GeneratePdbs(exportable,
-						a => Path.Combine(options.OutputDirectory, a.ShortName), settingsClone, options, report, ct), ct)
+						a => Path.Combine(options.OutputDirectory, SolutionWriter.GetProjectDirectoryName(a)),
+						settingsClone, options, report, ct), ct)
 						.ConfigureAwait(false);
 				}
 				AppendSkipReport(report, skipReport);

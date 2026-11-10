@@ -316,7 +316,8 @@ Examples:
 					var projects = new List<ProjectItem>();
 					foreach (var file in InputAssemblyNames)
 					{
-						string projectFileName = Path.Combine(outputDirectory, Path.GetFileNameWithoutExtension(file), Path.GetFileNameWithoutExtension(file) + ".csproj");
+						string projectName = Path.GetFileNameWithoutExtension(file);
+						string projectFileName = Path.Combine(outputDirectory, WholeProjectDecompiler.CleanUpDirectoryName(projectName), projectName + ".csproj");
 						Directory.CreateDirectory(Path.GetDirectoryName(projectFileName));
 						ProjectId projectId = DecompileAsProject(file, projectFileName);
 						projects.Add(new ProjectItem(projectFileName, projectId.PlatformName, projectId.Guid, projectId.TypeGuid));

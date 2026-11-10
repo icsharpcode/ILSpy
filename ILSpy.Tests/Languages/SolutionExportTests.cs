@@ -121,4 +121,47 @@ public class SolutionExportTests
 			catch { /* best-effort cleanup */ }
 		}
 	}
+
+	[AvaloniaTest]
+	public async Task CreateSolution_Keeps_Every_Project_Below_The_Solution_Directory()
+	{
+		var (_, vm) = await TestHarness.BootAsync();
+
+		// "...dll" minus its extension is "..", which taken literally as the project directory is the
+		// parent of the solution directory.
+		var fixture = FixtureAssembly.Emit("FixtureA");
+		var dotDotFile = Path.Combine(Path.GetDirectoryName(fixture)!, "...dll");
+		File.Move(fixture, dotDotFile);
+		var assemblies = new[] {
+			await vm.OpenAssemblyAsync(dotDotFile),
+			await vm.OpenFixtureAsync("FixtureB"),
+		};
+		assemblies[0].ShortName.Should().Be("..");
+
+		var language = AppComposition.Current.GetExport<LanguageService>()
+			.Languages.OfType<CSharpLanguage>().First();
+
+		var tempDir = Path.Combine(Path.GetTempPath(), "ILSpySlnDotDot_" + System.Guid.NewGuid().ToString("N"));
+		var solutionDir = Path.Combine(tempDir, "Solution");
+		Directory.CreateDirectory(solutionDir);
+		try
+		{
+			var result = await ICSharpCode.ILSpy.SolutionWriter.CreateSolutionAsync(
+				Path.Combine(solutionDir, "Solution.sln"), language, assemblies, CancellationToken.None, new DecompilerSettings());
+
+			result.Success.Should().BeTrue(
+				"the file name is unusual, but the assembly is valid. Status:\n" + result.StatusText);
+			Directory.EnumerateFileSystemEntries(tempDir).Should().Equal(new[] { solutionDir },
+				"nothing may be written outside the solution directory");
+			Directory.EnumerateDirectories(solutionDir).Should().HaveCount(2)
+				.And.OnlyContain(dir => Directory.EnumerateFiles(dir, "*.csproj").Count() == 1,
+					"each assembly still gets its own subdirectory with one project file");
+		}
+		finally
+		{
+			try
+			{ Directory.Delete(tempDir, recursive: true); }
+			catch { /* best-effort cleanup */ }
+		}
+	}
 }
