@@ -2346,6 +2346,34 @@ says why.
 The no-op red run failed 40 of 3,550 equality cases. The port matched every case on the
 first run, and the allowlist stays at 69 entries.
 
+### 3.81 AssignVariableNames (item 64, IL prefix 59)
+
+AssignVariableNames gives every variable a valid, unique C# name. It is the last IL
+transform, so IL prefix 59 is the whole pipeline. Most of it is local: names come from the
+debug info, from the stores and loads of each variable, from the called method or field, or
+from the variable's type. The exception is the root scope. Before naming anything, the
+managed transform collects the names it must not reuse: the lower-case members of the
+declaring type (inherited members too), the parameters of a primary constructor, and the
+lower-case types of the namespace, of the enclosing types and of the using scope. The engine
+has no using scope and no resolved namespace, so the host computes these lists
+(`RustEngine.RootNames`) and passes them with each read as two length-prefixed lists. The
+engine only avoids the member names and also reserves the rest, as the managed code does.
+
+Local functions get their source names here too, so `ILFunction.Name` and the name of a
+`LocalFunctionMethod` now travel on the wire, and the host uses them for the function and
+for every call that targets it.
+
+The item asked for the `Humanizer` pluralization rules to be ported as data. The IL transform
+never pluralizes: only `GenerateForeachVariableName` and `GenerateVariableName` do, and the
+C# AST transforms call those in Phase 3. The rules stay unported until then. Two documented
+shortcuts approximate the Unicode categories that `CleanUpVariableName` and the identifier
+check use.
+
+The no-op red run failed 2,574 of 3,550 equality cases. The last divergences were names
+derived from types: a type parameter, an unresolved type and a generic instance must answer
+`IType.Name` and `IType.Kind` as the managed type system does (a generic instance takes its
+kind from its generic type). After those fixes every case matched.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

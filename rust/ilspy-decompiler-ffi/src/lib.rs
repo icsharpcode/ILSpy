@@ -16,7 +16,9 @@ use std::sync::{Once, OnceLock};
 use ilspy_decompiler::Session;
 use ilspy_decompiler::il::debug_info::{DebugInfo, ExtraTypeInfo};
 use ilspy_decompiler::il::reader::ReaderOptions;
-use ilspy_decompiler::il::transforms::{ExtensionMethodQuery, Resolver, SETTING_NAMES, Settings};
+use ilspy_decompiler::il::transforms::{
+    ExtensionMethodQuery, Resolver, RootNames, SETTING_NAMES, Settings,
+};
 use ilspy_decompiler::typesystem::compilation::{Compilation, ModuleId, ModuleInput};
 use ilspy_decompiler::typesystem::members::MethodDefId;
 use ilspy_decompiler::typesystem::types::TypeSystem;
@@ -421,6 +423,39 @@ impl Resolver for HostResolver {
     }
 }
 
+/// The names AssignVariableNames' root scope collects, as `RustEngine.RootNames` writes them:
+/// two lists, each a count and length-prefixed UTF-8 strings, as unsigned LEB128.
+fn decode_root_names(bytes: &[u8]) -> Option<RootNames> {
+    let mut pos = 0;
+    let uvar = |pos: &mut usize| -> Option<usize> {
+        let mut value = 0usize;
+        let mut shift = 0;
+        loop {
+            let b = *bytes.get(*pos)?;
+            *pos += 1;
+            value |= usize::from(b & 0x7F).checked_shl(shift)?;
+            if b & 0x80 == 0 {
+                return Some(value);
+            }
+            shift += 7;
+        }
+    };
+    let mut lists = [Vec::new(), Vec::new()];
+    for list in &mut lists {
+        for _ in 0..uvar(&mut pos)? {
+            let len = uvar(&mut pos)?;
+            let text = bytes.get(pos..pos.checked_add(len)?)?;
+            pos += len;
+            list.push(String::from_utf8_lossy(text).into_owned());
+        }
+    }
+    let [member_names, reserved_names] = lists;
+    Some(RootNames {
+        member_names,
+        reserved_names,
+    })
+}
+
 /// Debug export for the shim's `IlAstReadEquality` test: the IL reader's function for every
 /// method body of module 0, as wire v1 (`wire::ilast`). Bit 0 of `reader_flags` is
 /// `UseRefLocalsForAccurateOrderOfEvaluation`; a non-null `debug_info` is called with
@@ -516,12 +551,14 @@ pub unsafe extern "C" fn ilspy_session_load(
 /// `Unsupported` when `il_prefix` exceeds `ilspy_il_prefix()`. `settings` has bit `i` set when
 /// the setting `ilspy_setting_names()` lists at `i` is on. `reader_flags`, `debug_ctx` and
 /// `debug_info` as for `ilspy_debug_read_il`. `resolver` answers the C# resolver questions
-/// (`resolver_ctx` is passed back); without it the engine finds no extension methods. Safe to
-/// call from several threads at once.
+/// (`resolver_ctx` is passed back); without it the engine finds no extension methods.
+/// `root_names` (`root_names_len` bytes, or null) are the names AssignVariableNames' root
+/// scope collects (`decode_root_names`). Safe to call from several threads at once.
 ///
 /// # Safety
 /// `session` must be a live, loaded session; `out` must be writable; `debug_info` must honor
-/// the `DebugInfoCallback` contract and `resolver` the `ResolverCallback` one.
+/// the `DebugInfoCallback` contract and `resolver` the `ResolverCallback` one. `root_names` must
+/// be readable for `root_names_len` bytes unless it is null.
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn ilspy_session_read_function(
     session: *const FfiSession,
@@ -533,6 +570,8 @@ pub unsafe extern "C" fn ilspy_session_read_function(
     debug_info: Option<DebugInfoCallback>,
     resolver_ctx: *mut c_void,
     resolver: Option<ResolverCallback>,
+    root_names: *const u8,
+    root_names_len: usize,
     out: *mut Buf,
 ) -> Status {
     // SAFETY: the caller guarantees `out` is writable.
@@ -552,6 +591,10 @@ pub unsafe extern "C" fn ilspy_session_read_function(
         ctx: resolver_ctx,
         callback,
     });
+    // SAFETY: the caller passes `root_names_len` readable bytes (or none).
+    let root_names = (!root_names.is_null() && root_names_len > 0)
+        .then(|| unsafe { std::slice::from_raw_parts(root_names, root_names_len) })
+        .and_then(decode_root_names);
     let reader = ReaderOptions {
         use_ref_locals_for_accurate_order_of_evaluation: reader_flags & 1 != 0,
         debug_info: host.as_ref().map(|h| h as &dyn DebugInfo),
@@ -578,6 +621,7 @@ pub unsafe extern "C" fn ilspy_session_read_function(
             il_prefix,
             Settings::from_bits(settings),
             resolver.as_ref().map(|r| r as &dyn Resolver),
+            root_names.as_ref(),
         )
     }) {
         Ok(bytes) => {

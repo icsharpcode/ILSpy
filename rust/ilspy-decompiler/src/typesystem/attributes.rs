@@ -899,7 +899,10 @@ impl TypeSystem<'_, '_> {
         Some(self.substitute(ty, m.class_args.as_deref(), None))
     }
 
-    fn is_compiler_generated_or_in_compiler_generated_class(&self, def: TypeDefId) -> bool {
+    pub(crate) fn is_compiler_generated_or_in_compiler_generated_class(
+        &self,
+        def: TypeDefId,
+    ) -> bool {
         let mut current = Some(def);
         while let Some(d) = current {
             if self.has_compiler_generated(d.module, TableId::TypeDef, d.row) {

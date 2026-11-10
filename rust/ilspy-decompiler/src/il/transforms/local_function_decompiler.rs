@@ -242,6 +242,7 @@ impl Decompiler {
                 local_functions: Vec::new(),
                 declaration_scope: None,
                 reduced: Some(reduced),
+                name: None,
             });
             r.function.local_functions.push(function);
             r.function.connect_root(function);
@@ -258,6 +259,7 @@ impl Decompiler {
                 rerun_requested: false,
                 removed_variables: Vec::new(),
                 resolver: ctx.resolver,
+                root_names: ctx.root_names,
             };
             run_prefix(&mut read, &mut nested, LOCAL_FUNCTION_DECOMPILER_LEAF);
             read.flush_pending_variables();
@@ -822,11 +824,13 @@ fn local_function_ref(f: &Function, function: NodeId) -> Option<LocalFunctionRef
         Inst::Function {
             read: Some(read),
             reduced: Some(reduced),
+            name: None,
             ..
         } => Some(LocalFunctionRef {
             method: read.method,
             context: read.context,
             reduced: *reduced,
+            name: None,
         }),
         _ => None,
     }
@@ -947,6 +951,7 @@ fn import_function(
         local_functions: Vec::new(),
         declaration_scope: None,
         reduced: Some(reduced),
+        name: None,
     });
     for (owner, v) in captured {
         let owner = owner.map_or(function, |n| by.node(n));
@@ -1134,6 +1139,22 @@ pub(crate) fn parse_local_function_name(name: &str) -> bool {
             // Without it the name gives back trailing characters until `\d+(_\d+)?` matches,
             // which it does exactly when the tail ends in a digit.
             None => tail.ends_with(|c: char| c.is_ascii_digit()),
+        }
+    })
+}
+
+/// The function name group of `ParseLocalFunctionName`: the regex takes the last `>g__` that
+/// matches, and without the `|` separator it gives the trailing digits back one at a time, so
+/// only the last digit is cut off (`<M>g__Local0_1` gives `Local0_`).
+pub(crate) fn local_function_name(name: &str) -> Option<&str> {
+    let rest = name.strip_prefix('<')?;
+    rest.rmatch_indices(">g__").find_map(|(i, _)| {
+        let tail = &rest[i + 4..];
+        match tail.split_once('|') {
+            Some((function, numbers)) => is_digits_and_suffix(numbers).then_some(function),
+            None => tail
+                .ends_with(|c: char| c.is_ascii_digit())
+                .then(|| &tail[..tail.len() - 1]),
         }
     })
 }
@@ -1371,5 +1392,17 @@ mod tests {
         assert!(!parse_local_function_name("<Main>b__0_0"));
         assert!(!parse_local_function_name("Main>g__Local|0_0"));
         assert!(!parse_local_function_name("<Main>g__Local"));
+    }
+
+    #[test]
+    fn local_function_names_split_like_the_managed_regex() {
+        use super::local_function_name;
+        assert_eq!(local_function_name("<Main>g__Local|0_0"), Some("Local"));
+        assert_eq!(local_function_name("<Main>g__Local0_1"), Some("Local0_"));
+        assert_eq!(
+            local_function_name("<<Main>b__0>g__Inner|0_1"),
+            Some("Inner")
+        );
+        assert_eq!(local_function_name("<Main>b__0_0"), None);
     }
 }

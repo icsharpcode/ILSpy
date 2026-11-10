@@ -369,6 +369,8 @@ pub struct LocalFunctionRef {
     /// `MethodOperand::context` of the context the local function was read in.
     pub context: u32,
     pub reduced: ReducedMethod,
+    /// The reduced method's `Name`, when AssignVariableNames renamed the local function.
+    pub name: Option<String>,
 }
 
 /// A field operand, as `MethodOperand`.
@@ -809,6 +811,8 @@ pub enum Inst {
         declaration_scope: Option<NodeId>,
         /// `ReducedMethod` of a local function.
         reduced: Option<ReducedMethod>,
+        /// `Name`, when it is not the method's (a local function renamed by AssignVariableNames).
+        name: Option<String>,
     },
     /// `expression.tree.cast T(arg)`: a conversion an expression tree spells out.
     ExpressionTreeCast {

@@ -471,6 +471,7 @@ fn convert_lambda(env: &mut Env<'_, '_, '_, '_>, instruction: NodeId) -> Option<
         local_functions: Vec::new(),
         declaration_scope: None,
         reduced: None,
+        name: None,
     });
     env.f.add_il_range(function, range);
     env.lambda_stack.push(function);

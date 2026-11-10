@@ -206,6 +206,7 @@ fn transform_delegate_construction(
             rerun_requested: false,
             removed_variables: Vec::new(),
             resolver: ctx.resolver,
+            root_names: ctx.root_names,
         };
         run_prefix(&mut lambda, &mut nested, DELEGATE_CONSTRUCTION_LEAF);
         combine_exits_transform::run(&mut lambda, &mut nested);
@@ -322,6 +323,7 @@ fn import_lambda(
         local_functions: Vec::new(),
         declaration_scope: None,
         reduced: None,
+        name: None,
     });
     for (owner, v) in captured {
         let owner = owner.map_or(function, |n| by.node(n));

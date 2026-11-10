@@ -82,7 +82,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 			var settings = context.Settings;
 			var status = engine.ReadFunction((MethodDefinitionHandle)method.MetadataToken, prefix,
 				settings, settings.UseDebugSymbols ? debugInfo : null,
-				out var rustFunction, out reason, resolver: context.CSharpResolver);
+				out var rustFunction, out reason, resolver: context.CSharpResolver, usingScope: context.UsingScope);
 			if (status != RustStatus.Ok)
 				return Fallback(reason);
 

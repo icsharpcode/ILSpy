@@ -160,6 +160,7 @@ fn early_transforms_run_on_every_body() {
             rerun_requested: false,
             removed_variables: Vec::new(),
             resolver: None,
+            root_names: None,
         };
         run_prefix(&mut r, &mut ctx, ilspy_decompiler::IL_PREFIX);
         let listed: std::collections::HashSet<_> = r.variables.iter().copied().collect();

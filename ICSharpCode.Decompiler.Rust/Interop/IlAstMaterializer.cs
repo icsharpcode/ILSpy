@@ -872,15 +872,18 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 			for (int i = 0; i < localFunctions.Length; i++)
 				localFunctions[i] = (ILFunction)Node();
 			(bool IsStatic, int Parameters, int TypeParameters)? reduced = Bool() ? (Bool(), Len(), Len()) : null;
+			string? name = Bool() ? Str() : null;
 			var function = method != null
 				? new ILFunction(method, 0, readContext, body, kind) { DelegateType = delegateType }
 				: new ILFunction(returnType, parameters, context, body, kind) { DelegateType = delegateType };
 			function.Variables.AddRange(functionVariables);
 			helperVariableCountField.SetValue(function, helperVariableCount);
 			readResults?.Invoke(function);
+			if (name != null)
+				function.Name = name;
 			function.LocalFunctions.AddRange(localFunctions);
 			if (reduced is var (isStaticLocal, generatedParameters, generatedTypeParameters))
-				function.ReducedMethod = new LocalFunctionMethod(function.Method!, function.Method!.Name, isStaticLocal, generatedParameters, generatedTypeParameters);
+				function.ReducedMethod = new LocalFunctionMethod(function.Method!, name ?? function.Method!.Name, isStaticLocal, generatedParameters, generatedTypeParameters);
 			return function;
 		}
 
@@ -1148,7 +1151,8 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				bool isStatic = Bool();
 				int parameters = Len();
 				int typeParameters = Len();
-				method = new LocalFunctionMethod(read, read.Name, isStatic, parameters, typeParameters).Specialize(method.Substitution);
+				string name = Bool() ? Str() : read.Name;
+				method = new LocalFunctionMethod(read, name, isStatic, parameters, typeParameters).Specialize(method.Substitution);
 			}
 			return method;
 		}

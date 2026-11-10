@@ -79,6 +79,7 @@ fn replace(r: &mut ReadFunction, ctx: &mut Context<'_, '_, '_>, inst: NodeId) {
         rerun_requested: false,
         removed_variables: Vec::new(),
         resolver: ctx.resolver,
+        root_names: ctx.root_names,
     };
     run_early_il_transforms(&mut proxy_function, &mut inner, false);
     let Some(call) = forwarded_call(&proxy_function) else {

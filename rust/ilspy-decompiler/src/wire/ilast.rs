@@ -314,6 +314,10 @@ impl FunctionWriter<'_, '_, '_, '_> {
             self.out.uvar(u64::from(
                 l.reduced.number_of_compiler_generated_type_parameters,
             ));
+            self.out.bool(l.name.is_some());
+            if let Some(name) = &l.name {
+                self.string(name);
+            }
         }
         Ok(())
     }
@@ -1155,6 +1159,7 @@ impl FunctionWriter<'_, '_, '_, '_> {
                 ref read,
                 ref local_functions,
                 reduced,
+                ref name,
                 ..
             } => {
                 tag(op::FUNCTION, &mut self.out);
@@ -1219,6 +1224,11 @@ impl FunctionWriter<'_, '_, '_, '_> {
                         .uvar(u64::from(r.number_of_compiler_generated_parameters));
                     self.out
                         .uvar(u64::from(r.number_of_compiler_generated_type_parameters));
+                }
+                // `Name`, when it is not the method's.
+                self.out.bool(name.is_some());
+                if let Some(name) = name {
+                    self.string(name);
                 }
             }
             Inst::Deconstruct {
@@ -1477,6 +1487,7 @@ pub fn read_function(
     il_prefix: u32,
     settings: crate::il::transforms::Settings,
     resolver: Option<&dyn crate::il::transforms::Resolver>,
+    root_names: Option<&crate::il::transforms::RootNames>,
 ) -> Result<Vec<u8>, String> {
     use crate::metadata::tables::rows;
     let md = &ts.comp.module(method.module).md;
@@ -1496,6 +1507,7 @@ pub fn read_function(
         rerun_requested: false,
         removed_variables: Vec::new(),
         resolver,
+        root_names,
     };
     crate::il::transforms::run_prefix(&mut f, &mut ctx, il_prefix);
     let mut w = ModuleWriter::new(ts);

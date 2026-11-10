@@ -6,6 +6,7 @@ use crate::typesystem::types::{TypeId, TypeSystem};
 use super::control_flow::control_flow_simplification::ControlFlowSimplification;
 use super::reader::ReadFunction;
 
+pub mod assign_variable_names;
 pub mod block_transform;
 pub mod cached_delegate_initialization;
 pub mod cached_read_only_span_initialization;
@@ -113,6 +114,7 @@ pub const SETTING_NAMES: &[&str] = &[
     "ForStatement",
     "DoWhileStatement",
     "ScopedRef",
+    "FieldKeyword",
 ];
 
 /// The values of `SETTING_NAMES`.
@@ -170,6 +172,7 @@ pub struct Settings {
     pub for_statement: bool,
     pub do_while_statement: bool,
     pub scoped_ref: bool,
+    pub field_keyword: bool,
 }
 
 impl Settings {
@@ -229,6 +232,7 @@ impl Settings {
             for_statement: bit(49),
             do_while_statement: bit(50),
             scoped_ref: bit(51),
+            field_keyword: bit(52),
         }
     }
 }
@@ -249,6 +253,17 @@ pub struct Context<'t, 'c, 'a> {
     /// The host's C# resolver (`ILTransformContext.CSharpResolver`); without one, the
     /// transforms answer as a resolver without a using scope does (no extension methods).
     pub resolver: Option<&'t dyn Resolver>,
+    /// The names AssignVariableNames' root scope collects from the host's type system and using
+    /// scope; without them it collects none.
+    pub root_names: Option<&'t RootNames>,
+}
+
+/// What AssignVariableNames' root scope collects around the method: the lower-case member names
+/// of the declaring type, which it only avoids, and the names it also reserves.
+#[derive(Clone, Debug, Default)]
+pub struct RootNames {
+    pub member_names: Vec<String>,
+    pub reserved_names: Vec<String>,
 }
 
 /// The questions the transforms ask the host's C# resolver.
@@ -372,6 +387,7 @@ const PIPELINE: &[Leaf] = &[
     Function(introduce_native_int_type_on_locals::run),
     Function(introduce_scoped_modifier_on_locals::run),
     Function(expand_nested_conditionals::run),
+    Function(assign_variable_names::run),
 ];
 
 /// The index of DelegateConstruction in `PIPELINE`: a lambda runs the leaves before it.
