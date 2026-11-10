@@ -415,6 +415,7 @@ impl CompOrDecimal {
                     })?;
                     MethodOperand {
                         range_accessor: None, // Found by lookup: the wire sends the method's signature.
+                        specialized_by: None,
                         token: 0,
                         method: inequality,
                         state_machine_context: call.method.state_machine_context,
@@ -1334,6 +1335,7 @@ fn new_nullable(
     f.add(Inst::NewObj(CallData {
         method: MethodOperand {
             range_accessor: None, // Found by type lookup: the wire sends the constructor's signature.
+            specialized_by: None,
             token: 0,
             method: ctor,
             state_machine_context: false,

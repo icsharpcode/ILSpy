@@ -247,6 +247,7 @@ impl<'r, 'c, 'a> Reader<'r, 'c, 'a> {
         let method = self.ts.resolve_method(self.module, token, self.ctx)?;
         Ok(MethodOperand {
             range_accessor: None,
+            specialized_by: None,
             lifted: false,
             token,
             method,
@@ -2624,6 +2625,7 @@ impl<'r, 'c, 'a> Reader<'r, 'c, 'a> {
                 Ok(self.add(Inst::LdMemberToken {
                     member: MemberOperand::Method(MethodOperand {
                         range_accessor: None,
+                        specialized_by: None,
                         lifted: false,
                         token,
                         method,
@@ -2645,6 +2647,7 @@ impl<'r, 'c, 'a> Reader<'r, 'c, 'a> {
                 Ok(self.add(Inst::LdMemberToken {
                     member: MemberOperand::Method(MethodOperand {
                         range_accessor: None,
+                        specialized_by: None,
                         lifted: false,
                         token,
                         method,

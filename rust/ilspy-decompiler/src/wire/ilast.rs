@@ -255,6 +255,12 @@ impl FunctionWriter<'_, '_, '_, '_> {
     /// The method of a call (or another instruction calling a method): the member, the
     /// lookup data of a method without token, and the lifted and range accessor flags.
     fn call_method(&mut self, method: &crate::il::ast::MethodOperand) -> Result<(), String> {
+        // A method `ProxyCallReplacer` specialized: first the proxy call, in whose generic
+        // context the host resolves the token.
+        self.out.bool(method.specialized_by.is_some());
+        if let Some(proxy) = &method.specialized_by {
+            self.call_method(proxy)?;
+        }
         self.member(method.token, method.state_machine_context);
         if method.token == 0 {
             // A method found by type lookup: its type, name and parameter types.

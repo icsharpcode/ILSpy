@@ -965,7 +965,22 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		/// <summary>The method of a call, lifted when the engine lifted a user-defined operator.</summary>
 		IMethod CallMethod()
 		{
-			var method = Method();
+			IMethod method;
+			if (Bool())
+			{
+				// ProxyCallReplacer: the forwarded method, read in the proxy's generic context and
+				// specialized by the proxy call's substitution.
+				var proxy = CallMethod();
+				var saved = context;
+				context = new GenericContext(proxy);
+				method = Method();
+				context = saved;
+				method = (IMethod)method.Specialize(proxy.Substitution);
+			}
+			else
+			{
+				method = Method();
+			}
 			if (Bool())
 			{
 				method = ICSharpCode.Decompiler.CSharp.Resolver.CSharpOperators.LiftUserDefinedOperator(method)

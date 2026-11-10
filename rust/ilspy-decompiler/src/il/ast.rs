@@ -317,6 +317,9 @@ pub struct MethodOperand {
     /// `SyntheticRangeIndexAccessor`: the method stands for an indexer taking a
     /// `System.Index` or `System.Range` in place of its integer parameters.
     pub range_accessor: Option<Box<RangeAccessor>>,
+    /// The proxy call `ProxyCallReplacer` replaced: the token resolves in this method's generic
+    /// context and the result is specialized by its substitution.
+    pub specialized_by: Option<Box<MethodOperand>>,
 }
 
 /// A field operand, as `MethodOperand`.

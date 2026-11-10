@@ -890,6 +890,7 @@ impl YieldReturnDecompiler {
             .map_err(|e| SymbolicAnalysisFailed(e.to_string()))?;
         r.move_next_method = Some(MethodOperand {
             range_accessor: None,
+            specialized_by: None,
             lifted: false,
             token,
             method,

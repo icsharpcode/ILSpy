@@ -32,6 +32,7 @@ pub mod null_coalescing_transform;
 pub mod null_propagation_transform;
 pub mod nullable_lifting_transform;
 pub mod pattern_matching_transform;
+pub mod proxy_call_replacer;
 pub mod remove_dead_variable_init;
 pub mod remove_infeasible_path_transform;
 pub mod remove_unconstrained_generic_reference_type_check;
@@ -330,6 +331,7 @@ const PIPELINE: &[Leaf] = &[
     Statement(1, remove_unconstrained_generic_reference_type_check::run),
     Statement(1, user_defined_logic_transform::run),
     Statement(1, interpolated_string_transform::run),
+    Function(proxy_call_replacer::run),
 ];
 
 /// Runs the first `prefix` leaves of the pipeline.

@@ -1480,6 +1480,7 @@ impl AsyncAwaitDecompiler {
             .ok()
             .map(|method| MethodOperand {
                 range_accessor: None,
+                specialized_by: None,
                 lifted: false,
                 token,
                 method,

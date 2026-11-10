@@ -1471,6 +1471,7 @@ fn block_from_initializer(
         final_inst = f.add(Inst::Call(CallData {
             method: MethodOperand {
                 range_accessor: None,
+                specialized_by: None,
                 token: 0,
                 method,
                 state_machine_context: false,

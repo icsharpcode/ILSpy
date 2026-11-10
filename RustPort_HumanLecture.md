@@ -2039,6 +2039,31 @@ The new settings bit 45 is `StringInterpolation`.
 The no-op red run failed 70 of 3,550 equality cases. The port then matched every case
 outside the allowlist, which stays at 69 entries.
 
+### 3.68 ProxyCallReplacer (item 53, IL prefix 46)
+
+An async method that calls `base.M()` cannot do so from its state machine. The compiler
+emits a proxy method such as `<>n__0` on the class: its body only calls the base method
+with the proxy's own parameters. The transform finds calls to such compiler-generated
+proxies of the current or an outer class. It reads each proxy's IL and runs the early IL
+transforms over it, as the state machine decompilers do for their methods. If the body is
+one forwarding call, the transform replaces the proxy call with a call to the forwarded
+method. The arguments, the IL range and the "stack was empty" flag stay those of the proxy
+call.
+
+The forwarded method's token belongs to the proxy, not to the decompiled method. It
+resolves in the proxy's generic context, and the managed code then specializes the result
+by the proxy call's substitution. The engine computes the same method with its type
+system's `specialize_method`. For the host, a method operand gained an optional
+`specialized_by` link to the proxy call's operand, and the wire writes that operand first.
+The materializer resolves the token in `new GenericContext(proxy)` and calls
+`Specialize(proxy.Substitution)`, so the host reproduces the managed steps exactly. The
+engine changes the call node in place rather than building a new one. Its children and IL
+range then stay as they were, which is what `ReplaceList` and `AddILRange` give the
+managed code.
+
+The no-op red run failed 24 of 3,550 equality cases. The port then matched every case,
+and the allowlist stays at 69 entries.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |
