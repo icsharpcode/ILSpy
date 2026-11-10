@@ -2244,6 +2244,27 @@ functions, in post-order, the order the managed tree has. Two settings bits were
 The no-op red run failed 1,526 of 3,550 equality cases. The port matched every case on the
 first run, and the allowlist stays at 69 entries.
 
+### 3.75 ReduceNestingTransform (item 58, IL prefix 53)
+
+ReduceNestingTransform undoes the deep nesting that ConditionDetection and switch detection
+leave, without changing the IL order of any code. When an `if` or a switch is followed by a
+keyword exit (`return`, `break`, `continue`, or a leave whose target is followed by one),
+the exit is copied into the branches, so the else block or default case can follow the
+statement instead. A statement-count and depth heuristic decides whether that pays off. If
+statements with an unreachable end point are also inverted back to IL order, and an empty
+`try-finally` around a pinned region (which the C# compiler emits for `fixed`) is removed.
+
+The port reuses InvertIf and the container's control flow graph with its dominator tree,
+which the default-case move needs. Two details follow the managed code literally.
+`MaxBy(s => s.Labels.Count())` takes the first section with the most label values, and
+`LongSet.Count()` gives that number on both sides. `ShouldReduceNesting` takes the
+siblings' depth but never reads it. Like the managed transform, the nesting pass visits
+only the function body, while the try-finally clean-up walks `Descendants`, local functions
+included.
+
+The no-op red run failed 508 of 3,550 equality cases. The port matched every case on the
+first run, and the allowlist stays at 69 entries.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

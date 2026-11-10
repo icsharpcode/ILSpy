@@ -392,7 +392,7 @@ the reasons. This file holds only the ordered steps, their gates and their rules
   - [x] 56. DelegateConstruction, LocalFunctionDecompiler and TransformDisplayClassUsage,
         ported together because they share state (L)
   - [x] 57. HighLevelLoopTransform (M)
-  - [ ] 58. ReduceNestingTransform (M)
+  - [x] 58. ReduceNestingTransform (M)
   - [ ] 59. RemoveRedundantReturn (S)
   - [ ] 60. IntroduceDynamicTypeOnLocals (S)
   - [ ] 61. IntroduceNativeIntTypeOnLocals (S)

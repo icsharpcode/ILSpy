@@ -37,6 +37,7 @@ pub mod null_propagation_transform;
 pub mod nullable_lifting_transform;
 pub mod pattern_matching_transform;
 pub mod proxy_call_replacer;
+pub mod reduce_nesting_transform;
 pub mod remove_dead_variable_init;
 pub mod remove_infeasible_path_transform;
 pub mod remove_unconstrained_generic_reference_type_check;
@@ -358,6 +359,7 @@ const PIPELINE: &[Leaf] = &[
     Function(local_function_decompiler::run),
     Function(transform_display_class_usage::run),
     Function(high_level_loop_transform::run),
+    Function(reduce_nesting_transform::run),
 ];
 
 /// The index of DelegateConstruction in `PIPELINE`: a lambda runs the leaves before it.
