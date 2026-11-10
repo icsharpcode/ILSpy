@@ -2225,6 +2225,25 @@ parameters. The settings bit 49 `AggressiveScalarReplacementOfAggregates` was ad
 The no-op red run failed 514 of 3,550 equality cases. The port then matched every case,
 and the allowlist stays at 69 entries.
 
+### 3.74 HighLevelLoopTransform (item 57, IL prefix 52)
+
+HighLevelLoopTransform turns the plain loops of loop detection into `while`, `do-while` and
+`for` loops, which only means a container kind and a block order that the C# backend
+reads. A while loop starts with `if (!condition) leave loop` (or has its body nested in
+`if (condition)`, which InvertIf flips first). The condition is negated, and the rest of
+the entry block moves into a new body block. A for loop is a while loop with an increment
+block of simple statements, or one whose body ends in a numeric increment of a variable
+the condition reads; that increment then moves into a block of its own. A do-while loop
+collects the conditions before the exit at the end of a block into one `if`.
+
+The port reuses ConditionDetection's InvertIf and ExtractBlock and the increment-block
+match ported with it. It walks `Descendants` over the body and then the top-level local
+functions, in post-order, the order the managed tree has. Two settings bits were added: 50
+`ForStatement` and 51 `DoWhileStatement`.
+
+The no-op red run failed 1,526 of 3,550 equality cases. The port matched every case on the
+first run, and the allowlist stays at 69 entries.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

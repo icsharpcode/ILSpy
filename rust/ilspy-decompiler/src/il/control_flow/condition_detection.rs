@@ -137,7 +137,13 @@ fn get_start_il_offset(f: &Function, inst: NodeId) -> i32 {
 }
 
 /// `ExtractBlock`: moves the instructions `start..end` of `block` into `extracted`.
-fn extract_block(f: &mut Function, block: NodeId, start: usize, end: usize, extracted: NodeId) {
+pub(crate) fn extract_block(
+    f: &mut Function,
+    block: NodeId,
+    start: usize,
+    end: usize,
+    extracted: NodeId,
+) {
     for i in start..end {
         let inst = f.list(block)[i];
         f.push(extracted, inst);
@@ -150,7 +156,7 @@ fn extract_block(f: &mut Function, block: NodeId, start: usize, end: usize, extr
 
 /// `HighLevelLoopTransform.GetIncrementBlock`: the one block besides the loop body that is
 /// simple statements and a branch to the loop head.
-fn get_increment_block(f: &Function, container: NodeId, body: NodeId) -> Option<NodeId> {
+pub(crate) fn get_increment_block(f: &Function, container: NodeId, body: NodeId) -> Option<NodeId> {
     let entry = f.list(container)[0];
     let mut found = f
         .list(container)

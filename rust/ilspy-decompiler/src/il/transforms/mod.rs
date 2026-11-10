@@ -20,6 +20,7 @@ pub mod dynamic_is_event_assignment_transform;
 pub mod early_expression_transforms;
 pub mod expression_transforms;
 pub mod fix_remaining_increments;
+pub mod high_level_loop_transform;
 pub mod il_extraction;
 pub mod il_inlining;
 pub mod index_range_transform;
@@ -104,6 +105,8 @@ pub const SETTING_NAMES: &[&str] = &[
     "LocalFunctions",
     "StaticLocalFunctions",
     "AggressiveScalarReplacementOfAggregates",
+    "ForStatement",
+    "DoWhileStatement",
 ];
 
 /// The values of `SETTING_NAMES`.
@@ -158,6 +161,8 @@ pub struct Settings {
     pub local_functions: bool,
     pub static_local_functions: bool,
     pub aggressive_scalar_replacement_of_aggregates: bool,
+    pub for_statement: bool,
+    pub do_while_statement: bool,
 }
 
 impl Settings {
@@ -214,6 +219,8 @@ impl Settings {
             local_functions: bit(46),
             static_local_functions: bit(47),
             aggressive_scalar_replacement_of_aggregates: bit(48),
+            for_statement: bit(49),
+            do_while_statement: bit(50),
         }
     }
 }
@@ -350,6 +357,7 @@ const PIPELINE: &[Leaf] = &[
     Function(delegate_construction::run),
     Function(local_function_decompiler::run),
     Function(transform_display_class_usage::run),
+    Function(high_level_loop_transform::run),
 ];
 
 /// The index of DelegateConstruction in `PIPELINE`: a lambda runs the leaves before it.
