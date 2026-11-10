@@ -12,7 +12,7 @@ pub mod wire;
 
 /// How many IL transforms of `CSharpDecompiler.GetILTransforms()`, flattened in pipeline
 /// order, the engine runs before it hands a function to the host (seam 1).
-pub const IL_PREFIX: u32 = 46;
+pub const IL_PREFIX: u32 = 47;
 
 /// The engine version, as declared in the workspace manifest.
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");

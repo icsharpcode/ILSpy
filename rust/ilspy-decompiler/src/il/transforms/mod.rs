@@ -18,6 +18,7 @@ pub mod dynamic_call_site;
 pub mod dynamic_is_event_assignment_transform;
 pub mod early_expression_transforms;
 pub mod expression_transforms;
+pub mod fix_remaining_increments;
 pub mod il_extraction;
 pub mod il_inlining;
 pub mod index_range_transform;
@@ -332,6 +333,7 @@ const PIPELINE: &[Leaf] = &[
     Statement(1, user_defined_logic_transform::run),
     Statement(1, interpolated_string_transform::run),
     Function(proxy_call_replacer::run),
+    Function(fix_remaining_increments::run),
 ];
 
 /// Runs the first `prefix` leaves of the pipeline.

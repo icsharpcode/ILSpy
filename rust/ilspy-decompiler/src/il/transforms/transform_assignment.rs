@@ -662,7 +662,7 @@ fn is_assignment_operator_name(ctx: &Context<'_, '_, '_>, name: &str) -> bool {
 }
 
 /// `UserDefinedCompoundAssign.IsIncrementOrDecrement`.
-fn is_increment_or_decrement(ctx: &mut Context<'_, '_, '_>, m: &ResolvedMethod) -> bool {
+pub(crate) fn is_increment_or_decrement(ctx: &mut Context<'_, '_, '_>, m: &ResolvedMethod) -> bool {
     if !(m.is_static && ctx.ts.method_is_operator(m)) {
         return false;
     }

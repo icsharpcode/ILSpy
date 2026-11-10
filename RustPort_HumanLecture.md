@@ -2064,6 +2064,26 @@ managed code.
 The no-op red run failed 24 of 3,550 equality cases. The port then matched every case,
 and the allowlist stays at 69 entries.
 
+### 3.69 FixRemainingIncrements (item 54, IL prefix 47)
+
+TransformAssignment turns a user-defined `op_Increment` or `op_Decrement` call into a
+compound assignment when it finds the variable being incremented. Roslyn sometimes
+optimizes that variable away and emits `Console.WriteLine(UserType.op_Increment(a + b))`.
+This transform fixes the calls that are left (decimal excepted, which
+ReplaceMethodCallsWithOperators handles). A call stored straight into a variable,
+`stloc V(call op_Increment(x))`, becomes `stloc V(x)` followed by a compound assignment to
+`V`. Any other call has its argument extracted into a new variable, as
+TransformArrayInitializers did in item 44. That variable takes the operator's parameter
+type, and the call becomes a compound assignment to it.
+
+Two details matter for equality. The managed code collects the calls in `Descendants`
+order, which is pre-order, and each extraction registers a variable. The port therefore
+walks the tree in pre-order too, so the new variables get the same numbers and positions.
+The new compound assignment takes the call's IL range.
+
+The no-op red run failed 9 of 3,550 equality cases. The port then matched every case, and
+the allowlist stays at 69 entries.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |
