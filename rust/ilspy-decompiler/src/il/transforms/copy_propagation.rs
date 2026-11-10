@@ -1,11 +1,165 @@
-//! `IL/Transforms/CopyPropagation.cs`. The state machine decompilers use `Propagate` on its
-//! own; the pipeline step comes later.
+//! `IL/Transforms/CopyPropagation.cs`: a very simple copy propagation. A stack slot or ref local
+//! stored once from an address load, a single-definition variable or parameter, or a
+//! flag-free leaf is replaced by copies of that value; a dead store to a stack slot is removed.
 
-use crate::il::ast::{Flags, Function, Inst, NodeId, VarId, Variable, VariableKind};
+use std::collections::HashSet;
+
+use crate::il::ast::{BlockKind, Flags, Function, Inst, NodeId, VarId, Variable, VariableKind};
+use crate::il::reader::ReadFunction;
+use crate::il::semantic_helper::is_pure;
+use crate::il::types::StackType;
+use crate::typesystem::known::KnownTypeCode;
 use crate::util::interval::Interval;
 
 use super::Context;
-use super::il_inlining::{inline_into, options};
+use super::il_inlining::{inline_into, known, options};
+use super::transform_assignment::{is_small_integer_type, same_il_variable};
+
+/// `IILTransform.Run`.
+pub fn run(r: &mut ReadFunction, ctx: &mut Context<'_, '_, '_>) {
+    // Variables of which the function lists several parts (`ILVariableEqualityComparer`).
+    let split: HashSet<VarId> = r
+        .variables
+        .iter()
+        .filter(|&&v| {
+            r.variables
+                .iter()
+                .any(|&w| w != v && same_il_variable(&r.function, v, w))
+        })
+        .copied()
+        .collect();
+    let Some(body) = r.function.body else {
+        return;
+    };
+    for block in r.function.descendants_pre(body) {
+        if !matches!(
+            r.function.inst(block),
+            Inst::Block {
+                kind: BlockKind::ControlFlow,
+                ..
+            }
+        ) {
+            continue;
+        }
+        // New variables go to the function the block belongs to (`v.Function.Variables`).
+        match enclosing_lambda(&r.function, block) {
+            Some(lambda) => {
+                let mut variables = match r.function.inst_mut(lambda) {
+                    Inst::Function { variables, .. } => std::mem::take(variables),
+                    _ => unreachable!("an enclosing lambda is a function"),
+                };
+                run_on_block(&mut r.function, &mut variables, ctx, block, &split);
+                if let Inst::Function { variables: v, .. } = r.function.inst_mut(lambda) {
+                    *v = variables;
+                }
+            }
+            None => run_on_block(&mut r.function, &mut r.variables, ctx, block, &split),
+        }
+    }
+}
+
+/// The nearest `Function` instruction above `node`, if any.
+fn enclosing_lambda(f: &Function, node: NodeId) -> Option<NodeId> {
+    let mut current = f.node(node).parent;
+    while let Some(p) = current {
+        if matches!(f.inst(p), Inst::Function { .. }) {
+            return Some(p);
+        }
+        current = f.node(p).parent;
+    }
+    None
+}
+
+/// `RunOnBlock`.
+fn run_on_block(
+    f: &mut Function,
+    variables: &mut Vec<VarId>,
+    ctx: &mut Context<'_, '_, '_>,
+    block: NodeId,
+    split: &HashSet<VarId>,
+) {
+    let mut i = 0usize;
+    while i < f.list(block).len() {
+        let store = f.list(block)[i];
+        if let Some((v, copied)) = f.match_stloc(store) {
+            let var = f.var(v);
+            if var.is_single_definition()
+                && var.load_count() == 0
+                && var.kind == VariableKind::StackSlot
+            {
+                // A dead store to a stack slot.
+                if is_pure(f.flags(copied)) {
+                    f.remove_at(block, i);
+                    // This can open up new inlining opportunities.
+                    let c = inline_into(f, block, i, options::NONE, ctx);
+                    i = i.wrapping_sub(c + 1);
+                } else {
+                    // The value is evaluated for its side effects.
+                    let range = f.il_range(store);
+                    f.add_il_range(copied, range);
+                    f.set_child_at(block, i, copied);
+                }
+            } else if var.is_single_definition()
+                && can_perform_copy_propagation(f, ctx, v, copied, split)
+            {
+                do_propagate(f, variables, ctx, v, copied, block, &mut i);
+            }
+        }
+        i = i.wrapping_add(1);
+    }
+}
+
+/// `CanPerformCopyPropagation`.
+fn can_perform_copy_propagation(
+    f: &Function,
+    ctx: &mut Context<'_, '_, '_>,
+    target: VarId,
+    value: NodeId,
+    split: &HashSet<VarId>,
+) -> bool {
+    let t = f.var(target);
+    if is_small_integer_type(ctx, t.ty) {
+        return false;
+    }
+    // A non-local code move might change semantics when there are split variables.
+    if split.contains(&target) {
+        return false;
+    }
+    match *f.inst(value) {
+        // Address loads always return the same value for the same operands, so they can be
+        // copied, except that ldelema and ldflda might throw.
+        Inst::LdLoca { .. } | Inst::LdsFlda { .. } => true,
+        Inst::LdElema { .. } | Inst::LdFlda { .. } => {
+            !ctx.reader.use_ref_locals_for_accurate_order_of_evaluation
+        }
+        Inst::LdLoc { var } => {
+            if split.contains(&var) {
+                return false;
+            }
+            let source = f.var(var);
+            let mut is_bool = |ty| known(ctx, ty) == Some(KnownTypeCode::Boolean);
+            if is_bool(source.ty) != is_bool(t.ty) {
+                return false;
+            }
+            match source.kind {
+                // The caller's initialization is the first store, so a parameter must not be
+                // assigned to (directly or through ldarga).
+                VariableKind::Parameter => source.is_single_definition(),
+                // To avoid removing too many variables, only into a stack slot or ref local.
+                _ => {
+                    source.is_single_definition()
+                        && (t.kind == VariableKind::StackSlot || t.stack_type == StackType::Ref)
+                }
+            }
+        }
+        // Any instruction without special behavior can be copied into a stack slot.
+        _ => {
+            f.flags(value) == Flags::NONE
+                && f.inst(value).children().is_empty()
+                && t.kind == VariableKind::StackSlot
+        }
+    }
+}
 
 /// `Propagate`: replaces every load of the single-definition variable stored by `store`
 /// with a copy of the stored value.

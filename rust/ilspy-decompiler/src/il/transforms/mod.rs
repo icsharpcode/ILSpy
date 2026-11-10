@@ -334,6 +334,7 @@ const PIPELINE: &[Leaf] = &[
     Statement(1, interpolated_string_transform::run),
     Function(proxy_call_replacer::run),
     Function(fix_remaining_increments::run),
+    Function(copy_propagation::run),
 ];
 
 /// Runs the first `prefix` leaves of the pipeline.

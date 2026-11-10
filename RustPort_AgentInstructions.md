@@ -388,7 +388,7 @@ the reasons. This file holds only the ordered steps, their gates and their rules
   - [x] 52. InterpolatedStringTransform (M)
   - [x] 53. ProxyCallReplacer (S)
   - [x] 54. FixRemainingIncrements (S)
-  - [ ] 55. CopyPropagation (S)
+  - [x] 55. CopyPropagation (S)
   - [ ] 56. DelegateConstruction, LocalFunctionDecompiler and TransformDisplayClassUsage,
         ported together because they share state (L)
   - [ ] 57. HighLevelLoopTransform (M)

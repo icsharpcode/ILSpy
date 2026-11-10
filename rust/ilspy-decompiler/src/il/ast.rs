@@ -1793,6 +1793,17 @@ impl Function {
         }
     }
 
+    /// `Descendants`: the nodes under `root` (inclusive) in pre-order, as a snapshot.
+    pub fn descendants_pre(&self, root: NodeId) -> Vec<NodeId> {
+        let mut out = Vec::new();
+        let mut stack = vec![root];
+        while let Some(id) = stack.pop() {
+            out.push(id);
+            stack.extend(self.inst(id).children().into_iter().rev());
+        }
+        out
+    }
+
     /// The nodes under `root` (inclusive) in post-order, as a snapshot.
     pub fn descendants_post(&self, root: NodeId) -> Vec<NodeId> {
         let mut out = Vec::new();

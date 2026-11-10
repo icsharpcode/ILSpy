@@ -54,13 +54,13 @@ fn is_property_setter(ctx: &mut Context<'_, '_, '_>, m: &ResolvedMethod) -> bool
 }
 
 /// `IType.IsSmallIntegerType()`: a size of 1 to 3 bytes.
-fn is_small_integer_type(ctx: &mut Context<'_, '_, '_>, t: TypeId) -> bool {
+pub(crate) fn is_small_integer_type(ctx: &mut Context<'_, '_, '_>, t: TypeId) -> bool {
     let size = ctx.ts.type_size(t);
     size > 0 && size < 4
 }
 
 /// `ILVariableEqualityComparer.Equals`: the same variable, or two parts of one IL local.
-fn same_il_variable(f: &Function, a: VarId, b: VarId) -> bool {
+pub(crate) fn same_il_variable(f: &Function, a: VarId, b: VarId) -> bool {
     if a == b {
         return true;
     }

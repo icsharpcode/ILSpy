@@ -19,7 +19,7 @@ pub fn run(r: &mut ReadFunction, ctx: &mut Context<'_, '_, '_>) {
         return;
     };
     let mut calls_to_fix = Vec::new();
-    for call in descendants_pre(f, body) {
+    for call in f.descendants_pre(body) {
         let Inst::Call(c) = f.inst(call) else {
             continue;
         };
@@ -89,15 +89,4 @@ fn fix(f: &mut Function, ctx: &mut Context<'_, '_, '_>, call: NodeId) {
         (None, Some((_, block, index))) => f.insert(block, index + 1, compound_assign),
         (None, None) => unreachable!("either the store or the call is replaced"),
     }
-}
-
-/// `Descendants`: the nodes under `root` (inclusive) in pre-order.
-fn descendants_pre(f: &Function, root: NodeId) -> Vec<NodeId> {
-    let mut out = Vec::new();
-    let mut stack = vec![root];
-    while let Some(id) = stack.pop() {
-        out.push(id);
-        stack.extend(f.inst(id).children().into_iter().rev());
-    }
-    out
 }

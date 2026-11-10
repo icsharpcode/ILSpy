@@ -2084,6 +2084,26 @@ The new compound assignment takes the call's IL range.
 The no-op red run failed 9 of 3,550 equality cases. The port then matched every case, and
 the allowlist stays at 69 entries.
 
+### 3.70 CopyPropagation (item 55, IL prefix 48)
+
+The state machine decompilers already used `Propagate` (items 13 and 14). This step adds the
+pipeline transform around it. For every control-flow block, in pre-order, it looks at
+single-definition stores. A dead store to a stack slot is removed when its value is pure.
+Otherwise only its value stays, as a statement. Other stores are copied into their loads
+when `CanPerformCopyPropagation` allows it. That covers address loads (ldelema and ldflda
+only without `UseRefLocalsForAccurateOrderOfEvaluation`) and loads of single-definition
+variables or parameters into stack slots or ref locals. It also covers flag-free leaf
+instructions stored to stack slots. A variable whose IL local the function lists in several
+parts (split variables, compared with `ILVariableEqualityComparer`) is never copied.
+
+One detail needs care: the expression-tree lambdas of item 46 already exist at this point.
+`DoPropagate` adds its `C_n` temporaries to `v.Function.Variables`, so for a block inside
+such a lambda the port adds them to that lambda's variable list, not the top-level one.
+The split-variable set comes from the top-level list only, as in the managed code.
+
+The no-op red run failed 586 of 3,550 equality cases. The port then matched every case, and
+the allowlist stays at 69 entries.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |
