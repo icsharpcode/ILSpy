@@ -30,6 +30,7 @@ pub mod interpolated_string_transform;
 pub mod introduce_dynamic_type_on_locals;
 pub mod introduce_native_int_type_on_locals;
 pub mod introduce_ref_read_only_modifier_on_locals;
+pub mod introduce_scoped_modifier_on_locals;
 pub mod ldloca_dup_init_obj_transform;
 pub mod local_function_decompiler;
 pub mod lock_transform;
@@ -110,6 +111,7 @@ pub const SETTING_NAMES: &[&str] = &[
     "AggressiveScalarReplacementOfAggregates",
     "ForStatement",
     "DoWhileStatement",
+    "ScopedRef",
 ];
 
 /// The values of `SETTING_NAMES`.
@@ -166,6 +168,7 @@ pub struct Settings {
     pub aggressive_scalar_replacement_of_aggregates: bool,
     pub for_statement: bool,
     pub do_while_statement: bool,
+    pub scoped_ref: bool,
 }
 
 impl Settings {
@@ -224,6 +227,7 @@ impl Settings {
             aggressive_scalar_replacement_of_aggregates: bit(48),
             for_statement: bit(49),
             do_while_statement: bit(50),
+            scoped_ref: bit(51),
         }
     }
 }
@@ -365,6 +369,7 @@ const PIPELINE: &[Leaf] = &[
     Function(super::control_flow::remove_redundant_return::run),
     Function(introduce_dynamic_type_on_locals::run),
     Function(introduce_native_int_type_on_locals::run),
+    Function(introduce_scoped_modifier_on_locals::run),
 ];
 
 /// The index of DelegateConstruction in `PIPELINE`: a lambda runs the leaves before it.
@@ -449,6 +454,8 @@ impl ReadFunction {
             store_instructions: Vec::new(),
             address_instructions: Vec::new(),
             capture_scope: None,
+            is_scoped: false,
+            is_scoped_without_initializer: false,
         });
         self.flush_pending_variables();
         self.variables.push(v);

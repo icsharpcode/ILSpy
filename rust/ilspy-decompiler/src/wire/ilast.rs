@@ -247,7 +247,9 @@ impl FunctionWriter<'_, '_, '_, '_> {
             | u8::from(var.initial_value_is_initialized) << 1
             | u8::from(var.uses_initial_value) << 2
             | u8::from(var.is_ref_read_only) << 3
-            | u8::from(var.remove_if_redundant) << 4);
+            | u8::from(var.remove_if_redundant) << 4
+            | u8::from(var.is_scoped) << 5
+            | u8::from(var.is_scoped_without_initializer) << 6);
         self.out.bool(var.state_machine_field.is_some());
         if let Some(field) = &var.state_machine_field {
             self.member(field.token, field.context);

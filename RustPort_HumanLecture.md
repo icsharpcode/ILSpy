@@ -2307,6 +2307,26 @@ underlying type of `~`.
 The no-op red run failed 26 of 3,550 equality cases. The port matched every case on the first
 run, and the allowlist stays at 69 entries.
 
+### 3.79 IntroduceScopedModifierOnLocals (item 62, IL prefix 57)
+
+The C# `scoped` modifier is erased from IL and PDBs. This transform recovers it on ref locals
+and ref struct locals. It computes the ref-safe context (for ref locals) or safe context (for
+ref struct locals) of the declaration initializer and of each later store. Field stores into
+the local and calls that can capture into it as a writable ref struct argument count too.
+The contexts, narrowest first, are the current method, return-only and the calling method. A
+narrower later store means the declaration needed `scoped`. Because a local's context
+depends on the contexts of the locals it is assigned from, the computation iterates to a
+fixed point. It applies only to methods of modules with the updated escape rules
+(`[module: RefSafetyRules(11)]`).
+
+The type system port already carried what the rules ask of signatures: parameter reference
+kinds and effective scopes, `[UnscopedRef]`, `allows ref struct` and the `this` scope of
+methods. Variables gained the two flags (`IsScoped` and `IsScopedWithoutInitializer`), as
+bits of the variable record on the wire. The settings bit 52 `ScopedRef` was added.
+
+The no-op red run failed 17 of 3,550 equality cases. The port matched every case on the first
+run, and the allowlist stays at 69 entries.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

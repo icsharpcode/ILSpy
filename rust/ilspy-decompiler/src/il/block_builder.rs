@@ -343,6 +343,8 @@ impl<'f> BlockBuilder<'f> {
                     store_instructions: Vec::new(),
                     address_instructions: Vec::new(),
                     capture_scope: None,
+                    is_scoped: false,
+                    is_scoped_without_initializer: false,
                 });
                 self.on_error_dispatchers.push((
                     try_catch,

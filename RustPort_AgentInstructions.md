@@ -396,7 +396,7 @@ the reasons. This file holds only the ordered steps, their gates and their rules
   - [x] 59. RemoveRedundantReturn (S)
   - [x] 60. IntroduceDynamicTypeOnLocals (S)
   - [x] 61. IntroduceNativeIntTypeOnLocals (S)
-  - [ ] 62. IntroduceScopedModifierOnLocals (S)
+  - [x] 62. IntroduceScopedModifierOnLocals (S)
   - [ ] 63. ExpandNestedConditionals (S)
   - [ ] 64. AssignVariableNames (M; port `Humanizer` pluralization rules as data, not as a port
         of the vendored library)

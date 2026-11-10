@@ -722,6 +722,8 @@ impl Tdcu {
                     store_instructions: Vec::new(),
                     address_instructions: Vec::new(),
                     capture_scope: None,
+                    is_scoped: false,
+                    is_scoped_without_initializer: false,
                 });
                 match owner {
                     None => r.variables.push(v),
@@ -1142,6 +1144,8 @@ fn register_variable(
         store_instructions: Vec::new(),
         address_instructions: Vec::new(),
         capture_scope: None,
+        is_scoped: false,
+        is_scoped_without_initializer: false,
     });
     if let Inst::Function { variables, .. } = r.function.inst_mut(function) {
         variables.push(v);

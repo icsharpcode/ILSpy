@@ -569,7 +569,7 @@ fn common_parent(f: &Function, a: NodeId, b: NodeId) -> Option<NodeId> {
 }
 
 /// `ILInstruction.IsBefore`: whether `a` comes before `b` in a post-order walk.
-fn is_before(f: &Function, a: NodeId, b: NodeId) -> bool {
+pub(crate) fn is_before(f: &Function, a: NodeId, b: NodeId) -> bool {
     let level = |n: NodeId| f.ancestors(n).count() + 1;
     let (mut a, mut b) = (a, b);
     let (mut level_a, mut level_b) = (level(a), level(b));

@@ -261,6 +261,11 @@ pub struct Variable {
     pub address_instructions: Vec<NodeId>,
     /// `CaptureScope`: the container a lambda captures the variable from.
     pub capture_scope: Option<NodeId>,
+    /// `IsScoped`: the C# `scoped` modifier.
+    pub is_scoped: bool,
+    /// `IsScopedWithoutInitializer`: `scoped` is needed when the declaration is split from its
+    /// initializer.
+    pub is_scoped_without_initializer: bool,
 }
 
 impl Variable {
@@ -1616,6 +1621,8 @@ impl Function {
             store_instructions: Vec::new(),
             address_instructions: Vec::new(),
             capture_scope: None,
+            is_scoped: false,
+            is_scoped_without_initializer: false,
         });
         self.pending_variables.push(v);
         v

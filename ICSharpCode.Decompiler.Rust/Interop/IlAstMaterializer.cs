@@ -534,6 +534,8 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 			}
 			v.IsRefReadOnly = (flags & 8) != 0;
 			v.RemoveIfRedundant = (flags & 16) != 0;
+			v.IsScoped = (flags & 32) != 0;
+			v.IsScopedWithoutInitializer = (flags & 64) != 0;
 			if (Bool())
 				v.StateMachineField = Field();
 			return v;
