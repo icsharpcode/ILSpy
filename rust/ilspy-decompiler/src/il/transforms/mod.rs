@@ -360,6 +360,7 @@ const PIPELINE: &[Leaf] = &[
     Function(transform_display_class_usage::run),
     Function(high_level_loop_transform::run),
     Function(reduce_nesting_transform::run),
+    Function(super::control_flow::remove_redundant_return::run),
 ];
 
 /// The index of DelegateConstruction in `PIPELINE`: a lambda runs the leaves before it.

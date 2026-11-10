@@ -9,6 +9,7 @@ pub mod control_flow_simplification;
 pub mod detect_pinned_regions;
 pub mod exit_points;
 pub mod loop_detection;
+pub mod remove_redundant_return;
 pub mod runtime_async;
 pub mod state_range_analysis;
 pub mod switch_analysis;

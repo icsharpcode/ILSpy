@@ -2265,6 +2265,20 @@ included.
 The no-op red run failed 508 of 3,550 equality cases. The port matched every case on the
 first run, and the allowlist stays at 69 entries.
 
+### 3.76 RemoveRedundantReturn (item 59, IL prefix 54)
+
+RemoveRedundantReturn works like the exit point detection, but only on `leave`
+instructions that leave a whole function returning `void` (or an iterator, where they are
+`yield break`). A `return` at the very end of such a function, possibly inside try blocks,
+`using`, `lock`, pinned regions or the branches of a final `if`, is removed or turned into
+a leave of its own container. It then falls through to the end instead. The port visits
+every function the managed `Descendants.OfType<ILFunction>()` does, the nested ones first
+and the top-level one last. It takes a nested function's return type from its reader
+header (the async return type when there is one) or from the lambda.
+
+The no-op red run failed 909 of 3,550 equality cases. The port matched every case on the
+first run, and the allowlist stays at 69 entries.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |
