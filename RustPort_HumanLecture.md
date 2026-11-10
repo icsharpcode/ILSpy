@@ -2327,6 +2327,25 @@ bits of the variable record on the wire. The settings bit 52 `ScopedRef` was add
 The no-op red run failed 17 of 3,550 equality cases. The port matched every case on the first
 run, and the allowlist stays at 69 entries.
 
+### 3.80 ExpandNestedConditionals (item 63, IL prefix 58)
+
+ExpressionTransforms collapses `if (c) a = x; else a = y;` into a conditional operator, and an
+else-if ladder therefore comes back as one long expression. This transform expands such a
+store back into if-else once it nests more than one conditional operator. A conditional that
+flows into a position naming a type (a parameter, a return value, a field, a local) is first
+extracted into a variable of that type. It runs at the end, after the transforms that need
+the single expression, and only in top-level and local functions that are not constructors.
+
+`InferExpectedType` (what a position expects, the counterpart of `InferType`) was ported for
+it. The extraction port now registers its temporaries in the function that holds the
+extracted instruction, as `ILExtraction` does, and so does TransformDisplayClassUsage; both
+go through one `register_variable_in`. `IsInConstructorInitializer` is always false here,
+because an expanded function is never a constructor, so the port leaves the check out and
+says why.
+
+The no-op red run failed 40 of 3,550 equality cases. The port matched every case on the
+first run, and the allowlist stays at 69 entries.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

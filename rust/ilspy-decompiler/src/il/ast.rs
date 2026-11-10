@@ -1588,6 +1588,48 @@ impl Function {
         self.register_variable_named(ts, kind, ty, None)
     }
 
+    /// `function.RegisterVariable(kind, type, name)` in the nested function `owner`, or in the
+    /// top-level function for `None` (through the pending list); a nested function counts its
+    /// own `I_n` names.
+    pub fn register_variable_in(
+        &mut self,
+        ts: &mut TypeSystem<'_, '_>,
+        owner: Option<NodeId>,
+        kind: VariableKind,
+        ty: TypeId,
+        name: Option<&str>,
+    ) -> VarId {
+        let Some(function) = owner else {
+            return self.register_variable_named(ts, kind, ty, name);
+        };
+        let generated = match (name, self.inst_mut(function)) {
+            (
+                None,
+                Inst::Function {
+                    helper_variable_count,
+                    ..
+                },
+            ) => {
+                let n = *helper_variable_count;
+                *helper_variable_count += 1;
+                Some(n)
+            }
+            _ => None,
+        };
+        let v = self.register_variable_named(ts, kind, ty, Some(name.unwrap_or("")));
+        // The nested function lists it, not the top-level one.
+        self.pending_variables.pop();
+        if let Some(n) = generated {
+            let var = self.var_mut(v);
+            var.name = format!("I_{n}");
+            var.has_generated_name = true;
+        }
+        if let Inst::Function { variables, .. } = self.inst_mut(function) {
+            variables.push(v);
+        }
+        v
+    }
+
     /// `RegisterVariable` with a name; without one the variable is named `I_n`.
     pub fn register_variable_named(
         &mut self,

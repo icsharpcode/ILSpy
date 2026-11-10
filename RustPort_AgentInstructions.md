@@ -397,7 +397,7 @@ the reasons. This file holds only the ordered steps, their gates and their rules
   - [x] 60. IntroduceDynamicTypeOnLocals (S)
   - [x] 61. IntroduceNativeIntTypeOnLocals (S)
   - [x] 62. IntroduceScopedModifierOnLocals (S)
-  - [ ] 63. ExpandNestedConditionals (S)
+  - [x] 63. ExpandNestedConditionals (S)
   - [ ] 64. AssignVariableNames (M; port `Humanizer` pluralization rules as data, not as a port
         of the vendored library)
   - [ ] 65. `EarlyILTransforms` and `DecompileBodyForAnalysis` paths (the speculative

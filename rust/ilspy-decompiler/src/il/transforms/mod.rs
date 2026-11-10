@@ -18,6 +18,7 @@ pub mod detect_catch_when_condition_blocks;
 pub mod dynamic_call_site;
 pub mod dynamic_is_event_assignment_transform;
 pub mod early_expression_transforms;
+pub mod expand_nested_conditionals;
 pub mod expression_transforms;
 pub mod fix_remaining_increments;
 pub mod high_level_loop_transform;
@@ -370,6 +371,7 @@ const PIPELINE: &[Leaf] = &[
     Function(introduce_dynamic_type_on_locals::run),
     Function(introduce_native_int_type_on_locals::run),
     Function(introduce_scoped_modifier_on_locals::run),
+    Function(expand_nested_conditionals::run),
 ];
 
 /// The index of DelegateConstruction in `PIPELINE`: a lambda runs the leaves before it.

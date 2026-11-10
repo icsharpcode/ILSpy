@@ -80,9 +80,10 @@ fn move_to_store(
     inst: NodeId,
     block: NodeId,
     index: usize,
+    owner: Option<NodeId>,
 ) -> VarId {
     let ty = f.infer_type(ctx.ts, inst);
-    let v = f.register_variable(ctx.ts, VariableKind::StackSlot, ty);
+    let v = f.register_variable_in(ctx.ts, owner, VariableKind::StackSlot, ty, None);
     let load = f.add(Inst::LdLoc { var: v });
     f.replace(inst, load);
     let store = f.add(Inst::StLoc {
@@ -102,6 +103,8 @@ pub(crate) fn extract(
     ctx: &mut Context<'_, '_, '_>,
     inst_to_extract: NodeId,
 ) -> Option<VarId> {
+    // The variables belong to the function holding the instruction.
+    let owner = f.enclosing_function(inst_to_extract);
     let mut ec = ExtractionContext {
         flags_being_moved: f.flags(inst_to_extract),
         moves: Vec::new(),
@@ -169,9 +172,9 @@ pub(crate) fn extract(
                 }
             }
             let insert_index = f.node(inst).child_index as usize;
-            let v = move_to_store(f, ctx, inst_to_extract, block, insert_index);
+            let v = move_to_store(f, ctx, inst_to_extract, block, insert_index, owner);
             for predecessor in ec.moves {
-                move_to_store(f, ctx, predecessor, block, insert_index);
+                move_to_store(f, ctx, predecessor, block, insert_index, owner);
             }
             return Some(v);
         }

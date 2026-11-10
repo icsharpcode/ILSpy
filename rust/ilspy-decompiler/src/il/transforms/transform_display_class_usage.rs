@@ -1110,47 +1110,8 @@ fn register_variable(
     name: &str,
 ) -> VarId {
     let name = (!name.trim().is_empty()).then_some(name);
-    let Some(function) = owner else {
-        return r.function.register_variable_named(ctx.ts, kind, ty, name);
-    };
-    let (name, generated) = match name {
-        Some(n) => (n.to_owned(), false),
-        None => match r.function.inst_mut(function) {
-            Inst::Function {
-                helper_variable_count,
-                ..
-            } => {
-                let n = format!("I_{helper_variable_count}");
-                *helper_variable_count += 1;
-                (n, true)
-            }
-            _ => unreachable!("a function"),
-        },
-    };
-    let stack_type = ctx.ts.stack_type(ty);
-    let v = r.function.add_var(Variable {
-        kind,
-        ty,
-        stack_type,
-        index: None,
-        name,
-        has_generated_name: generated,
-        initial_value_is_initialized: false,
-        uses_initial_value: false,
-        is_ref_read_only: false,
-        remove_if_redundant: false,
-        state_machine_field: None,
-        load_instructions: Vec::new(),
-        store_instructions: Vec::new(),
-        address_instructions: Vec::new(),
-        capture_scope: None,
-        is_scoped: false,
-        is_scoped_without_initializer: false,
-    });
-    if let Inst::Function { variables, .. } = r.function.inst_mut(function) {
-        variables.push(v);
-    }
-    v
+    r.function
+        .register_variable_in(ctx.ts, owner, kind, ty, name)
 }
 
 /// `ITypeDefinition.Fields`, as fields of the definition.
