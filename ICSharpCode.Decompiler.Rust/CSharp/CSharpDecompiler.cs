@@ -203,6 +203,14 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (!methodDef.HasBody())
 				return null;
 
+			// RUST-SEAM-1 BEGIN
+			var rustSettings = new DecompilerSettings(LanguageVersion.CSharp1);
+			var rustTransforms = GetILTransforms();
+			int rustLastBlockTransform = rustTransforms.FindLastIndex(t => t is BlockILTransform);
+			rustTransforms.RemoveRange(rustLastBlockTransform + 1, rustTransforms.Count - (rustLastBlockTransform + 1));
+			if (Rust.Interop.RustSeam1.ServeAnalysis(typeSystem, method, rustTransforms, rustSettings) is { } rustFunction)
+				return rustFunction.Body is BlockContainer rustContainer ? rustContainer.EntryPoint : rustFunction.Body as Block;
+			// RUST-SEAM-1 END
 			var genericContext = new GenericContext(
 				classTypeParameters: method.DeclaringTypeDefinition?.TypeParameters,
 				methodTypeParameters: null);

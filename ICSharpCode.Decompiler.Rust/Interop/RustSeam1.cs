@@ -30,6 +30,7 @@ using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.DebugInfo;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.IL.Transforms;
+using ICSharpCode.Decompiler.Instrumentation;
 using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.Rust.Interop
@@ -71,8 +72,9 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 			ref ILFunction function, ref ILTransformContext context)
 		{
 			var pipeline = transforms.ToList();
-			// The Debug Steps pane needs every transform to run managed, so it only gets the reader.
-			int requested = recordSteps ? 0 : RustEngine.ILPrefix;
+			// The Debug Steps pane and per-transform tracing (ILTransformExecuted events) need every
+			// transform to run managed, so they only get the reader.
+			int requested = recordSteps || DecompilerEventSource.Log.IsTransformTracingEnabled() ? 0 : RustEngine.ILPrefix;
 			int prefix = IlTransformPrefix.TopLevelBoundary(pipeline, requested, out int topLevelCount);
 			if (!IlTransformPrefix.MatchesStandardPipeline(pipeline, topLevelCount))
 				return Fallback("the IL transform list differs from the standard pipeline");
@@ -94,6 +96,40 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 			context = new ILTransformContext(context, function);
 			Interlocked.Increment(ref served);
 			return pipeline.Skip(topLevelCount);
+		}
+
+		/// <summary>
+		/// <see cref="CSharpDecompiler.DecompileBodyForAnalysis"/>: the function of
+		/// <paramref name="method"/> after <paramref name="transforms"/> (a prefix of the standard
+		/// pipeline) and then CombineExitsTransform, under <paramref name="settings"/> and without
+		/// debug info. Returns null when the method falls back to the managed pipeline.
+		/// </summary>
+		internal static ILFunction? ServeAnalysis(IDecompilerTypeSystem typeSystem, IMethod method, IReadOnlyList<IILTransform> transforms,
+			DecompilerSettings settings)
+		{
+			// The analysis reads a generic method without its own type parameters, which the engine's
+			// reader cannot.
+			if (method.TypeParameters.Count > 0)
+			{
+				Fallback("the analysis of a generic method");
+				return null;
+			}
+			var engine = RustEngine.For(typeSystem, out string? reason);
+			if (engine == null)
+			{
+				Fallback(reason);
+				return null;
+			}
+			int prefix = transforms.SelectMany(IlTransformPrefix.Leaves).Count();
+			var status = engine.ReadFunction((MethodDefinitionHandle)method.MetadataToken, prefix, settings, null,
+				out var function, out reason, combineExits: true);
+			if (status != RustStatus.Ok)
+			{
+				Fallback(reason);
+				return null;
+			}
+			Interlocked.Increment(ref served);
+			return function;
 		}
 
 		/// <summary>

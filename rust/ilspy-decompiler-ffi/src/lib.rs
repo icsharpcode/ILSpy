@@ -550,7 +550,8 @@ pub unsafe extern "C" fn ilspy_session_load(
 /// `il_prefix` IL transforms, as a one-entry wire v1 message (`wire::ilast::read_function`).
 /// `Unsupported` when `il_prefix` exceeds `ilspy_il_prefix()`. `settings` has bit `i` set when
 /// the setting `ilspy_setting_names()` lists at `i` is on. `reader_flags`, `debug_ctx` and
-/// `debug_info` as for `ilspy_debug_read_il`. `resolver` answers the C# resolver questions
+/// `debug_info` as for `ilspy_debug_read_il`; bit 1 of `reader_flags` reads for analysis
+/// (`wire::ilast::read_function`). `resolver` answers the C# resolver questions
 /// (`resolver_ctx` is passed back); without it the engine finds no extension methods.
 /// `root_names` (`root_names_len` bytes, or null) are the names AssignVariableNames' root
 /// scope collects (`decode_root_names`). Safe to call from several threads at once.
@@ -622,6 +623,7 @@ pub unsafe extern "C" fn ilspy_session_read_function(
             Settings::from_bits(settings),
             resolver.as_ref().map(|r| r as &dyn Resolver),
             root_names.as_ref(),
+            reader_flags & 2 != 0,
         )
     }) {
         Ok(bytes) => {

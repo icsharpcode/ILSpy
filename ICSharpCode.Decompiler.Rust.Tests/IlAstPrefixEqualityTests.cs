@@ -148,7 +148,13 @@ public class IlAstPrefixEqualityTests
 		}
 	}
 
-	static string? Managed(DecompilerTypeSystem ts, MethodDefinitionHandle handle, DecompilerSettings settings, int prefix, out string? error)
+	/// <summary>
+	/// The managed function after IL prefix <paramref name="prefix"/>. With
+	/// <paramref name="analysis"/> it is read and finished as
+	/// <c>CSharpDecompiler.DecompileBodyForAnalysis</c> does: without the method's own type
+	/// parameters and with CombineExitsTransform after the prefix.
+	/// </summary>
+	static string? Managed(DecompilerTypeSystem ts, MethodDefinitionHandle handle, DecompilerSettings settings, int prefix, out string? error, bool analysis = false)
 	{
 		error = null;
 		try
@@ -160,7 +166,9 @@ public class IlAstPrefixEqualityTests
 				UseDebugSymbols = settings.UseDebugSymbols,
 				UseRefLocalsForAccurateOrderOfEvaluation = settings.UseRefLocalsForAccurateOrderOfEvaluation,
 			};
-			var function = reader.ReadIL(handle, body);
+			var function = analysis
+				? reader.ReadIL(handle, body, new GenericContext(module.GetDefinition(handle).DeclaringTypeDefinition?.TypeParameters, null), ILFunctionKind.TopLevelFunction)
+				: reader.ReadIL(handle, body);
 			// RunTransforms without its Debug-only invariant checks: the reference is what a Release
 			// pipeline produces, and the managed async/await decompiler leaves trees on some runtime
 			// methods that the checks reject (an instruction shared by two blocks).
@@ -172,6 +180,8 @@ public class IlAstPrefixEqualityTests
 				else
 					transform.Run(function, context);
 			}
+			if (analysis)
+				new CombineExitsTransform().Run(function, context);
 			return IlAstReadEqualityTests.Print(function);
 		}
 		catch (Exception ex)
@@ -278,6 +288,61 @@ public class IlAstPrefixEqualityTests
 	static IEnumerable<TestCaseData> SettingsImages() => Corpus.ManagedImages().Where(c => Path.GetFileName((string)c.Arguments[0]!) is var name
 		&& (name.StartsWith("Switch", StringComparison.Ordinal) || name.StartsWith("UnsafeCode", StringComparison.Ordinal)
 			|| name.StartsWith("ICSharpCode.Decompiler", StringComparison.Ordinal)));
+
+	/// <summary>
+	/// <c>CSharpDecompiler.DecompileBodyForAnalysis</c> served through seam 1 matches the managed
+	/// analysis pipeline, over the fixtures whose members RecordDecompiler and
+	/// AutoEventDecompiler analyze.
+	/// </summary>
+	[TestCaseSource(nameof(AnalysisImages))]
+	public void AnalysisBodyEquality(string path)
+	{
+		var settings = new DecompilerSettings(LanguageVersion.CSharp1);
+		var transforms = CSharpDecompiler.GetILTransforms();
+		int lastBlockTransform = transforms.FindLastIndex(t => t is BlockILTransform);
+		transforms.RemoveRange(lastBlockTransform + 1, transforms.Count - (lastBlockTransform + 1));
+		int prefix = transforms.SelectMany(IlTransformPrefix.Leaves).Count();
+		var ts = TypeSystemListingEqualityTests.Load(path, DecompilerTypeSystem.GetOptions(new DecompilerSettings()));
+		string fixture = Path.GetFileName(path);
+		var metadata = ts.MainModule.MetadataFile.Metadata;
+		int compared = 0;
+		foreach (var handle in metadata.MethodDefinitions)
+		{
+			if (metadata.GetMethodDefinition(handle).RelativeVirtualAddress == 0 || IsAllowlisted(ts, fixture, handle))
+				continue;
+			string name = $"method 0x{MetadataTokens.GetToken(handle):x8}";
+			var method = ts.MainModule.GetDefinition(handle);
+			string? engineError = null;
+			ILFunction? function = null;
+			try
+			{
+				function = RustSeam1.ServeAnalysis(ts, method, transforms, settings);
+			}
+			catch (RustEngineException ex)
+			{
+				engineError = ex.Message;
+			}
+			if (method.TypeParameters.Count > 0)
+			{
+				Assert.That(function, Is.Null, $"{name}: a generic method falls back");
+				continue;
+			}
+			string? expected = Managed(ts, handle, settings, prefix, out string? managedError, analysis: true);
+			if (expected == null || function == null)
+			{
+				Assert.That(engineError != null, Is.EqualTo(managedError != null),
+					$"{name}: managed: {managedError ?? "read"}, engine: {engineError ?? "read"}");
+				continue;
+			}
+			string? difference = Corpus.FirstDifference(expected, IlAstReadEqualityTests.Print(function));
+			Assert.That(difference, Is.Null, $"{name} for analysis: {difference}");
+			compared++;
+		}
+		TestContext.Out.WriteLine($"{compared} functions compared for analysis");
+	}
+
+	static IEnumerable<TestCaseData> AnalysisImages() => Corpus.ManagedImages().Where(c => Path.GetFileName((string)c.Arguments[0]!) is var name
+		&& (name.Contains("Record", StringComparison.Ordinal) || name.Contains("Event", StringComparison.Ordinal)));
 
 	[Test]
 	public void EngineSettingsAreDecompilerSettings()

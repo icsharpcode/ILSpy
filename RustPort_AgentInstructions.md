@@ -400,7 +400,7 @@ the reasons. This file holds only the ordered steps, their gates and their rules
   - [x] 63. ExpandNestedConditionals (S)
   - [x] 64. AssignVariableNames (M; port `Humanizer` pluralization rules as data, not as a port
         of the vendored library)
-  - [ ] 65. `EarlyILTransforms` and `DecompileBodyForAnalysis` paths (the speculative
+  - [x] 65. `EarlyILTransforms` and `DecompileBodyForAnalysis` paths (the speculative
         pipelines used by `TransformDisplayClassUsage` and the analyzers) served by the engine
         where they run inside a decompile request (M)
   - [ ] 66. Seam 1 strict by default in the test run; `il_prefix` becomes the full pipeline

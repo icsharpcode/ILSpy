@@ -1477,9 +1477,12 @@ pub fn read_module(
     w.finish()
 }
 
-/// Reads one method body of `module`, runs the first `il_prefix` IL transforms and encodes
-/// the function as a one-entry message in the
-/// `read_module` format; a failed read is an error for the caller, not an entry.
+/// Reads one method body of `module`, runs the first `il_prefix` IL transforms and encodes the function as a one-entry message in the `read_module` format; a failed
+/// read is an error for the caller, not an entry. `analysis` reads and finishes the body as
+/// `CSharpDecompiler.DecompileBodyForAnalysis` does: in a context of the declaring type's
+/// parameters only, which specializes the method's signature through them, and with
+/// CombineExitsTransform after the prefix.
+#[allow(clippy::too_many_arguments)]
 pub fn read_function(
     ts: &mut TypeSystem<'_, '_>,
     method: crate::typesystem::members::MethodDefId,
@@ -1488,6 +1491,7 @@ pub fn read_function(
     settings: crate::il::transforms::Settings,
     resolver: Option<&dyn crate::il::transforms::Resolver>,
     root_names: Option<&crate::il::transforms::RootNames>,
+    analysis: bool,
 ) -> Result<Vec<u8>, String> {
     use crate::metadata::tables::rows;
     let md = &ts.comp.module(method.module).md;
@@ -1499,7 +1503,13 @@ pub fn read_function(
         return Err(format!("MethodDef row {} has no body", method.row));
     }
     let body = md.method_body(rva).map_err(|e| e.to_string())?;
-    let mut f = crate::il::reader::read_il(ts, method, body, options).map_err(|e| e.to_string())?;
+    let context = if analysis {
+        analysis_context(ts, method).map_err(|e| e.to_string())?
+    } else {
+        None
+    };
+    let mut f = crate::il::reader::read_il_in_context(ts, method, body, options, context)
+        .map_err(|e| e.to_string())?;
     let mut ctx = crate::il::transforms::Context {
         ts,
         settings,
@@ -1510,9 +1520,31 @@ pub fn read_function(
         root_names,
     };
     crate::il::transforms::run_prefix(&mut f, &mut ctx, il_prefix);
+    if analysis {
+        crate::il::transforms::combine_exits_transform::run(&mut f, &mut ctx);
+    }
     let mut w = ModuleWriter::new(ts);
     w.function(method.row, &f)?;
     Ok(w.finish())
+}
+
+/// `new GenericContext(classTypeParameters: method.DeclaringTypeDefinition?.TypeParameters,
+/// methodTypeParameters: null)`.
+fn analysis_context(
+    ts: &mut TypeSystem<'_, '_>,
+    method: crate::typesystem::members::MethodDefId,
+) -> crate::metadata::Result<Option<crate::typesystem::types::GenericContext>> {
+    // Without class type parameters the substitution changes nothing: the own context reads alike.
+    let Some((def, count)) = ts.method_context(method)?.class.filter(|&(_, n)| n > 0) else {
+        return Ok(None);
+    };
+    let class = (0..count)
+        .map(|index| {
+            let owner = ts.class_param_owner(def, index);
+            ts.intern(crate::typesystem::types::TypeData::TypeParam { owner, index })
+        })
+        .collect();
+    Ok(Some(ts.explicit_context(class, Vec::new())))
 }
 
 /// Encodes `query` for the host's resolver: the tables, then the explicit generic contexts, the kind (0 `Call`, 1 `Method`),

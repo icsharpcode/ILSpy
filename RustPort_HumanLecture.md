@@ -2374,6 +2374,45 @@ derived from types: a type parameter, an unresolved type and a generic instance 
 `IType.Name` and `IType.Kind` as the managed type system does (a generic instance takes its
 kind from its generic type). After those fixes every case matched.
 
+### 3.82 The analysis pipeline (item 65)
+
+RecordDecompiler and AutoEventDecompiler recognize compiler-generated members by decompiling
+their bodies through `CSharpDecompiler.DecompileBodyForAnalysis`. That pipeline runs the
+standard IL transforms through the last block transform, then CombineExitsTransform, under
+C# 1 settings and without debug info. The shim now serves it through seam 1 too. The seam
+block computes the same truncated list, hands its leaf count to the engine as the IL prefix,
+and sets a reader flag that tells the engine to finish the body the analysis way. Fallback is
+counted like any other seam 1 fallback.
+
+The flag does more than append CombineExitsTransform. The managed analysis reads the method
+in a context of its declaring type's parameters only, and that explicit context specializes
+the method's signature through a substitution. A substitution turns `T!` (a not-null
+annotated class type parameter) into plain `T`, so a parameter of such a type prints
+differently from a normal read. The engine reproduces this by reading through an explicit
+context of the class type parameters, which its reader already supports for the state
+machine decompilers. A generic method would lose its own type parameters in that context, so
+the seam sends generic methods to the managed pipeline, and the test asserts this.
+
+The `EarlyILTransforms` pipelines (inside YieldReturnDecompiler, AsyncAwaitDecompiler and
+ProxyCallReplacer) needed no work: when the engine serves a method, they run inside the
+engine as part of the transforms that call them. They run managed only when the whole method
+falls back.
+
+The new `AnalysisBodyEquality` test compares the served analysis body with the managed
+pipeline over the record and event fixtures (146 images). With the flag ignored, 6 failed;
+with CombineExitsTransform alone, 1 still failed (the `T!` signature); with the explicit
+context, all passed. The fork drift test now expects five seam blocks.
+
+Serving the analysis pipeline also removed the last managed IL transforms that ran while the
+engine served a method at the full IL prefix. The oracle test
+`TransformsKeywordEmitsPerTransformEvents` caught this: with the `Transforms` keyword of
+`DecompilerEventSource` on, no `ILTransformExecuted` event fired. It had only passed because the
+analysis pipeline still ran managed. Seam 1 now treats per-transform tracing like the Debug
+Steps pane: it hands over only the reader, so every transform runs managed and reports its own
+event. The other option, timing each transform in the engine and having the host emit the
+events from the wire, would keep tracing on the engine path but needs a wire extension. It is
+left for when someone profiles the engine through this event source.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

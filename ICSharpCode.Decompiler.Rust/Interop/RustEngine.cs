@@ -96,15 +96,18 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		/// The function of <paramref name="method"/> after the first <paramref name="ilPrefix"/>
 		/// IL transforms, asking <paramref name="resolver"/> the C# resolver questions. The names AssignVariableNames
 		/// reserves around the method come from the type system and <paramref name="usingScope"/>.
+		/// <paramref name="combineExits"/> runs CombineExitsTransform after the prefix.
 		/// <see cref="RustStatus.Unsupported"/> leaves <paramref name="function"/>
 		/// null; an engine error or panic throws <see cref="RustEngineException"/>.
 		/// </summary>
 		public RustStatus ReadFunction(MethodDefinitionHandle method, int ilPrefix, DecompilerSettings settings,
-			IDebugInfoProvider? debugInfo, out ILFunction? function, out string? unsupportedReason, CSharpResolver? resolver = null, UsingScope? usingScope = null)
+			IDebugInfoProvider? debugInfo, out ILFunction? function, out string? unsupportedReason, CSharpResolver? resolver = null, UsingScope? usingScope = null, bool combineExits = false)
 		{
 			function = null;
 			unsupportedReason = null;
 			uint flags = settings.UseRefLocalsForAccurateOrderOfEvaluation ? 1u : 0u;
+			if (combineExits)
+				flags |= 2;
 			var bridge = debugInfo == null ? null : new RustDebugInfo(debugInfo);
 			var resolverBridge = resolver == null ? null
 				: new RustResolver(resolver, MetadataTokens.GetRowNumber(method), typeSystem, modules, settings);
