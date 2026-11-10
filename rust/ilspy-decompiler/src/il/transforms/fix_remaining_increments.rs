@@ -19,7 +19,7 @@ pub fn run(r: &mut ReadFunction, ctx: &mut Context<'_, '_, '_>) {
         return;
     };
     let mut calls_to_fix = Vec::new();
-    for call in f.descendants_pre(body) {
+    for call in f.descendants_post(body) {
         let Inst::Call(c) = f.inst(call) else {
             continue;
         };

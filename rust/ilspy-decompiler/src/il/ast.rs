@@ -302,6 +302,14 @@ pub struct RangeAccessor {
     pub underlying_params: Vec<TypeId>,
 }
 
+/// What `LocalFunctionMethod` adds to a local function's method.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct ReducedMethod {
+    pub is_static_local_function: bool,
+    pub number_of_compiler_generated_parameters: u32,
+    pub number_of_compiler_generated_type_parameters: u32,
+}
+
 /// What `ILReader.ReadIL` gives a nested function read from a method body; the instruction
 /// holds its variables and helper variable count.
 #[derive(Clone, Debug)]
@@ -319,6 +327,10 @@ pub struct NestedRead {
     pub async_debug_info: Option<(i32, Vec<(i32, i32)>)>,
     pub warnings: Vec<String>,
     pub sequence_point_candidates: Vec<i32>,
+    /// The method itself, for a local function without a body (the managed code then gives
+    /// the function the use site's method and a `nop` body); `method` and `context` give the
+    /// context then.
+    pub method_operand: Option<MethodOperand>,
 }
 
 /// A method operand: the metadata token it was read from (resolved again by the
@@ -340,6 +352,18 @@ pub struct MethodOperand {
     /// The proxy call `ProxyCallReplacer` replaced: the token resolves in this method's generic
     /// context and the result is specialized by its substitution.
     pub specialized_by: Option<Box<MethodOperand>>,
+    /// A use of a local function (`LocalFunctionMethod`): the method stands for the reduced
+    /// method of the local function read from that method.
+    pub local_function: Option<Box<LocalFunctionRef>>,
+}
+
+/// The local function a `MethodOperand` refers to.
+#[derive(Clone, Debug)]
+pub struct LocalFunctionRef {
+    pub method: crate::typesystem::members::MethodDefId,
+    /// `MethodOperand::context` of the context the local function was read in.
+    pub context: u32,
+    pub reduced: ReducedMethod,
 }
 
 /// A field operand, as `MethodOperand`.
@@ -774,6 +798,12 @@ pub enum Inst {
         /// For a function read from a method body (DelegateConstruction,
         /// LocalFunctionDecompiler): what `ILReader.ReadIL` set on it.
         read: Option<Box<NestedRead>>,
+        /// `LocalFunctions`: children after the body.
+        local_functions: Vec<NodeId>,
+        /// `DeclarationScope` of a local function: the container it is declared in.
+        declaration_scope: Option<NodeId>,
+        /// `ReducedMethod` of a local function.
+        reduced: Option<ReducedMethod>,
     },
     /// `expression.tree.cast T(arg)`: a conversion an expression tree spells out.
     ExpressionTreeCast {
@@ -1035,8 +1065,14 @@ impl Inst {
             | NullableUnwrap { arg, .. }
             | NullableRewrap { arg, .. }
             | ExpressionTreeCast { arg, .. }
-            | Function { body: arg, .. }
             | DeconstructResult { arg, .. } => vec![*arg],
+            Function {
+                body,
+                local_functions,
+                ..
+            } => std::iter::once(*body)
+                .chain(local_functions.iter().copied())
+                .collect(),
             LdElemaInlineArray { array, indices, .. } => {
                 let mut c = vec![*array];
                 c.extend(indices);
@@ -1199,10 +1235,20 @@ impl Inst {
             | NullableUnwrap { arg, .. }
             | NullableRewrap { arg, .. }
             | ExpressionTreeCast { arg, .. }
-            | Function { body: arg, .. }
             | DeconstructResult { arg, .. } => {
                 assert_eq!(index, 0, "child index out of range");
                 arg
+            }
+            Function {
+                body,
+                local_functions,
+                ..
+            } => {
+                if index == 0 {
+                    body
+                } else {
+                    local_functions.get_mut(index - 1).expect("child index")
+                }
             }
             LdElemaInlineArray { array, indices, .. } => {
                 if index == 0 {
@@ -1481,6 +1527,9 @@ pub struct Function {
     /// (a `Function` instruction), or `None` for the top-level one, and the variable; in
     /// insertion order, each pair once.
     pub captured_variables: Vec<(Option<NodeId>, VarId)>,
+    /// `LocalFunctions` of the top-level function; each is a root of its own (nested
+    /// functions hold theirs as children).
+    pub local_functions: Vec<NodeId>,
 }
 
 impl Function {
@@ -1834,18 +1883,7 @@ impl Function {
         }
     }
 
-    /// `Descendants`: the nodes under `root` (inclusive) in pre-order, as a snapshot.
-    pub fn descendants_pre(&self, root: NodeId) -> Vec<NodeId> {
-        let mut out = Vec::new();
-        let mut stack = vec![root];
-        while let Some(id) = stack.pop() {
-            out.push(id);
-            stack.extend(self.inst(id).children().into_iter().rev());
-        }
-        out
-    }
-
-    /// The nodes under `root` (inclusive) in post-order, as a snapshot.
+    /// `Descendants`: the nodes under `root` (inclusive) in post-order, as a snapshot.
     pub fn descendants_post(&self, root: NodeId) -> Vec<NodeId> {
         let mut out = Vec::new();
         let mut stack = vec![(root, false)];

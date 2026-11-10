@@ -269,6 +269,23 @@ impl Function {
     }
 }
 
+impl Function {
+    /// `function.LocalFunctions.Add(localFunction)` for a nested function: `local_function`
+    /// becomes its last child, counted once more when the function is connected.
+    pub fn add_local_function(&mut self, function: NodeId, local_function: NodeId) {
+        match self.inst_mut(function) {
+            Inst::Function {
+                local_functions, ..
+            } => local_functions.push(local_function),
+            other => panic!("{other:?} is not a function"),
+        }
+        self.relink(function);
+        if self.is_connected(function) {
+            self.add_ref(local_function);
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::super::ast::*;

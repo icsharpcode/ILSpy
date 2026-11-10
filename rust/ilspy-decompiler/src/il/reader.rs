@@ -252,6 +252,7 @@ impl<'r, 'c, 'a> Reader<'r, 'c, 'a> {
         Ok(MethodOperand {
             range_accessor: None,
             specialized_by: None,
+            local_function: None,
             lifted: false,
             token,
             method,
@@ -2657,6 +2658,7 @@ impl<'r, 'c, 'a> Reader<'r, 'c, 'a> {
                     member: MemberOperand::Method(MethodOperand {
                         range_accessor: None,
                         specialized_by: None,
+                        local_function: None,
                         lifted: false,
                         token,
                         method,
@@ -2679,6 +2681,7 @@ impl<'r, 'c, 'a> Reader<'r, 'c, 'a> {
                     member: MemberOperand::Method(MethodOperand {
                         range_accessor: None,
                         specialized_by: None,
+                        local_function: None,
                         lifted: false,
                         token,
                         method,

@@ -300,6 +300,19 @@ impl FunctionWriter<'_, '_, '_, '_> {
             self.ty(r.index_or_range_type);
             self.out.bool(r.slicing);
         }
+        // The host makes the method a `LocalFunctionMethod` of the local function read from
+        // `method` in `context`.
+        self.out.bool(method.local_function.is_some());
+        if let Some(l) = &method.local_function {
+            self.out.uvar(u64::from(l.method.row));
+            self.out.uvar(u64::from(l.context));
+            self.out.bool(l.reduced.is_static_local_function);
+            self.out
+                .uvar(u64::from(l.reduced.number_of_compiler_generated_parameters));
+            self.out.uvar(u64::from(
+                l.reduced.number_of_compiler_generated_type_parameters,
+            ));
+        }
         Ok(())
     }
 
@@ -315,6 +328,11 @@ impl FunctionWriter<'_, '_, '_, '_> {
             self.out.len(c.method.len());
             for t in c.method {
                 self.ty(t);
+            }
+            self.out.bool(c.method_type_parameters_of.is_some());
+            if let Some((token, context, first)) = c.method_type_parameters_of {
+                self.member(token, context);
+                self.out.uvar(u64::from(first));
             }
         }
     }
@@ -409,6 +427,9 @@ impl FunctionWriter<'_, '_, '_, '_> {
             self.out.ivar(i64::from(s));
         }
         self.number(body);
+        for lf in self.f.local_functions.clone() {
+            self.number(lf);
+        }
         self.out.len(self.block_order.len());
         for &b in &self.block_order.clone() {
             let Inst::Block { kind, .. } = self.f.inst(b) else {
@@ -421,6 +442,12 @@ impl FunctionWriter<'_, '_, '_, '_> {
         }
         self.out.len(self.containers.len());
         self.node(body)?;
+        // `LocalFunctions` of the top-level function.
+        let local_functions = self.f.local_functions.clone();
+        self.out.len(local_functions.len());
+        for lf in local_functions {
+            self.node(lf)?;
+        }
         // Capture scopes refer to containers, which are numbered by now.
         let captures: Vec<(usize, usize)> = r
             .variables
@@ -434,6 +461,24 @@ impl FunctionWriter<'_, '_, '_, '_> {
         self.out.len(captures.len());
         for (v, container) in captures {
             self.out.len(v);
+            self.out.len(container);
+        }
+        // `DeclarationScope` of each local function: its node number and the container's.
+        let mut scopes: Vec<(usize, usize)> = self
+            .written
+            .iter()
+            .filter_map(|(&n, &i)| match self.f.inst(n) {
+                Inst::Function {
+                    declaration_scope: Some(scope),
+                    ..
+                } => Some((i, *self.containers.get(scope)?)),
+                _ => None,
+            })
+            .collect();
+        scopes.sort_unstable();
+        self.out.len(scopes.len());
+        for (function, container) in scopes {
+            self.out.len(function);
             self.out.len(container);
         }
         // `CapturedVariables`: the function as its node number + 1 (0 for the top-level one).
@@ -801,11 +846,11 @@ impl FunctionWriter<'_, '_, '_, '_> {
             Inst::LdNull => tag(op::LD_NULL, &mut self.out),
             Inst::LdFtn { method } => {
                 tag(op::LD_FTN, &mut self.out);
-                self.member(method.token, method.context);
+                self.call_method(&method)?;
             }
             Inst::LdVirtFtn { arg, method } => {
                 tag(op::LD_VIRT_FTN, &mut self.out);
-                self.member(method.token, method.context);
+                self.call_method(&method)?;
                 self.node(arg)?;
             }
             Inst::LdTypeToken { ty } => {
@@ -1106,6 +1151,9 @@ impl FunctionWriter<'_, '_, '_, '_> {
                 helper_variable_count,
                 body,
                 ref read,
+                ref local_functions,
+                reduced,
+                ..
             } => {
                 tag(op::FUNCTION, &mut self.out);
                 self.out.u8(kind as u8);
@@ -1124,6 +1172,11 @@ impl FunctionWriter<'_, '_, '_, '_> {
                 // A function read from a method body: its method, context and reader results.
                 self.out.bool(read.is_some());
                 if let Some(read) = read {
+                    // A local function without a body has the use site's method itself.
+                    self.out.bool(read.method_operand.is_some());
+                    if let Some(m) = &read.method_operand {
+                        self.call_method(m)?;
+                    }
                     self.out.uvar(u64::from(read.method.row));
                     self.out.uvar(u64::from(read.context));
                     self.out.len(read.code_size as usize);
@@ -1155,6 +1208,16 @@ impl FunctionWriter<'_, '_, '_, '_> {
                     }
                 }
                 self.node(body)?;
+                self.nodes(local_functions)?;
+                // `ReducedMethod` of a local function.
+                self.out.bool(reduced.is_some());
+                if let Some(r) = reduced {
+                    self.out.bool(r.is_static_local_function);
+                    self.out
+                        .uvar(u64::from(r.number_of_compiler_generated_parameters));
+                    self.out
+                        .uvar(u64::from(r.number_of_compiler_generated_type_parameters));
+                }
             }
             Inst::Deconstruct {
                 ref init,
@@ -1491,12 +1554,11 @@ pub fn resolver_query(
 
 /// The variables of the nested functions (lambdas) in `f`, in tree order.
 fn nested_variables(f: &crate::il::ast::Function) -> Vec<VarId> {
-    let Some(body) = f.body else {
-        return Vec::new();
-    };
-    f.descendants_post(body)
+    // The body, then the top-level function's local functions.
+    f.body
         .into_iter()
-        .rev()
+        .chain(f.local_functions.iter().copied())
+        .flat_map(|root| f.descendants_post(root).into_iter().rev())
         .filter_map(|n| match f.inst(n) {
             Inst::Function { variables, .. } => Some(variables.clone()),
             _ => None,

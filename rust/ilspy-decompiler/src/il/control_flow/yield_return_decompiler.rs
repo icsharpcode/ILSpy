@@ -902,6 +902,7 @@ impl YieldReturnDecompiler {
         r.move_next_method = Some(MethodOperand {
             range_accessor: None,
             specialized_by: None,
+            local_function: None,
             lifted: false,
             token,
             method,

@@ -145,6 +145,10 @@ impl Tables {
                         e.len(m.module.0 as usize);
                         e.uvar(u64::from(m.row));
                     }
+                    TypeParamOwner::ContextMethod { context, .. } => {
+                        e.u8(4);
+                        e.uvar(u64::from(context));
+                    }
                     TypeParamOwner::DummyType => e.u8(2),
                     TypeParamOwner::DummyMethod => e.u8(3),
                 }
@@ -241,6 +245,8 @@ impl Tables {
         }
         let i = self.type_count;
         self.type_count += 1;
+        // Each entry is length-prefixed, so the host can decode it on first use.
+        self.types.len(e.0.len());
         self.types.raw(&e.0);
         self.type_index.insert(t, i);
         i

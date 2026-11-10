@@ -44,7 +44,8 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		readonly byte[] data;
 		int pos;
 		readonly string[] strings;
-		readonly IType[] types;
+		readonly IType?[] types;
+		readonly int[] typeOffsets;
 		protected readonly ICompilation compilation;
 		protected readonly IReadOnlyList<MetadataModule> modules;
 
@@ -66,9 +67,16 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				strings[i] = Encoding.UTF8.GetString(data, pos, length);
 				pos += length;
 			}
-			types = new IType[Len()];
+			// Each entry is length-prefixed and decoded on first use: an entry may refer to a
+			// generic context the function header only defines later.
+			types = new IType?[Len()];
+			typeOffsets = new int[types.Length];
 			for (int i = 0; i < types.Length; i++)
-				types[i] = ReadTypeEntry();
+			{
+				int length = Len();
+				typeOffsets[i] = pos;
+				pos += length;
+			}
 		}
 
 		public bool AtEnd => pos == data.Length;
@@ -105,9 +113,22 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 
 		public string Str() => strings[Len()];
 
-		public IType Type() => types[Len()];
+		public IType Type() => TypeAt(Len());
 
-		protected IType TypeAt(int index) => types[index];
+		protected IType TypeAt(int index)
+		{
+			if (types[index] is { } type)
+				return type;
+			int saved = pos;
+			pos = typeOffsets[index];
+			type = ReadTypeEntry();
+			pos = saved;
+			return types[index] = type;
+		}
+
+		/// <summary>Method type parameter <paramref name="index"/> of explicit generic context <paramref name="context"/>.</summary>
+		protected virtual ITypeParameter ContextMethodTypeParameter(int context, int index)
+			=> throw new InvalidOperationException("This message has no generic contexts");
 
 		public byte[] Raw(int count)
 		{
@@ -165,6 +186,11 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 							var module = Module();
 							var method = module.GetDefinition(MetadataTokens.MethodDefinitionHandle(Len()));
 							return method.TypeParameters[Len()];
+						}
+						case 4:
+						{
+							int context = Len();
+							return ContextMethodTypeParameter(context, Len());
 						}
 						case 2:
 							return DummyTypeParameter.GetClassTypeParameter(Len());
@@ -238,6 +264,9 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		int currentRow;
 		GenericContext context;
 		GenericContext[] explicitContexts = [];
+
+		protected override ITypeParameter ContextMethodTypeParameter(int context, int index)
+			=> explicitContexts[context].MethodTypeParameters![index];
 		ILVariable[] variables = [];
 		Block[] blocks = [];
 		BlockContainer[] containers = [];
@@ -449,14 +478,23 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 			containers = new BlockContainer[Len()];
 			materialized = new List<ILInstruction>();
 			var body = Node();
+			var localFunctions = new ILFunction[Len()];
+			for (int i = 0; i < localFunctions.Length; i++)
+				localFunctions[i] = (ILFunction)Node();
 			var function = new ILFunction(method, codeSize, context, body, ILFunctionKind.TopLevelFunction);
 			function.Variables.AddRange(topLevelVariables);
+			function.LocalFunctions.AddRange(localFunctions);
 			// Capture scopes refer to containers, so they follow the body.
 			for (int i = Len(); i > 0; i--)
 			{
 				var captured = Variable();
 				var scope = containers[Len()];
 				captured.CaptureScope = scope;
+			}
+			for (int i = Len(); i > 0; i--)
+			{
+				var localFunction = (ILFunction)materialized[Len()];
+				localFunction.DeclarationScope = containers[Len()];
 			}
 			for (int i = Len(); i > 0; i--)
 			{
@@ -512,9 +550,22 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				var classTypeParameters = new ITypeParameter[Len()];
 				for (int j = 0; j < classTypeParameters.Length; j++)
 					classTypeParameters[j] = (ITypeParameter)Type();
-				var methodTypeParameters = new ITypeParameter[Len()];
+				var methodTypes = new int[Len()];
+				for (int j = 0; j < methodTypes.Length; j++)
+					methodTypes[j] = Len();
+				// From `first` on, the type parameters of a (specialized) method, whose constraints are
+				// seen through its type arguments; their entries refer to this context.
+				int first = methodTypes.Length;
+				IMethod? source = null;
+				if (Bool())
+				{
+					var handle = Member(out var memberContext);
+					first = Len();
+					source = mainModule.ResolveMethod(handle, memberContext);
+				}
+				var methodTypeParameters = new ITypeParameter[methodTypes.Length];
 				for (int j = 0; j < methodTypeParameters.Length; j++)
-					methodTypeParameters[j] = (ITypeParameter)Type();
+					methodTypeParameters[j] = j < first ? (ITypeParameter)TypeAt(methodTypes[j]) : source!.TypeParameters[j];
 				explicitContexts[i] = new GenericContext(classTypeParameters, methodTypeParameters);
 			}
 		}
@@ -634,7 +685,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				32 => new LdcF4(BitConverter.ToSingle(Raw(4), 0)),
 				33 => new LdcF8(BitConverter.ToDouble(Raw(8), 0)),
 				34 => new LdNull(),
-				35 => new LdFtn(Method()),
+				35 => new LdFtn(CallMethod()),
 				36 => LdVirtFtn(),
 				37 => new LdTypeToken(Type()),
 				38 => LdMemberToken(),
@@ -765,11 +816,21 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 			GenericContext readContext = default;
 			if (Bool())
 			{
-				// A function read from a method body: ILReader.ReadIL in an explicit context.
+				// A function read from a method body: ILReader.ReadIL in an explicit context. A local
+				// function without a body has the use site's method and the bare context instead.
+				var operandMethod = Bool() ? CallMethod() : null;
 				var definition = mainModule.GetDefinition(MetadataTokens.MethodDefinitionHandle(Len()));
 				int contextIndex = Len();
-				readContext = contextIndex == 0 ? new GenericContext(definition) : explicitContexts[contextIndex - 2];
-				method = contextIndex == 0 ? definition : (IMethod)definition.Specialize(readContext.ToSubstitution());
+				if (operandMethod != null)
+				{
+					readContext = contextIndex == 0 ? default : explicitContexts[contextIndex - 2];
+					method = operandMethod;
+				}
+				else
+				{
+					readContext = contextIndex == 0 ? new GenericContext(definition) : explicitContexts[contextIndex - 2];
+					method = contextIndex == 0 ? definition : (IMethod)definition.Specialize(readContext.ToSubstitution());
+				}
 				int codeSize = Len();
 				int localSignatureLength = Len();
 				var asyncReturnType = OptionalType();
@@ -805,12 +866,19 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				};
 			}
 			var body = Node();
+			var localFunctions = new ILFunction[Len()];
+			for (int i = 0; i < localFunctions.Length; i++)
+				localFunctions[i] = (ILFunction)Node();
+			(bool IsStatic, int Parameters, int TypeParameters)? reduced = Bool() ? (Bool(), Len(), Len()) : null;
 			var function = method != null
 				? new ILFunction(method, 0, readContext, body, kind) { DelegateType = delegateType }
 				: new ILFunction(returnType, parameters, context, body, kind) { DelegateType = delegateType };
 			function.Variables.AddRange(functionVariables);
 			helperVariableCountField.SetValue(function, helperVariableCount);
 			readResults?.Invoke(function);
+			function.LocalFunctions.AddRange(localFunctions);
+			if (reduced is var (isStaticLocal, generatedParameters, generatedTypeParameters))
+				function.ReducedMethod = new LocalFunctionMethod(function.Method!, function.Method!.Name, isStaticLocal, generatedParameters, generatedTypeParameters);
 			return function;
 		}
 
@@ -1069,6 +1137,17 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				var indexOrRangeType = Type();
 				method = new SyntheticRangeIndexAccessor(method, indexOrRangeType, slicing: Bool());
 			}
+			if (Bool())
+			{
+				// A local function use: the reduced method of the function read from this method.
+				var definition = mainModule.GetDefinition(MetadataTokens.MethodDefinitionHandle(Len()));
+				int contextIndex = Len();
+				IMethod read = contextIndex == 0 ? definition : (IMethod)definition.Specialize(explicitContexts[contextIndex - 2].ToSubstitution());
+				bool isStatic = Bool();
+				int parameters = Len();
+				int typeParameters = Len();
+				method = new LocalFunctionMethod(read, read.Name, isStatic, parameters, typeParameters).Specialize(method.Substitution);
+			}
 			return method;
 		}
 
@@ -1100,7 +1179,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 
 		ILInstruction LdVirtFtn()
 		{
-			var method = Method();
+			var method = CallMethod();
 			return new LdVirtFtn(Node(), method);
 		}
 

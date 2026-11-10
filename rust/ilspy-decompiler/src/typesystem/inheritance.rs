@@ -92,7 +92,9 @@ impl TypeSystem<'_, '_> {
             TypeData::TypeParam { owner, index } => {
                 let (module, table, row) = match owner {
                     TypeParamOwner::Type(def) => (def.module, TableId::TypeDef, def.row),
-                    TypeParamOwner::Method(m) => (m.module, TableId::MethodDef, m.row),
+                    TypeParamOwner::Method(m) | TypeParamOwner::ContextMethod { method: m, .. } => {
+                        (m.module, TableId::MethodDef, m.row)
+                    }
                     // shortcut: dummy type parameters report no base types; upgrade when a
                     // caller needs the `object` base `DummyTypeParameter` reports.
                     TypeParamOwner::DummyType | TypeParamOwner::DummyMethod => {

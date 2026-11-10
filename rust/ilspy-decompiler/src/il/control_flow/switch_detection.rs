@@ -609,6 +609,7 @@ pub(crate) fn inline_switch_expression_default_case_throw_helper(
                 method: MethodOperand {
                     range_accessor: None,
                     specialized_by: None,
+                    local_function: None,
                     lifted: false,
                     // Found by type lookup: the wire sends the constructor's signature.
                     token: 0,

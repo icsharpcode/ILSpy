@@ -103,6 +103,7 @@ impl Env<'_, '_, '_, '_> {
         MethodOperand {
             range_accessor: None,
             specialized_by: None,
+            local_function: None,
             token: 0,
             method,
             context: 0,
@@ -465,6 +466,9 @@ fn convert_lambda(env: &mut Env<'_, '_, '_, '_>, instruction: NodeId) -> Option<
         helper_variable_count: 0,
         body: container,
         read: None,
+        local_functions: Vec::new(),
+        declaration_scope: None,
+        reduced: None,
     });
     env.f.add_il_range(function, range);
     env.lambda_stack.push(function);

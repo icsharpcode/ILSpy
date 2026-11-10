@@ -2077,8 +2077,9 @@ TransformArrayInitializers did in item 44. That variable takes the operator's pa
 type, and the call becomes a compound assignment to it.
 
 Two details matter for equality. The managed code collects the calls in `Descendants`
-order, which is pre-order, and each extraction registers a variable. The port therefore
-walks the tree in pre-order too, so the new variables get the same numbers and positions.
+order, which is post-order (children first, the node itself last), and each extraction
+registers a variable. The port walks the tree in the same order, so the new variables get
+the same numbers and positions.
 The new compound assignment takes the call's IL range.
 
 The no-op red run failed 9 of 3,550 equality cases. The port then matched every case, and
@@ -2087,7 +2088,7 @@ the allowlist stays at 69 entries.
 ### 3.70 CopyPropagation (item 55, IL prefix 48)
 
 The state machine decompilers already used `Propagate` (items 13 and 14). This step adds the
-pipeline transform around it. For every control-flow block, in pre-order, it looks at
+pipeline transform around it. For every control-flow block, in post-order (`Descendants`), it looks at
 single-definition stores. A dead store to a stack slot is removed when its value is pure.
 Otherwise only its value stays, as a statement. Other stores are copied into their loads
 when `CanPerformCopyPropagation` allows it. That covers address loads (ldelema and ldflda
@@ -2146,6 +2147,51 @@ method. CombineExitsTransform and the local-function name test (`IsLocalFunction
 were ported too, both needed here.
 
 The no-op red run failed 739 of 3,550 equality cases. The port then matched every case,
+and the allowlist stays at 69 entries.
+
+### 3.72 LocalFunctionDecompiler (item 56, second leaf, IL prefix 50)
+
+LocalFunctionDecompiler finds every use of a compiler-generated local function method: a
+call, an `ldftn`, or a delegate construction. It reads each method once into a nested
+function of kind LocalFunction, running every IL transform before itself, DelegateConstruction
+included. It then replaces the function's `this` and closure parameters with the display
+classes the use sites pass. It decides where the function is declared, moves it to the
+function owning that scope, and turns the use sites into calls of the reduced method, the
+`LocalFunctionMethod` without the compiler-generated parameters.
+
+Local functions are children of an `ILFunction`, after its body. The engine's nested
+`Function` instruction gained that child list, a declaration scope and the reduced method's
+counts. The top-level function, which has no instruction of its own, keeps its local
+functions on the arena, each one a root. A use site's method operand can name the local
+function it refers to. The host then builds `new LocalFunctionMethod(read method, ...)
+.Specialize(useSite.Method.Substitution)`, which is the managed expression; the type's
+equality is by value, so separately built instances compare equal. `ldftn` now uses the call
+method encoding, so it can carry that reference too. A local function without a body
+(`extern`, as the generated P/Invoke stubs in the runtime libraries use) gets a `nop` body
+and the use site's method, as in the managed code. Two settings bits were added: 47
+`LocalFunctions` and 48 `StaticLocalFunctions`.
+
+Two findings came out of the corpus. First, `IsLocalFunctionDisplayClass` decodes each local
+function signature with a `FindTypeDecoder` but then asks `ParameterTypes.Any()`, so any
+parameter counts. Because of that, decompiling a state machine's `MoveNext` directly turns
+the transform off. The port copies the test as it is. Second, `ILInstruction.Descendants`
+is a post-order walk, children first and the node itself last. FixRemainingIncrements,
+CopyPropagation and DelegateConstruction had been ported with a pre-order walk; the
+difference only showed here, in the order local functions are read. All four now walk in
+post-order, and sections 3.69 and 3.70 were corrected.
+
+The oracle found one more difference that the equality printer cannot show. A generic local
+function's own type parameters, in the managed code, are the use-site method's
+`TypeParameters`. Those are specialized type parameters, whose constraints are seen through
+the caller's type arguments: in `ZZ<T3>() where T3 : T2` the constraint is the caller's
+`T2`. The engine had sent the definition's type parameters, so the C# backend inserted
+casts. An explicit context can now name a member token whose method type parameters it
+uses from some index on. Inside the local function, those type parameters are a new owner
+kind, "method type parameter `i` of explicit context `e`", which the host takes from the
+context. Since such a type cannot be built before the function header defines its
+contexts, the type table is now length-prefixed and decoded on first use.
+
+The no-op red run failed 204 of 3,550 equality cases. The port then matched every case,
 and the allowlist stays at 69 entries.
 
 ## 4. Alternatives evaluated

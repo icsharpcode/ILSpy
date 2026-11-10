@@ -1472,6 +1472,7 @@ fn block_from_initializer(
             method: MethodOperand {
                 range_accessor: None,
                 specialized_by: None,
+                local_function: None,
                 token: 0,
                 method,
                 context: 0,

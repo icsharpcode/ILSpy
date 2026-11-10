@@ -119,7 +119,7 @@ fn run_on(
     // `decompilationContext.CurrentTypeDefinition`.
     let decompiled_type = declaring_type(ctx, method);
     let root = scope.or(r.function.body);
-    for inst in root.map_or_else(Vec::new, |root| r.function.descendants_pre(root)) {
+    for inst in root.map_or_else(Vec::new, |root| r.function.descendants_post(root)) {
         let Some(parts) = delegate_construction_parts(&r.function, ctx, inst) else {
             continue;
         };
@@ -302,6 +302,7 @@ fn import_lambda(
         async_debug_info: lambda.async_debug_info,
         warnings: lambda.warnings,
         sequence_point_candidates: lambda.sequence_point_candidates,
+        method_operand: None,
     };
     let parameters = method
         .params()
@@ -318,6 +319,9 @@ fn import_lambda(
         helper_variable_count,
         body: by.node(body),
         read: Some(Box::new(read)),
+        local_functions: Vec::new(),
+        declaration_scope: None,
+        reduced: None,
     });
     for (owner, v) in captured {
         let owner = owner.map_or(function, |n| by.node(n));

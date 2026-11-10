@@ -453,7 +453,7 @@ impl<'c, 'a> TypeSystem<'c, 'a> {
                     self.type_context(Some(def)),
                     self.type_nullable_context(def),
                 ),
-                TypeParamOwner::Method(m) => {
+                TypeParamOwner::Method(m) | TypeParamOwner::ContextMethod { method: m, .. } => {
                     (self.method_context(m)?, self.method_nullable_context(m)?)
                 }
                 _ => (GenericContext::default(), Nullability::Oblivious),

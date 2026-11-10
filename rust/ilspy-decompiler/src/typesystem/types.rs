@@ -36,6 +36,12 @@ impl TypeId {
 pub enum TypeParamOwner {
     Type(TypeDefId),
     Method(super::members::MethodDefId),
+    /// Method type parameter of an explicit context (`ExplicitContext::method_type_parameters_of`):
+    /// the host takes it from the context; otherwise it behaves as the method's own.
+    ContextMethod {
+        method: super::members::MethodDefId,
+        context: u32,
+    },
     DummyType,
     DummyMethod,
 }
@@ -44,7 +50,9 @@ impl TypeParamOwner {
     pub fn is_method(self) -> bool {
         matches!(
             self,
-            TypeParamOwner::Method(_) | TypeParamOwner::DummyMethod
+            TypeParamOwner::Method(_)
+                | TypeParamOwner::ContextMethod { .. }
+                | TypeParamOwner::DummyMethod
         )
     }
 }
@@ -142,6 +150,11 @@ pub struct GenericContext {
 pub struct ExplicitContext {
     pub class: Vec<TypeId>,
     pub method: Vec<TypeId>,
+    /// The method type parameters from index `first` on are those of the method this member
+    /// token resolves to in that context (`(token, context, first)`, as `MethodOperand` has
+    /// them): `IMethod.TypeParameters` of a specialized method see their constraints through
+    /// its type arguments, which a definition's type parameters cannot express.
+    pub method_type_parameters_of: Option<(u32, u32, u32)>,
 }
 
 impl GenericContext {
@@ -189,7 +202,21 @@ impl<'c, 'a> TypeSystem<'c, 'a> {
 
     /// The explicit context with these type parameters, added on first use.
     pub fn explicit_context(&mut self, class: Vec<TypeId>, method: Vec<TypeId>) -> GenericContext {
-        let context = ExplicitContext { class, method };
+        self.explicit_context_of(class, method, None)
+    }
+
+    /// `explicit_context` with `ExplicitContext::method_type_parameters_of`.
+    pub fn explicit_context_of(
+        &mut self,
+        class: Vec<TypeId>,
+        method: Vec<TypeId>,
+        method_type_parameters_of: Option<(u32, u32, u32)>,
+    ) -> GenericContext {
+        let context = ExplicitContext {
+            class,
+            method,
+            method_type_parameters_of,
+        };
         let index = match self.explicit_contexts.iter().position(|c| *c == context) {
             Some(i) => i,
             None => {

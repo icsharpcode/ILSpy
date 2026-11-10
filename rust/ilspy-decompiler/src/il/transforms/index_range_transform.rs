@@ -162,6 +162,7 @@ pub fn handle_ld_elema(f: &mut Function, ctx: &mut Context<'_, '_, '_>, ldelema:
                 method: MethodOperand {
                     range_accessor: None,
                     specialized_by: None,
+                    local_function: None,
                     lifted: false,
                     // Found by type lookup: the wire sends the constructor's signature.
                     token: 0,
@@ -311,6 +312,7 @@ fn operand(method: ResolvedMethod) -> MethodOperand {
         lifted: false,
         range_accessor: None,
         specialized_by: None,
+        local_function: None,
     }
 }
 

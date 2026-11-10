@@ -416,6 +416,7 @@ impl CompOrDecimal {
                     MethodOperand {
                         range_accessor: None, // Found by lookup: the wire sends the method's signature.
                         specialized_by: None,
+                        local_function: None,
                         token: 0,
                         method: inequality,
                         context: call.method.context,
@@ -1336,6 +1337,7 @@ fn new_nullable(
         method: MethodOperand {
             range_accessor: None, // Found by type lookup: the wire sends the constructor's signature.
             specialized_by: None,
+            local_function: None,
             token: 0,
             method: ctor,
             context: 0,

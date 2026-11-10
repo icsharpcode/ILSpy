@@ -132,7 +132,9 @@ impl TypeSystem<'_, '_> {
             TypeData::TypeParam { owner, index } => {
                 let (module, table, row) = match owner {
                     TypeParamOwner::Type(def) => (def.module, TableId::TypeDef, def.row),
-                    TypeParamOwner::Method(m) => (m.module, TableId::MethodDef, m.row),
+                    TypeParamOwner::Method(m) | TypeParamOwner::ContextMethod { method: m, .. } => {
+                        (m.module, TableId::MethodDef, m.row)
+                    }
                     _ => return false,
                 };
                 let md = &self.comp.module(module).md;
@@ -244,7 +246,9 @@ impl TypeSystem<'_, '_> {
         let md = &self.comp.module(module).md;
         let owner_options = match owner {
             TypeParamOwner::Type(def) => self.type_options_of(def),
-            TypeParamOwner::Method(m) => self.method_options_of(m),
+            TypeParamOwner::Method(m) | TypeParamOwner::ContextMethod { method: m, .. } => {
+                self.method_options_of(m)
+            }
             _ => self.options(module),
         };
         if owner_options & options::NULLABILITY == 0 {
@@ -269,7 +273,7 @@ impl TypeSystem<'_, '_> {
             }
         }
         match owner {
-            TypeParamOwner::Method(m) => self
+            TypeParamOwner::Method(m) | TypeParamOwner::ContextMethod { method: m, .. } => self
                 .method_nullable_context(m)
                 .unwrap_or(Nullability::Oblivious),
             TypeParamOwner::Type(def) => self.type_nullable_context(def),

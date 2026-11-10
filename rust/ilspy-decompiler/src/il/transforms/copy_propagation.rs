@@ -31,7 +31,7 @@ pub fn run(r: &mut ReadFunction, ctx: &mut Context<'_, '_, '_>) {
     let Some(body) = r.function.body else {
         return;
     };
-    for block in r.function.descendants_pre(body) {
+    for block in r.function.descendants_post(body) {
         if !matches!(
             r.function.inst(block),
             Inst::Block {

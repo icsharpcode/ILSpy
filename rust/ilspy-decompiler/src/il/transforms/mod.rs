@@ -100,6 +100,8 @@ pub const SETTING_NAMES: &[&str] = &[
     "NamedArguments",
     "StringInterpolation",
     "ExtensionMethodsInCollectionInitializers",
+    "LocalFunctions",
+    "StaticLocalFunctions",
 ];
 
 /// The values of `SETTING_NAMES`.
@@ -151,6 +153,8 @@ pub struct Settings {
     pub named_arguments: bool,
     pub string_interpolation: bool,
     pub extension_methods_in_collection_initializers: bool,
+    pub local_functions: bool,
+    pub static_local_functions: bool,
 }
 
 impl Settings {
@@ -204,6 +208,8 @@ impl Settings {
             named_arguments: bit(43),
             string_interpolation: bit(44),
             extension_methods_in_collection_initializers: bit(45),
+            local_functions: bit(46),
+            static_local_functions: bit(47),
         }
     }
 }
@@ -338,10 +344,15 @@ const PIPELINE: &[Leaf] = &[
     Function(fix_remaining_increments::run),
     Function(copy_propagation::run),
     Function(delegate_construction::run),
+    Function(local_function_decompiler::run),
 ];
 
 /// The index of DelegateConstruction in `PIPELINE`: a lambda runs the leaves before it.
 pub const DELEGATE_CONSTRUCTION_LEAF: u32 = 48;
+
+/// The index of LocalFunctionDecompiler in `PIPELINE`: a local function runs the leaves
+/// before it.
+pub const LOCAL_FUNCTION_DECOMPILER_LEAF: u32 = 49;
 
 /// Runs the first `prefix` leaves of the pipeline.
 ///
