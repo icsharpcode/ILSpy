@@ -62,6 +62,10 @@ struct Decoded {
 pub struct ReadFunction {
     /// `ILFunction.Method`.
     pub method: MethodDefId,
+    /// `ILFunction.GenericContext`: the context the method was read in.
+    pub generic_context: GenericContext,
+    /// `ILFunction.Kind`.
+    pub kind: super::ast::FunctionKind,
     /// `ILFunction.AsyncReturnType`: the unpacked task type of a runtime async method.
     pub async_return_type: Option<TypeId>,
     pub function: Function,
@@ -251,7 +255,7 @@ impl<'r, 'c, 'a> Reader<'r, 'c, 'a> {
             lifted: false,
             token,
             method,
-            state_machine_context: self.ctx.class_tail.is_some(),
+            context: self.member_context(),
         })
     }
 
@@ -306,7 +310,7 @@ impl<'r, 'c, 'a> Reader<'r, 'c, 'a> {
         Ok(FieldOperand {
             token,
             field,
-            state_machine_context: self.ctx.class_tail.is_some(),
+            context: self.member_context(),
         })
     }
 
@@ -348,7 +352,19 @@ impl<'r, 'c, 'a> Reader<'r, 'c, 'a> {
         let module = method_id.module;
         let method = ts.method_definition(method_id)?;
         let (method, ctx) = match context {
-            // An explicit context specializes the method for it (`Specialize(ToSubstitution())`).
+            // An explicit context specializes the method for it (`Specialize(ToSubstitution())`,
+            // which takes empty lists as none).
+            Some(c) if c.explicit.is_some() => {
+                let e = ts.explicit_contexts()[c.explicit.unwrap_or_default() as usize].clone();
+                let class = (!e.class.is_empty()).then_some(e.class);
+                let method_args = (!e.method.is_empty()).then_some(e.method);
+                let m = if class.is_none() && method_args.is_none() {
+                    method
+                } else {
+                    ts.specialize(method, class, method_args)
+                };
+                (m, c)
+            }
             Some(c) => {
                 let count = c.class.map_or(0, |(_, n)| n) + c.class_tail.map_or(0, |(_, n)| n);
                 let args = (0..count)
@@ -468,9 +484,24 @@ impl<'r, 'c, 'a> Reader<'r, 'c, 'a> {
             self.parameter_variables.push(v);
         }
         let offset = usize::from(!is_static);
+        // An explicit context specialized the method: its parameters are seen through it.
+        let substitution = self.ctx.explicit.map(|e| {
+            let e = &self.ts.explicit_contexts()[e as usize];
+            (
+                (!e.class.is_empty()).then(|| e.class.clone()),
+                (!e.method.is_empty()).then(|| e.method.clone()),
+            )
+        });
         for p in params.iter().take(count - offset) {
             let index = self.parameter_variables.len() - offset;
-            let v = self.parameter_variable(index as i32, p.ty, &p.name);
+            let ty = match &substitution {
+                Some((class, method)) => {
+                    self.ts
+                        .substitute(p.ty, class.as_deref(), method.as_deref())
+                }
+                None => p.ty,
+            };
+            let v = self.parameter_variable(index as i32, ty, &p.name);
             self.f.var_mut(v).is_ref_read_only =
                 matches!(p.ref_kind, RefKind::In | RefKind::RefReadOnly);
             self.parameter_variables.push(v);
@@ -2629,7 +2660,7 @@ impl<'r, 'c, 'a> Reader<'r, 'c, 'a> {
                         lifted: false,
                         token,
                         method,
-                        state_machine_context: self.ctx.class_tail.is_some(),
+                        context: self.member_context(),
                     }),
                 }))
             }
@@ -2639,7 +2670,7 @@ impl<'r, 'c, 'a> Reader<'r, 'c, 'a> {
                         member: MemberOperand::Field(FieldOperand {
                             token,
                             field,
-                            state_machine_context: self.ctx.class_tail.is_some(),
+                            context: self.member_context(),
                         }),
                     }));
                 }
@@ -2651,7 +2682,7 @@ impl<'r, 'c, 'a> Reader<'r, 'c, 'a> {
                         lifted: false,
                         token,
                         method,
-                        state_machine_context: self.ctx.class_tail.is_some(),
+                        context: self.member_context(),
                     }),
                 }))
             }
@@ -2663,6 +2694,15 @@ impl<'r, 'c, 'a> Reader<'r, 'c, 'a> {
 
     /// The rest of `ReadIL` after `ReadInstructions`: the block structure, the variable list
     /// and the removal of unreachable blocks.
+    /// `MethodOperand::context` for the members this reader resolves.
+    fn member_context(&self) -> u32 {
+        match (self.ctx.explicit, self.ctx.class_tail) {
+            (Some(e), _) => e + 2,
+            (None, Some(_)) => 1,
+            (None, None) => 0,
+        }
+    }
+
     fn finish(mut self) -> Result<ReadFunction> {
         let code_size = self.code.len() as i32;
         let blocks: Vec<NodeId> = self.blocks.iter().map(|b| b.block).collect();
@@ -2731,6 +2771,8 @@ impl<'r, 'c, 'a> Reader<'r, 'c, 'a> {
             warnings,
             sequence_point_candidates: self.sequence_point_candidates,
             method: self.method_id,
+            generic_context: self.ctx,
+            kind: super::ast::FunctionKind::TopLevelFunction,
             is_iterator: false,
             state_machine_compiled_with_mono: false,
             state_machine_compiled_with_legacy_visual_basic: false,

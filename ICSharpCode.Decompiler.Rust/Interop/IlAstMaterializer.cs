@@ -237,6 +237,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		readonly DecompilerSettings settings;
 		int currentRow;
 		GenericContext context;
+		GenericContext[] explicitContexts = [];
 		ILVariable[] variables = [];
 		Block[] blocks = [];
 		BlockContainer[] containers = [];
@@ -277,6 +278,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		{
 			var reader = new IlAstMaterializer(wire, compilation, modules, settings);
 			reader.context = new GenericContext(reader.mainModule.GetDefinition(MetadataTokens.MethodDefinitionHandle(row)));
+			reader.ReadContexts();
 			var query = new RustResolverQuery { Kind = reader.U8(), Method = reader.CallMethod() };
 			if (query.Kind == RustResolverQuery.CallKind)
 			{
@@ -408,6 +410,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 			context = new GenericContext(method);
 			currentRow = row;
 			transformContext = null;
+			ReadContexts();
 			int codeSize = Len();
 			int localSignatureLength = Len();
 			int asyncReturnType = Len();
@@ -454,7 +457,12 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				var captured = Variable();
 				var scope = containers[Len()];
 				captured.CaptureScope = scope;
-				scope.Ancestors.OfType<ILFunction>().FirstOrDefault()?.CapturedVariables.Add(captured);
+			}
+			for (int i = Len(); i > 0; i--)
+			{
+				int owner = Len();
+				var captured = Variable();
+				(owner == 0 ? function : (ILFunction)materialized[owner - 1]).CapturedVariables.Add(captured);
 			}
 			function.LocalVariableSignatureLength = localSignatureLength;
 			if (asyncReturnType != 0)
@@ -495,17 +503,40 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 
 		ILVariable Variable() => variables[Len()];
 
+		/// <summary>The explicit generic contexts (<c>GenericContext.explicit</c> in the engine).</summary>
+		void ReadContexts()
+		{
+			explicitContexts = new GenericContext[Len()];
+			for (int i = 0; i < explicitContexts.Length; i++)
+			{
+				var classTypeParameters = new ITypeParameter[Len()];
+				for (int j = 0; j < classTypeParameters.Length; j++)
+					classTypeParameters[j] = (ITypeParameter)Type();
+				var methodTypeParameters = new ITypeParameter[Len()];
+				for (int j = 0; j < methodTypeParameters.Length; j++)
+					methodTypeParameters[j] = (ITypeParameter)Type();
+				explicitContexts[i] = new GenericContext(classTypeParameters, methodTypeParameters);
+			}
+		}
+
 		/// <summary>
-		/// A member token and the context it resolves in: the function's own, or the state machine
+		/// A member token and the context it resolves in: the function's own, the state machine
 		/// context the yield-return and async decompilers read compiler-generated methods in (the
-		/// function's class and method type parameters as class type parameters).
+		/// function's class and method type parameters as class type parameters), or an explicit one.
 		/// </summary>
 		EntityHandle Member(out GenericContext memberContext)
 		{
 			ulong v = UVar();
-			memberContext = (v & 1) == 0 ? context : new GenericContext(
-				classTypeParameters: (context.ClassTypeParameters ?? []).Concat(context.MethodTypeParameters ?? []).ToArray(),
-				methodTypeParameters: null);
+			memberContext = context;
+			if ((v & 1) != 0)
+			{
+				int index = Len();
+				memberContext = index == 1
+					? new GenericContext(
+						classTypeParameters: (context.ClassTypeParameters ?? []).Concat(context.MethodTypeParameters ?? []).ToArray(),
+						methodTypeParameters: null)
+					: explicitContexts[index - 2];
+			}
 			return MetadataTokens.EntityHandle(checked((int)(v >> 1)));
 		}
 
@@ -729,10 +760,57 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 			for (int i = 0; i < functionVariables.Length; i++)
 				functionVariables[i] = Variable();
 			int helperVariableCount = Len();
+			Action<ILFunction>? readResults = null;
+			IMethod? method = null;
+			GenericContext readContext = default;
+			if (Bool())
+			{
+				// A function read from a method body: ILReader.ReadIL in an explicit context.
+				var definition = mainModule.GetDefinition(MetadataTokens.MethodDefinitionHandle(Len()));
+				int contextIndex = Len();
+				readContext = contextIndex == 0 ? new GenericContext(definition) : explicitContexts[contextIndex - 2];
+				method = contextIndex == 0 ? definition : (IMethod)definition.Specialize(readContext.ToSubstitution());
+				int codeSize = Len();
+				int localSignatureLength = Len();
+				var asyncReturnType = OptionalType();
+				byte stateMachineFlags = U8();
+				var moveNextMethod = Bool() ? Method() : null;
+				AsyncDebugInfo? asyncDebugInfo = null;
+				if (Bool())
+				{
+					int catchHandlerOffset = Int();
+					var awaits = new AsyncDebugInfo.Await[Len()];
+					for (int i = 0; i < awaits.Length; i++)
+						awaits[i] = new AsyncDebugInfo.Await(Int(), Int());
+					asyncDebugInfo = new AsyncDebugInfo(catchHandlerOffset, ImmutableArray.Create(awaits));
+				}
+				var warnings = new string[Len()];
+				for (int i = 0; i < warnings.Length; i++)
+					warnings[i] = Str();
+				var sequencePoints = new List<int>(Len());
+				for (int i = sequencePoints.Capacity; i > 0; i--)
+					sequencePoints.Add(Int());
+				readResults = f => {
+					f.CodeSize = codeSize;
+					f.LocalVariableSignatureLength = localSignatureLength;
+					f.AsyncReturnType = asyncReturnType;
+					f.IsIterator = (stateMachineFlags & 1) != 0;
+					f.StateMachineCompiledWithMono = (stateMachineFlags & 2) != 0;
+					f.StateMachineCompiledWithLegacyVisualBasic = (stateMachineFlags & 4) != 0;
+					f.MoveNextMethod = moveNextMethod;
+					if (asyncDebugInfo is { } info)
+						f.AsyncDebugInfo = info;
+					f.SequencePointCandidates = sequencePoints;
+					f.Warnings.AddRange(warnings);
+				};
+			}
 			var body = Node();
-			var function = new ILFunction(returnType, parameters, context, body, kind) { DelegateType = delegateType };
+			var function = method != null
+				? new ILFunction(method, 0, readContext, body, kind) { DelegateType = delegateType }
+				: new ILFunction(returnType, parameters, context, body, kind) { DelegateType = delegateType };
 			function.Variables.AddRange(functionVariables);
 			helperVariableCountField.SetValue(function, helperVariableCount);
+			readResults?.Invoke(function);
 			return function;
 		}
 

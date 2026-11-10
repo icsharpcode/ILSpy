@@ -283,6 +283,7 @@ const OP_RET: u16 = 0x2A;
 pub fn create_il_ast(
     ctx: &mut Context<'_, '_, '_>,
     outer: MethodDefId,
+    outer_context: GenericContext,
     row: u32,
 ) -> Result<ReadFunction> {
     if row == 0 {
@@ -300,14 +301,19 @@ pub fn create_il_ast(
     let body = md
         .method_body(def.rva)
         .map_err(|e| SymbolicAnalysisFailed(e.to_string()))?;
-    let outer_context = ctx
-        .ts
-        .method_context(outer)
-        .map_err(|e| SymbolicAnalysisFailed(e.to_string()))?;
-    let generic_context = GenericContext {
-        class: outer_context.class,
-        method: None,
-        class_tail: outer_context.method,
+    // The outer function's class and method type parameters as class type parameters.
+    let generic_context = match outer_context.explicit {
+        Some(e) => {
+            let e = ctx.ts.explicit_contexts()[e as usize].clone();
+            let class = e.class.into_iter().chain(e.method).collect();
+            ctx.ts.explicit_context(class, Vec::new())
+        }
+        None => GenericContext {
+            class: outer_context.class,
+            method: None,
+            class_tail: outer_context.method,
+            explicit: None,
+        },
     };
     let method = MethodDefId {
         module: outer.module,
@@ -332,6 +338,7 @@ pub fn create_il_ast(
 pub fn resolve_ienumerable_ienumerator_field_mapping(
     ctx: &mut Context<'_, '_, '_>,
     outer: MethodDefId,
+    outer_context: GenericContext,
     row: u32,
     field_to_parameter: &mut OrderedMap<FieldDef, VarId>,
 ) -> Result<()> {
@@ -339,7 +346,7 @@ pub fn resolve_ienumerable_ienumerator_field_mapping(
         // Maybe only an IEnumerator implementation.
         return Ok(());
     }
-    let get_enumerator = create_il_ast(ctx, outer, row)?;
+    let get_enumerator = create_il_ast(ctx, outer, outer_context, row)?;
     let f = &get_enumerator.function;
     for block in f.descendants_post(f.body.expect("body")) {
         if !matches!(f.inst(block), Inst::Block { .. }) {
@@ -372,6 +379,7 @@ pub fn run(r: &mut ReadFunction, ctx: &mut Context<'_, '_, '_>) {
     };
     let mut d = YieldReturnDecompiler {
         outer: r.method,
+        outer_context: r.generic_context,
         module: r.method.module,
         current_type,
         enumerator_type: 0,
@@ -397,6 +405,8 @@ pub fn run(r: &mut ReadFunction, ctx: &mut Context<'_, '_, '_>) {
 struct YieldReturnDecompiler {
     /// The iterator method being decompiled.
     outer: MethodDefId,
+    /// The context it was read in (`context.Function.GenericContext`).
+    outer_context: GenericContext,
     module: ModuleId,
     /// TypeDef rows (0 for none) of the iterator's class and the enumerator class.
     current_type: u32,
@@ -551,7 +561,7 @@ impl YieldReturnDecompiler {
     }
 
     fn create_il_ast(&self, ctx: &mut Context<'_, '_, '_>, row: u32) -> Result<ReadFunction> {
-        create_il_ast(ctx, self.outer, row)
+        create_il_ast(ctx, self.outer, self.outer_context, row)
     }
 
     fn match_enumerator_creation_pattern(
@@ -820,6 +830,7 @@ impl YieldReturnDecompiler {
         resolve_ienumerable_ienumerator_field_mapping(
             ctx,
             self.outer,
+            self.outer_context,
             row,
             &mut self.field_to_parameter,
         )
@@ -894,7 +905,7 @@ impl YieldReturnDecompiler {
             lifted: false,
             token,
             method,
-            state_machine_context: false,
+            context: 0,
         });
         r.sequence_point_candidates = mn.sequence_point_candidates.clone();
         r.code_size = mn.code_size;
@@ -1530,7 +1541,7 @@ pub(crate) fn field_operand(ts: &mut TypeSystem<'_, '_>, (module, row): FieldDef
             name,
             ty,
         },
-        state_machine_context: false,
+        context: 0,
     }
 }
 

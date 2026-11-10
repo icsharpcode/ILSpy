@@ -1170,7 +1170,7 @@ enum IncDec {
         operand: NodeId,
     },
     Operator {
-        method: MethodOperand,
+        method: Box<MethodOperand>,
         operand: NodeId,
     },
 }
@@ -1220,7 +1220,7 @@ fn match_inc_dec(
                 return None;
             }
             return Some(IncDec::Operator {
-                method: c.method.clone(),
+                method: Box::new(c.method.clone()),
                 operand: c.args[0],
             });
         }
@@ -1287,7 +1287,7 @@ fn transform_pre_inc_dec_operator_with_inline_store(
         ),
         IncDec::Operator { method, .. } => new_user_defined_increment(
             f,
-            method,
+            *method,
             target,
             target_kind,
             CompoundEvalMode::EvaluatesToNewValue,
@@ -1344,7 +1344,7 @@ fn transform_post_inc_dec_operator_with_inline_store(
         ),
         IncDec::Operator { method, .. } => new_user_defined_increment(
             f,
-            method,
+            *method,
             target,
             target_kind,
             CompoundEvalMode::EvaluatesToOldValue,

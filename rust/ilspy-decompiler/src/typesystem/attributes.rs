@@ -816,7 +816,7 @@ impl TypeSystem<'_, '_> {
     }
 
     /// Whether the row carries `[CompilerGenerated]`.
-    fn has_compiler_generated(&self, module: ModuleId, table: TableId, row: u32) -> bool {
+    pub fn has_compiler_generated(&self, module: ModuleId, table: TableId, row: u32) -> bool {
         let md = &self.comp.module(module).md;
         md.custom_attributes(table, row).into_iter().any(|ca| {
             md.attribute_type(ca).is_ok_and(|t| {

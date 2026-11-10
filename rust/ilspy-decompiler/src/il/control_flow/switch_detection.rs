@@ -613,7 +613,7 @@ pub(crate) fn inline_switch_expression_default_case_throw_helper(
                     // Found by type lookup: the wire sends the constructor's signature.
                     token: 0,
                     method: ctor,
-                    state_machine_context: false,
+                    context: 0,
                 },
                 args: value.into_iter().collect(),
                 is_tail: false,

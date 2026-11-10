@@ -105,7 +105,7 @@ impl Env<'_, '_, '_, '_> {
             specialized_by: None,
             token: 0,
             method,
-            state_machine_context: false,
+            context: 0,
             lifted: false,
         }
     }
@@ -464,6 +464,7 @@ fn convert_lambda(env: &mut Env<'_, '_, '_, '_>, instruction: NodeId) -> Option<
         variables: parameter_variables,
         helper_variable_count: 0,
         body: container,
+        read: None,
     });
     env.f.add_il_range(function, range);
     env.lambda_stack.push(function);
@@ -2119,6 +2120,10 @@ fn convert_value(env: &mut Env<'_, '_, '_, '_>, value: NodeId, context: NodeId) 
                 .chain(env.f.ancestors(context))
                 .find(|&n| matches!(env.f.inst(n), Inst::BlockContainer { .. }));
             env.f.var_mut(var).capture_scope = scope;
+            if let Some(scope) = scope {
+                let function = env.f.enclosing_function(scope);
+                env.f.add_captured_variable(function, var);
+            }
         }
     }
     Some(value)

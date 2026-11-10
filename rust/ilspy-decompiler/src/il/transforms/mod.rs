@@ -9,6 +9,7 @@ use super::reader::ReadFunction;
 pub mod block_transform;
 pub mod cached_delegate_initialization;
 pub mod cached_read_only_span_initialization;
+pub mod combine_exits_transform;
 pub mod copy_propagation;
 pub mod csharp_semantics;
 pub mod deconstruction_transform;
@@ -27,6 +28,7 @@ pub mod inline_return_transform;
 pub mod interpolated_string_transform;
 pub mod introduce_ref_read_only_modifier_on_locals;
 pub mod ldloca_dup_init_obj_transform;
+pub mod local_function_decompiler;
 pub mod lock_transform;
 pub mod named_argument_transform;
 pub mod null_coalescing_transform;
@@ -335,7 +337,11 @@ const PIPELINE: &[Leaf] = &[
     Function(proxy_call_replacer::run),
     Function(fix_remaining_increments::run),
     Function(copy_propagation::run),
+    Function(delegate_construction::run),
 ];
+
+/// The index of DelegateConstruction in `PIPELINE`: a lambda runs the leaves before it.
+pub const DELEGATE_CONSTRUCTION_LEAF: u32 = 48;
 
 /// Runs the first `prefix` leaves of the pipeline.
 ///
@@ -456,5 +462,17 @@ mod tests {
     #[test]
     fn the_pipeline_is_the_served_prefix() {
         assert_eq!(super::PIPELINE.len() as u32, crate::IL_PREFIX);
+    }
+
+    #[test]
+    fn delegate_construction_follows_copy_propagation() {
+        let index = super::DELEGATE_CONSTRUCTION_LEAF as usize;
+        let super::Leaf::Function(previous) = super::PIPELINE[index - 1] else {
+            panic!("CopyPropagation is a function leaf");
+        };
+        assert_eq!(
+            previous as usize,
+            super::copy_propagation::run as fn(&mut _, &mut _) as usize
+        );
     }
 }

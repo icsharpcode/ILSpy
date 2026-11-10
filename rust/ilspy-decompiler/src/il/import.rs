@@ -39,8 +39,14 @@ impl Inst {
             | Inst::LdLoca { var }
             | Inst::StLoc { var, .. }
             | Inst::TryCatchHandler { variable: var, .. }
+            | Inst::Match { variable: var, .. }
             | Inst::PinnedRegion { variable: var, .. }
             | Inst::Using { variable: var, .. } => *var = by.var(*var),
+            Inst::Function { variables, .. } => {
+                for v in variables {
+                    *v = by.var(*v);
+                }
+            }
             _ => {}
         }
     }
@@ -49,7 +55,8 @@ impl Inst {
 impl Function {
     /// Appends `other`'s nodes and variables. Connection state, use lists and counts come
     /// along unchanged: `other`'s tree stays connected to its own (now imported) root until
-    /// the caller releases it.
+    /// the caller releases it. `other`'s captured variables are left to the caller, whose
+    /// mapping of `other`'s top-level function decides where they belong.
     pub fn import(&mut self, other: Function) -> Imported {
         let by = Imported {
             node_offset: self.nodes.len() as u32,
@@ -70,6 +77,7 @@ impl Function {
                     *n = by.node(*n);
                 }
             }
+            var.capture_scope = var.capture_scope.map(|s| by.node(s));
             self.variables.push(var);
         }
         by

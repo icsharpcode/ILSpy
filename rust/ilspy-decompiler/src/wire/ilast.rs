@@ -194,11 +194,14 @@ impl FunctionWriter<'_, '_, '_, '_> {
         self.out.uvar(u64::from(i));
     }
 
-    /// A member token, shifted left by one; bit 0 says the host resolves it in the state
-    /// machine context (the function's class and method type parameters as class parameters).
-    fn member(&mut self, token: u32, state_machine_context: bool) {
+    /// A member token, shifted left by one; bit 0 says the generic context it resolves in
+    /// (`MethodOperand::context`) follows, which is otherwise the function's own.
+    fn member(&mut self, token: u32, context: u32) {
         self.out
-            .uvar(u64::from(token) << 1 | u64::from(state_machine_context));
+            .uvar(u64::from(token) << 1 | u64::from(context != 0));
+        if context != 0 {
+            self.out.uvar(u64::from(context));
+        }
     }
 
     /// An optional type as its index + 1, 0 for none.
@@ -247,8 +250,7 @@ impl FunctionWriter<'_, '_, '_, '_> {
             | u8::from(var.remove_if_redundant) << 4);
         self.out.bool(var.state_machine_field.is_some());
         if let Some(field) = &var.state_machine_field {
-            let (token, state_machine) = (field.token, field.state_machine_context);
-            self.member(token, state_machine);
+            self.member(field.token, field.context);
         }
     }
 
@@ -261,7 +263,7 @@ impl FunctionWriter<'_, '_, '_, '_> {
         if let Some(proxy) = &method.specialized_by {
             self.call_method(proxy)?;
         }
-        self.member(method.token, method.state_machine_context);
+        self.member(method.token, method.context);
         if method.token == 0 {
             // A method found by type lookup: its type, name and parameter types.
             let m = &method.method;
@@ -299,6 +301,22 @@ impl FunctionWriter<'_, '_, '_, '_> {
             self.out.bool(r.slicing);
         }
         Ok(())
+    }
+
+    /// The type system's explicit generic contexts, which `member` refers to by index.
+    fn contexts(&mut self) {
+        let contexts = self.ts.explicit_contexts().to_vec();
+        self.out.len(contexts.len());
+        for c in contexts {
+            self.out.len(c.class.len());
+            for t in c.class {
+                self.ty(t);
+            }
+            self.out.len(c.method.len());
+            for t in c.method {
+                self.ty(t);
+            }
+        }
     }
 
     fn stack_type(&mut self, st: StackType) {
@@ -346,6 +364,7 @@ impl FunctionWriter<'_, '_, '_, '_> {
 
     fn write(&mut self, r: &ReadFunction, nested: &[VarId]) -> Result<(), String> {
         let body = r.function.body.ok_or("function without body")?;
+        self.contexts();
         self.out.len(r.code_size as usize);
         self.out.len(r.local_signature_length);
         match r.async_return_type {
@@ -361,7 +380,7 @@ impl FunctionWriter<'_, '_, '_, '_> {
             | u8::from(r.state_machine_compiled_with_legacy_visual_basic) << 2);
         self.out.bool(r.move_next_method.is_some());
         if let Some(m) = &r.move_next_method {
-            self.member(m.token, m.state_machine_context);
+            self.member(m.token, m.context);
         }
         self.out.bool(r.async_debug_info.is_some());
         if let Some((catch_handler, awaits)) = &r.async_debug_info {
@@ -416,6 +435,22 @@ impl FunctionWriter<'_, '_, '_, '_> {
         for (v, container) in captures {
             self.out.len(v);
             self.out.len(container);
+        }
+        // `CapturedVariables`: the function as its node number + 1 (0 for the top-level one).
+        let captured = self.f.captured_variables.clone();
+        self.out.len(captured.len());
+        for (function, v) in captured {
+            let function = match function {
+                Some(n) => {
+                    1 + *self
+                        .written
+                        .get(&n)
+                        .ok_or("captured in an unwritten function")?
+                }
+                None => 0,
+            };
+            self.out.len(function);
+            self.var(v)?;
         }
         Ok(())
     }
@@ -766,11 +801,11 @@ impl FunctionWriter<'_, '_, '_, '_> {
             Inst::LdNull => tag(op::LD_NULL, &mut self.out),
             Inst::LdFtn { method } => {
                 tag(op::LD_FTN, &mut self.out);
-                self.member(method.token, method.state_machine_context);
+                self.member(method.token, method.context);
             }
             Inst::LdVirtFtn { arg, method } => {
                 tag(op::LD_VIRT_FTN, &mut self.out);
-                self.member(method.token, method.state_machine_context);
+                self.member(method.token, method.context);
                 self.node(arg)?;
             }
             Inst::LdTypeToken { ty } => {
@@ -780,8 +815,8 @@ impl FunctionWriter<'_, '_, '_, '_> {
             Inst::LdMemberToken { member } => {
                 tag(op::LD_MEMBER_TOKEN, &mut self.out);
                 let (token, state_machine) = match member {
-                    MemberOperand::Method(m) => (m.token, m.state_machine_context),
-                    MemberOperand::Field(f) => (f.token, f.state_machine_context),
+                    MemberOperand::Method(m) => (m.token, m.context),
+                    MemberOperand::Field(f) => (f.token, f.context),
                 };
                 self.member(token, state_machine);
             }
@@ -807,7 +842,7 @@ impl FunctionWriter<'_, '_, '_, '_> {
                     | u8::from(check_not_null) << 3);
                 self.out.bool(method.is_some());
                 if let Some(m) = &method {
-                    self.member(m.token, m.state_machine_context);
+                    self.member(m.token, m.context);
                 }
                 self.node(tested_operand)?;
                 self.nodes(&sub_patterns)?;
@@ -862,13 +897,13 @@ impl FunctionWriter<'_, '_, '_, '_> {
                 delay_exceptions,
             } => {
                 tag(op::LD_FLDA, &mut self.out);
-                self.member(field.token, field.state_machine_context);
+                self.member(field.token, field.context);
                 self.out.bool(delay_exceptions);
                 self.node(target)?;
             }
             Inst::LdsFlda { field } => {
                 tag(op::LDS_FLDA, &mut self.out);
-                self.member(field.token, field.state_machine_context);
+                self.member(field.token, field.context);
             }
             Inst::CastClass { arg, ty }
             | Inst::IsInst { arg, ty }
@@ -957,7 +992,7 @@ impl FunctionWriter<'_, '_, '_, '_> {
                 value,
             } => {
                 tag(op::USER_DEFINED_COMPOUND_ASSIGN, &mut self.out);
-                self.member(method.token, method.state_machine_context);
+                self.member(method.token, method.context);
                 self.out.u8(eval_mode as u8);
                 self.out.u8(target_kind as u8);
                 self.node(target)?;
@@ -1013,7 +1048,7 @@ impl FunctionWriter<'_, '_, '_, '_> {
             } => {
                 tag(op::LD_VIRT_DELEGATE, &mut self.out);
                 self.ty(ty);
-                self.member(method.token, method.state_machine_context);
+                self.member(method.token, method.context);
                 self.node(arg)?;
             }
             Inst::LdElemaInlineArray {
@@ -1070,6 +1105,7 @@ impl FunctionWriter<'_, '_, '_, '_> {
                 ref variables,
                 helper_variable_count,
                 body,
+                ref read,
             } => {
                 tag(op::FUNCTION, &mut self.out);
                 self.out.u8(kind as u8);
@@ -1085,6 +1121,39 @@ impl FunctionWriter<'_, '_, '_, '_> {
                     self.var(v)?;
                 }
                 self.out.uvar(u64::from(helper_variable_count));
+                // A function read from a method body: its method, context and reader results.
+                self.out.bool(read.is_some());
+                if let Some(read) = read {
+                    self.out.uvar(u64::from(read.method.row));
+                    self.out.uvar(u64::from(read.context));
+                    self.out.len(read.code_size as usize);
+                    self.out.len(read.local_signature_length);
+                    self.opt_ty(read.async_return_type);
+                    self.out.u8(u8::from(read.is_iterator)
+                        | u8::from(read.state_machine_compiled_with_mono) << 1
+                        | u8::from(read.state_machine_compiled_with_legacy_visual_basic) << 2);
+                    self.out.bool(read.move_next_method.is_some());
+                    if let Some(m) = &read.move_next_method {
+                        self.member(m.token, m.context);
+                    }
+                    self.out.bool(read.async_debug_info.is_some());
+                    if let Some((catch_handler, awaits)) = &read.async_debug_info {
+                        self.out.ivar(i64::from(*catch_handler));
+                        self.out.len(awaits.len());
+                        for &(yield_offset, resume_offset) in awaits {
+                            self.out.ivar(i64::from(yield_offset));
+                            self.out.ivar(i64::from(resume_offset));
+                        }
+                    }
+                    self.out.len(read.warnings.len());
+                    for w in &read.warnings {
+                        self.string(w);
+                    }
+                    self.out.len(read.sequence_point_candidates.len());
+                    for &s in &read.sequence_point_candidates {
+                        self.out.ivar(i64::from(s));
+                    }
+                }
                 self.node(body)?;
             }
             Inst::Deconstruct {
@@ -1142,7 +1211,7 @@ impl FunctionWriter<'_, '_, '_, '_> {
                         None => self.out.u8(0),
                         Some(AwaiterMethod::Method(m)) => {
                             self.out.u8(1);
-                            self.member(m.token, m.state_machine_context);
+                            self.member(m.token, m.context);
                         }
                         Some(AwaiterMethod::Dynamic(name)) => {
                             self.out.u8(2);
@@ -1197,7 +1266,7 @@ impl FunctionWriter<'_, '_, '_, '_> {
                 self.ty(ty);
                 self.out.bool(method.is_some());
                 if let Some(m) = method {
-                    self.member(m.token, m.state_machine_context);
+                    self.member(m.token, m.context);
                 }
                 self.node(arg)?;
             }
@@ -1369,7 +1438,7 @@ pub fn read_function(
     Ok(w.finish())
 }
 
-/// Encodes `query` for the host's resolver: the tables, then the kind (0 `Call`, 1 `Method`),
+/// Encodes `query` for the host's resolver: the tables, then the explicit generic contexts, the kind (0 `Call`, 1 `Method`),
 /// the method as `call_method` writes it, and for `Call` the target type, whether the target
 /// store types follow (then the variable's and the value's type) and the argument types.
 pub fn resolver_query(
@@ -1390,6 +1459,7 @@ pub fn resolver_query(
         containers: HashMap::new(),
         written: HashMap::new(),
     };
+    w.contexts();
     match query {
         ExtensionMethodQuery::Call {
             method,

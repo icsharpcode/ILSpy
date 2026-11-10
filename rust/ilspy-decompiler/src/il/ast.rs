@@ -302,15 +302,35 @@ pub struct RangeAccessor {
     pub underlying_params: Vec<TypeId>,
 }
 
+/// What `ILReader.ReadIL` gives a nested function read from a method body; the instruction
+/// holds its variables and helper variable count.
+#[derive(Clone, Debug)]
+pub struct NestedRead {
+    pub method: crate::typesystem::members::MethodDefId,
+    /// `MethodOperand::context` of the generic context it was read in.
+    pub context: u32,
+    pub code_size: i32,
+    pub local_signature_length: usize,
+    pub async_return_type: Option<TypeId>,
+    pub is_iterator: bool,
+    pub state_machine_compiled_with_mono: bool,
+    pub state_machine_compiled_with_legacy_visual_basic: bool,
+    pub move_next_method: Option<MethodOperand>,
+    pub async_debug_info: Option<(i32, Vec<(i32, i32)>)>,
+    pub warnings: Vec<String>,
+    pub sequence_point_candidates: Vec<i32>,
+}
+
 /// A method operand: the metadata token it was read from (resolved again by the
 /// materializer, in the function's generic context) and its resolution.
 #[derive(Clone, Debug)]
 pub struct MethodOperand {
     pub token: u32,
     pub method: ResolvedMethod,
-    /// Read in a state machine context (`GenericContext::class_tail`): the host resolves the
-    /// token with the function's class and method type parameters as class parameters.
-    pub state_machine_context: bool,
+    /// The generic context the host resolves the token in: 0 the function's own, 1 the state
+    /// machine context (`GenericContext::class_tail`: the function's class and method type
+    /// parameters as class parameters), `n + 2` the type system's explicit context `n`.
+    pub context: u32,
     /// The method is the lifted form of a user-defined operator
     /// (`CSharpOperators.LiftUserDefinedOperator`): parameters and return type are nullable.
     pub lifted: bool,
@@ -327,8 +347,8 @@ pub struct MethodOperand {
 pub struct FieldOperand {
     pub token: u32,
     pub field: ResolvedField,
-    /// As `MethodOperand::state_machine_context`.
-    pub state_machine_context: bool,
+    /// As `MethodOperand::context`.
+    pub context: u32,
 }
 
 /// A type operand: the metadata token it was read from (0 for a known type the reader picks
@@ -751,6 +771,9 @@ pub enum Inst {
         /// `helperVariableCount`: how many `I_n` variables the function named.
         helper_variable_count: u32,
         body: NodeId,
+        /// For a function read from a method body (DelegateConstruction,
+        /// LocalFunctionDecompiler): what `ILReader.ReadIL` set on it.
+        read: Option<Box<NestedRead>>,
     },
     /// `expression.tree.cast T(arg)`: a conversion an expression tree spells out.
     ExpressionTreeCast {
@@ -1454,9 +1477,27 @@ pub struct Function {
     /// Variables `register_variable` created that the variable list does not hold yet
     /// (`ReadFunction::flush_pending_variables`).
     pub pending_variables: Vec<VarId>,
+    /// `ILFunction.CapturedVariables` of every function in the arena: the nested function
+    /// (a `Function` instruction), or `None` for the top-level one, and the variable; in
+    /// insertion order, each pair once.
+    pub captured_variables: Vec<(Option<NodeId>, VarId)>,
 }
 
 impl Function {
+    /// `function.CapturedVariables.Add(v)`.
+    pub fn add_captured_variable(&mut self, function: Option<NodeId>, v: VarId) {
+        if !self.captured_variables.contains(&(function, v)) {
+            self.captured_variables.push((function, v));
+        }
+    }
+
+    /// The nearest `Function` instruction above `node`, or `None` for the top-level function.
+    pub fn enclosing_function(&self, node: NodeId) -> Option<NodeId> {
+        self.ancestors(node)
+            .into_iter()
+            .find(|&n| matches!(self.inst(n), Inst::Function { .. }))
+    }
+
     pub fn node(&self, id: NodeId) -> &Node {
         &self.nodes[id.0 as usize]
     }

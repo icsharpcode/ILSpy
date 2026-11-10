@@ -2104,6 +2104,50 @@ The split-variable set comes from the top-level list only, as in the managed cod
 The no-op red run failed 586 of 3,550 equality cases. The port then matched every case, and
 the allowlist stays at 69 entries.
 
+### 3.71 DelegateConstruction (item 56, first leaf, IL prefix 49)
+
+Item 56 has three pipeline leaves. With the human's agreement it lands as three gated
+commits, one per leaf. Each leaf is a top-level boundary, so the oracle checks each one on
+its own: at this prefix the managed LocalFunctionDecompiler and TransformDisplayClassUsage
+already run on the lambdas the engine built.
+
+DelegateConstruction turns `newobj D(target, ldftn M)` of an anonymous method into a
+nested function holding `M`'s body. The managed code reads the body, puts the lambda in
+the tree, runs every IL transform before itself and CombineExitsTransform over it, replaces
+its `this` with the delegate target, and recurses into nested lambdas. Three design
+decisions, taken with the human, shape the port:
+
+- **Explicit generic contexts.** A lambda is read in a context built from the type
+  arguments of its delegate target (`GenericContextFromTypeArguments`): the display class's
+  type parameters stand for the caller's. The type system gained a table of such contexts,
+  and `GenericContext` can point into it. Member operands carry a context index on the wire
+  instead of the old state-machine bit: 0 for the function's own, 1 for the state machine
+  context, `n + 2` for explicit context `n`. Each function message starts with the table,
+  and the host rebuilds every entry with `new GenericContext(class, method)`. An index on
+  each operand, rather than a context switch by tree position, survives the later
+  transforms that move outer instructions into lambdas. The state machine decompilers now
+  derive their context from the function they work on, so async lambdas read their
+  `MoveNext` in the lambda's context, as `CreateILAst` does.
+- **Separate arena, then import.** The lambda is read into its own `ReadFunction`, and the
+  prefix runs there. The existing arena import, which the state machine decompilers use,
+  then moves it into the function's arena. This is equivalent to the managed order because
+  the body refers only to its own variables until the target replacement afterwards.
+- **Three gated commits**, as above.
+
+Several smaller pieces came with it. A nested `Function` instruction gained a reader
+header: method, context, sizes, iterator and async state, warnings and sequence points.
+The host builds it with `new ILFunction(definition.Specialize(context.ToSubstitution()),
+...)`, as `ReadIL` does. `CapturedVariables` became explicit per function, on the arena and
+on the wire, because DelegateConstruction sets capture scopes without the expression-tree
+rule that derived the list from them. `ReadFunction` records its kind, because
+`RemoveDead` drops an unused `this` of a non-top-level function. The reader now sees
+parameter types through an explicit context, like `method.Parameters` of the specialized
+method. CombineExitsTransform and the local-function name test (`IsLocalFunctionMethod`)
+were ported too, both needed here.
+
+The no-op red run failed 739 of 3,550 equality cases. The port then matched every case,
+and the allowlist stays at 69 entries.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

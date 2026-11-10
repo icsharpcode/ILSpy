@@ -1474,7 +1474,7 @@ fn block_from_initializer(
                 specialized_by: None,
                 token: 0,
                 method,
-                state_machine_context: false,
+                context: 0,
                 lifted: false,
             },
             args: vec![final_inst],

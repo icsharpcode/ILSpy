@@ -59,6 +59,7 @@ pub fn run(r: &mut ReadFunction, ctx: &mut Context<'_, '_, '_>) {
     let void = ctx.ts.known_type(KnownTypeCode::Void);
     let mut d = AsyncAwaitDecompiler {
         outer: r.method,
+        outer_context: r.generic_context,
         task_type: void,
         underlying_return_type: void,
         method_type: MethodType::Void,
@@ -91,6 +92,8 @@ pub fn run(r: &mut ReadFunction, ctx: &mut Context<'_, '_, '_>) {
 
 struct AsyncAwaitDecompiler {
     outer: MethodDefId,
+    /// The context the async method was read in (`context.Function.GenericContext`).
+    outer_context: crate::typesystem::types::GenericContext,
     /// The return type of the async method (or `IAsyncEnumerable<T>` / `IAsyncEnumerator<T>`).
     task_type: TypeId,
     /// The `T` of `Task<T>`; for async enumerators the yielded type.
@@ -824,7 +827,7 @@ impl AsyncAwaitDecompiler {
     ) -> Result<()> {
         self.builder_field = None;
         self.state_field = None;
-        let read = create_il_ast(ctx, self.outer, def_row(ctor))?;
+        let read = create_il_ast(ctx, self.outer, self.outer_context, def_row(ctor))?;
         let f = &read.function;
         let Some(body) = single_block(f, f.body.expect("body")) else {
             return fail("Missing enumeratorCtor.Body");
@@ -872,6 +875,7 @@ impl AsyncAwaitDecompiler {
         resolve_ienumerable_ienumerator_field_mapping(
             ctx,
             self.outer,
+            self.outer_context,
             row,
             &mut self.field_to_parameter,
         )
@@ -898,7 +902,7 @@ impl AsyncAwaitDecompiler {
         let Some(row) = row else {
             return fail("");
         };
-        let mn = create_il_ast(ctx, self.outer, row)?;
+        let mn = create_il_ast(ctx, self.outer, self.outer_context, row)?;
         let f = &mn.function;
         let container = f.body.expect("body");
         let entry = f.list(container)[0];
@@ -1426,7 +1430,7 @@ impl AsyncAwaitDecompiler {
         let Some(row) = row else {
             return fail("Could not find DisposeAsync()");
         };
-        let read = create_il_ast(ctx, self.outer, row)?;
+        let read = create_il_ast(ctx, self.outer, self.outer_context, row)?;
         let f = &read.function;
         for store in f.descendants_post(f.body.expect("body")) {
             let Some((target, field, value)) = f.match_stfld(store) else {
@@ -1484,7 +1488,7 @@ impl AsyncAwaitDecompiler {
                 lifted: false,
                 token,
                 method,
-                state_machine_context: false,
+                context: 0,
             });
         r.sequence_point_candidates = std::mem::take(&mut mn.sequence_point_candidates);
         r.code_size = mn.code_size;

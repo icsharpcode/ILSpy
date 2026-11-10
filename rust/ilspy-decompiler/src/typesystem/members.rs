@@ -341,6 +341,7 @@ impl<'c, 'a> TypeSystem<'c, 'a> {
             }),
             method: None,
             class_tail: None,
+            explicit: None,
         }
     }
 

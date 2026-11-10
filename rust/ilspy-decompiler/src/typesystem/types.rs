@@ -131,6 +131,17 @@ pub struct GenericContext {
     /// the context the state machine decompilers read a compiler-generated class's methods in
     /// (`new GenericContext(classTypeParameters: class ++ method, methodTypeParameters: null)`).
     pub class_tail: Option<(super::members::MethodDefId, u32)>,
+    /// A context with arbitrary type parameters (`new GenericContext(classTypeParameters,
+    /// methodTypeParameters)`): an index into the type system's explicit contexts. It
+    /// overrides the fields above.
+    pub explicit: Option<u32>,
+}
+
+/// The type parameters of an explicit `GenericContext`.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct ExplicitContext {
+    pub class: Vec<TypeId>,
+    pub method: Vec<TypeId>,
 }
 
 impl GenericContext {
@@ -161,6 +172,7 @@ pub struct TypeSystem<'c, 'a> {
     known: HashMap<KnownTypeCode, TypeId>,
     /// Per module: method row to `(owner token, semantics)` of C# accessors.
     pub(super) accessor_owners: HashMap<ModuleId, HashMap<u32, (u32, u16)>>,
+    explicit_contexts: Vec<ExplicitContext>,
 }
 
 impl<'c, 'a> TypeSystem<'c, 'a> {
@@ -171,7 +183,74 @@ impl<'c, 'a> TypeSystem<'c, 'a> {
             map: HashMap::new(),
             known: HashMap::new(),
             accessor_owners: HashMap::new(),
+            explicit_contexts: Vec::new(),
         }
+    }
+
+    /// The explicit context with these type parameters, added on first use.
+    pub fn explicit_context(&mut self, class: Vec<TypeId>, method: Vec<TypeId>) -> GenericContext {
+        let context = ExplicitContext { class, method };
+        let index = match self.explicit_contexts.iter().position(|c| *c == context) {
+            Some(i) => i,
+            None => {
+                self.explicit_contexts.push(context);
+                self.explicit_contexts.len() - 1
+            }
+        };
+        GenericContext {
+            explicit: Some(index as u32),
+            ..GenericContext::default()
+        }
+    }
+
+    /// The explicit contexts, by index.
+    pub fn explicit_contexts(&self) -> &[ExplicitContext] {
+        &self.explicit_contexts
+    }
+
+    /// The type `!index` stands for in `ctx` (`GetClassTypeParameter`).
+    pub fn context_class_param(&mut self, ctx: &GenericContext, index: u32) -> TypeId {
+        if let Some(e) = ctx.explicit {
+            if let Some(&t) = self.explicit_contexts[e as usize].class.get(index as usize) {
+                return t;
+            }
+            return self.intern(TypeData::TypeParam {
+                owner: TypeParamOwner::DummyType,
+                index,
+            });
+        }
+        match ctx.class_param(index) {
+            Some(ClassParam::Class(def, i)) => {
+                let owner = self.class_param_owner(def, i);
+                self.intern(TypeData::TypeParam { owner, index: i })
+            }
+            Some(ClassParam::Method(m, i)) => self.intern(TypeData::TypeParam {
+                owner: TypeParamOwner::Method(m),
+                index: i,
+            }),
+            None => self.intern(TypeData::TypeParam {
+                owner: TypeParamOwner::DummyType,
+                index,
+            }),
+        }
+    }
+
+    /// The type `!!index` stands for in `ctx` (`GetMethodTypeParameter`).
+    pub fn context_method_param(&mut self, ctx: &GenericContext, index: u32) -> TypeId {
+        if let Some(e) = ctx.explicit
+            && let Some(&t) = self.explicit_contexts[e as usize]
+                .method
+                .get(index as usize)
+        {
+            return t;
+        }
+        let owner = match ctx.method {
+            Some((m, count)) if ctx.explicit.is_none() && index < count => {
+                TypeParamOwner::Method(m)
+            }
+            _ => TypeParamOwner::DummyMethod,
+        };
+        self.intern(TypeData::TypeParam { owner, index })
     }
 
     /// The `TypeSystemOptions` of `module`.
@@ -423,30 +502,8 @@ impl<'c, 'a> TypeSystem<'c, 'a> {
                     self.intern(TypeData::Inst { generic, args })
                 }
             }
-            SigType::TypeParam(index) => match ctx.class_param(*index) {
-                Some(ClassParam::Class(def, i)) => {
-                    let owner = self.class_param_owner(def, i);
-                    self.intern(TypeData::TypeParam { owner, index: i })
-                }
-                Some(ClassParam::Method(m, i)) => self.intern(TypeData::TypeParam {
-                    owner: TypeParamOwner::Method(m),
-                    index: i,
-                }),
-                None => self.intern(TypeData::TypeParam {
-                    owner: TypeParamOwner::DummyType,
-                    index: *index,
-                }),
-            },
-            SigType::MethodParam(index) => {
-                let owner = match ctx.method {
-                    Some((m, count)) if *index < count => TypeParamOwner::Method(m),
-                    _ => TypeParamOwner::DummyMethod,
-                };
-                self.intern(TypeData::TypeParam {
-                    owner,
-                    index: *index,
-                })
-            }
+            SigType::TypeParam(index) => self.context_class_param(&ctx, *index),
+            SigType::MethodParam(index) => self.context_method_param(&ctx, *index),
             SigType::Pointer(t) => {
                 let t = self.from_sig_raw(module, t, ctx)?;
                 self.intern(TypeData::Pointer(t))

@@ -418,7 +418,7 @@ impl CompOrDecimal {
                         specialized_by: None,
                         token: 0,
                         method: inequality,
-                        state_machine_context: call.method.state_machine_context,
+                        context: call.method.context,
                         lifted: false,
                     }
                 } else {
@@ -1338,7 +1338,7 @@ fn new_nullable(
             specialized_by: None,
             token: 0,
             method: ctor,
-            state_machine_context: false,
+            context: 0,
             lifted: false,
         },
         args: vec![inst],

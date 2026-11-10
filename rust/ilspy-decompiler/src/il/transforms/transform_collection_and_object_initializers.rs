@@ -222,7 +222,7 @@ pub(crate) fn is_anonymous_type(ctx: &mut Context<'_, '_, '_>, def: TypeDefId) -
 }
 
 /// `ContainsAnonymousType`.
-fn contains_anonymous_type(ctx: &mut Context<'_, '_, '_>, t: TypeId) -> bool {
+pub(crate) fn contains_anonymous_type(ctx: &mut Context<'_, '_, '_>, t: TypeId) -> bool {
     match ctx.ts.data(t).clone() {
         TypeData::Def(d) => is_anonymous_type(ctx, d),
         TypeData::Inst { generic, args } => {

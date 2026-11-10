@@ -166,7 +166,7 @@ pub fn handle_ld_elema(f: &mut Function, ctx: &mut Context<'_, '_, '_>, ldelema:
                     // Found by type lookup: the wire sends the constructor's signature.
                     token: 0,
                     method: ctor,
-                    state_machine_context: false,
+                    context: 0,
                 },
                 args: vec![right, one],
                 is_tail: false,
@@ -307,7 +307,7 @@ fn operand(method: ResolvedMethod) -> MethodOperand {
     MethodOperand {
         token: 0,
         method,
-        state_machine_context: false,
+        context: 0,
         lifted: false,
         range_accessor: None,
         specialized_by: None,

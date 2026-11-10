@@ -89,9 +89,13 @@ pub fn remove_dead_variables(r: &mut ReadFunction) {
     while i < r.variables.len() {
         let v = r.function.var(r.variables[i]);
         // Display-class locals stay for the PDB; parameters exist even when unused.
+        // The `this` of a delegate or expression tree goes, as the top-level function's
+        // replaces it.
         let remove = v.is_dead()
             && v.kind != VariableKind::DisplayClassLocal
-            && v.kind != VariableKind::Parameter;
+            && (v.kind != VariableKind::Parameter
+                || (v.index == Some(-1)
+                    && r.kind != crate::il::ast::FunctionKind::TopLevelFunction));
         if remove {
             r.variables.swap_remove(i);
         } else {
