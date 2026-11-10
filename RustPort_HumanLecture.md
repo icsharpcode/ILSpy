@@ -1998,6 +1998,47 @@ The red run (with the ExpressionTransforms hook in place, item 51 entries remove
 of 3,550 equality cases. The port then matched every case outside the allowlist, which
 shrinks from 365 to 69 entries.
 
+### 3.67 InterpolatedStringTransform (item 52, IL prefix 45)
+
+Since C# 10, `$"a{x}b"` compiles to calls on a `DefaultInterpolatedStringHandler` local:
+- the constructor with the literal length and the hole count;
+- `AppendLiteral` and `AppendFormatted` per part;
+- `ToStringAndClear` where the string is used.
+
+The transform moves those calls into a `Block InterpolatedString` that replaces the
+`ToStringAndClear` call and has it as its final instruction. The C# backend prints that
+block as the interpolated string. The handler variable becomes an initializer target. All
+calls must be ones the backend can print: the known overloads with literal format
+arguments. Each must also be able to move into the statement that holds the
+`ToStringAndClear` call, which `FindLoadInNext` checks.
+
+This step is the first whose prefix ends the statement transform group. The shim rounds the
+prefix down to a top-level boundary, so the oracle now runs everything since item 30 through
+the engine, and it found three problems the IL prefix equality test could not show:
+- The materializer built the binary instruction of a `NumericCompoundAssign` with placeholder
+  operands. The constructor's Debug assertion inspects the right operand for pointer
+  targets, so it now gets the value, as in TransformAssignment.
+- With a using scope, the real decompiler's resolver finds extension methods. The
+  null-propagation and collection-initializer checks of items 43 and 45 assumed it never
+  does, which is only true in the compared IL pipeline. A first fix reported such methods
+  as unsupported and let the shim fall back to the managed pipeline, but the ratchet's
+  served share then dropped below 100 percent. Instead, the engine now asks the host. A
+  second callback on `ilspy_session_read_function`, next to the debug-info one, takes a
+  small wire message: the instantiated method in the `call_method` encoding, and for the
+  null-propagation check the target type, the target variable's and its store's types, and
+  the argument types. The host decodes it in the decompiled method's generic context and
+  answers with its own `CSharpResolver`, so the answer is the managed one by construction.
+  Without the callback (the IL prefix equality harness) no extension method is found, as
+  in the compared pipeline. Porting the resolver itself stays with the semantics step
+  (item 67).
+- The collection-initializer check reads the `ExtensionMethodsInCollectionInitializers`
+  setting (bit 46) before it asks the resolver.
+
+The new settings bit 45 is `StringInterpolation`.
+
+The no-op red run failed 70 of 3,550 equality cases. The port then matched every case
+outside the allowlist, which stays at 69 entries.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

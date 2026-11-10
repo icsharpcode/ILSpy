@@ -1,7 +1,7 @@
 //! `IL/Transforms/IILTransform.cs`: the transform context and the IL pipeline the engine
 //! serves, in the order of `CSharpDecompiler.GetILTransforms()` flattened to its leaves.
 
-use crate::typesystem::types::TypeSystem;
+use crate::typesystem::types::{TypeId, TypeSystem};
 
 use super::control_flow::control_flow_simplification::ControlFlowSimplification;
 use super::reader::ReadFunction;
@@ -23,6 +23,7 @@ pub mod il_inlining;
 pub mod index_range_transform;
 pub mod inline_array_transform;
 pub mod inline_return_transform;
+pub mod interpolated_string_transform;
 pub mod introduce_ref_read_only_modifier_on_locals;
 pub mod ldloca_dup_init_obj_transform;
 pub mod lock_transform;
@@ -93,6 +94,8 @@ pub const SETTING_NAMES: &[&str] = &[
     "ExpressionTrees",
     "Deconstruction",
     "NamedArguments",
+    "StringInterpolation",
+    "ExtensionMethodsInCollectionInitializers",
 ];
 
 /// The values of `SETTING_NAMES`.
@@ -142,6 +145,8 @@ pub struct Settings {
     pub expression_trees: bool,
     pub deconstruction: bool,
     pub named_arguments: bool,
+    pub string_interpolation: bool,
+    pub extension_methods_in_collection_initializers: bool,
 }
 
 impl Settings {
@@ -193,6 +198,8 @@ impl Settings {
             expression_trees: bit(41),
             deconstruction: bit(42),
             named_arguments: bit(43),
+            string_interpolation: bit(44),
+            extension_methods_in_collection_initializers: bit(45),
         }
     }
 }
@@ -210,6 +217,37 @@ pub struct Context<'t, 'c, 'a> {
     /// Variables a transform merged into others (`RecombineVariables`); the block driver
     /// removes them from the function's variables after each transform.
     pub removed_variables: Vec<super::ast::VarId>,
+    /// The host's C# resolver (`ILTransformContext.CSharpResolver`); without one, the
+    /// transforms answer as a resolver without a using scope does (no extension methods).
+    pub resolver: Option<&'t dyn Resolver>,
+}
+
+/// The questions the transforms ask the host's C# resolver.
+pub trait Resolver {
+    /// `CSharpResolver.CanTransformToExtensionMethodCall` for `query`; asked with the
+    /// decompiled method's generic context.
+    fn can_transform_to_extension_method_call(
+        &self,
+        ts: &TypeSystem<'_, '_>,
+        query: &ExtensionMethodQuery<'_>,
+    ) -> bool;
+}
+
+/// A `CanTransformToExtensionMethodCall` question.
+pub enum ExtensionMethodQuery<'q> {
+    /// `NullPropagationTransform.CanTransformToExtensionMethodCall(call)`: the call's target
+    /// type and argument types, and when the target loads a single-definition variable stored
+    /// once, that variable's type and the stored value's type.
+    Call {
+        method: &'q super::ast::MethodOperand,
+        target: TypeId,
+        target_store: Option<(TypeId, TypeId)>,
+        arguments: Vec<TypeId>,
+    },
+    /// `CanTransformToExtensionMethodCall(method, ignoreTypeArguments: true)`.
+    Method {
+        method: &'q super::ast::MethodOperand,
+    },
 }
 
 /// A pipeline leaf: a whole-function transform, or a post-order block transform of the
@@ -291,6 +329,7 @@ const PIPELINE: &[Leaf] = &[
     Statement(1, named_argument_transform::run),
     Statement(1, remove_unconstrained_generic_reference_type_check::run),
     Statement(1, user_defined_logic_transform::run),
+    Statement(1, interpolated_string_transform::run),
 ];
 
 /// Runs the first `prefix` leaves of the pipeline.

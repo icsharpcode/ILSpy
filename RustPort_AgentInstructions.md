@@ -385,7 +385,7 @@ the reasons. This file holds only the ordered steps, their gates and their rules
   - [x] 49. NamedArgumentTransform (S)
   - [x] 50. RemoveUnconstrainedGenericReferenceTypeCheck (S)
   - [x] 51. UserDefinedLogicTransform (S)
-  - [ ] 52. InterpolatedStringTransform (M)
+  - [x] 52. InterpolatedStringTransform (M)
   - [ ] 53. ProxyCallReplacer (S)
   - [ ] 54. FixRemainingIncrements (S)
   - [ ] 55. CopyPropagation (S)

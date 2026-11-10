@@ -268,6 +268,30 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 			return result;
 		}
 
+		/// <summary>
+		/// A <c>resolver_query</c> message (rust/ilspy-decompiler/src/wire/ilast.rs), read in the
+		/// generic context of the main module's MethodDef <paramref name="row"/>.
+		/// </summary>
+		public static RustResolverQuery ReadResolverQuery(byte[] wire, int row, ICompilation compilation,
+			IReadOnlyList<MetadataModule> modules, DecompilerSettings settings)
+		{
+			var reader = new IlAstMaterializer(wire, compilation, modules, settings);
+			reader.context = new GenericContext(reader.mainModule.GetDefinition(MetadataTokens.MethodDefinitionHandle(row)));
+			var query = new RustResolverQuery { Kind = reader.U8(), Method = reader.CallMethod() };
+			if (query.Kind == RustResolverQuery.CallKind)
+			{
+				query.Target = reader.Type();
+				if (reader.Bool())
+					query.TargetStore = (reader.Type(), reader.Type());
+				query.Arguments = new IType[reader.Len()];
+				for (int i = 0; i < query.Arguments.Length; i++)
+					query.Arguments[i] = reader.Type();
+			}
+			if (!reader.AtEnd)
+				throw new InvalidOperationException("Trailing bytes after the resolver query");
+			return query;
+		}
+
 		/// <summary><c>ILFunction.helperVariableCount</c>, which <see cref="ILFunction.RegisterVariable"/> continues.</summary>
 		static readonly System.Reflection.FieldInfo helperVariableCountField =
 			typeof(ILFunction).GetField("helperVariableCount", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!;
@@ -653,8 +677,9 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 			var targetKind = (CompoundTargetKind)U8();
 			var target = Node();
 			var value = Node();
-			// The instruction copies its operator from a binary instruction.
-			var binary = new BinaryNumericInstruction(op, new Nop(), new Nop(), leftType, rightType, check, sign, lifted);
+			// The instruction copies its operator from a binary instruction, whose right operand is
+			// the value (as in TransformAssignment): the constructor checks it for pointer targets.
+			var binary = new BinaryNumericInstruction(op, new Nop(), value, leftType, rightType, check, sign, lifted);
 			return new NumericCompoundAssign(binary, target, targetKind, value, type, evalMode, TransformContext);
 		}
 

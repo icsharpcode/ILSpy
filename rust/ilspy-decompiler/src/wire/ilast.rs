@@ -1336,6 +1336,7 @@ pub fn read_function(
     options: crate::il::reader::ReaderOptions<'_>,
     il_prefix: u32,
     settings: crate::il::transforms::Settings,
+    resolver: Option<&dyn crate::il::transforms::Resolver>,
 ) -> Result<Vec<u8>, String> {
     use crate::metadata::tables::rows;
     let md = &ts.comp.module(method.module).md;
@@ -1354,11 +1355,62 @@ pub fn read_function(
         reader: options,
         rerun_requested: false,
         removed_variables: Vec::new(),
+        resolver,
     };
     crate::il::transforms::run_prefix(&mut f, &mut ctx, il_prefix);
     let mut w = ModuleWriter::new(ts);
     w.function(method.row, &f)?;
     Ok(w.finish())
+}
+
+/// Encodes `query` for the host's resolver: the tables, then the kind (0 `Call`, 1 `Method`),
+/// the method as `call_method` writes it, and for `Call` the target type, whether the target
+/// store types follow (then the variable's and the value's type) and the argument types.
+pub fn resolver_query(
+    ts: &TypeSystem<'_, '_>,
+    query: &crate::il::transforms::ExtensionMethodQuery<'_>,
+) -> Result<Vec<u8>, String> {
+    use crate::il::transforms::ExtensionMethodQuery;
+    let mut tables = Tables::default();
+    let empty = Function::default();
+    let mut w = FunctionWriter {
+        ts,
+        tables: &mut tables,
+        f: &empty,
+        out: Bytes::default(),
+        vars: HashMap::new(),
+        blocks: HashMap::new(),
+        block_order: Vec::new(),
+        containers: HashMap::new(),
+        written: HashMap::new(),
+    };
+    match query {
+        ExtensionMethodQuery::Call {
+            method,
+            target,
+            target_store,
+            arguments,
+        } => {
+            w.out.u8(0);
+            w.call_method(method)?;
+            w.ty(*target);
+            w.out.bool(target_store.is_some());
+            if let Some((variable, value)) = *target_store {
+                w.ty(variable);
+                w.ty(value);
+            }
+            w.out.len(arguments.len());
+            for &a in arguments {
+                w.ty(a);
+            }
+        }
+        ExtensionMethodQuery::Method { method } => {
+            w.out.u8(1);
+            w.call_method(method)?;
+        }
+    }
+    let payload = std::mem::take(&mut w.out);
+    Ok(tables.finish(VERSION, payload))
 }
 
 /// The variables of the nested functions (lambdas) in `f`, in tree order.

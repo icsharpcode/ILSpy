@@ -385,11 +385,10 @@ fn is_valid_access_chain(
         } else if let Inst::Call(c) | Inst::CallVirt(c) = f.inst(inst) {
             let &first = c.args.first()?;
             // Only instance or extension methods can be called with `?.`.
-            // shortcut: an extension method also needs the C# resolver's
-            // CanTransformToExtensionMethodCall, which finds no extension method without a
-            // using scope (as in the IL pipeline the tests compare); port it with the
-            // semantics step (item 67) and the host's using scope.
-            if c.method.method.is_static {
+            if c.method.method.is_static
+                && !(is_extension_method(ctx, &c.method.method)
+                    && can_transform_to_extension_method_call(f, ctx, inst))
+            {
                 return None;
             }
             // A setter, adder or remover cannot be called with `?.`.
@@ -673,5 +672,70 @@ fn is_fallback_block(
             (leave_target == container && !f.match_nop(value)).then_some(value)
         }
         FallbackEnd::Block(..) => None,
+    }
+}
+
+/// `IMethod.IsExtensionMethod`.
+/// `CanTransformToExtensionMethodCall(call, context)`: whether the host's resolver turns
+/// `call` back into an extension method call; without a resolver it finds none.
+fn can_transform_to_extension_method_call(
+    f: &Function,
+    ctx: &mut Context<'_, '_, '_>,
+    call: NodeId,
+) -> bool {
+    let Some(resolver) = ctx.resolver else {
+        return false;
+    };
+    let (Inst::Call(c) | Inst::CallVirt(c)) = f.inst(call) else {
+        return false;
+    };
+    let mut target = c.args[0];
+    let this_type = c.constrained_to.map(|t| t.ty).or(c.method.method.declaring);
+    match *f.inst(target) {
+        Inst::AddressOf { value, .. }
+            if this_type.is_some_and(|t| ctx.ts.is_reference_type(t) == Some(false)) =>
+        {
+            target = value
+        }
+        Inst::LdObjIfRef { target: t, .. } => target = t,
+        _ => {}
+    }
+    let target_type = f.infer_type(ctx.ts, target);
+    let target_store = match *f.inst(target) {
+        Inst::LdLoc { var } if f.var(var).is_single_definition() => {
+            match f.var(var).store_instructions[..] {
+                [store] => f
+                    .match_stloc(store)
+                    .map(|(_, value)| (f.var(var).ty, f.infer_type(ctx.ts, value))),
+                _ => None,
+            }
+        }
+        _ => None,
+    };
+    let arguments = c.args[1..]
+        .iter()
+        .map(|&a| f.infer_type(ctx.ts, a))
+        .collect();
+    resolver.can_transform_to_extension_method_call(
+        ctx.ts,
+        &crate::il::transforms::ExtensionMethodQuery::Call {
+            method: &c.method,
+            target: target_type,
+            target_store,
+            arguments,
+        },
+    )
+}
+
+fn is_extension_method(
+    ctx: &mut Context<'_, '_, '_>,
+    m: &crate::typesystem::resolve::ResolvedMethod,
+) -> bool {
+    match m.origin {
+        crate::typesystem::resolve::MethodOrigin::Def(d) => {
+            let owner = ctx.ts.accessor_owner(d).map(|(o, _)| o);
+            ctx.ts.method_flags(d, owner).extension
+        }
+        _ => false,
     }
 }

@@ -626,10 +626,11 @@ fn mentions_method_type_parameter(ctx: &mut Context<'_, '_, '_>, t: TypeId, inde
 fn is_method_applicable(
     f: &Function,
     ctx: &mut Context<'_, '_, '_>,
-    method: &ResolvedMethod,
+    operand: &crate::il::ast::MethodOperand,
     arguments: &[NodeId],
     root_type: TypeId,
 ) -> bool {
+    let method = &operand.method;
     let is_extension = match method.origin {
         MethodOrigin::Def(d) => {
             let owner = ctx.ts.accessor_owner(d).map(|(o, _)| o);
@@ -658,10 +659,19 @@ fn is_method_applicable(
         return false;
     }
     if is_extension {
-        // The IL pipeline's resolver has no using scope, so CanTransformToExtensionMethodCall
-        // finds no extension method (and ExtensionMethodsInCollectionInitializers only
-        // narrows that further).
-        return false;
+        if !ctx.settings.extension_methods_in_collection_initializers {
+            return false;
+        }
+        // Without a resolver (as in the IL pipeline the tests compare) no extension method is found.
+        let Some(resolver) = ctx.resolver else {
+            return false;
+        };
+        if !resolver.can_transform_to_extension_method_call(
+            ctx.ts,
+            &crate::il::transforms::ExtensionMethodQuery::Method { method: operand },
+        ) {
+            return false;
+        }
     }
     let target_type = get_return_type_from_instruction(f, arguments[0]).unwrap_or(root_type);
     let Ok(bases) = ctx.ts.all_base_types(target_type) else {
@@ -727,9 +737,10 @@ fn get_access_path(
     while let Some(current) = inst {
         match f.inst(current) {
             Inst::Call(call) | Inst::CallVirt(call) => {
-                let method = call.method.method.clone();
+                let operand = call.method.clone();
+                let method = operand.method.clone();
                 let args = call.args.clone();
-                if !is_method_applicable(f, ctx, &method, &args, root_type) {
+                if !is_method_applicable(f, ctx, &operand, &args, root_type) {
                     kind = AccessPathKind::Invalid;
                     break;
                 }

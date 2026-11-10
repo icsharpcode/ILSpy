@@ -24,6 +24,7 @@ using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 using System.Runtime.CompilerServices;
 
+using ICSharpCode.Decompiler.CSharp.Resolver;
 using ICSharpCode.Decompiler.DebugInfo;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Metadata;
@@ -91,21 +92,26 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 
 		/// <summary>
 		/// The function of <paramref name="method"/> after the first <paramref name="ilPrefix"/>
-		/// IL transforms. <see cref="RustStatus.Unsupported"/> leaves <paramref name="function"/>
+		/// IL transforms, asking <paramref name="resolver"/> the C# resolver questions.
+		/// <see cref="RustStatus.Unsupported"/> leaves <paramref name="function"/>
 		/// null; an engine error or panic throws <see cref="RustEngineException"/>.
 		/// </summary>
 		public RustStatus ReadFunction(MethodDefinitionHandle method, int ilPrefix, DecompilerSettings settings,
-			IDebugInfoProvider? debugInfo, out ILFunction? function, out string? unsupportedReason)
+			IDebugInfoProvider? debugInfo, out ILFunction? function, out string? unsupportedReason, CSharpResolver? resolver = null)
 		{
 			function = null;
 			unsupportedReason = null;
 			uint flags = settings.UseRefLocalsForAccurateOrderOfEvaluation ? 1u : 0u;
 			var bridge = debugInfo == null ? null : new RustDebugInfo(debugInfo);
+			var resolverBridge = resolver == null ? null
+				: new RustResolver(resolver, MetadataTokens.GetRowNumber(method), typeSystem, modules, settings);
 			var status = NativeMethods.ilspy_session_read_function(session, (uint)MetadataTokens.GetToken(method), (uint)ilPrefix,
-				flags, RustSettings.Bits(settings), IntPtr.Zero, bridge?.Delegate, out var buffer);
+				flags, RustSettings.Bits(settings), IntPtr.Zero, bridge?.Delegate, IntPtr.Zero, resolverBridge?.Delegate, out var buffer);
 			GC.KeepAlive(bridge);
+			GC.KeepAlive(resolverBridge);
 			byte[] bytes = NativeMethods.TakeBuffer(buffer);
 			bridge?.ThrowIfFailed();
+			resolverBridge?.ThrowIfFailed();
 			switch (status)
 			{
 				case RustStatus.Ok:

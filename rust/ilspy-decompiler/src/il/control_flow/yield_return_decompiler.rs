@@ -321,6 +321,7 @@ pub fn create_il_ast(
         reader: ctx.reader,
         rerun_requested: false,
         removed_variables: Vec::new(),
+        resolver: ctx.resolver,
     };
     run_early_il_transforms(&mut read, &mut inner, true);
     Ok(read)

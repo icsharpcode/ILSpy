@@ -16,7 +16,7 @@ use std::sync::{Once, OnceLock};
 use ilspy_decompiler::Session;
 use ilspy_decompiler::il::debug_info::{DebugInfo, ExtraTypeInfo};
 use ilspy_decompiler::il::reader::ReaderOptions;
-use ilspy_decompiler::il::transforms::{SETTING_NAMES, Settings};
+use ilspy_decompiler::il::transforms::{ExtensionMethodQuery, Resolver, SETTING_NAMES, Settings};
 use ilspy_decompiler::typesystem::compilation::{Compilation, ModuleId, ModuleInput};
 use ilspy_decompiler::typesystem::members::MethodDefId;
 use ilspy_decompiler::typesystem::types::TypeSystem;
@@ -120,6 +120,17 @@ pub unsafe extern "C" fn ilspy_buf_free(buf: Buf) {
         }
         Ok(())
     })
+}
+
+/// The host's C# resolver: answers the `resolver_query` message at `query` (`len` bytes) with 1
+/// for yes and 0 for no; any other value is a failure, which the engine takes as no and the host
+/// reports after the call. It must not retain `query`.
+pub type ResolverCallback =
+    unsafe extern "C" fn(ctx: *mut c_void, query: *const u8, len: usize) -> i32;
+
+struct HostResolver {
+    ctx: *mut c_void,
+    callback: ResolverCallback,
 }
 
 /// Debug export for the shim's `MetadataListingEquality` test: the canonical metadata listing
@@ -396,6 +407,20 @@ fn decode_extra_type_info(mut b: &[u8]) -> Option<ExtraTypeInfo> {
     })
 }
 
+impl Resolver for HostResolver {
+    fn can_transform_to_extension_method_call(
+        &self,
+        ts: &TypeSystem<'_, '_>,
+        query: &ExtensionMethodQuery<'_>,
+    ) -> bool {
+        let Ok(bytes) = ilspy_decompiler::wire::ilast::resolver_query(ts, query) else {
+            return false;
+        };
+        // SAFETY: the host contract above; `bytes` outlives the call.
+        unsafe { (self.callback)(self.ctx, bytes.as_ptr(), bytes.len()) == 1 }
+    }
+}
+
 /// Debug export for the shim's `IlAstReadEquality` test: the IL reader's function for every
 /// method body of module 0, as wire v1 (`wire::ilast`). Bit 0 of `reader_flags` is
 /// `UseRefLocalsForAccurateOrderOfEvaluation`; a non-null `debug_info` is called with
@@ -490,11 +515,13 @@ pub unsafe extern "C" fn ilspy_session_load(
 /// `il_prefix` IL transforms, as a one-entry wire v1 message (`wire::ilast::read_function`).
 /// `Unsupported` when `il_prefix` exceeds `ilspy_il_prefix()`. `settings` has bit `i` set when
 /// the setting `ilspy_setting_names()` lists at `i` is on. `reader_flags`, `debug_ctx` and
-/// `debug_info` as for `ilspy_debug_read_il`. Safe to call from several threads at once.
+/// `debug_info` as for `ilspy_debug_read_il`. `resolver` answers the C# resolver questions
+/// (`resolver_ctx` is passed back); without it the engine finds no extension methods. Safe to
+/// call from several threads at once.
 ///
 /// # Safety
 /// `session` must be a live, loaded session; `out` must be writable; `debug_info` must honor
-/// the `DebugInfoCallback` contract.
+/// the `DebugInfoCallback` contract and `resolver` the `ResolverCallback` one.
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn ilspy_session_read_function(
     session: *const FfiSession,
@@ -504,6 +531,8 @@ pub unsafe extern "C" fn ilspy_session_read_function(
     settings: u64,
     debug_ctx: *mut c_void,
     debug_info: Option<DebugInfoCallback>,
+    resolver_ctx: *mut c_void,
+    resolver: Option<ResolverCallback>,
     out: *mut Buf,
 ) -> Status {
     // SAFETY: the caller guarantees `out` is writable.
@@ -517,6 +546,10 @@ pub unsafe extern "C" fn ilspy_session_read_function(
     }
     let host = debug_info.map(|callback| HostDebugInfo {
         ctx: debug_ctx,
+        callback,
+    });
+    let resolver = resolver.map(|callback| HostResolver {
+        ctx: resolver_ctx,
         callback,
     });
     let reader = ReaderOptions {
@@ -544,6 +577,7 @@ pub unsafe extern "C" fn ilspy_session_read_function(
             reader,
             il_prefix,
             Settings::from_bits(settings),
+            resolver.as_ref().map(|r| r as &dyn Resolver),
         )
     }) {
         Ok(bytes) => {
