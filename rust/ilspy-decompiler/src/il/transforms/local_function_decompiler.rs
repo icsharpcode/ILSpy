@@ -810,6 +810,8 @@ fn reduce_operand(method: &MethodOperand, reference: &LocalFunctionRef) -> Metho
         .len()
         .saturating_sub(reference.reduced.number_of_compiler_generated_parameters as usize);
     operand.method.base_params.truncate(keep);
+    // `LocalFunctionMethod.IsStatic` is always true: a use has no `this` argument.
+    operand.method.is_static = true;
     operand.local_function = Some(Box::new(reference.clone()));
     operand
 }
@@ -1146,7 +1148,11 @@ fn is_digits_and_suffix(s: &str) -> bool {
 }
 
 /// `MatchLdLocRef`: `ldloc` of a reference type variable, or `ldloca` of another.
-fn match_ld_loc_ref(f: &Function, ctx: &mut Context<'_, '_, '_>, inst: NodeId) -> Option<VarId> {
+pub(crate) fn match_ld_loc_ref(
+    f: &Function,
+    ctx: &mut Context<'_, '_, '_>,
+    inst: NodeId,
+) -> Option<VarId> {
     match *f.inst(inst) {
         Inst::LdLoc { var } => {
             (ctx.ts.is_reference_type(f.var(var).ty) == Some(true)).then_some(var)
@@ -1161,7 +1167,7 @@ fn match_ld_loc_ref(f: &Function, ctx: &mut Context<'_, '_, '_>, inst: NodeId) -
 }
 
 /// The variable of an `IInstructionWithVariableOperand`.
-fn variable_operand(f: &Function, inst: NodeId) -> Option<VarId> {
+pub(crate) fn variable_operand(f: &Function, inst: NodeId) -> Option<VarId> {
     match *f.inst(inst) {
         Inst::LdLoc { var } | Inst::LdLoca { var } | Inst::StLoc { var, .. } => Some(var),
         _ => None,
@@ -1169,7 +1175,7 @@ fn variable_operand(f: &Function, inst: NodeId) -> Option<VarId> {
 }
 
 /// `ILVariable.Function`: the nested function listing `v`, `None` for the top-level one.
-fn variable_function(r: &ReadFunction, v: VarId) -> Option<NodeId> {
+pub(crate) fn variable_function(r: &ReadFunction, v: VarId) -> Option<NodeId> {
     if r.variables.contains(&v) {
         return None;
     }
@@ -1180,7 +1186,7 @@ fn variable_function(r: &ReadFunction, v: VarId) -> Option<NodeId> {
 
 /// The nested functions of the arena's function tree in `Descendants` order: the body's, then
 /// the top-level local functions with theirs.
-fn all_functions(f: &Function) -> Vec<NodeId> {
+pub(crate) fn all_functions(f: &Function) -> Vec<NodeId> {
     f.body
         .into_iter()
         .chain(f.local_functions.iter().copied())
@@ -1189,14 +1195,14 @@ fn all_functions(f: &Function) -> Vec<NodeId> {
         .collect()
 }
 
-fn function_variables(f: &Function, function: NodeId) -> Vec<VarId> {
+pub(crate) fn function_variables(f: &Function, function: NodeId) -> Vec<VarId> {
     match f.inst(function) {
         Inst::Function { variables, .. } => variables.clone(),
         _ => Vec::new(),
     }
 }
 
-fn is_this(f: &Function, v: VarId) -> bool {
+pub(crate) fn is_this(f: &Function, v: VarId) -> bool {
     let var = f.var(v);
     var.kind == VariableKind::Parameter && var.index == Some(-1)
 }
@@ -1249,14 +1255,14 @@ fn read_method_params(ts: &TypeSystem<'_, '_>, read: &ReadFunction) -> Vec<TypeI
     params.into_iter().map(|(_, t)| t).collect()
 }
 
-fn unwrap_by_ref(ts: &TypeSystem<'_, '_>, t: TypeId) -> TypeId {
+pub(crate) fn unwrap_by_ref(ts: &TypeSystem<'_, '_>, t: TypeId) -> TypeId {
     match *ts.data(t) {
         TypeData::ByRef(e) => e,
         _ => t,
     }
 }
 
-fn declaring_type(ts: &TypeSystem<'_, '_>, method: MethodDefId) -> Option<TypeDefId> {
+pub(crate) fn declaring_type(ts: &TypeSystem<'_, '_>, method: MethodDefId) -> Option<TypeDefId> {
     let md = &ts.comp.module(method.module).md;
     let row = md.method_declaring_type(method.row).ok()?;
     (row != 0).then_some(TypeDefId {
@@ -1284,14 +1290,14 @@ fn set_declaration_scope(f: &mut Function, function: NodeId, scope: Option<NodeI
 }
 
 /// `GetDeclaringFunction`: the nearest function at or above `node`, `None` for the top level.
-fn enclosing_function_inclusive(f: &Function, node: NodeId) -> Option<NodeId> {
+pub(crate) fn enclosing_function_inclusive(f: &Function, node: NodeId) -> Option<NodeId> {
     std::iter::once(node)
         .chain(f.ancestors(node))
         .find(|&n| matches!(f.inst(n), Inst::Function { .. }))
 }
 
 /// `IsDescendantOf`: `node` is `ancestor` or below it.
-fn is_descendant_of(f: &Function, node: NodeId, ancestor: NodeId) -> bool {
+pub(crate) fn is_descendant_of(f: &Function, node: NodeId, ancestor: NodeId) -> bool {
     node == ancestor || f.ancestors(node).any(|a| a == ancestor)
 }
 
@@ -1313,7 +1319,7 @@ fn is_in_nested_local_function(f: &Function, scope: NodeId, function: Option<Nod
 }
 
 /// `BlockContainer.FindClosestContainer`.
-fn closest_container(f: &Function, inst: NodeId) -> Option<NodeId> {
+pub(crate) fn closest_container(f: &Function, inst: NodeId) -> Option<NodeId> {
     std::iter::once(inst)
         .chain(f.ancestors(inst))
         .find(|&n| matches!(f.inst(n), Inst::BlockContainer { .. }))
@@ -1332,7 +1338,7 @@ fn common_container(f: &Function, a: NodeId, b: NodeId) -> Option<NodeId> {
 }
 
 /// `Block.GetContainingStatement`: the ancestor (or `inst`) directly in a control flow block.
-fn containing_statement(f: &Function, inst: NodeId) -> Option<NodeId> {
+pub(crate) fn containing_statement(f: &Function, inst: NodeId) -> Option<NodeId> {
     let mut current = inst;
     loop {
         let parent = f.node(current).parent?;

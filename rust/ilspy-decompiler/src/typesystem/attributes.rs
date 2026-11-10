@@ -957,7 +957,7 @@ impl TypeSystem<'_, '_> {
     }
 
     /// `TransformDisplayClassUsage.IsPotentialClosure` for a struct display class.
-    fn is_potential_closure(
+    pub(crate) fn is_potential_closure(
         &mut self,
         decompiled: Option<TypeDefId>,
         display: TypeDefId,

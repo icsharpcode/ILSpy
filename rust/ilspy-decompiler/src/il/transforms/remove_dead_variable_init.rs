@@ -4,8 +4,8 @@
 
 use std::collections::VecDeque;
 
-use crate::flow_analysis::definite_assignment::potentially_used_uninitialized;
-use crate::il::ast::{Inst, VariableKind};
+use crate::flow_analysis::definite_assignment::potentially_used_uninitialized_in;
+use crate::il::ast::{Function, Inst, NodeId, VarId, VariableKind};
 use crate::il::reader::ReadFunction;
 use crate::il::semantic_helper::is_pure;
 
@@ -58,9 +58,21 @@ pub fn run(r: &mut ReadFunction, ctx: &mut Context<'_, '_, '_>) {
 
 /// `ResetUsesInitialValueFlag`.
 pub fn reset_uses_initial_value_flag(r: &mut ReadFunction, ctx: &mut Context<'_, '_, '_>) {
-    let used = potentially_used_uninitialized(&r.function, ctx.ts, &r.variables);
-    for (i, &v) in r.variables.iter().enumerate() {
-        let var = r.function.var_mut(v);
+    let variables = r.variables.clone();
+    reset_uses_initial_value_flag_of(&mut r.function, ctx, &variables, None);
+}
+
+/// `ResetUsesInitialValueFlag` of a nested function (`function`, with its `variables`), or of
+/// the top-level one (`None`).
+pub fn reset_uses_initial_value_flag_of(
+    f: &mut Function,
+    ctx: &mut Context<'_, '_, '_>,
+    variables: &[VarId],
+    function: Option<NodeId>,
+) {
+    let used = potentially_used_uninitialized_in(f, ctx.ts, variables, function);
+    for (i, &v) in variables.iter().enumerate() {
+        let var = f.var_mut(v);
         if var.kind != VariableKind::Parameter && !used.bit(i) {
             var.uses_initial_value = false;
         }

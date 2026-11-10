@@ -272,6 +272,12 @@ impl<S: State> Flow<S> {
                 self.visit(a, f, on_expression);
                 self.visit(a, f, body);
             }
+            // `VisitMatchInstruction`.
+            Inst::Match { .. } => {
+                let (on_true, on_false) = self.evaluate_match(a, f, id);
+                self.state = on_true;
+                self.state.join_with(&on_false);
+            }
             Inst::LdLoc { .. } | Inst::LdLoca { .. } => a.handle_load(self, f, id),
             inst => {
                 if inst.direct_flags().0 & self.manual_flags.0 != 0 {
@@ -422,11 +428,45 @@ impl<S: State> Flow<S> {
                     (self.state.clone(), self.bottom.clone())
                 }
             }
+            Inst::Match { .. } => self.evaluate_match(a, f, inst),
             _ => {
                 self.visit(a, f, inst);
                 (self.state.clone(), self.state.clone())
             }
         }
+    }
+
+    /// `EvaluateMatch`: the states after the pattern matches and after it fails.
+    fn evaluate_match<A: Analysis<S = S>>(
+        &mut self,
+        a: &mut A,
+        f: &Function,
+        inst: NodeId,
+    ) -> (S, S) {
+        let Inst::Match {
+            variable,
+            tested_operand,
+            ref sub_patterns,
+            check_type,
+            check_not_null,
+            ..
+        } = *f.inst(inst)
+        else {
+            unreachable!("a match instruction");
+        };
+        self.visit(a, f, tested_operand);
+        let mut on_false = self.state.clone();
+        if !check_not_null && !check_type {
+            on_false.replace_with_bottom();
+        }
+        // `HandleMatchStore`.
+        a.handle_store(self, f, inst, variable);
+        for &sub in sub_patterns {
+            let (sub_true, sub_false) = self.evaluate_condition(a, f, sub);
+            on_false.join_with(&sub_false);
+            self.state = sub_true;
+        }
+        (self.state.clone(), on_false)
     }
 }
 

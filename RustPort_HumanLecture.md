@@ -2194,6 +2194,37 @@ contexts, the type table is now length-prefixed and decoded on first use.
 The no-op red run failed 204 of 3,550 equality cases. The port then matched every case,
 and the allowlist stays at 69 entries.
 
+### 3.73 TransformDisplayClassUsage (item 56, third leaf, IL prefix 51)
+
+TransformDisplayClassUsage finishes what the two leaves before it and the expression-tree
+step started: the fields of display classes become local variables. A display class is a
+variable initialized by an empty (or field-copying) constructor call, or a display struct,
+whose uses are all field accesses or copies of it. The analysis walks the variables of every
+function and validates each candidate's uses. A field initialized from a parameter, `this`
+or another display class is replaced by that variable; any other field gets a new variable
+in the function that owns the display class. The transform then visits the tree the way
+`ILVisitor.Default` does, taking each next sibling before visiting a child. It turns field
+accesses into `ldloca` of the new variables and adds those variables to the captured
+variables of every function between the use and the declaring one. It also removes
+initializers that propagation made redundant, and moves the stores of an object
+initializer after it. Last, the initial-value flags of every function are reset.
+
+That last step needed two pieces of the definite assignment analysis the engine lacked.
+The managed visitor handles a lambda at its declaration, visiting its body and then
+restoring the state before it. It visits local functions in the joined states of their
+uses until nothing changes. It also evaluates a `match` instruction into a state for each
+outcome. No flow analysis had run after pattern matching or local functions before, so the
+port had needed none of the three. With them in place, the reset runs per function, on
+that function's own variable list. The managed `RegisterVariable` adds a variable to the
+list immediately, so the engine adds the top-level function's pending variables before the
+reset. `ValidateConstructor` is now complete, including the one-parameter copy
+constructor, and the yield-return decompiler uses the same check. A use of a local function
+is static, as `LocalFunctionMethod.IsStatic` always is, so its arguments line up with its
+parameters. The settings bit 49 `AggressiveScalarReplacementOfAggregates` was added.
+
+The no-op red run failed 514 of 3,550 equality cases. The port then matched every case,
+and the allowlist stays at 69 entries.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

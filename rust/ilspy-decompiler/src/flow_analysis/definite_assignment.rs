@@ -1,18 +1,15 @@
 //! `FlowAnalysis/DefiniteAssignmentVisitor.cs`: which variables may be read before they are
 //! written.
-//!
-//! Local functions do not exist in the ILAst yet, so their fixed-point iteration is not
-//! needed.
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
-use crate::il::ast::{Flags, Function, Inst, NodeId, VarId};
-use crate::typesystem::members::RefKind;
+use crate::il::ast::{Flags, Function, Inst, MethodOperand, NodeId, VarId};
+use crate::typesystem::members::{MethodDefId, RefKind};
 use crate::typesystem::resolve::MethodOrigin;
 use crate::typesystem::types::TypeSystem;
 use crate::util::bitset::BitSet;
 
-use super::data_flow::{self, Analysis, Flow};
+use super::data_flow::{self, Analysis, Flow, State as _};
 
 /// Bit `i`: a path from the entry reaches here without writing variable `i`. The initial
 /// state has every bit set, the bottom state none.
@@ -52,9 +49,72 @@ struct DefiniteAssignment<'t, 'c, 'a> {
     ts: &'t mut TypeSystem<'c, 'a>,
     var_index: HashMap<VarId, usize>,
     used_uninitialized: BitSet,
+    /// `stateOfLocalFunctionUse`, by the local function's method.
+    local_function_use: HashMap<MethodDefId, State>,
+    /// `localFunctionsNeedingAnalysis`.
+    needing_analysis: HashSet<MethodDefId>,
 }
 
 impl DefiniteAssignment<'_, '_, '_> {
+    /// `HandleLocalFunctionUse`: the state at a use of a local function is (joined into) its
+    /// state on entry.
+    fn local_function_use(&mut self, flow: &Flow<State>, method: &MethodOperand) {
+        let Some(l) = &method.local_function else {
+            return;
+        };
+        match self.local_function_use.get_mut(&l.method) {
+            Some(entry) => {
+                if !flow.state.less_than_or_equal(entry) {
+                    entry.join_with(&flow.state);
+                    self.needing_analysis.insert(l.method);
+                }
+            }
+            None => {
+                self.local_function_use.insert(l.method, flow.state.clone());
+                self.needing_analysis.insert(l.method);
+            }
+        }
+    }
+
+    /// `VisitILFunction`: a lambda's body is visited where it is declared (its captured
+    /// variables must be assigned there), then the state before it is restored; local
+    /// functions are visited in the states of their uses until nothing changes.
+    fn visit_function(
+        &mut self,
+        flow: &mut Flow<State>,
+        f: &Function,
+        body: NodeId,
+        local_functions: &[NodeId],
+    ) {
+        let before = flow.state.clone();
+        let before_on_exception = flow.current_state_on_exception.clone();
+        flow.visit(self, f, body);
+        loop {
+            let mut changed = false;
+            for &lf in local_functions {
+                let Inst::Function {
+                    read: Some(read), ..
+                } = f.inst(lf)
+                else {
+                    continue;
+                };
+                if !self.needing_analysis.remove(&read.method) {
+                    continue;
+                }
+                let entry = self.local_function_use[&read.method].clone();
+                flow.state.replace_with(&entry);
+                flow.current_state_on_exception.replace_with(&entry);
+                flow.visit(self, f, lf);
+                changed = true;
+            }
+            if !changed {
+                break;
+            }
+        }
+        flow.current_state_on_exception = before_on_exception;
+        flow.state = before;
+    }
+
     fn store(&self, flow: &mut Flow<State>, var: VarId) {
         if let Some(&i) = self.var_index.get(&var) {
             flow.state.bits.clear_range(i, i + 1);
@@ -103,6 +163,22 @@ impl Analysis for DefiniteAssignment<'_, '_, '_> {
     /// `HandleCall`: arguments passed to `out` parameters need no initialization and are
     /// initialized after the whole call.
     fn visit_override(&mut self, flow: &mut Flow<State>, f: &Function, inst: NodeId) -> bool {
+        match f.inst(inst) {
+            Inst::Function {
+                body,
+                local_functions,
+                ..
+            } => {
+                let (body, local_functions) = (*body, local_functions.clone());
+                self.visit_function(flow, f, body, &local_functions);
+                return true;
+            }
+            Inst::LdFtn { method } => {
+                self.local_function_use(flow, method);
+                return true;
+            }
+            _ => {}
+        }
         let (Inst::Call(c) | Inst::CallVirt(c) | Inst::NewObj(c)) = f.inst(inst) else {
             return false;
         };
@@ -119,6 +195,7 @@ impl Analysis for DefiniteAssignment<'_, '_, '_> {
         for var in out_vars {
             self.store(flow, var);
         }
+        self.local_function_use(flow, &c.method);
         true
     }
 }
@@ -130,6 +207,17 @@ pub fn potentially_used_uninitialized(
     ts: &mut TypeSystem<'_, '_>,
     variables: &[VarId],
 ) -> BitSet {
+    potentially_used_uninitialized_in(f, ts, variables, None)
+}
+
+/// `potentially_used_uninitialized` of a nested function (`function`), or of the top-level
+/// function with its local functions (`None`).
+pub fn potentially_used_uninitialized_in(
+    f: &Function,
+    ts: &mut TypeSystem<'_, '_>,
+    variables: &[VarId],
+    function: Option<NodeId>,
+) -> BitSet {
     let var_index = variables.iter().enumerate().map(|(i, &v)| (v, i)).collect();
     let mut initial = BitSet::new(variables.len());
     for i in 0..variables.len() {
@@ -139,11 +227,20 @@ pub fn potentially_used_uninitialized(
         ts,
         var_index,
         used_uninitialized: BitSet::new(variables.len()),
+        local_function_use: HashMap::new(),
+        needing_analysis: HashSet::new(),
     };
     let mut flow = Flow::new(
         State { bits: initial },
         Flags::MAY_READ_LOCALS | Flags::MAY_WRITE_LOCALS,
     );
-    flow.visit(&mut a, f, f.body.expect("function body"));
+    match function {
+        Some(n) => flow.visit(&mut a, f, n),
+        None => {
+            let body = f.body.expect("function body");
+            let local_functions = f.local_functions.clone();
+            a.visit_function(&mut flow, f, body, &local_functions);
+        }
+    }
     a.used_uninitialized
 }

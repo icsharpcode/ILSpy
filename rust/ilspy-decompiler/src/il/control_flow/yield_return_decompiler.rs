@@ -194,6 +194,23 @@ pub(crate) fn is_compiler_generated(md: &Metadata<'_>, type_def: u32) -> bool {
         })
 }
 
+/// Whether interface implementation `ii` names the non-generic interface `ns.name`.
+pub(crate) fn interface_name_is(md: &Metadata<'_>, ii: u32, ns: &str, name: &str) -> bool {
+    let Ok(token) = md
+        .get::<rows::InterfaceImpl>(ii)
+        .and_then(|r| r.interface.token())
+    else {
+        return false;
+    };
+    let full = match token >> 24 {
+        0x01 => type_ref_full_name(md, token & 0x00FF_FFFF),
+        0x02 => type_def_full_name(md, token & 0x00FF_FFFF),
+        // A generic instance is never a non-generic interface.
+        _ => return false,
+    };
+    full.is_ok_and(|n| n.nested.is_empty() && n.top.ns == ns && n.top.name == name)
+}
+
 /// `IsCompilerGeneratorEnumerator`: a nested, compiler-generated class implementing
 /// `System.Collections.IEnumerator`.
 fn is_compiler_generated_enumerator(md: &Metadata<'_>, type_def: u32) -> bool {
@@ -226,26 +243,30 @@ fn is_compiler_generated_enumerator(md: &Metadata<'_>, type_def: u32) -> bool {
 }
 
 /// Raw IL decoding for `ValidateConstructor`; running past the end is an invalid body.
-struct IlCursor<'a> {
+pub(crate) struct IlCursor<'a> {
     code: &'a [u8],
     pos: usize,
 }
 
-impl IlCursor<'_> {
-    fn u8(&mut self) -> Option<u8> {
+impl<'a> IlCursor<'a> {
+    pub(crate) fn new(code: &'a [u8]) -> Self {
+        IlCursor { code, pos: 0 }
+    }
+
+    pub(crate) fn u8(&mut self) -> Option<u8> {
         let b = *self.code.get(self.pos)?;
         self.pos += 1;
         Some(b)
     }
 
-    fn i32(&mut self) -> Option<i32> {
+    pub(crate) fn i32(&mut self) -> Option<i32> {
         let bytes = self.code.get(self.pos..self.pos + 4)?;
         self.pos += 4;
         Some(i32::from_le_bytes(bytes.try_into().ok()?))
     }
 
     /// `DecodeOpCodeSkipNop`: two-byte opcodes are `0xFE00 | second byte`.
-    fn op_skip_nop(&mut self) -> Option<u16> {
+    pub(crate) fn op_skip_nop(&mut self) -> Option<u16> {
         loop {
             let b = self.u8()?;
             let op = if b == 0xFE {
@@ -260,8 +281,14 @@ impl IlCursor<'_> {
     }
 
     /// `DecodeLdArg`.
-    fn ldarg(&mut self, expected: u16) -> Option<bool> {
-        Some(match self.op_skip_nop()? {
+    pub(crate) fn ldarg(&mut self, expected: u16) -> Option<bool> {
+        let op = self.op_skip_nop()?;
+        self.ldarg_op(op, expected)
+    }
+
+    /// `DecodeLdArg(opCode, ...)` for an opcode already read.
+    pub(crate) fn ldarg_op(&mut self, op: u16, expected: u16) -> Option<bool> {
+        Some(match op {
             0xFE09 => {
                 let lo = self.u8()?;
                 let hi = self.u8()?;
@@ -274,9 +301,6 @@ impl IlCursor<'_> {
         })
     }
 }
-
-const OP_CALL: u16 = 0x28;
-const OP_RET: u16 = 0x2A;
 
 /// `CreateILAst`: reads a method of a compiler-generated class of the iterator's or async
 /// method's type, in its generic context, and runs the early transforms over it.
@@ -705,61 +729,13 @@ impl YieldReturnDecompiler {
         declaring == self.current_type && is_compiler_generated_enumerator(md, self.enumerator_type)
     }
 
-    /// `TransformDisplayClassUsage.ValidateConstructor` for a parameterless constructor:
-    /// `ldarg.0; call object::.ctor(); ret`.
+    /// `TransformDisplayClassUsage.ValidateConstructor`.
     fn validate_constructor(&self, ts: &mut TypeSystem<'_, '_>, method: &MethodOperand) -> bool {
-        let Ok(params) = method.method.params() else {
-            return false;
-        };
-        let MethodOrigin::Def(d) = method.method.origin else {
-            return false;
-        };
-        // shortcut: the one-parameter form is unreachable from a newobj without arguments; port it with the display class transform
-        if !params.is_empty() || d.module != self.module {
-            return false;
-        }
-        let md = self.md(ts);
-        let Ok(def) = md.get::<rows::MethodDef>(d.row) else {
-            return false;
-        };
-        if def.rva == 0 {
-            return false;
-        }
-        let Ok(body) = md.method_body(def.rva) else {
-            return false;
-        };
-        if !body.clauses.is_empty() || body.code.len() < 7 {
-            return false;
-        }
-        let mut c = IlCursor {
-            code: body.code,
-            pos: 0,
-        };
-        let mut check = || -> Option<bool> {
-            if !c.ldarg(0)? || c.op_skip_nop()? != OP_CALL {
-                return Some(false);
-            }
-            let token = c.i32()? as u32;
-            if token & 0x00FF_FFFF == 0 {
-                return Some(false);
-            }
-            let Ok(base) = ts.resolve_method(self.module, token, GenericContext::default()) else {
-                return Some(false);
-            };
-            if !base
-                .declaring
-                .is_some_and(|t| is_known(ts, t, KnownTypeCode::Object))
-            {
-                return Some(false);
-            }
-            if !matches!(base.name.as_str(), ".ctor" | ".cctor")
-                || !base.params().is_ok_and(|p| p.is_empty())
-            {
-                return Some(false);
-            }
-            Some(c.op_skip_nop()? == OP_RET)
-        };
-        check().unwrap_or(false)
+        crate::il::transforms::transform_display_class_usage::validate_constructor(
+            ts,
+            self.module,
+            &method.method,
+        )
     }
 
     /// `AnalyzeCtor`: the field the constructor stores its first parameter in is the state.

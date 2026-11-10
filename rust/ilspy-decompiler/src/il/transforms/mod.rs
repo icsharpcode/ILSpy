@@ -46,6 +46,7 @@ pub mod switch_on_string_transform;
 pub mod transform_array_initializers;
 pub mod transform_assignment;
 pub mod transform_collection_and_object_initializers;
+pub mod transform_display_class_usage;
 pub mod transform_expression_trees;
 pub mod user_defined_logic_transform;
 pub mod using_transform;
@@ -102,6 +103,7 @@ pub const SETTING_NAMES: &[&str] = &[
     "ExtensionMethodsInCollectionInitializers",
     "LocalFunctions",
     "StaticLocalFunctions",
+    "AggressiveScalarReplacementOfAggregates",
 ];
 
 /// The values of `SETTING_NAMES`.
@@ -155,6 +157,7 @@ pub struct Settings {
     pub extension_methods_in_collection_initializers: bool,
     pub local_functions: bool,
     pub static_local_functions: bool,
+    pub aggressive_scalar_replacement_of_aggregates: bool,
 }
 
 impl Settings {
@@ -210,6 +213,7 @@ impl Settings {
             extension_methods_in_collection_initializers: bit(45),
             local_functions: bit(46),
             static_local_functions: bit(47),
+            aggressive_scalar_replacement_of_aggregates: bit(48),
         }
     }
 }
@@ -345,6 +349,7 @@ const PIPELINE: &[Leaf] = &[
     Function(copy_propagation::run),
     Function(delegate_construction::run),
     Function(local_function_decompiler::run),
+    Function(transform_display_class_usage::run),
 ];
 
 /// The index of DelegateConstruction in `PIPELINE`: a lambda runs the leaves before it.
