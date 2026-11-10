@@ -2294,6 +2294,19 @@ directly.
 The no-op red run failed 49 of 3,550 equality cases. The port matched every case on the first
 run, and the allowlist stays at 69 entries.
 
+### 3.78 IntroduceNativeIntTypeOnLocals (item 61, IL prefix 56)
+
+With `NativeIntegers`, an `IntPtr` or `UIntPtr` local that is used as a native integer (an
+operand of arithmetic or `~` computed as `I`, or an argument to an `nint`/`nuint` parameter)
+or assigned one (from such arithmetic, a conversion to `I`, or a value of type `nint` or
+`nuint`) becomes `nint` or `nuint`. The other locals split from the same IL local follow.
+The port reads the underlying result type of a lifted operator as the managed
+`UnderlyingResultType` does: the non-lifted result of a binary operator and the lifted
+underlying type of `~`.
+
+The no-op red run failed 26 of 3,550 equality cases. The port matched every case on the first
+run, and the allowlist stays at 69 entries.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |
