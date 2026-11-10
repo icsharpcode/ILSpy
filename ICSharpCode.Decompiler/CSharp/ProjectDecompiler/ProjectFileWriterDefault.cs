@@ -103,20 +103,20 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 				w.WriteElementString("LangVersion", project.LanguageVersion.ToString().Replace("CSharp", "").Replace('_', '.'));
 				w.WriteElementString("CheckForOverflowUnderflow", project.CheckForOverflowUnderflow ? "true" : "false");
 
-				w.WriteElementString("AssemblyName", module.Name);
+				w.WriteElementString("AssemblyName", MSBuildEscaping.EscapeAssemblyName(module.Name));
 				if (targetFramework.Identifier != null)
-					w.WriteElementString("TargetFrameworkIdentifier", targetFramework.Identifier);
+					w.WriteElementString("TargetFrameworkIdentifier", MSBuildEscaping.Escape(targetFramework.Identifier));
 				if (targetFramework.VersionString != null)
-					w.WriteElementString("TargetFrameworkVersion", targetFramework.VersionString);
+					w.WriteElementString("TargetFrameworkVersion", MSBuildEscaping.Escape(targetFramework.VersionString));
 				if (targetFramework.Profile != null)
-					w.WriteElementString("TargetFrameworkProfile", targetFramework.Profile);
+					w.WriteElementString("TargetFrameworkProfile", MSBuildEscaping.Escape(targetFramework.Profile));
 				w.WriteElementString("WarningLevel", "4");
 				w.WriteElementString("AllowUnsafeBlocks", "True");
 
 				if (project.StrongNameKeyFile != null)
 				{
 					w.WriteElementString("SignAssembly", "True");
-					w.WriteElementString("AssemblyOriginatorKeyFile", Path.GetFileName(project.StrongNameKeyFile));
+					w.WriteElementString("AssemblyOriginatorKeyFile", MSBuildEscaping.Escape(Path.GetFileName(project.StrongNameKeyFile)));
 				}
 
 				w.WriteEndElement(); // </PropertyGroup>
@@ -157,11 +157,11 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 					if (r.Name != "mscorlib")
 					{
 						w.WriteStartElement("Reference");
-						w.WriteAttributeString("Include", r.Name);
+						w.WriteAttributeString("Include", MSBuildEscaping.EscapeAssemblyName(r.Name));
 						var asm = project.AssemblyResolver.Resolve(r);
 						if (asm != null && !project.AssemblyReferenceClassifier.IsGacAssembly(r))
 						{
-							w.WriteElementString("HintPath", asm.FileName);
+							w.WriteElementString("HintPath", MSBuildEscaping.Escape(asm.FileName));
 						}
 						w.WriteEndElement();
 					}
@@ -174,14 +174,14 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 					foreach (var item in gr.OrderBy(f => f.FileName, StringComparer.OrdinalIgnoreCase))
 					{
 						w.WriteStartElement(gr.Key);
-						w.WriteAttributeString("Include", item.FileName);
+						w.WriteAttributeString("Include", MSBuildEscaping.Escape(item.FileName));
 						if (item.AdditionalProperties != null)
 						{
 							// Item metadata as attributes is MSBuild 15 syntax. This format is what an
 							// export targets when the toolchain predates that, so the metadata goes where
 							// every non-SDK project keeps it: in child elements.
 							foreach (var (key, value) in item.AdditionalProperties)
-								w.WriteElementString(key, value);
+								w.WriteElementString(key, MSBuildEscaping.Escape(value));
 						}
 						w.WriteEndElement();
 					}

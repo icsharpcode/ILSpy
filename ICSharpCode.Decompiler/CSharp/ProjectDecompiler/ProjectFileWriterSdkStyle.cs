@@ -156,7 +156,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 				{
 					foreach (var (name, value) in customProperties)
 					{
-						xml.WriteElementString(name, value);
+						xml.WriteElementString(name, MSBuildEscaping.Escape(value));
 					}
 				}
 			}
@@ -174,7 +174,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 
 		void WriteAssemblyInfo(XmlTextWriter xml, MetadataFile module, IProjectInfoProvider project, ProjectType projectType)
 		{
-			xml.WriteElementString("AssemblyName", module.Name);
+			xml.WriteElementString("AssemblyName", MSBuildEscaping.EscapeAssemblyName(module.Name));
 
 			// Since we create AssemblyInfo.cs manually, we need to disable the auto-generation
 			xml.WriteElementString("GenerateAssemblyInfo", FalseString);
@@ -202,12 +202,12 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			{
 				moniker += "-" + platform;
 			}
-			xml.WriteElementString("TargetFramework", moniker);
+			xml.WriteElementString("TargetFramework", MSBuildEscaping.Escape(moniker));
 
 			string? minVersion = platform != null ? GetTargetPlatformMinVersion(module, platform) : null;
 			if (minVersion != null)
 			{
-				xml.WriteElementString("TargetPlatformMinVersion", minVersion);
+				xml.WriteElementString("TargetPlatformMinVersion", MSBuildEscaping.Escape(minVersion));
 			}
 
 			// 'AnyCPU' is default, so only need to specify platform if it differs
@@ -350,7 +350,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			if (project.StrongNameKeyFile != null)
 			{
 				xml.WriteElementString("SignAssembly", TrueString);
-				xml.WriteElementString("AssemblyOriginatorKeyFile", Path.GetFileName(project.StrongNameKeyFile));
+				xml.WriteElementString("AssemblyOriginatorKeyFile", MSBuildEscaping.Escape(Path.GetFileName(project.StrongNameKeyFile)));
 			}
 		}
 
@@ -358,11 +358,11 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		{
 			var (itemType, fileName) = files.FirstOrDefault(t => t.ItemType == "ApplicationIcon");
 			if (fileName != null)
-				xml.WriteElementString("ApplicationIcon", fileName);
+				xml.WriteElementString("ApplicationIcon", MSBuildEscaping.Escape(fileName));
 
 			(itemType, fileName) = files.FirstOrDefault(t => t.ItemType == "ApplicationManifest");
 			if (fileName != null)
-				xml.WriteElementString("ApplicationManifest", fileName);
+				xml.WriteElementString("ApplicationManifest", MSBuildEscaping.Escape(fileName));
 
 			if (files.Any(t => t.ItemType == "EmbeddedResource"))
 				xml.WriteElementString("RootNamespace", string.Empty);
@@ -395,7 +395,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 					continue;
 
 				xml.WriteStartElement(buildAction);
-				xml.WriteAttributeString("Remove", item.FileName);
+				xml.WriteAttributeString("Remove", MSBuildEscaping.Escape(item.FileName));
 				xml.WriteEndElement();
 			}
 
@@ -406,11 +406,11 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 					continue;
 
 				xml.WriteStartElement("EmbeddedResource");
-				xml.WriteAttributeString("Include", item.FileName);
+				xml.WriteAttributeString("Include", MSBuildEscaping.Escape(item.FileName));
 				if (item.AdditionalProperties != null)
 				{
 					foreach (var (key, value) in item.AdditionalProperties)
-						xml.WriteAttributeString(key, value);
+						xml.WriteAttributeString(key, MSBuildEscaping.Escape(value));
 				}
 				xml.WriteEndElement();
 			}
@@ -429,7 +429,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 				foreach (var item in items)
 				{
 					xml.WriteStartElement(group.Key);
-					xml.WriteAttributeString("Remove", item.FileName);
+					xml.WriteAttributeString("Remove", MSBuildEscaping.Escape(item.FileName));
 					xml.WriteEndElement();
 				}
 
@@ -437,11 +437,11 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 				foreach (var item in items)
 				{
 					xml.WriteStartElement(group.Key);
-					xml.WriteAttributeString("Include", item.FileName);
+					xml.WriteAttributeString("Include", MSBuildEscaping.Escape(item.FileName));
 					if (item.AdditionalProperties != null)
 					{
 						foreach (var (key, value) in item.AdditionalProperties)
-							xml.WriteAttributeString(key, value);
+							xml.WriteAttributeString(key, MSBuildEscaping.Escape(value));
 					}
 					xml.WriteEndElement();
 				}
@@ -528,12 +528,12 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		protected virtual void WriteReference(XmlTextWriter xml, IAssemblyReference reference, IProjectInfoProvider project)
 		{
 			xml.WriteStartElement("Reference");
-			xml.WriteAttributeString("Include", reference.Name);
+			xml.WriteAttributeString("Include", MSBuildEscaping.EscapeAssemblyName(reference.Name));
 
 			var assembly = project.AssemblyResolver.Resolve(reference);
 			if (assembly != null && !project.AssemblyReferenceClassifier.IsGacAssembly(reference))
 			{
-				xml.WriteElementString("HintPath", FileUtility.GetRelativePath(project.TargetDirectory, assembly.FileName));
+				xml.WriteElementString("HintPath", MSBuildEscaping.Escape(FileUtility.GetRelativePath(project.TargetDirectory, assembly.FileName)));
 			}
 
 			xml.WriteEndElement();
