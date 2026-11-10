@@ -49,4 +49,7 @@
     <ProjectReference Include="..\TestPlugin\TestPlugin.csproj" ReferenceOutputAssembly="false" Private="false" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Compile Include="..\ICSharpCode.Decompiler.Rust.Tests\RustStrictByDefault.cs" Link="RustStrictByDefault.cs" />
+  </ItemGroup>
 </Project>

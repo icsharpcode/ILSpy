@@ -56,4 +56,7 @@
     <ProjectReference Include="..\ILSpy\ILSpy.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Compile Include="..\ICSharpCode.Decompiler.Rust.Tests\RustStrictByDefault.cs" Link="RustStrictByDefault.cs" />
+  </ItemGroup>
 </Project>

@@ -2413,6 +2413,22 @@ event. The other option, timing each transform in the engine and having the host
 events from the wire, would keep tracing on the engine path but needs a wire extension. It is
 left for when someone profiles the engine through this event source.
 
+### 3.83 Strict by default (item 66)
+
+The test projects that load the shim now run seam 1 strict unless told otherwise. A file
+linked into each of them, `RustStrictByDefault.cs`, holds a module initializer that sets
+`ILSPY_RUST_STRICT=1` when the variable is unset. A module initializer runs before any test
+in the assembly, so no fixture can see the lenient mode by accident. Processes a test starts,
+such as the decompiler test runner, inherit the variable. To get the counted fallback back,
+for example to measure what the engine still misses, set the variable yourself before the
+run (`ILSPY_RUST_STRICT=0`). The initializer leaves an explicit value alone.
+
+No code outside the test projects changed. The IL prefix was already the full pipeline (59),
+and no test relied on fallback: the ratchet test counts served and fallen-back methods
+itself. The gates ran with the new default: every test project passed, including the UI suite
+except one test, `Ctrl_A_Then_Delete_Drops_The_Selection_History_And_Tab`, which hangs on this
+machine on master as well (a font fallback loop in Avalonia) and was excluded.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

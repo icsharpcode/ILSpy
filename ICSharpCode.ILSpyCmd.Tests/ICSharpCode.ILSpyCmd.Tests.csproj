@@ -30,4 +30,7 @@
     <EmbeddedResource Include="fixtures\test.g.resources" LogicalName="ICSharpCode.ILSpyCmd.Tests.g.resources" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Compile Include="..\ICSharpCode.Decompiler.Rust.Tests\RustStrictByDefault.cs" Link="RustStrictByDefault.cs" />
+  </ItemGroup>
 </Project>

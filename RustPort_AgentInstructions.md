@@ -403,7 +403,7 @@ the reasons. This file holds only the ordered steps, their gates and their rules
   - [x] 65. `EarlyILTransforms` and `DecompileBodyForAnalysis` paths (the speculative
         pipelines used by `TransformDisplayClassUsage` and the analyzers) served by the engine
         where they run inside a decompile request (M)
-  - [ ] 66. Seam 1 strict by default in the test run; `il_prefix` becomes the full pipeline
+  - [x] 66. Seam 1 strict by default in the test run; `il_prefix` becomes the full pipeline
         length. Subject: `Make seam 1 strict`. Gate: G-dotnet, G-oracle, G-ui with
         `ILSPY_RUST_STRICT=1`. (S)
 
