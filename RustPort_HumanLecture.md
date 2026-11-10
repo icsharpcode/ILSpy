@@ -2279,6 +2279,21 @@ header (the async return type when there is one) or from the lambda.
 The no-op red run failed 909 of 3,550 equality cases. The port matched every case on the
 first run, and the allowlist stays at 69 entries.
 
+### 3.77 IntroduceDynamicTypeOnLocals (item 60, IL prefix 55)
+
+The compiler stores `dynamic` values in `object` locals. Their uses show the type: an operand
+the dynamic binder sees with its runtime type (its argument info lacks
+`UseCompileTimeType`), or an awaited value whose `GetResult` belongs to `dynamic`. Such a
+local becomes `dynamic`, and so do the other locals split from the same IL local. The port
+needed `DynamicInstruction.GetArgumentInfoOfChild`: no argument info for a conversion or an
+event test, one extra info for an invocation with a static target type and for a constructor
+call (whose first info describes the type), otherwise the child's own index. The engine keeps
+each kind's argument info list as the managed instruction does, so the mapping carries over
+directly.
+
+The no-op red run failed 49 of 3,550 equality cases. The port matched every case on the first
+run, and the allowlist stays at 69 entries.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

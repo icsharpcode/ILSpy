@@ -27,6 +27,7 @@ pub mod index_range_transform;
 pub mod inline_array_transform;
 pub mod inline_return_transform;
 pub mod interpolated_string_transform;
+pub mod introduce_dynamic_type_on_locals;
 pub mod introduce_ref_read_only_modifier_on_locals;
 pub mod ldloca_dup_init_obj_transform;
 pub mod local_function_decompiler;
@@ -361,6 +362,7 @@ const PIPELINE: &[Leaf] = &[
     Function(high_level_loop_transform::run),
     Function(reduce_nesting_transform::run),
     Function(super::control_flow::remove_redundant_return::run),
+    Function(introduce_dynamic_type_on_locals::run),
 ];
 
 /// The index of DelegateConstruction in `PIPELINE`: a lambda runs the leaves before it.

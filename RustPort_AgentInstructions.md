@@ -394,7 +394,7 @@ the reasons. This file holds only the ordered steps, their gates and their rules
   - [x] 57. HighLevelLoopTransform (M)
   - [x] 58. ReduceNestingTransform (M)
   - [x] 59. RemoveRedundantReturn (S)
-  - [ ] 60. IntroduceDynamicTypeOnLocals (S)
+  - [x] 60. IntroduceDynamicTypeOnLocals (S)
   - [ ] 61. IntroduceNativeIntTypeOnLocals (S)
   - [ ] 62. IntroduceScopedModifierOnLocals (S)
   - [ ] 63. ExpandNestedConditionals (S)
