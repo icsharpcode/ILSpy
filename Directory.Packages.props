@@ -8,10 +8,10 @@
     <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
   </PropertyGroup>
   <PropertyGroup>
-    <RoslynVersion>5.12.0-1.26502.119</RoslynVersion>
-    <NetPackageVersion>10.0.14</NetPackageVersion>
+    <RoslynVersion>5.12.0-1.26529.118</RoslynVersion>
+    <NetPackageVersion>10.0.15</NetPackageVersion>
     <TomsToolboxVersion>2.26.1</TomsToolboxVersion>
-    <AvaloniaVersion>12.1.5</AvaloniaVersion>
+    <AvaloniaVersion>12.1.6</AvaloniaVersion>
     <DockVersion>12.1.5</DockVersion>
   </PropertyGroup>
   <ItemGroup>
@@ -49,7 +49,7 @@
     <PackageVersion Include="Microsoft.NETCore.ILAsm" Version="$(NetPackageVersion)" />
     <PackageVersion Include="Microsoft.NETCore.ILDAsm" Version="$(NetPackageVersion)" />
     <PackageVersion Include="Microsoft.Sbom.Targets" Version="4.1.5" />
-    <PackageVersion Include="Microsoft.SourceLink.GitHub" Version="10.0.403" />
+    <PackageVersion Include="Microsoft.SourceLink.GitHub" Version="10.0.404" />
     <PackageVersion Include="Microsoft.Testing.Extensions.TrxReport" Version="2.5.2" />
     <PackageVersion Include="Microsoft.Testing.Extensions.VSTestBridge" Version="2.5.2" />
     <PackageVersion Include="Mono.Cecil" Version="0.11.6" />
@@ -57,8 +57,8 @@
     <PackageVersion Include="NUnit" Version="5.0.0" />
     <PackageVersion Include="NUnit3TestAdapter" Version="6.3.1" />
     <PackageVersion Include="coverlet.MTP" Version="10.1.0" />
-    <PackageVersion Include="NuGet.Frameworks" Version="7.9.0" />
-    <PackageVersion Include="NuGet.Protocol" Version="7.9.0" />
+    <PackageVersion Include="NuGet.Frameworks" Version="8.0.0" />
+    <PackageVersion Include="NuGet.Protocol" Version="8.0.0" />
     <PackageVersion Include="PowerShellStandard.Library" Version="5.1.1" />
     <PackageVersion Include="System.Composition.AttributedModel" Version="$(NetPackageVersion)" />
     <PackageVersion Include="System.Composition.Hosting" Version="$(NetPackageVersion)" />
