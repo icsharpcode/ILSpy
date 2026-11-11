@@ -652,6 +652,9 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				case RustBodyNode.Throw:
 					node.Children = Bool() ? [BodyNode()] : [];
 					break;
+				case RustBodyNode.Conditional:
+					node.Children = [BodyNode(), BodyNode(), BodyNode()];
+					break;
 				case RustBodyNode.ObjectCreate:
 				{
 					node.Type = Type();
@@ -728,6 +731,8 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					// A constructor call has no target; RustSeam2 completes the resolve result.
 					pendingInvocation = (null, CallMethod());
 					return null;
+				case 12:
+					return new ResolveResult(Type());
 				case 8:
 				{
 					var target = BodyResolveResult(out _);

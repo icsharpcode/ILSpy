@@ -8,7 +8,7 @@ use crate::typesystem::known::KnownTypeCode;
 use crate::typesystem::members::ConstValue;
 use crate::typesystem::types::{TypeData, TypeId};
 
-use super::ast::{AstNode, BinaryOp, Rr};
+use super::ast::{AstId, AstNode, BinaryOp, Rr};
 use super::{Builder, TranslatedExpression, Unsupported};
 
 impl Builder<'_, '_, '_, '_> {
@@ -85,6 +85,12 @@ impl Builder<'_, '_, '_, '_> {
             Inst::Call(c) => self.call(inst, &c, super::call_builder::CallOp::Call),
             Inst::CallVirt(c) => self.call(inst, &c, super::call_builder::CallOp::CallVirt),
             Inst::NewObj(c) => self.new_obj(inst, &c),
+            Inst::If {
+                condition,
+                true_inst,
+                false_inst,
+                ..
+            } => self.if_expression(inst, condition, true_inst, false_inst, type_hint),
             Inst::Comp {
                 kind,
                 lifting,
@@ -404,9 +410,10 @@ impl Builder<'_, '_, '_, '_> {
         }
         // `GetUserDefinedOperatorCandidates`, which skips the primitive types (Boolean to
         // Decimal).
-        let name = match op {
-            BinaryOp::Equality => "op_Equality",
-            BinaryOp::InEquality => "op_Inequality",
+        let name = if op == BinaryOp::Equality {
+            "op_Equality"
+        } else {
+            "op_Inequality"
         };
         for t in [lt, rt] {
             if !(3..=15).contains(&self.ts.type_code(t)) && self.declares_method(t, name) {
@@ -484,6 +491,99 @@ impl Builder<'_, '_, '_, '_> {
         TranslatedExpression {
             expression: e,
             ty: boolean,
+        }
+    }
+    /// `VisitIfInstruction` in an expression: `&&` and `||` with a `bool` on the right, and
+    /// the conditional operator where both branches have the same type.
+    fn if_expression(
+        &mut self,
+        inst: NodeId,
+        condition: NodeId,
+        true_inst: NodeId,
+        false_inst: NodeId,
+        type_hint: Option<TypeId>,
+    ) -> Result<TranslatedExpression, Unsupported> {
+        let condition = self.translate_condition(condition)?;
+        let true_branch = self.translate(true_inst, type_hint)?;
+        let false_branch = self.translate(false_inst, type_hint)?;
+        let ldc = |b: &Self, n: NodeId| match *b.f.inst(n) {
+            Inst::LdcI4 { value } => Some(value),
+            _ => None,
+        };
+        // `MatchLogicAnd` is `if (a) b else 0`, `MatchLogicOr` is `if (a) 1 else b`.
+        let logic = if ldc(self, false_inst) == Some(0) && ldc(self, true_inst) != Some(1) {
+            Some((BinaryOp::ConditionalAnd, true_branch))
+        } else if ldc(self, true_inst) == Some(1) && ldc(self, false_inst) != Some(0) {
+            Some((BinaryOp::ConditionalOr, false_branch))
+        } else {
+            None
+        };
+        if let Some((op, rhs)) = logic {
+            let is_bool = self.ts.is_known(rhs.ty, KnownTypeCode::Boolean);
+            if is_bool || self.is_in_condition_slot(inst) {
+                // `ConvertToBoolean` returns a bool unchanged.
+                if !is_bool {
+                    return Err("a logic operator with an operand that is no bool".to_owned());
+                }
+                let boolean = self.ts.known_type(KnownTypeCode::Boolean);
+                let e = self.ast.add(AstNode::BinaryOperator {
+                    op,
+                    left: condition.expression,
+                    right: rhs.expression,
+                });
+                self.ast.with_il(e, inst);
+                self.ast.with_rr(e, Rr::Plain(boolean));
+                return Ok(TranslatedExpression {
+                    expression: e,
+                    ty: boolean,
+                });
+            }
+        }
+        let true_branch = self.adjust_constant_expression_to_type(true_branch, false_branch.ty)?;
+        let false_branch = self.adjust_constant_expression_to_type(false_branch, true_branch.ty)?;
+        // `ResolveConditional` with branches of the same type: no conversion, the type is
+        // theirs.
+        let ty = true_branch.ty;
+        let has_type =
+            |b: &Self, t: TypeId| !matches!(b.ts.kind(t), TypeKind::None | TypeKind::Null);
+        if ty != false_branch.ty
+            || !has_type(self, ty)
+            || matches!(self.ts.kind(ty), TypeKind::Dynamic | TypeKind::ByReference)
+        {
+            return Err("a conditional expression that needs conversions".to_owned());
+        }
+        let constant = |b: &Self, e: AstId| matches!(b.rr_of(e), Rr::Constant { .. });
+        if constant(self, condition.expression)
+            && constant(self, true_branch.expression)
+            && constant(self, false_branch.expression)
+        {
+            return Err("a conditional expression of constants".to_owned());
+        }
+        let e = self.ast.add(AstNode::Conditional {
+            condition: condition.expression,
+            true_expression: true_branch.expression,
+            false_expression: false_branch.expression,
+        });
+        self.ast.with_il(e, inst);
+        self.ast.with_rr(e, Rr::Operator { ty });
+        Ok(TranslatedExpression { expression: e, ty })
+    }
+
+    /// `IfInstruction.IsInConditionSlot`: whether the value is only used as a condition.
+    fn is_in_condition_slot(&self, inst: NodeId) -> bool {
+        let node = self.f.node(inst);
+        let Some(parent) = node.parent else {
+            return false;
+        };
+        let index = node.child_index;
+        match self.f.inst(parent) {
+            Inst::If { .. } => index == 0 || self.is_in_condition_slot(parent),
+            Inst::NullCoalescing { .. } if index == 1 => self.is_in_condition_slot(parent),
+            Inst::Comp { left, right, .. } => {
+                let zero = |n: NodeId| matches!(*self.f.inst(n), Inst::LdcI4 { value: 0 });
+                (*left == inst && zero(*right)) || (*right == inst && zero(*left))
+            }
+            _ => false,
         }
     }
 }

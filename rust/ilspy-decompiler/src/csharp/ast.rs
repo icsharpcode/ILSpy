@@ -61,6 +61,12 @@ pub enum AstNode {
     },
     /// `UnaryOperatorExpression` with `UnaryOperatorType.Not`.
     LogicNot { expression: AstId },
+    /// `ConditionalExpression`: `condition ? true_expression : false_expression`.
+    Conditional {
+        condition: AstId,
+        true_expression: AstId,
+        false_expression: AstId,
+    },
     /// `ThrowStatement`, a rethrow without an expression.
     Throw { expression: Option<AstId> },
     /// `ObjectCreateExpression` of `ExpressionBuilder.ConvertType(ty)`, which the host builds.
@@ -76,6 +82,8 @@ pub enum AstNode {
 /// `BinaryOperatorType`, with its values.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum BinaryOp {
+    ConditionalAnd = 3,
+    ConditionalOr = 4,
     Equality = 8,
     InEquality = 9,
 }
@@ -113,7 +121,8 @@ pub enum Rr {
     },
     /// `ByReferenceResolveResult` with `ReferenceKind.Ref` of the element's resolve result.
     ByReference(Box<Rr>),
-    /// `OperatorResolveResult` of the node's operator (an assignment, `!` or a binary operator), of
+    /// `OperatorResolveResult` of the node's operator (an assignment, `!`, a binary or the conditional
+    /// operator), of
     /// the given
     /// type, whose operands are the resolve results of the node's children.
     Operator { ty: TypeId },
@@ -125,6 +134,8 @@ pub enum Rr {
         method: Box<crate::il::ast::MethodOperand>,
         ty: TypeId,
     },
+    /// A plain `ResolveResult` of the given type.
+    Plain(TypeId),
     /// `CSharpInvocationResolveResult` without target of the constructor `method` of the type
     /// `ty`, whose arguments are the resolve results of the object creation's arguments.
     ObjectCreation {

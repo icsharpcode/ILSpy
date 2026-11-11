@@ -2727,6 +2727,27 @@ The host builds the `ObjectCreateExpression` with `ConvertType` of the declaring
 instructions in expressions (91), generic method calls (61) and string concatenation (47)
 lead now.
 
+### 3.94 Logic operators and conditional expressions (item 68j)
+
+In an expression, the ILAst `if` stands for three C# forms. `if (a) b else 0` is `a && b`
+and `if (a) 1 else b` is `a || b`, provided `b` is a `bool` (the ILAst operators may yield
+another value when `b` runs) or the whole is only used as a condition
+(`IsInConditionSlot`, which the engine computes from the node's parent and slot). The
+operator gets a plain `ResolveResult` of `bool`, the one resolve result kind the wire format
+did not have yet. A non-bool right operand in a condition slot needs `ConvertToBoolean`'s
+comparison with zero and falls back.
+
+Everything else becomes the conditional operator, after the constant branch is adjusted to
+the other branch's type. `ResolveConditional` converts the branches to their common type;
+the engine takes only branches that already have the same type, where neither conversion
+does anything and the result is an `OperatorResolveResult` of the conditional over the
+three operands' own resolve results. Branches of different types, `null`, `ref` and
+`dynamic` branches, and three constants (which the resolver folds) fall back.
+
+The share rose from 47.8 % to 48.3 %. Most of the 91 `if` instructions only moved the reason
+further in: pattern matching (`match`, 26) and relational comparisons (20) now show up,
+behind generic method calls (64) and string concatenation (50).
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

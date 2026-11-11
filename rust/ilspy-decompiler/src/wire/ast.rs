@@ -42,6 +42,7 @@ mod kind {
     pub const BINARY_OPERATOR: u8 = 18;
     pub const THROW: u8 = 19;
     pub const OBJECT_CREATE: u8 = 20;
+    pub const CONDITIONAL: u8 = 21;
 }
 
 pub(super) fn write_body(
@@ -87,14 +88,14 @@ fn var_index(
 /// it causes a non-virtual invocation); 4 `TypeResolveResult` (type); 5 the
 /// `MemberResolveResult` of a field (the target's resolve result, the field as a member
 /// token); 6 `ByReferenceResolveResult` (the element's resolve result); 7 the
-/// `OperatorResolveResult` of an assignment, `!` or a binary operator (type; the operands are the children's); 8 the
+/// `OperatorResolveResult` of an assignment, `!`, a binary or the conditional operator (type; the operands are the children's); 8 the
 /// `MemberResolveResult` of an event (the target's resolve result, the event as a member
 /// token); 9 the `CSharpInvocationResolveResult` of a call (the target's resolve result and
 /// the method as a call operand; the arguments are the invocation's); 10 the
 /// `MemberResolveResult` of a property (the target's resolve result and an accessor of the
 /// property as a call operand); 11 the `CSharpInvocationResolveResult` of a constructor
 /// call (the constructor as a call operand; no target, the arguments are the object
-/// creation's). A field's target is
+/// creation's); 12 a plain `ResolveResult` (type). A field's target is
 /// absent (0) for the `field` keyword.
 fn rr(w: &mut FunctionWriter<'_, '_, '_, '_>, rr: Option<&Rr>) -> Result<(), String> {
     match rr {
@@ -157,6 +158,10 @@ fn rr(w: &mut FunctionWriter<'_, '_, '_, '_>, rr: Option<&Rr>) -> Result<(), Str
             self::rr(w, Some(target))?;
             w.call_method(accessor)?;
         }
+        Some(Rr::Plain(ty)) => {
+            w.out.u8(12);
+            w.ty(*ty);
+        }
         Some(Rr::ObjectCreation { method, .. }) => {
             w.out.u8(11);
             w.call_method(method)?;
@@ -190,6 +195,7 @@ fn node(w: &mut FunctionWriter<'_, '_, '_, '_>, ast: &Ast, id: AstId) -> Result<
         AstNode::BinaryOperator { .. } => kind::BINARY_OPERATOR,
         AstNode::Throw { .. } => kind::THROW,
         AstNode::ObjectCreate { .. } => kind::OBJECT_CREATE,
+        AstNode::Conditional { .. } => kind::CONDITIONAL,
     });
     w.out.len(a.il.len());
     for &inst in &a.il {
@@ -253,6 +259,15 @@ fn node(w: &mut FunctionWriter<'_, '_, '_, '_>, ast: &Ast, id: AstId) -> Result<
         AstNode::NamedArgument { name, expression } => {
             w.string(&name);
             node(w, ast, expression)?;
+        }
+        AstNode::Conditional {
+            condition,
+            true_expression,
+            false_expression,
+        } => {
+            node(w, ast, condition)?;
+            node(w, ast, true_expression)?;
+            node(w, ast, false_expression)?;
         }
         AstNode::Throw { expression } => {
             w.out.bool(expression.is_some());

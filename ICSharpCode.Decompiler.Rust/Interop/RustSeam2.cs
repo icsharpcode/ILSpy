@@ -61,6 +61,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		public const byte BinaryOperator = 18;
 		public const byte Throw = 19;
 		public const byte ObjectCreate = 20;
+		public const byte Conditional = 21;
 
 		public byte Kind;
 		/// <summary>The instructions the node is annotated with, in order.</summary>
@@ -262,9 +263,22 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					var op = (BinaryOperatorType)node.Value!;
 					var left = (Expression)Build(node.Children[0], exprBuilder);
 					var right = (Expression)Build(node.Children[1], exprBuilder);
-					node.ResolveResult = new OperatorResolveResult(node.OperatorType!, BinaryOperatorExpression.GetLinqNodeType(op, false),
-						left.GetResolveResult(), right.GetResolveResult());
+					// A logic operator comes with a plain resolve result of its own.
+					if (node.OperatorType != null)
+					{
+						node.ResolveResult = new OperatorResolveResult(node.OperatorType, BinaryOperatorExpression.GetLinqNodeType(op, false),
+							left.GetResolveResult(), right.GetResolveResult());
+					}
 					return Annotate(new BinaryOperatorExpression(left, op, right), node);
+				}
+				case RustBodyNode.Conditional:
+				{
+					var condition = (Expression)Build(node.Children[0], exprBuilder);
+					var trueExpression = (Expression)Build(node.Children[1], exprBuilder);
+					var falseExpression = (Expression)Build(node.Children[2], exprBuilder);
+					node.ResolveResult = new OperatorResolveResult(node.OperatorType!, System.Linq.Expressions.ExpressionType.Conditional,
+						condition.GetResolveResult(), trueExpression.GetResolveResult(), falseExpression.GetResolveResult());
+					return Annotate(new ConditionalExpression(condition, trueExpression, falseExpression), node);
 				}
 				default:
 					throw new RustEngineException($"unknown C# node kind {node.Kind}");
