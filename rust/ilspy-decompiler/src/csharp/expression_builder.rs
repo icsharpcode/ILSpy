@@ -1,6 +1,8 @@
 //! `ExpressionBuilder`: the C# expression of an ILAst instruction.
 
-use crate::il::ast::{ComparisonKind, ComparisonLiftingKind, Inst, NodeId, VariableKind};
+use crate::il::ast::{
+    BinaryNumericOperator, ComparisonKind, ComparisonLiftingKind, Inst, NodeId, VariableKind,
+};
 use crate::il::types::{Sign, StackType};
 use crate::metadata::tables::rows;
 use crate::semantics::types::TypeKind;
@@ -8,7 +10,7 @@ use crate::typesystem::known::KnownTypeCode;
 use crate::typesystem::members::ConstValue;
 use crate::typesystem::types::{TypeData, TypeId};
 
-use super::ast::{AstId, AstNode, BinaryOp, Rr};
+use super::ast::{AstId, AstNode, BinaryOp, Overflow, Rr};
 use super::{Builder, TranslatedExpression, Unsupported};
 
 impl Builder<'_, '_, '_, '_> {
@@ -101,6 +103,28 @@ impl Builder<'_, '_, '_, '_> {
             Inst::Call(c) => self.call(inst, &c, super::call_builder::CallOp::Call),
             Inst::CallVirt(c) => self.call(inst, &c, super::call_builder::CallOp::CallVirt),
             Inst::NewObj(c) => self.new_obj(inst, &c),
+            Inst::BinaryNumeric {
+                op,
+                check_overflow,
+                sign,
+                left_input,
+                right_input,
+                left,
+                right,
+                is_lifted,
+                ..
+            } => self.binary_numeric(
+                inst,
+                op,
+                check_overflow,
+                sign,
+                left_input,
+                right_input,
+                left,
+                right,
+                is_lifted,
+                type_hint,
+            ),
             // `VisitLdTypeToken`: `typeof(T).TypeHandle`.
             Inst::LdTypeToken { ty } => {
                 let type_type = self.ts.known_type(KnownTypeCode::Type);
@@ -371,6 +395,7 @@ impl Builder<'_, '_, '_, '_> {
         if self.is_special_cased_reference_comparison_with_null(l.ty, r.ty) {
             // `CreateBuiltinBinaryOperator(...).WithILInstruction(inst)`
             let e = self.ast.add(AstNode::BinaryOperator {
+                overflow: Overflow::None,
                 op,
                 left: l.expression,
                 right: r.expression,
@@ -389,6 +414,7 @@ impl Builder<'_, '_, '_, '_> {
             return Err("a comparison that needs casts".to_owned());
         }
         let e = self.ast.add(AstNode::BinaryOperator {
+            overflow: Overflow::None,
             op,
             left: l.expression,
             right: r.expression,
@@ -587,6 +613,7 @@ impl Builder<'_, '_, '_, '_> {
                 }
                 let boolean = self.ts.known_type(KnownTypeCode::Boolean);
                 let e = self.ast.add(AstNode::BinaryOperator {
+                    overflow: Overflow::None,
                     op,
                     left: condition.expression,
                     right: rhs.expression,
@@ -672,6 +699,7 @@ impl Builder<'_, '_, '_, '_> {
             return Err("a ?? that needs conversions".to_owned());
         }
         let e = self.ast.add(AstNode::BinaryOperator {
+            overflow: Overflow::None,
             op: BinaryOp::NullCoalescing,
             left: value.expression,
             right: fallback.expression,
@@ -754,6 +782,7 @@ impl Builder<'_, '_, '_, '_> {
             return Err("a relational comparison of references".to_owned());
         };
         let e = self.ast.add(AstNode::BinaryOperator {
+            overflow: Overflow::None,
             op,
             left: l.expression,
             right: r.expression,
@@ -798,6 +827,139 @@ impl Builder<'_, '_, '_, '_> {
             _ => return Err("arithmetic on a native integer".to_owned()),
         };
         Ok(self.ts.known_type(code))
+    }
+
+    /// `HandleBinaryNumeric` for `+ - * / %` and `& | ^` on operands of the same type from
+    /// `int` to `double` (where the operator resolves to the built-in one of that type), or
+    /// cast to the result's arithmetic type.
+    #[allow(clippy::too_many_arguments)]
+    fn binary_numeric(
+        &mut self,
+        inst: NodeId,
+        operator: BinaryNumericOperator,
+        check_overflow: bool,
+        sign: Sign,
+        left_input: StackType,
+        right_input: StackType,
+        left: NodeId,
+        right: NodeId,
+        is_lifted: bool,
+        type_hint: Option<TypeId>,
+    ) -> Result<TranslatedExpression, Unsupported> {
+        let op = match operator {
+            BinaryNumericOperator::Add => BinaryOp::Add,
+            BinaryNumericOperator::Sub => BinaryOp::Subtract,
+            BinaryNumericOperator::Mul => BinaryOp::Multiply,
+            BinaryNumericOperator::Div => BinaryOp::Divide,
+            BinaryNumericOperator::Rem => BinaryOp::Modulus,
+            BinaryNumericOperator::BitAnd => BinaryOp::BitwiseAnd,
+            BinaryNumericOperator::BitOr => BinaryOp::BitwiseOr,
+            BinaryNumericOperator::BitXor => BinaryOp::ExclusiveOr,
+            _ => return Err("a shift".to_owned()),
+        };
+        if is_lifted {
+            return Err("a lifted arithmetic operation".to_owned());
+        }
+        let bitwise = matches!(
+            op,
+            BinaryOp::BitwiseAnd | BinaryOp::BitwiseOr | BinaryOp::ExclusiveOr
+        );
+        let hint = if bitwise && left_input != right_input {
+            type_hint
+        } else {
+            None
+        };
+        let l = self.translate(left, hint)?;
+        let r = self.translate(right, hint)?;
+        if left_input == StackType::Ref || right_input == StackType::Ref {
+            return Err("managed pointer arithmetic".to_owned());
+        }
+        for t in [l.ty, r.ty] {
+            let k = self.ts.kind(self.ts.nullable_underlying(t));
+            if matches!(
+                k,
+                TypeKind::Pointer
+                    | TypeKind::Enum
+                    | TypeKind::Dynamic
+                    | TypeKind::NInt
+                    | TypeKind::NUInt
+                    | TypeKind::TypeParameter
+            ) || self.ts.is_known(t, KnownTypeCode::NullableOfT)
+            {
+                return Err("arithmetic on these types".to_owned());
+            }
+        }
+        let l = self.prepare_arithmetic_argument(l, left_input, sign)?;
+        let r = self.prepare_arithmetic_argument(r, right_input, sign)?;
+        if op == BinaryOp::Subtract
+            && matches!(
+                *self.f.inst(left),
+                Inst::LdcI4 { value: 0 } | Inst::LdcI8 { value: 0 }
+            )
+        {
+            return Err("a negation".to_owned());
+        }
+        if matches!(self.rr_of(l.expression), Rr::Constant { .. })
+            && matches!(self.rr_of(r.expression), Rr::Constant { .. })
+        {
+            return Err("an arithmetic operation on constants".to_owned());
+        }
+        // `ResolveBinaryOperator` leaves operands of the same type from Int32 to Double alone.
+        let (lc, rc) = (self.ts.type_code(l.ty), self.ts.type_code(r.ty));
+        if lc != rc || !(9..=14).contains(&lc) {
+            return Err("an arithmetic operation that promotes its operands".to_owned());
+        }
+        let result_stack = crate::il::ast::binary_result_type(operator, left_input, right_input);
+        let compatible = |b: &mut Self, t: TypeId| sign == Sign::None || b.ts.type_sign(t) == sign;
+        let (l, r) = if self.ts.stack_type(l.ty) == result_stack && compatible(self, l.ty) {
+            (l, r)
+        } else {
+            // The operands are converted to a common type.
+            let mut s = sign;
+            if s == Sign::None {
+                s = type_hint.map_or(Sign::None, |t| self.ts.type_sign(t));
+                if s == Sign::None {
+                    s = if bitwise {
+                        Sign::Unsigned
+                    } else {
+                        Sign::Signed
+                    };
+                }
+            }
+            let target = match result_stack {
+                StackType::F4 => self.ts.known_type(KnownTypeCode::Single),
+                StackType::F8 => self.ts.known_type(KnownTypeCode::Double),
+                _ => self.find_integer_type(result_stack, s)?,
+            };
+            let l = self.convert_to(l, target, false)?;
+            let r = self.convert_to(r, target, false)?;
+            (l, r)
+        };
+        // Constant operands of bitwise operators are written anew (in hexadecimal where that
+        // reads better), which is not translated.
+        if bitwise
+            && (matches!(self.rr_of(l.expression), Rr::Constant { .. })
+                || matches!(self.rr_of(r.expression), Rr::Constant { .. }))
+        {
+            return Err("a bitwise operation with a constant".to_owned());
+        }
+        let overflow = if bitwise || matches!(result_stack, StackType::F4 | StackType::F8) {
+            Overflow::None
+        } else if check_overflow {
+            Overflow::Checked
+        } else {
+            Overflow::Unchecked
+        };
+        let ty = l.ty;
+        let e = self.ast.add(AstNode::BinaryOperator {
+            op,
+            left: l.expression,
+            right: r.expression,
+            overflow,
+        });
+        self.ast.with_il(e, inst);
+        self.ast.with_rr(e, Rr::Operator { ty });
+        Ok(TranslatedExpression { expression: e, ty })
     }
 }
 

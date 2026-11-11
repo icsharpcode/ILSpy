@@ -80,6 +80,8 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		public Leave? ImplicitReturn;
 		public RustBodyNode[] Children = [];
 		public IType? Type;
+		/// <summary>For an arithmetic operator: its <c>AddCheckedBlocks</c> annotation, 0 none, 1 checked, 2 unchecked.</summary>
+		public byte Overflow;
 		/// <summary>For a cast: whether its resolve result is <c>ResolveCast</c> over the operand's.</summary>
 		public bool ResolveCast;
 		/// <summary>For a generic name: the type arguments written with it.</summary>
@@ -274,10 +276,17 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					// A logic operator comes with a plain resolve result of its own.
 					if (node.OperatorType != null)
 					{
-						node.ResolveResult = new OperatorResolveResult(node.OperatorType, BinaryOperatorExpression.GetLinqNodeType(op, false),
+						node.ResolveResult = new OperatorResolveResult(node.OperatorType, BinaryOperatorExpression.GetLinqNodeType(op, node.Overflow == 1),
 							left.GetResolveResult(), right.GetResolveResult());
 					}
-					return Annotate(new BinaryOperatorExpression(left, op, right), node);
+					var binary = Annotate(new BinaryOperatorExpression(left, op, right), node);
+					if (node.Overflow != 0)
+					{
+						binary.AddAnnotation(node.Overflow == 1
+							? CSharp.Transforms.AddCheckedBlocks.CheckedAnnotation
+							: CSharp.Transforms.AddCheckedBlocks.UncheckedAnnotation);
+					}
+					return binary;
 				}
 				case RustBodyNode.TypeOf:
 					return Annotate(new TypeOfExpression(exprBuilder.ConvertType(node.Type!)), node);

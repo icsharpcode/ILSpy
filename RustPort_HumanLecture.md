@@ -2913,6 +2913,24 @@ enum, pointer and native integer comparisons fall back. The share rose from 52.0
 52.2 %; binary arithmetic (24) is the operator group that remains, with its overflow
 annotations and constant formatting.
 
+### 3.103 Binary arithmetic (item 68s)
+
+`HandleBinaryNumeric` follows the pattern of the comparisons: prepare both operands, resolve
+the operator, and if its type does not have the instruction's result stack type and sign,
+cast both operands to the arithmetic type of the result and resolve again. The engine takes
+`+ - * / %` and `& | ^` where both operands have the same type from `int` to `double`, and
+the casts where the sign differs. What it adds over the comparisons is the overflow
+annotation the arithmetic operators carry for `AddCheckedBlocks`: `checked` for an
+overflow-checking instruction, `unchecked` otherwise, none for bitwise operators and
+floating point results; the host adds it after the resolve result, in the managed order,
+and a checked operator gets the checked LINQ node type in its `OperatorResolveResult`.
+
+Falling back: shifts (`HandleShift`), `0 - x` (written as unary minus), lifted, enum,
+pointer and native integer arithmetic, operations on two constants (which the resolver
+folds, and which may need an explicit `unchecked`), and bitwise operations with a constant
+operand, whose constants `HandleBinaryNumeric` writes anew (in hexadecimal where that reads
+better). The share rose from 52.2 % to 53.0 %.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

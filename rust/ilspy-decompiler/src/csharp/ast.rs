@@ -97,20 +97,40 @@ pub enum AstNode {
         op: BinaryOp,
         left: AstId,
         right: AstId,
+        overflow: Overflow,
     },
+}
+
+/// The `AddCheckedBlocks` annotation of an arithmetic operator.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Overflow {
+    /// None: a comparison, a logic or bitwise operator, or floating point arithmetic.
+    None = 0,
+    /// `CheckedAnnotation`.
+    Checked = 1,
+    /// `UncheckedAnnotation`.
+    Unchecked = 2,
 }
 
 /// `BinaryOperatorType`, with its values.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum BinaryOp {
+    BitwiseAnd = 1,
+    BitwiseOr = 2,
     ConditionalAnd = 3,
     ConditionalOr = 4,
+    ExclusiveOr = 5,
     GreaterThan = 6,
     GreaterThanOrEqual = 7,
     Equality = 8,
     InEquality = 9,
     LessThan = 10,
     LessThanOrEqual = 11,
+    Add = 12,
+    Subtract = 13,
+    Multiply = 14,
+    Divide = 15,
+    Modulus = 16,
     NullCoalescing = 20,
 }
 

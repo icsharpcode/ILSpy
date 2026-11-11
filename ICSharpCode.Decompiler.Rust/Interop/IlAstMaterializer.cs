@@ -717,6 +717,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				}
 				case RustBodyNode.BinaryOperator:
 					node.Value = (CSharp.Syntax.BinaryOperatorType)U8();
+					node.Overflow = U8();
 					node.Children = [BodyNode(), BodyNode()];
 					break;
 			}

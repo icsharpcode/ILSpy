@@ -335,8 +335,14 @@ fn node(w: &mut FunctionWriter<'_, '_, '_, '_>, ast: &Ast, id: AstId) -> Result<
                 node(w, ast, a)?;
             }
         }
-        AstNode::BinaryOperator { op, left, right } => {
+        AstNode::BinaryOperator {
+            op,
+            left,
+            right,
+            overflow,
+        } => {
             w.out.u8(op as u8);
+            w.out.u8(overflow as u8);
             node(w, ast, left)?;
             node(w, ast, right)?;
         }

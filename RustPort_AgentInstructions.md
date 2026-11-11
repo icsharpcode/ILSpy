@@ -486,7 +486,10 @@ the reasons. This file holds only the ordered steps, their gates and their rules
   - [x] 68r. Relational comparisons of operands of the same type from `int` to `double`, cast
     to the comparison's integer type where its sign differs (lecture 3.102). Subject:
     `Translate relational comparisons to C# in the engine`.
-  - [ ] 68s-68y. Further construct groups, in the order of the fallback reasons the ratchet test
+  - [x] 68s. Binary arithmetic and bitwise operators on operands of the same type from `int` to
+    `double`, with the overflow annotations (lecture 3.103). Subject:
+    `Translate binary arithmetic to C# in the engine`.
+  - [ ] 68t-68y. Further construct groups, in the order of the fallback reasons the ratchet test
     prints, until no body of the corpus falls back. Subject pattern:
     `Translate <construct group> to C# in the engine`.
   - [ ] 68z. Request-level seam 2. Subject: `Add the Rust C# AST builders and the AST materializer`.
