@@ -439,7 +439,11 @@ the reasons. This file holds only the ordered steps, their gates and their rules
   - [x] 68c. Backing fields and the `field` keyword: the host classifies each field the way
     `ConvertField` does before it builds an ordinary reference (lecture 3.87). Subject:
     `Translate backing field references to C# in the engine`.
-  - [ ] 68d-68y. Further construct groups, in the order of the fallback reasons the ratchet test
+  - [x] 68d. Conversions without casts: `ConvertTo` returns an expression unchanged when an
+    implicit conversion allows it and folds constants (`ResolveCast`, the integral part of
+    `CSharpPrimitiveCast`); casts still fall back (lecture 3.88). Subject:
+    `Translate implicit conversions and constant folding to C# in the engine`.
+  - [ ] 68e-68y. Further construct groups, in the order of the fallback reasons the ratchet test
     prints, until no body of the corpus falls back. Subject pattern:
     `Translate <construct group> to C# in the engine`.
   - [ ] 68z. Request-level seam 2. Subject: `Add the Rust C# AST builders and the AST materializer`.

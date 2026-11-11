@@ -2585,6 +2585,24 @@ Automatic-property accessors are among the most common bodies, so the share seam
 rose from 8.0 % to 28.3 %. Calls are now by far the largest fallback group (336 `call`,
 100 `callvirt`), followed by `if` statements (169).
 
+### 3.88 Implicit conversions and constant folding (item 68d)
+
+`TranslatedExpression.ConvertTo` now follows the managed order up to the cast. It returns the
+expression unchanged for equal types (up to nullability and tuple names), for a `void` or
+unknown target, and, with `allowImplicitConversion`, when the ported `CSharpConversions`
+finds an implicit conversion. Before that it asks `ResolveCast`, which is now in the engine
+as far as `ConvertTo` reads it. The explicit conversion is classified so a user-defined one
+stays a conversion, and a constant is folded into the target type (an `int` returned from a
+`long` method becomes `0L`, `null` returned as `string` a string constant). The folded
+constant goes to the host as a `ConstantValue` node, which `ConvertConstantValue` expands as
+before, carrying the original expression's IL instructions.
+
+The folding uses `CSharpPrimitiveCast` without overflow checking for integral, char and bool
+constants. Floating point and decimal constants, native integers, and the special cases
+before the cast (bool to and from integers, `IntPtr`, pointers, references) fall back, as
+does every conversion that needs a cast. The share rose from 28.3 % to 29.9 %; calls remain
+the largest group (338 `call`, 100 `callvirt`).
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |
