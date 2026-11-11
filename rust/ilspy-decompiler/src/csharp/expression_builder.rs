@@ -270,6 +270,53 @@ impl Builder<'_, '_, '_, '_> {
                 let ty = self.ts.intern(TypeData::ByRef(target));
                 Ok(TranslatedExpression { expression: d, ty })
             }
+            // `VisitLdElema`: `ref array[indices]`.
+            Inst::LdElema {
+                ty,
+                array,
+                indices,
+                with_system_index,
+                ..
+            } => {
+                if with_system_index {
+                    return Err("an array index of type Index".to_owned());
+                }
+                let mut a = self.translate(array, None)?;
+                let array_element = match *self.ts.data(a.ty) {
+                    TypeData::Array { elem, .. } => Some(elem),
+                    _ => None,
+                };
+                let element = match array_element {
+                    Some(elem) if self.ts.is_compatible_type_for_memory_access(elem, ty.ty) => elem,
+                    _ => {
+                        let array_type = self.ts.intern(TypeData::Array {
+                            elem: ty.ty,
+                            rank: indices.len() as u32,
+                            nullability: crate::typesystem::types::Nullability::Oblivious,
+                        });
+                        a = self.convert_to(a, array_type, false)?;
+                        ty.ty
+                    }
+                };
+                let mut written = Vec::with_capacity(indices.len());
+                for &i in &indices {
+                    written.push(self.translate_array_index(i)?.expression);
+                }
+                let e = self.ast.add(AstNode::Indexer {
+                    target: a.expression,
+                    indices: written,
+                });
+                self.ast.with_il(e, inst);
+                self.ast.with_rr(e, Rr::Plain(element));
+                let d = self.ast.add(AstNode::RefDirection { expression: e });
+                self.ast
+                    .with_rr(d, Rr::ByReference(Box::new(Rr::Plain(element))));
+                let by_ref = self.ts.intern(TypeData::ByRef(element));
+                Ok(TranslatedExpression {
+                    expression: d,
+                    ty: by_ref,
+                })
+            }
             // `VisitCastClass`
             Inst::CastClass { arg, ty } => {
                 let e = self.translate(arg, None)?;
@@ -1076,6 +1123,34 @@ impl Builder<'_, '_, '_, '_> {
         self.ast.with_il(e, inst);
         self.ast.with_rr(e, Rr::Operator { ty });
         Ok(TranslatedExpression { expression: e, ty })
+    }
+
+    /// `TranslateArrayIndex`: the index converted to an integer type an array index takes.
+    fn translate_array_index(&mut self, i: NodeId) -> Result<TranslatedExpression, Unsupported> {
+        let stack = self.f.result_type(self.ts, i);
+        let input = self.translate(i, None)?;
+        let sign = self.ts.type_sign(input.ty);
+        // A truncated oversized index.
+        if self.ts.type_size(input.ty) > stack_size(stack) {
+            let target = self.find_integer_type(stack, sign)?;
+            return self.convert_to(input, target, false);
+        }
+        // `IsCSharpPrimitiveIntegerType`: SByte to UInt64 other than Char, used as is.
+        let code = self.ts.type_code(input.ty);
+        if (5..=12).contains(&code) {
+            return Ok(input);
+        }
+        if matches!(self.ts.kind(input.ty), TypeKind::NInt | TypeKind::NUInt) {
+            return Err("a native integer array index".to_owned());
+        }
+        // `int` is preferred where it is big enough.
+        let stack = if stack != StackType::I4 && self.ts.stack_type(input.ty) == StackType::I4 {
+            StackType::I4
+        } else {
+            stack
+        };
+        let target = self.find_integer_type(stack, sign)?;
+        self.convert_to(input, target, false)
     }
 }
 

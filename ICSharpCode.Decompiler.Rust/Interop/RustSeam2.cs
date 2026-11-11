@@ -77,6 +77,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		public const byte Continue = 32;
 		public const byte DoWhile = 33;
 		public const byte For = 34;
+		public const byte Indexer = 35;
 
 		public byte Kind;
 		/// <summary>The instructions the node is annotated with, in order.</summary>
@@ -339,6 +340,9 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					var body = (Statement)Build(node.Children[^1], exprBuilder);
 					return Annotate(new WhileStatement(condition, body), node);
 				}
+				case RustBodyNode.Indexer:
+					return Annotate(new IndexerExpression((Expression)Build(node.Children[0], exprBuilder),
+						node.Children.Skip(1).Select(c => (Expression)Build(c, exprBuilder))), node);
 				case RustBodyNode.DoWhile:
 					return Annotate(new DoWhileStatement {
 						EmbeddedStatement = (Statement)Build(node.Children[0], exprBuilder),

@@ -125,6 +125,8 @@ pub enum AstNode {
     Break,
     /// `ContinueStatement`.
     Continue,
+    /// `IndexerExpression` over an array: `target[indices]`.
+    Indexer { target: AstId, indices: Vec<AstId> },
     /// `LockStatement`.
     Lock { expression: AstId, body: AstId },
     /// `ThrowStatement`, a rethrow without an expression.

@@ -56,6 +56,7 @@ mod kind {
     pub const CONTINUE: u8 = 32;
     pub const DO_WHILE: u8 = 33;
     pub const FOR: u8 = 34;
+    pub const INDEXER: u8 = 35;
 }
 
 pub(super) fn write_body(
@@ -252,6 +253,7 @@ fn node(w: &mut FunctionWriter<'_, '_, '_, '_>, ast: &Ast, id: AstId) -> Result<
         AstNode::Continue => kind::CONTINUE,
         AstNode::DoWhile { .. } => kind::DO_WHILE,
         AstNode::For { .. } => kind::FOR,
+        AstNode::Indexer { .. } => kind::INDEXER,
     });
     w.out.len(a.il.len());
     for &inst in &a.il {
@@ -350,6 +352,13 @@ fn node(w: &mut FunctionWriter<'_, '_, '_, '_>, ast: &Ast, id: AstId) -> Result<
                 node(w, ast, c)?;
             }
             node(w, ast, body)?;
+        }
+        AstNode::Indexer { target, indices } => {
+            node(w, ast, target)?;
+            w.out.len(indices.len());
+            for i in indices {
+                node(w, ast, i)?;
+            }
         }
         AstNode::DoWhile { body, condition } => {
             node(w, ast, body)?;

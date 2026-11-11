@@ -3074,6 +3074,18 @@ back in blocks of containers too now; the check only existed for plain blocks, w
 matter while no loop was translated. The share rose from 59.6 % to 59.8 %; array elements
 (20), conversions (21) and operator calls (20) are among the groups the loops uncovered.
 
+### 3.113 Array element access (item 68y5)
+
+`ldelema` is the address of an array element, `ref array[indices]`: an indexer with a plain
+`ResolveResult` of the element type inside a `ref` with its by-reference resolve result; a
+load or store through it (`ldobj`, `stobj`) unwraps the `ref` as for fields. The array is
+cast to an array of the instruction's element type where its own element type is not
+compatible for memory access, and each index goes through `TranslateArrayIndex`: an
+oversized index is truncated to its stack type, a C# integer type is used as it is, and
+anything else is cast to the arithmetic type of its stack type, preferring `int` where it
+fits. `System.Index` indices and native integer indices fall back. The share rose from
+59.8 % to 60.6 %.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

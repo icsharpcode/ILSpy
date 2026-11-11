@@ -733,6 +733,15 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				case RustBodyNode.DoWhile:
 					node.Children = [BodyNode(), BodyNode()];
 					break;
+				case RustBodyNode.Indexer:
+				{
+					var target = BodyNode();
+					var indices = new RustBodyNode[Len()];
+					for (int i = 0; i < indices.Length; i++)
+						indices[i] = BodyNode();
+					node.Children = [target, .. indices];
+					break;
+				}
 				case RustBodyNode.For:
 				{
 					// The condition, the iterators and the body last.
