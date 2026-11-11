@@ -1632,6 +1632,21 @@ pub fn field_reference_query(
     })
 }
 
+/// A `field_kind` question in the `resolver_query` format: kind 4, the field and whether its
+/// target is the `this` instance.
+pub fn field_kind_query(
+    ts: &TypeSystem<'_, '_>,
+    field: &crate::il::ast::FieldOperand,
+    target_is_this: bool,
+) -> Result<Vec<u8>, String> {
+    query_message(ts, |w| {
+        w.out.u8(4);
+        w.member(field.token, field.context);
+        w.out.bool(target_is_this);
+        Ok(())
+    })
+}
+
 /// A resolver question: the tables, the explicit generic contexts and what `write` adds.
 fn query_message(
     ts: &TypeSystem<'_, '_>,

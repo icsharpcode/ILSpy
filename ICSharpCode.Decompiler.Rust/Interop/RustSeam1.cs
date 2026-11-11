@@ -86,16 +86,18 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 			var settings = context.Settings;
 			// The body translation (seam 2) needs the whole IL pipeline to have run in the engine.
 			bool translateBody = topLevelCount == pipeline.Count && settings.DecompileMemberBodies && RustSeam2.Enabled;
-			// The resolver the statement builder's ExpressionBuilder creates.
-			var astResolver = !translateBody ? null : new CSharpResolver(new CSharpTypeResolveContext(
-				decompilationContext.Compilation.MainModule,
-				context.DecompileRun!.GetUsingScopeFor(decompilationContext.CurrentTypeDefinition?.Namespace),
-				decompilationContext.CurrentTypeDefinition,
-				decompilationContext.CurrentMember));
+			// The resolver the statement builder's ExpressionBuilder creates, and the context it
+			// decompiles the body in.
+			var body = !translateBody ? null : new RustBodyContext(new CSharpResolver(new CSharpTypeResolveContext(
+					decompilationContext.Compilation.MainModule,
+					context.DecompileRun!.GetUsingScopeFor(decompilationContext.CurrentTypeDefinition?.Namespace),
+					decompilationContext.CurrentTypeDefinition,
+					decompilationContext.CurrentMember)),
+				decompilationContext, context.DecompileRun, typeSystem);
 			var status = engine.ReadFunction((MethodDefinitionHandle)method.MetadataToken, prefix,
 				settings, settings.UseDebugSymbols ? debugInfo : null,
 				out var rustFunction, out reason, resolver: context.CSharpResolver, usingScope: context.UsingScope,
-				translateBody: translateBody, astResolver: astResolver);
+				translateBody: translateBody, body: body);
 			if (status != RustStatus.Ok)
 				return Fallback(reason);
 

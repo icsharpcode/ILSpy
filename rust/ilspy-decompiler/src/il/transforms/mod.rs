@@ -288,6 +288,31 @@ pub trait Resolver {
         field: &super::ast::FieldOperand,
         target: Option<LookupTarget>,
     ) -> bool;
+
+    /// The branch `ExpressionBuilder.ConvertField` takes for `field`, whose target is the
+    /// `this` instance (or absent) when `target_is_this`.
+    fn field_kind(
+        &self,
+        ts: &TypeSystem<'_, '_>,
+        field: &super::ast::FieldOperand,
+        target_is_this: bool,
+    ) -> FieldKind;
+}
+
+/// How `ConvertField` treats a field, which depends on the declarations around the body.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum FieldKind {
+    /// An ordinary field reference.
+    Ordinary,
+    /// The C# 14 `field` keyword of the property whose accessor is decompiled.
+    FieldKeyword,
+    /// The backing field of an automatic property (the Property row): whether it needs a
+    /// qualifier is decided for the property.
+    AutoPropertyBackingField { property_row: u32 },
+    /// A field named `field` inside a property accessor, which always needs a qualifier.
+    NamedFieldInAccessor,
+    /// The backing field of an automatic event (the Event row), written as the event.
+    AutoEventBackingField { event_row: u32 },
 }
 
 /// The target of a member lookup, as its resolve result presents it to the resolver.

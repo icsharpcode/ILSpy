@@ -316,9 +316,11 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 			reader.context = new GenericContext(reader.mainModule.GetDefinition(MetadataTokens.MethodDefinitionHandle(row)));
 			reader.ReadContexts();
 			var query = new RustResolverQuery { Kind = reader.U8() };
-			if (query.Kind is RustResolverQuery.FieldSimpleNameKind or RustResolverQuery.FieldMemberAccessKind)
+			if (query.Kind is RustResolverQuery.FieldSimpleNameKind or RustResolverQuery.FieldMemberAccessKind or RustResolverQuery.FieldKindKind)
 			{
 				query.Field = reader.Field();
+				if (query.Kind == RustResolverQuery.FieldKindKind)
+					query.TargetIsThis = reader.Bool();
 				if (query.Kind == RustResolverQuery.FieldMemberAccessKind)
 				{
 					query.TargetKind = reader.U8();
@@ -641,6 +643,14 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				case 7:
 					assignmentType = Type();
 					return null;
+				case 8:
+				{
+					var target = BodyResolveResult(out _);
+					var token = Member(out var memberContext);
+					var ev = mainModule.ResolveEntity(token, memberContext) as IEvent
+						?? throw new InvalidOperationException("Event token does not resolve to an event");
+					return new MemberResolveResult(target, ev);
+				}
 				default:
 					throw new InvalidOperationException("Unknown resolve result tag");
 			}

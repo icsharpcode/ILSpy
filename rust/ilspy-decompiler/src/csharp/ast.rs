@@ -66,10 +66,18 @@ pub enum Rr {
     },
     /// `TypeResolveResult`.
     Type(TypeId),
-    /// `MemberResolveResult` of a field with the target's resolve result.
+    /// `MemberResolveResult` of a field with the target's resolve result (none for the
+    /// `field` keyword).
     Field {
-        target: Box<Rr>,
+        target: Option<Box<Rr>>,
         field: crate::il::ast::FieldOperand,
+    },
+    /// `MemberResolveResult` of an event of the main module (its Event row and type) with
+    /// the target's resolve result.
+    Event {
+        target: Box<Rr>,
+        event_row: u32,
+        ty: TypeId,
     },
     /// `ByReferenceResolveResult` with `ReferenceKind.Ref` of the element's resolve result.
     ByReference(Box<Rr>),

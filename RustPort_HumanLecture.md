@@ -2559,6 +2559,32 @@ properties lost their `{ get; set; }` form. The guard now covers both patterns.
 The share of bodies seam 2 serves rose from 3.5 % to 8.0 %. The largest fallback groups are
 now calls (329 `call`, 100 `callvirt`), backing fields (301) and `if` statements (169).
 
+### 3.87 Backing fields (item 68c)
+
+`ConvertField` treats a field differently depending on the declarations around the body.
+The backing field of an automatic event is written as the event, unless the body is one of
+that event's own accessors and only when `AutoEventDecompiler` judges the event automatic,
+which runs the analysis pipeline over its accessors. The backing field of the property
+whose accessor is decompiled becomes the C# 14 `field` keyword. The backing field of another
+automatic property takes its qualifier from the property. A field named `field` inside a
+property accessor is always qualified. All of these read the decompilation context's current
+member and the host's type system.
+
+The engine asks the host which branch applies (resolver query kind 4: the field, and whether
+its target is the `this` instance or absent). The host answers with the same checks
+`ConvertField` makes, as an integer the engine decodes into `FieldKind`: an ordinary field,
+the keyword, a field named `field` in an accessor, or the backing field of the automatic
+property or event at a metadata row. The engine then builds the reference itself: the event
+from its Event row (name, static accessors, type), a `MemberResolveResult` without target
+for the keyword, and the property's name and staticness for `RequiresQualifier`. The host
+side's inputs (resolver, decompilation context, decompile run and type system) travel
+together as `RustBodyContext`, which seam 1 builds. This replaces the name guards of 68b,
+which only kept such bodies out.
+
+Automatic-property accessors are among the most common bodies, so the share seam 2 serves
+rose from 8.0 % to 28.3 %. Calls are now by far the largest fallback group (336 `call`,
+100 `callvirt`), followed by `if` statements (169).
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

@@ -20,11 +20,17 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Runtime.ExceptionServices;
+using System.Reflection.Metadata;
+using System.Reflection.Metadata.Ecma335;
 using System.Runtime.InteropServices;
+using System.Threading;
 
+using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.CSharp.Resolver;
+using ICSharpCode.Decompiler.CSharp.Transforms;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Semantics;
 using ICSharpCode.Decompiler.TypeSystem;
@@ -43,6 +49,8 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		public const byte FieldSimpleNameKind = 2;
 		/// <summary><c>Disambiguator.ProbeField</c> for <c>target.field</c>.</summary>
 		public const byte FieldMemberAccessKind = 3;
+		/// <summary>The branch <c>ExpressionBuilder.ConvertField</c> takes for the field.</summary>
+		public const byte FieldKindKind = 4;
 
 		/// <summary><see cref="TargetKind"/>: <c>this</c> or <c>base</c>.</summary>
 		public const byte ThisTarget = 0;
@@ -55,10 +63,33 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		/// <summary>For <see cref="FieldMemberAccessKind"/>: what the target is (0 this or base, 1 a type, 2 another expression).</summary>
 		public byte TargetKind;
 		public bool CausesNonVirtualInvocation;
+		/// <summary>For <see cref="FieldKindKind"/>: whether the field's target is the <c>this</c> instance or absent.</summary>
+		public bool TargetIsThis;
 		public IType? Target;
 		/// <summary>The target variable's type and its single store's value type.</summary>
 		public (IType Variable, IType Value)? TargetStore;
 		public IType[] Arguments = [];
+	}
+
+	/// <summary>
+	/// What the questions of the engine's C# body translation are answered from: the resolver the
+	/// statement builder's ExpressionBuilder creates, and the context it decompiles the body in.
+	/// </summary>
+	internal sealed class RustBodyContext
+	{
+		public RustBodyContext(CSharpResolver resolver, ITypeResolveContext decompilationContext,
+			DecompileRun decompileRun, IDecompilerTypeSystem typeSystem)
+		{
+			Resolver = resolver;
+			DecompilationContext = decompilationContext;
+			DecompileRun = decompileRun;
+			TypeSystem = typeSystem;
+		}
+
+		public CSharpResolver Resolver { get; }
+		public ITypeResolveContext DecompilationContext { get; }
+		public DecompileRun DecompileRun { get; }
+		public IDecompilerTypeSystem TypeSystem { get; }
 	}
 
 	/// <summary>
@@ -73,8 +104,8 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		internal unsafe delegate int Callback(IntPtr context, byte* query, UIntPtr length);
 
 		readonly CSharpResolver resolver;
-		/// <summary>The resolver of the method's ExpressionBuilder (with the current type and member), for the C# body's questions.</summary>
-		readonly CSharpResolver? astResolver;
+		/// <summary>What the C# body translation's questions are answered from.</summary>
+		readonly RustBodyContext? body;
 		readonly int row;
 		readonly ICompilation compilation;
 		readonly IReadOnlyList<MetadataModule> modules;
@@ -85,10 +116,10 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		public Callback Delegate { get; }
 
 		public unsafe RustResolver(CSharpResolver resolver, int row, ICompilation compilation,
-			IReadOnlyList<MetadataModule> modules, DecompilerSettings settings, CSharpResolver? astResolver = null)
+			IReadOnlyList<MetadataModule> modules, DecompilerSettings settings, RustBodyContext? body = null)
 		{
 			this.resolver = resolver;
-			this.astResolver = astResolver;
+			this.body = body;
 			this.row = row;
 			this.compilation = compilation;
 			this.modules = modules;
@@ -101,7 +132,10 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 			try
 			{
 				var wire = new ReadOnlySpan<byte>(query, checked((int)length)).ToArray();
-				return Answer(IlAstMaterializer.ReadResolverQuery(wire, row, compilation, modules, settings)) ? 1 : 0;
+				var q = IlAstMaterializer.ReadResolverQuery(wire, row, compilation, modules, settings);
+				if (q.Kind == RustResolverQuery.FieldKindKind)
+					return ClassifyField(q.Field, q.TargetIsThis);
+				return Answer(q) ? 1 : 0;
 			}
 			catch (Exception ex)
 			{
@@ -134,7 +168,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		/// </summary>
 		bool FieldReferenceBinds(RustResolverQuery query)
 		{
-			var resolver = astResolver ?? throw new InvalidOperationException("The engine asked about a C# body without the body's resolver");
+			var resolver = (body ?? throw new InvalidOperationException("The engine asked about a C# body without the body's context")).Resolver;
 			MemberResolveResult? result;
 			if (query.Kind == RustResolverQuery.FieldSimpleNameKind)
 			{
@@ -153,6 +187,73 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				result = lookup.Lookup(target, query.Field.Name, EmptyList<IType>.Instance, isInvocation: false) as MemberResolveResult;
 			}
 			return result != null && !result.IsError && result.Member.Equals(query.Field, NormalizeTypeVisitor.TypeErasure);
+		}
+
+		/// <summary>
+		/// The branch <c>ExpressionBuilder.ConvertField</c> takes before it builds an ordinary field
+		/// reference, as the engine's <c>FieldKind</c> answer: 0 an ordinary field, 1 the C# 14
+		/// <c>field</c> keyword, 3 a field named "field" in a property accessor,
+		/// <c>0x2000_0000 | row</c> the backing field of the automatic property at Property row,
+		/// <c>0x1000_0000 | row</c> that of the automatic event at Event row.
+		/// </summary>
+		int ClassifyField(IField field, bool targetIsThis)
+		{
+			var context = body ?? throw new InvalidOperationException("The engine asked about a C# body without the body's context");
+			var currentMember = context.DecompilationContext.CurrentMember;
+			if (settings.AutomaticEvents && IsBackingFieldOfAutomaticEvent(field, out var ev))
+				return 0x1000_0000 | MetadataTokens.GetRowNumber(ev.MetadataToken);
+			if (CanUseFieldKeyword())
+				return 1;
+			if (settings.AutomaticProperties
+				&& PatternStatementTransform.IsBackingFieldOfAutomaticProperty(field, out var property)
+				&& !PatternStatementTransform.HasAccessedThroughPropertyAttribute(field)
+				&& currentMember != property
+				&& (property.CanSet || settings.GetterOnlyAutomaticProperties))
+			{
+				return 0x2000_0000 | MetadataTokens.GetRowNumber(property.MetadataToken);
+			}
+			if (settings.FieldKeyword && field.Name == "field" && currentMember is IProperty { Parameters.Count: 0 })
+				return 3;
+			return 0;
+
+			bool CanUseFieldKeyword()
+			{
+				if (!settings.FieldKeyword)
+					return false;
+				if (currentMember is not IProperty prop || prop.Parameters.Count != 0)
+					return false;
+				if (!prop.CanSet && !settings.GetterOnlyAutomaticProperties)
+					return false;
+				if (!PatternStatementTransform.TryGetBackingField(prop, out var backingField)
+					|| PatternStatementTransform.HasAccessedThroughPropertyAttribute(backingField)
+					|| !field.MemberDefinition.Equals(backingField.MemberDefinition))
+				{
+					return false;
+				}
+				return field.IsStatic || targetIsThis;
+			}
+
+			bool IsBackingFieldOfAutomaticEvent(IField f, [NotNullWhen(true)] out IEvent? e)
+			{
+				e = null;
+				if (f.MetadataToken.IsNil || f.ParentModule is not MetadataModule module)
+					return false;
+				if (!module.MetadataFile.PropertyAndEventBackingFieldLookup.IsEventBackingField((FieldDefinitionHandle)f.MetadataToken, out var eventHandle))
+					return false;
+				e = module.GetDefinition(eventHandle);
+				if (currentMember is IMethod { AccessorOwner: IEvent owner } && owner.Equals(e))
+				{
+					e = null;
+					return false;
+				}
+				if (!AutoEventDecompiler.IsAutomaticEvent(context.TypeSystem, e, context.DecompileRun, CancellationToken.None, out var backingField)
+					|| !backingField.Equals(f.MemberDefinition))
+				{
+					e = null;
+					return false;
+				}
+				return true;
+			}
 		}
 
 		/// <summary>Rethrows the first exception the resolver threw during the engine call.</summary>

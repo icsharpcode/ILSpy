@@ -17,7 +17,7 @@ use ilspy_decompiler::Session;
 use ilspy_decompiler::il::debug_info::{DebugInfo, ExtraTypeInfo};
 use ilspy_decompiler::il::reader::ReaderOptions;
 use ilspy_decompiler::il::transforms::{
-    ExtensionMethodQuery, Resolver, RootNames, SETTING_NAMES, Settings,
+    ExtensionMethodQuery, FieldKind, Resolver, RootNames, SETTING_NAMES, Settings,
 };
 use ilspy_decompiler::typesystem::compilation::{Compilation, ModuleId, ModuleInput};
 use ilspy_decompiler::typesystem::members::MethodDefId;
@@ -434,6 +434,35 @@ impl Resolver for HostResolver {
         };
         // SAFETY: the host contract above; `bytes` outlives the call.
         unsafe { (self.callback)(self.ctx, bytes.as_ptr(), bytes.len()) == 1 }
+    }
+
+    /// The answer is 0 for an ordinary field, 1 for the `field` keyword, 3 for a field named
+    /// `field` in an accessor, `0x2000_0000 | row` for the backing field of the automatic
+    /// property at Property `row` and `0x1000_0000 | row` for that of the automatic event at
+    /// Event `row`; a failed callback answers as for an ordinary field (the host rethrows).
+    fn field_kind(
+        &self,
+        ts: &TypeSystem<'_, '_>,
+        field: &ilspy_decompiler::il::ast::FieldOperand,
+        target_is_this: bool,
+    ) -> FieldKind {
+        let Ok(bytes) = ilspy_decompiler::wire::ilast::field_kind_query(ts, field, target_is_this)
+        else {
+            return FieldKind::Ordinary;
+        };
+        // SAFETY: the host contract above; `bytes` outlives the call.
+        let answer = unsafe { (self.callback)(self.ctx, bytes.as_ptr(), bytes.len()) };
+        match answer {
+            1 => FieldKind::FieldKeyword,
+            3 => FieldKind::NamedFieldInAccessor,
+            a if a & 0x3000_0000 == 0x2000_0000 => FieldKind::AutoPropertyBackingField {
+                property_row: (a & 0x00FF_FFFF) as u32,
+            },
+            a if a & 0x3000_0000 == 0x1000_0000 => FieldKind::AutoEventBackingField {
+                event_row: (a & 0x00FF_FFFF) as u32,
+            },
+            _ => FieldKind::Ordinary,
+        }
     }
 }
 

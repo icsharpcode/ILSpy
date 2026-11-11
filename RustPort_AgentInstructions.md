@@ -436,7 +436,10 @@ the reasons. This file holds only the ordered steps, their gates and their rules
     `ConvertField`, `TranslateTarget` and the field `Disambiguator`, whose checks ask the
     host's resolver (human decision; lecture 3.86). Subject: `Translate field access and
     assignments to C# in the engine`.
-  - [ ] 68c-68y. Further construct groups, in the order of the fallback reasons the ratchet test
+  - [x] 68c. Backing fields and the `field` keyword: the host classifies each field the way
+    `ConvertField` does before it builds an ordinary reference (lecture 3.87). Subject:
+    `Translate backing field references to C# in the engine`.
+  - [ ] 68d-68y. Further construct groups, in the order of the fallback reasons the ratchet test
     prints, until no body of the corpus falls back. Subject pattern:
     `Translate <construct group> to C# in the engine`.
   - [ ] 68z. Request-level seam 2. Subject: `Add the Rust C# AST builders and the AST materializer`.

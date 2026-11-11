@@ -80,7 +80,9 @@ fn var_index(
 /// it causes a non-virtual invocation); 4 `TypeResolveResult` (type); 5 the
 /// `MemberResolveResult` of a field (the target's resolve result, the field as a member
 /// token); 6 `ByReferenceResolveResult` (the element's resolve result); 7 the
-/// `OperatorResolveResult` of an assignment (type; the operands are the children's).
+/// `OperatorResolveResult` of an assignment (type; the operands are the children's); 8 the
+/// `MemberResolveResult` of an event (the target's resolve result, the event as a member
+/// token). A field's target is absent (0) for the `field` keyword.
 fn rr(w: &mut FunctionWriter<'_, '_, '_, '_>, rr: Option<&Rr>) -> Result<(), String> {
     match rr {
         None => w.out.u8(0),
@@ -112,8 +114,15 @@ fn rr(w: &mut FunctionWriter<'_, '_, '_, '_>, rr: Option<&Rr>) -> Result<(), Str
         }
         Some(Rr::Field { target, field }) => {
             w.out.u8(5);
-            self::rr(w, Some(target))?;
+            self::rr(w, target.as_deref())?;
             w.member(field.token, field.context);
+        }
+        Some(Rr::Event {
+            target, event_row, ..
+        }) => {
+            w.out.u8(8);
+            self::rr(w, Some(target))?;
+            w.member(0x1400_0000 | event_row, 0);
         }
         Some(Rr::ByReference(element)) => {
             w.out.u8(6);

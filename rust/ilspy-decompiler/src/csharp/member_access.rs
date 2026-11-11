@@ -3,7 +3,7 @@
 //! the field case of `Disambiguator`.
 
 use crate::il::ast::{FieldOperand, Inst, NodeId, VarId, VariableKind};
-use crate::il::transforms::LookupTarget;
+use crate::il::transforms::{FieldKind, LookupTarget};
 use crate::il::types::StackType;
 use crate::metadata::tables::rows;
 use crate::semantics::types::TypeKind;
@@ -17,6 +17,9 @@ use super::{Builder, TranslatedExpression, Unsupported};
 /// `FieldAttributes.Static`.
 const FIELD_STATIC: u16 = 0x0010;
 
+/// `MethodAttributes.Static`.
+const METHOD_STATIC: u16 = 0x0010;
+
 impl Builder<'_, '_, '_, '_> {
     /// `ResolveResult.Type` of a resolve result the builders made.
     pub(crate) fn rr_type(&mut self, rr: &Rr) -> TypeId {
@@ -27,6 +30,7 @@ impl Builder<'_, '_, '_, '_> {
             | Rr::Type(ty)
             | Rr::Assign { ty } => *ty,
             Rr::Field { field, .. } => field.field.ty,
+            Rr::Event { ty, .. } => *ty,
             Rr::ByReference(element) => {
                 let e = self.rr_type(element);
                 self.ts.intern(TypeData::ByRef(e))
@@ -156,11 +160,6 @@ impl Builder<'_, '_, '_, '_> {
         target_inst: Option<NodeId>,
     ) -> Result<TranslatedExpression, Unsupported> {
         let name = field.field.name.clone();
-        // Backing fields of automatic properties and events, and the C# 14 `field` keyword,
-        // depend on how the declarations around the body are decompiled.
-        if name.starts_with('<') || name == "field" {
-            return Err("a backing field".to_owned());
-        }
         let FieldOrigin::Def { module, row } = field.field.origin else {
             return Err("an unresolved field".to_owned());
         };
@@ -169,17 +168,6 @@ impl Builder<'_, '_, '_, '_> {
             .declaring
             .ok_or("a field without declaring type")?;
         let declaring_def = self.ts.definition(declaring);
-        if let Some(def) = declaring_def {
-            if self.has_event_named(def, &name) {
-                return Err("the backing field of an event".to_owned());
-            }
-            // The VB backing field `_Name` of a property `Name`.
-            if let Some(property) = name.strip_prefix('_')
-                && self.has_property_named(def, property)
-            {
-                return Err("a backing field".to_owned());
-            }
-        }
         let is_static = self
             .ts
             .comp
@@ -190,15 +178,59 @@ impl Builder<'_, '_, '_, '_> {
             .flags
             & FIELD_STATIC
             != 0;
+        let resolver = self
+            .resolver
+            .ok_or("a member reference without the host's resolver")?;
+        let target_is_this = match target_inst {
+            None => true,
+            Some(t) => self.match_ld_this(t).is_some() || self.is_ld_loca_this(t),
+        };
+        let kind = resolver.field_kind(self.ts, field, target_is_this);
+        if let FieldKind::AutoEventBackingField { event_row } = kind {
+            return self.event_reference(module, event_row, target_inst, declaring, declaring_def);
+        }
+        if kind == FieldKind::FieldKeyword {
+            // Unqualified: "this.field" would refer to a real member named "field".
+            let e = self.ast.add(AstNode::Identifier {
+                name: "field".to_owned(),
+            });
+            self.ast.with_rr(
+                e,
+                Rr::Field {
+                    target: None,
+                    field: field.clone(),
+                },
+            );
+            return Ok(TranslatedExpression {
+                expression: e,
+                ty: field.field.ty,
+            });
+        }
         if matches!(self.ts.data(field.field.ty), TypeData::ByRef(_)) {
             return Err("a ref field".to_owned());
         }
         let target = self.translate_target(target_inst, true, is_static, declaring)?;
-        let require = self.requires_qualifier(&name, is_static, declaring_def, target.expression);
+        let require = match kind {
+            // The backing field of an automatic property needs a qualifier when its property
+            // would, because PatternStatementTransform turns the reference into one to the
+            // property.
+            FieldKind::AutoPropertyBackingField { property_row } => {
+                let (property_name, property_static) = self.property_info(module, property_row)?;
+                self.requires_qualifier(
+                    &property_name,
+                    property_static,
+                    declaring_def,
+                    target.expression,
+                )
+            }
+            // In a C# 14 property accessor a bare "field" binds to the backing field keyword.
+            FieldKind::NamedFieldInAccessor => true,
+            _ => self.requires_qualifier(&name, is_static, declaring_def, target.expression),
+        };
         let require = self.disambiguate_field(field, &target, require, declaring)?;
         let target_rr = self.rr_of(target.expression);
         let mrr = Rr::Field {
-            target: Box::new(target_rr),
+            target: Some(Box::new(target_rr)),
             field: field.clone(),
         };
         let e = if require {
@@ -216,34 +248,79 @@ impl Builder<'_, '_, '_, '_> {
         })
     }
 
-    fn has_event_named(&self, def: TypeDefId, name: &str) -> bool {
-        let md = &self.ts.comp.module(def.module).md;
-        self.ts
-            .comp
-            .visible_events(def)
-            .unwrap_or_default()
-            .into_iter()
-            .any(|row| {
-                md.get::<rows::Event>(row)
-                    .ok()
-                    .and_then(|e| md.string(e.name).ok())
-                    .is_some_and(|n| n == name)
-            })
+    /// `ldloca this` (a struct method's `this` address).
+    fn is_ld_loca_this(&self, inst: NodeId) -> bool {
+        let Inst::LdLoca { var } = *self.f.inst(inst) else {
+            return false;
+        };
+        let v = self.f.var(var);
+        v.kind == VariableKind::Parameter && v.index == Some(-1)
     }
 
-    fn has_property_named(&self, def: TypeDefId, name: &str) -> bool {
-        let md = &self.ts.comp.module(def.module).md;
-        self.ts
-            .comp
-            .visible_properties(def)
-            .unwrap_or_default()
-            .into_iter()
-            .any(|row| {
-                md.get::<rows::Property>(row)
-                    .ok()
-                    .and_then(|p| md.string(p.name).ok())
-                    .is_some_and(|n| n == name)
+    /// The name of a Property row and whether its accessors are static.
+    fn property_info(
+        &self,
+        module: crate::typesystem::compilation::ModuleId,
+        row: u32,
+    ) -> Result<(String, bool), Unsupported> {
+        let md = &self.ts.comp.module(module).md;
+        let p = md.get::<rows::Property>(row).map_err(|e| e.to_string())?;
+        let name = md.string(p.name).map_err(|e| e.to_string())?.into_owned();
+        let (get, set, _) = md.property_accessors(row);
+        let accessor = if get != 0 { get } else { set };
+        let is_static = md
+            .get::<rows::MethodDef>(accessor)
+            .is_ok_and(|m| m.flags & METHOD_STATIC != 0);
+        Ok((name, is_static))
+    }
+
+    /// `ConvertField` for the backing field of an automatic event: the event, written with
+    /// its target where `RequiresQualifier` asks for it.
+    fn event_reference(
+        &mut self,
+        module: crate::typesystem::compilation::ModuleId,
+        event_row: u32,
+        target_inst: Option<NodeId>,
+        declaring: TypeId,
+        declaring_def: Option<TypeDefId>,
+    ) -> Result<TranslatedExpression, Unsupported> {
+        let md = &self.ts.comp.module(module).md;
+        let e = md
+            .get::<rows::Event>(event_row)
+            .map_err(|e| e.to_string())?;
+        let name = md.string(e.name).map_err(|e| e.to_string())?.into_owned();
+        let (add, remove, _, _) = md.event_accessors(event_row);
+        let accessor = if add != 0 { add } else { remove };
+        let is_static = md
+            .get::<rows::MethodDef>(accessor)
+            .is_ok_and(|m| m.flags & METHOD_STATIC != 0);
+        let ty = self
+            .ts
+            .event_type(module, event_row)
+            .map_err(|e| e.to_string())?;
+        let target = self.translate_target(target_inst, true, is_static, declaring)?;
+        let require = self.requires_qualifier(&name, is_static, declaring_def, target.expression);
+        let target_rr = self.rr_of(target.expression);
+        let reference = if require {
+            self.ast.add(AstNode::MemberReference {
+                target: target.expression,
+                name,
             })
+        } else {
+            self.ast.add(AstNode::Identifier { name })
+        };
+        self.ast.with_rr(
+            reference,
+            Rr::Event {
+                target: Box::new(target_rr),
+                event_row,
+                ty,
+            },
+        );
+        Ok(TranslatedExpression {
+            expression: reference,
+            ty,
+        })
     }
 
     /// `inst.MatchLdThis()`: the `this` parameter it loads.
