@@ -453,7 +453,11 @@ the reasons. This file holds only the ordered steps, their gates and their rules
   - [x] 68g. `if` statements and blocks without container, with conditions that are bools and
     the comparison of a bool with 0 or 1 written as the bool or `!` (lecture 3.91). Subject:
     `Translate if statements and logical not to C# in the engine`.
-  - [ ] 68h-68y. Further construct groups, in the order of the fallback reasons the ratchet test
+  - [x] 68h. Equality comparisons that resolve to a built-in operator without converting the
+    operands: the same primitive type of at least `int`, `bool`, `object`, a reference with
+    `null`, and the string and delegate comparison with `null` (lecture 3.92). Subject:
+    `Translate equality comparisons to C# in the engine`.
+  - [ ] 68i-68y. Further construct groups, in the order of the fallback reasons the ratchet test
     prints, until no body of the corpus falls back. Subject pattern:
     `Translate <construct group> to C# in the engine`.
   - [ ] 68z. Request-level seam 2. Subject: `Add the Rust C# AST builders and the AST materializer`.

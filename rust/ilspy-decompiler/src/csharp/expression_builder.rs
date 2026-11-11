@@ -2,11 +2,13 @@
 
 use crate::il::ast::{ComparisonKind, ComparisonLiftingKind, Inst, NodeId, VariableKind};
 use crate::il::types::{Sign, StackType};
+use crate::metadata::tables::rows;
+use crate::semantics::types::TypeKind;
 use crate::typesystem::known::KnownTypeCode;
 use crate::typesystem::members::ConstValue;
 use crate::typesystem::types::{TypeData, TypeId};
 
-use super::ast::{AstNode, Rr};
+use super::ast::{AstNode, BinaryOp, Rr};
 use super::{Builder, TranslatedExpression, Unsupported};
 
 impl Builder<'_, '_, '_, '_> {
@@ -226,25 +228,249 @@ impl Builder<'_, '_, '_, '_> {
             Inst::LdcI4 { value } => Some(value),
             _ => None,
         };
-        // Remove redundant bool comparisons.
-        let (result, constant) = if self.ts.is_known(l.ty, KnownTypeCode::Boolean) {
-            (l, ldc(self, right))
+        // Remove redundant bool comparisons: `b == 0` is `!b`, `b != 0` is `b`, and the
+        // other way round for 1.
+        let shortcut = |b: &Self, operand: TranslatedExpression, other: NodeId| match ldc(b, other)
+        {
+            Some(0) => Some((operand, ComparisonKind::Equality)),
+            Some(1) => Some((operand, ComparisonKind::Inequality)),
+            _ => None,
+        };
+        let redundant = if self.ts.is_known(l.ty, KnownTypeCode::Boolean) {
+            shortcut(self, l, right)
         } else if self.ts.is_known(r.ty, KnownTypeCode::Boolean) {
-            (r, ldc(self, left))
+            shortcut(self, r, left)
         } else {
-            return Err("a comparison".to_owned());
+            None
         };
-        let negate = match constant {
-            Some(0) => kind == ComparisonKind::Equality,
-            Some(1) => kind == ComparisonKind::Inequality,
-            _ => return Err("a comparison".to_owned()),
-        };
-        if !negate {
-            return Ok(result);
+        if let Some((result, negated)) = redundant {
+            if kind != negated {
+                return Ok(result);
+            }
+            let e = self.logic_not(result);
+            self.ast.with_il(e.expression, inst);
+            return Ok(e);
         }
-        let e = self.logic_not(result);
-        self.ast.with_il(e.expression, inst);
-        Ok(e)
+        self.ceq(inst, kind, input, l, r, left, right)
+    }
+
+    /// The rest of `TranslateCeq`: `left == right` or `left != right` where the operator
+    /// resolves to a built-in one without converting the operands.
+    #[allow(clippy::too_many_arguments)]
+    fn ceq(
+        &mut self,
+        inst: NodeId,
+        kind: ComparisonKind,
+        input: StackType,
+        l: TranslatedExpression,
+        r: TranslatedExpression,
+        left: NodeId,
+        right: NodeId,
+    ) -> Result<TranslatedExpression, Unsupported> {
+        let is_zero = |b: &Self, n: NodeId| {
+            matches!(
+                *b.f.inst(n),
+                Inst::LdcI4 { value: 0 } | Inst::LdcI8 { value: 0 }
+            )
+        };
+        if (self.ts.kind(l.ty) == TypeKind::Pointer && is_zero(self, right))
+            || (self.ts.kind(r.ty) == TypeKind::Pointer && is_zero(self, left))
+        {
+            return Err("a comparison of a pointer with null".to_owned());
+        }
+        // `TryUniteEqualityOperandType` treats a zero compared with an enum apart.
+        for t in [l.ty, r.ty] {
+            let u = self.ts.nullable_underlying(t);
+            if self.ts.kind(u) == TypeKind::Enum {
+                return Err("an enum comparison".to_owned());
+            }
+        }
+        let l = self.adjust_constant_expression_to_type(l, r.ty)?;
+        let r = self.adjust_constant_expression_to_type(r, l.ty)?;
+        let op = if kind == ComparisonKind::Equality {
+            BinaryOp::Equality
+        } else {
+            BinaryOp::InEquality
+        };
+        let boolean = self.ts.known_type(KnownTypeCode::Boolean);
+        if self.is_special_cased_reference_comparison_with_null(l.ty, r.ty) {
+            // `CreateBuiltinBinaryOperator(...).WithILInstruction(inst)`
+            let e = self.ast.add(AstNode::BinaryOperator {
+                op,
+                left: l.expression,
+                right: r.expression,
+            });
+            self.ast.with_rr(e, Rr::Operator { ty: boolean });
+            self.ast.with_il(e, inst);
+            return Ok(TranslatedExpression {
+                expression: e,
+                ty: boolean,
+            });
+        }
+        self.resolve_builtin_equality(op, &l, &r)?;
+        // The check `TranslateCeq` makes before it takes the resolve result.
+        let operand = self.ts.nullable_underlying(l.ty);
+        if self.ts.stack_type(operand) != input {
+            return Err("a comparison that needs casts".to_owned());
+        }
+        let e = self.ast.add(AstNode::BinaryOperator {
+            op,
+            left: l.expression,
+            right: r.expression,
+        });
+        self.ast.with_il(e, inst);
+        self.ast.with_rr(e, Rr::Operator { ty: boolean });
+        Ok(TranslatedExpression {
+            expression: e,
+            ty: boolean,
+        })
+    }
+
+    /// `AdjustConstantExpressionToType`: a constant converted to the type hint where that loses
+    /// nothing, carrying the original's instructions.
+    fn adjust_constant_expression_to_type(
+        &mut self,
+        e: TranslatedExpression,
+        hint: TypeId,
+    ) -> Result<TranslatedExpression, Unsupported> {
+        let Rr::Constant { ty, value } = self.rr_of(e.expression) else {
+            return Ok(e);
+        };
+        let (new_ty, new_value) = self.adjust_constant_to_type(ty, value.clone(), hint)?;
+        if new_ty == ty && new_value == value {
+            return Ok(e);
+        }
+        let n = self.ast.add(AstNode::ConstantValue {
+            ty: new_ty,
+            value: new_value.clone(),
+            allow_implicit_conversion: true,
+        });
+        self.ast.with_rr(
+            n,
+            Rr::Constant {
+                ty: new_ty,
+                value: new_value,
+            },
+        );
+        for inst in self.ast.annotations(e.expression).il.clone() {
+            self.ast.with_il(n, inst);
+        }
+        Ok(TranslatedExpression {
+            expression: n,
+            ty: new_ty,
+        })
+    }
+
+    /// `IsSpecialCasedReferenceComparisonWithNull`: a string or delegate compared with the
+    /// null literal, which the compiler emits as a reference comparison.
+    fn is_special_cased_reference_comparison_with_null(&self, lhs: TypeId, rhs: TypeId) -> bool {
+        let (lhs, rhs) = if self.ts.kind(lhs) == TypeKind::Null {
+            (rhs, lhs)
+        } else {
+            (lhs, rhs)
+        };
+        self.ts.kind(rhs) == TypeKind::Null
+            && (self.ts.kind(lhs) == TypeKind::Delegate
+                || self.ts.is_known(lhs, KnownTypeCode::String))
+            && self.ts.definition(lhs) != self.current_type
+    }
+
+    /// The part of `CSharpResolver.ResolveBinaryOperator` for `==` and `!=` that ends in a
+    /// built-in operator whose parameters are the operands' types, so that its
+    /// `OperatorResolveResult` has the operands' resolve results unchanged; every other
+    /// outcome is unsupported.
+    fn resolve_builtin_equality(
+        &mut self,
+        op: BinaryOp,
+        l: &TranslatedExpression,
+        r: &TranslatedExpression,
+    ) -> Result<(), Unsupported> {
+        let (lt, rt) = (l.ty, r.ty);
+        for t in [lt, rt] {
+            match self.ts.kind(t) {
+                TypeKind::Dynamic => return Err("a dynamic comparison".to_owned()),
+                TypeKind::TypeParameter | TypeKind::NInt | TypeKind::NUInt => {
+                    return Err("a comparison of a type parameter or native integer".to_owned());
+                }
+                TypeKind::Pointer | TypeKind::FunctionPointer => {
+                    return Err("a pointer comparison".to_owned());
+                }
+                _ => {}
+            }
+            if self.ts.is_known(t, KnownTypeCode::NullableOfT) {
+                return Err("a lifted comparison".to_owned());
+            }
+        }
+        // `GetUserDefinedOperatorCandidates`, which skips the primitive types (Boolean to
+        // Decimal).
+        let name = match op {
+            BinaryOp::Equality => "op_Equality",
+            BinaryOp::InEquality => "op_Inequality",
+        };
+        for t in [lt, rt] {
+            if !(3..=15).contains(&self.ts.type_code(t)) && self.declares_method(t, name) {
+                return Err("a comparison with user-defined operators".to_owned());
+            }
+        }
+        let l_null = self.ts.kind(lt) == TypeKind::Null;
+        let r_null = self.ts.kind(rt) == TypeKind::Null;
+        if (l_null && self.ts.is_reference_type(rt) == Some(false))
+            || (r_null && self.ts.is_reference_type(lt) == Some(false))
+        {
+            return Err("a lifted comparison".to_owned());
+        }
+        if matches!(self.rr_of(l.expression), Rr::Constant { .. })
+            && matches!(self.rr_of(r.expression), Rr::Constant { .. })
+        {
+            return Err("a comparison of constants".to_owned());
+        }
+        // `BinaryNumericPromotion` converts unless both are the same type of at least `int`:
+        // Int32, UInt32, Int64, UInt64, Single or Double.
+        let (lc, rc) = (self.ts.type_code(lt), self.ts.type_code(rt));
+        if (4..=15).contains(&lc) && (4..=15).contains(&rc) {
+            return if lc == rc && (9..=14).contains(&lc) {
+                Ok(())
+            } else {
+                Err("a comparison that promotes its operands".to_owned())
+            };
+        }
+        // bool operator ==(bool x, bool y)
+        if lc == 3 && rc == 3 {
+            return Ok(());
+        }
+        // A reference comparison converts both operands to object.
+        if self.ts.is_known(lt, KnownTypeCode::Object)
+            && self.ts.is_known(rt, KnownTypeCode::Object)
+        {
+            return Ok(());
+        }
+        // A type that can be null compared with the null literal.
+        if l_null != r_null {
+            let other = if l_null { rt } else { lt };
+            if self.ts.is_reference_type(other) != Some(false) {
+                return Ok(());
+            }
+        }
+        Err("a comparison that needs casts".to_owned())
+    }
+
+    /// Whether `t` or one of its base types declares a method named `name`.
+    fn declares_method(&mut self, t: TypeId, name: &str) -> bool {
+        for d in self.ts.all_base_type_definitions(t) {
+            let md = &self.ts.comp.module(d.module).md;
+            let Ok(methods) = md.type_methods(d.row) else {
+                return true;
+            };
+            for m in methods {
+                let Ok(row) = md.get::<rows::MethodDef>(m) else {
+                    return true;
+                };
+                if md.string(row.name).map_or(true, |n| n == name) {
+                    return true;
+                }
+            }
+        }
+        false
     }
 
     /// `LogicNot(expr)`: `!expr`.

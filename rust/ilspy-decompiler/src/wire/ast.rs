@@ -39,6 +39,7 @@ mod kind {
     pub const NAMED_ARGUMENT: u8 = 15;
     pub const IF_ELSE: u8 = 16;
     pub const LOGIC_NOT: u8 = 17;
+    pub const BINARY_OPERATOR: u8 = 18;
 }
 
 pub(super) fn write_body(
@@ -84,7 +85,7 @@ fn var_index(
 /// it causes a non-virtual invocation); 4 `TypeResolveResult` (type); 5 the
 /// `MemberResolveResult` of a field (the target's resolve result, the field as a member
 /// token); 6 `ByReferenceResolveResult` (the element's resolve result); 7 the
-/// `OperatorResolveResult` of an assignment or `!` (type; the operands are the children's); 8 the
+/// `OperatorResolveResult` of an assignment, `!` or a binary operator (type; the operands are the children's); 8 the
 /// `MemberResolveResult` of an event (the target's resolve result, the event as a member
 /// token); 9 the `CSharpInvocationResolveResult` of a call (the target's resolve result and
 /// the method as a call operand; the arguments are the invocation's); 10 the
@@ -178,6 +179,7 @@ fn node(w: &mut FunctionWriter<'_, '_, '_, '_>, ast: &Ast, id: AstId) -> Result<
         AstNode::NamedArgument { .. } => kind::NAMED_ARGUMENT,
         AstNode::IfElse { .. } => kind::IF_ELSE,
         AstNode::LogicNot { .. } => kind::LOGIC_NOT,
+        AstNode::BinaryOperator { .. } => kind::BINARY_OPERATOR,
     });
     w.out.len(a.il.len());
     for &inst in &a.il {
@@ -241,6 +243,11 @@ fn node(w: &mut FunctionWriter<'_, '_, '_, '_>, ast: &Ast, id: AstId) -> Result<
         AstNode::NamedArgument { name, expression } => {
             w.string(&name);
             node(w, ast, expression)?;
+        }
+        AstNode::BinaryOperator { op, left, right } => {
+            w.out.u8(op as u8);
+            node(w, ast, left)?;
+            node(w, ast, right)?;
         }
         AstNode::IfElse {
             condition,

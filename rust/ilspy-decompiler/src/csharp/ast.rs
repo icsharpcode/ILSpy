@@ -61,6 +61,19 @@ pub enum AstNode {
     },
     /// `UnaryOperatorExpression` with `UnaryOperatorType.Not`.
     LogicNot { expression: AstId },
+    /// `BinaryOperatorExpression`.
+    BinaryOperator {
+        op: BinaryOp,
+        left: AstId,
+        right: AstId,
+    },
+}
+
+/// `BinaryOperatorType`, with its values.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum BinaryOp {
+    Equality = 8,
+    InEquality = 9,
 }
 
 /// `ResolveResult` annotations.
@@ -96,7 +109,8 @@ pub enum Rr {
     },
     /// `ByReferenceResolveResult` with `ReferenceKind.Ref` of the element's resolve result.
     ByReference(Box<Rr>),
-    /// `OperatorResolveResult` of the node's operator (an assignment or `!`), of the given
+    /// `OperatorResolveResult` of the node's operator (an assignment, `!` or a binary operator), of
+    /// the given
     /// type, whose operands are the resolve results of the node's children.
     Operator { ty: TypeId },
     /// `CSharpInvocationResolveResult` of a call of `method` (of the given return type) on the

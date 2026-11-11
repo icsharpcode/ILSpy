@@ -2673,6 +2673,33 @@ Every other comparison falls back, because it needs `ResolveBinaryOperator`, whi
 the engine yet. The share rose from 40.7 % to 41.4 %; comparisons (99) are now the largest
 group, ahead of `if` instructions in expressions (82) and `newobj` (63).
 
+### 3.92 Equality comparisons (item 68h)
+
+`TranslateCeq` asks `CSharpResolver.ResolveBinaryOperator` for the operator and keeps its
+`OperatorResolveResult` when it is a built-in one whose first operand has the comparison's
+stack type; otherwise it casts the operands and asks again. The full operator resolution
+(about 700 lines of the resolver plus the 1,175 lines of `CSharpOperators`) is not in the
+engine. This step ports only the part of it that ends in a built-in `==` or `!=` without
+converting either operand, because only then are the resolve result's operands the
+operands' own resolve results, which the host can take from the children:
+
+- both operands of the same primitive type of at least `int` (`int`, `uint`, `long`,
+  `ulong`, `float`, `double`), which binary numeric promotion leaves alone, or both `bool`;
+- both `object`, the reference comparison's parameter type;
+- a reference, interface or array compared with the null literal.
+
+Before it asks the resolver, `TranslateCeq` writes a string or delegate compared with `null`
+as a built-in comparison directly; the engine does the same. Everything else falls back
+under its own reason: user-defined operators (checked as any method of that name on the
+operand types or their base types, which is stricter than overload resolution), enums,
+nullable and lifted comparisons, pointers, native integers, type parameters, two
+constants (which the resolver folds), and operands that numeric promotion or the reference
+comparison would convert. The constant on one side is first adjusted to the other side's
+type, as `TryUniteEqualityOperandType` does.
+
+The share rose from 41.4 % to 43.0 %. Comparisons are no longer a large group;
+`if` instructions in expressions (89), `newobj` (68) and `throw` (60) lead now.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

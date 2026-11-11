@@ -649,6 +649,10 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				case RustBodyNode.LogicNot:
 					node.Children = [BodyNode()];
 					break;
+				case RustBodyNode.BinaryOperator:
+					node.Value = (CSharp.Syntax.BinaryOperatorType)U8();
+					node.Children = [BodyNode(), BodyNode()];
+					break;
 			}
 			return node;
 		}
