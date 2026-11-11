@@ -2899,6 +2899,20 @@ The casts uncovered `ldtoken` of a type, which the engine now writes as
 `typeof(T).TypeHandle` with the two `TypeOfResolveResult`s of the managed builder. The share
 rose from 51.8 % to 52.0 %; lambdas (47) and `using` statements (43) lead.
 
+### 3.102 Relational comparisons (item 68r)
+
+`TranslateComp` prepares both operands (truncating one wider than the comparison's stack
+type), adjusts a constant to the other operand's type, and keeps the built-in operator
+`ResolveBinaryOperator` finds if its operand type has the comparison's sign and stack type;
+otherwise it casts both integer operands to the integer type of that sign, and compares
+floating point operands as they are. The engine takes the same path for the operator
+resolution item 68h ported: operands of the same type from `int` to `double`, which binary
+numeric promotion leaves alone, and neither of them constants. The sign mismatch (an
+unsigned comparison of `int` values) now works through the casts of item 68q. Lifted,
+enum, pointer and native integer comparisons fall back. The share rose from 52.0 % to
+52.2 %; binary arithmetic (24) is the operator group that remains, with its overflow
+annotations and constant formatting.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

@@ -483,7 +483,10 @@ the reasons. This file holds only the ordered steps, their gates and their rules
   - [x] 68q. Casts: the cast at the end of `ConvertTo` (and `castclass`), with the host
     computing its `ResolveCast` over the operand, and `typeof(T).TypeHandle` for `ldtoken`
     (lecture 3.101). Subject: `Translate casts and typeof to C# in the engine`.
-  - [ ] 68r-68y. Further construct groups, in the order of the fallback reasons the ratchet test
+  - [x] 68r. Relational comparisons of operands of the same type from `int` to `double`, cast
+    to the comparison's integer type where its sign differs (lecture 3.102). Subject:
+    `Translate relational comparisons to C# in the engine`.
+  - [ ] 68s-68y. Further construct groups, in the order of the fallback reasons the ratchet test
     prints, until no body of the corpus falls back. Subject pattern:
     `Translate <construct group> to C# in the engine`.
   - [ ] 68z. Request-level seam 2. Subject: `Add the Rust C# AST builders and the AST materializer`.

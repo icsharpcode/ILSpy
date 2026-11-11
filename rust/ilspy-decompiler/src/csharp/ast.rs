@@ -105,8 +105,12 @@ pub enum AstNode {
 pub enum BinaryOp {
     ConditionalAnd = 3,
     ConditionalOr = 4,
+    GreaterThan = 6,
+    GreaterThanOrEqual = 7,
     Equality = 8,
     InEquality = 9,
+    LessThan = 10,
+    LessThanOrEqual = 11,
     NullCoalescing = 20,
 }
 

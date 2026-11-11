@@ -147,11 +147,11 @@ impl Builder<'_, '_, '_, '_> {
             Inst::Comp {
                 kind,
                 lifting,
+                sign,
                 input,
                 left,
                 right,
-                ..
-            } => self.comp(inst, kind, lifting, input, left, right),
+            } => self.comp(inst, kind, lifting, sign, input, left, right),
             other => Err(format!("the instruction {}", super::inst_name(&other))),
         }
     }
@@ -270,11 +270,13 @@ impl Builder<'_, '_, '_, '_> {
 
     /// `VisitComp` for the equality of a bool with 0 or 1, which `TranslateCeq` writes as the
     /// bool or its negation.
+    #[allow(clippy::too_many_arguments)]
     fn comp(
         &mut self,
         inst: NodeId,
         kind: ComparisonKind,
         lifting: ComparisonLiftingKind,
+        sign: Sign,
         input: StackType,
         left: NodeId,
         right: NodeId,
@@ -286,7 +288,7 @@ impl Builder<'_, '_, '_, '_> {
             return Err("a comparison of references".to_owned());
         }
         if !kind.is_equality_or_inequality() {
-            return Err("a relational comparison".to_owned());
+            return self.translate_comp(inst, kind, lifting, sign, input, left, right);
         }
         let is_inst = |b: &Self, n: NodeId| matches!(b.f.inst(n), Inst::IsInst { .. });
         let is_null = |b: &Self, n: NodeId| matches!(b.f.inst(n), Inst::LdNull);
@@ -680,5 +682,130 @@ impl Builder<'_, '_, '_, '_> {
             expression: e,
             ty: value.ty,
         })
+    }
+    /// `TranslateComp`: a relational comparison, where the operands are of the same type
+    /// from `int` to `double` (which binary numeric promotion leaves alone) and resolve to a
+    /// built-in operator, or are cast to the comparison's integer type.
+    #[allow(clippy::too_many_arguments)]
+    fn translate_comp(
+        &mut self,
+        inst: NodeId,
+        kind: ComparisonKind,
+        lifting: ComparisonLiftingKind,
+        sign: Sign,
+        input: StackType,
+        left: NodeId,
+        right: NodeId,
+    ) -> Result<TranslatedExpression, Unsupported> {
+        if lifting != ComparisonLiftingKind::None {
+            return Err("a lifted relational comparison".to_owned());
+        }
+        let op = match kind {
+            ComparisonKind::LessThan => BinaryOp::LessThan,
+            ComparisonKind::LessThanOrEqual => BinaryOp::LessThanOrEqual,
+            ComparisonKind::GreaterThan => BinaryOp::GreaterThan,
+            ComparisonKind::GreaterThanOrEqual => BinaryOp::GreaterThanOrEqual,
+            _ => unreachable!("an equality comparison"),
+        };
+        let l = self.translate(left, None)?;
+        let r = self.translate(right, None)?;
+        let l = self.prepare_arithmetic_argument(l, input, sign)?;
+        let r = self.prepare_arithmetic_argument(r, input, sign)?;
+        // Special case comparisons with enum and char literals
+        let l = self.adjust_constant_expression_to_type(l, r.ty)?;
+        let r = self.adjust_constant_expression_to_type(r, l.ty)?;
+        for t in [l.ty, r.ty] {
+            let k = self.ts.kind(self.ts.nullable_underlying(t));
+            if matches!(
+                k,
+                TypeKind::Enum
+                    | TypeKind::Pointer
+                    | TypeKind::Dynamic
+                    | TypeKind::NInt
+                    | TypeKind::NUInt
+                    | TypeKind::TypeParameter
+            ) || self.ts.is_known(t, KnownTypeCode::NullableOfT)
+            {
+                return Err("a relational comparison of these types".to_owned());
+            }
+        }
+        if matches!(self.rr_of(l.expression), Rr::Constant { .. })
+            && matches!(self.rr_of(r.expression), Rr::Constant { .. })
+        {
+            return Err("a comparison of constants".to_owned());
+        }
+        // `ResolveBinaryOperator` leaves operands of the same type from Int32 to Double alone.
+        let (lc, rc) = (self.ts.type_code(l.ty), self.ts.type_code(r.ty));
+        if lc != rc || !(9..=14).contains(&lc) {
+            return Err("a relational comparison that promotes its operands".to_owned());
+        }
+        let boolean = self.ts.known_type(KnownTypeCode::Boolean);
+        let (l, r) = if self.ts.type_sign(l.ty) == sign && self.ts.stack_type(l.ty) == input {
+            (l, r)
+        } else if input.is_integer() {
+            // Ensure the inputs have the correct sign.
+            let input_type = self.find_integer_type(input, sign)?;
+            let l = self.convert_to(l, input_type, false)?;
+            let r = self.convert_to(r, input_type, false)?;
+            (l, r)
+        } else if matches!(input, StackType::F4 | StackType::F8) {
+            (l, r)
+        } else {
+            return Err("a relational comparison of references".to_owned());
+        };
+        let e = self.ast.add(AstNode::BinaryOperator {
+            op,
+            left: l.expression,
+            right: r.expression,
+        });
+        self.ast.with_il(e, inst);
+        self.ast.with_rr(e, Rr::Operator { ty: boolean });
+        Ok(TranslatedExpression {
+            expression: e,
+            ty: boolean,
+        })
+    }
+
+    /// `PrepareArithmeticArgument` without lifting: an operand wider than the stack type is
+    /// truncated to it.
+    fn prepare_arithmetic_argument(
+        &mut self,
+        arg: TranslatedExpression,
+        stack: StackType,
+        sign: Sign,
+    ) -> Result<TranslatedExpression, Unsupported> {
+        let mut arg = arg;
+        if stack.is_integer() && stack_size(stack) < self.ts.type_size(arg.ty) {
+            let target = self.find_integer_type(stack, sign)?;
+            arg = self.convert_to(arg, target, false)?;
+        }
+        if self.ts.is_known(arg.ty, KnownTypeCode::IntPtr)
+            || self.ts.is_known(arg.ty, KnownTypeCode::UIntPtr)
+        {
+            return Err("arithmetic on IntPtr".to_owned());
+        }
+        Ok(arg)
+    }
+
+    /// `FindType(stackType, sign)` for the 32- and 64-bit integer stack types.
+    fn find_integer_type(&mut self, stack: StackType, sign: Sign) -> Result<TypeId, Unsupported> {
+        let unsigned = sign == Sign::Unsigned;
+        let code = match stack {
+            StackType::I4 if unsigned => KnownTypeCode::UInt32,
+            StackType::I4 => KnownTypeCode::Int32,
+            StackType::I8 if unsigned => KnownTypeCode::UInt64,
+            StackType::I8 => KnownTypeCode::Int64,
+            _ => return Err("arithmetic on a native integer".to_owned()),
+        };
+        Ok(self.ts.known_type(code))
+    }
+}
+
+/// `StackType.GetSize` for integer stack types (`NativeIntSize` for `I`).
+fn stack_size(stack: StackType) -> i32 {
+    match stack {
+        StackType::I4 => 4,
+        StackType::I8 => 8,
+        _ => crate::il::types::NATIVE_INT_SIZE,
     }
 }
