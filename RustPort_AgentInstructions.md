@@ -501,7 +501,9 @@ the reasons. This file holds only the ordered steps, their gates and their rules
     (lecture 3.107). Subject: `Translate ref arguments to C# in the engine`.
   - [x] 68x. Arguments of `out` parameters, written and resolved as `out var` where the
     parameter type matches (lecture 3.108). Subject: `Translate out arguments to C# in the engine`.
-  - [ ] 68y. Further construct groups, in the order of the fallback reasons the ratchet test
+  - [x] 68y1. `try` with `catch` and `finally`, and `lock` (lecture 3.109). Subject:
+    `Translate try and lock statements to C# in the engine`.
+  - [ ] 68y2-. Further construct groups (numbered on from 68y1), in the order of the fallback reasons the ratchet test
     prints, until no body of the corpus falls back. Subject pattern:
     `Translate <construct group> to C# in the engine`.
   - [ ] 68z. Request-level seam 2. Subject: `Add the Rust C# AST builders and the AST materializer`.

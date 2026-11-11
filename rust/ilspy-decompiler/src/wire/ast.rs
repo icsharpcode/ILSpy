@@ -48,6 +48,9 @@ mod kind {
     pub const CAST: u8 = 24;
     pub const TYPE_OF: u8 = 25;
     pub const OUT_DIRECTION: u8 = 26;
+    pub const TRY_CATCH: u8 = 27;
+    pub const CATCH_CLAUSE: u8 = 28;
+    pub const LOCK: u8 = 29;
 }
 
 pub(super) fn write_body(
@@ -229,6 +232,9 @@ fn node(w: &mut FunctionWriter<'_, '_, '_, '_>, ast: &Ast, id: AstId) -> Result<
         AstNode::Cast { .. } => kind::CAST,
         AstNode::TypeOf { .. } => kind::TYPE_OF,
         AstNode::OutDirection { .. } => kind::OUT_DIRECTION,
+        AstNode::TryCatch { .. } => kind::TRY_CATCH,
+        AstNode::CatchClause { .. } => kind::CATCH_CLAUSE,
+        AstNode::Lock { .. } => kind::LOCK,
     });
     w.out.len(a.il.len());
     for &inst in &a.il {
@@ -292,6 +298,45 @@ fn node(w: &mut FunctionWriter<'_, '_, '_, '_>, ast: &Ast, id: AstId) -> Result<
         AstNode::NamedArgument { name, expression } => {
             w.string(&name);
             node(w, ast, expression)?;
+        }
+        AstNode::TryCatch {
+            try_block,
+            catch_clauses,
+            finally_block,
+        } => {
+            node(w, ast, try_block)?;
+            w.out.len(catch_clauses.len());
+            for c in catch_clauses {
+                node(w, ast, c)?;
+            }
+            w.out.bool(finally_block.is_some());
+            if let Some(f) = finally_block {
+                node(w, ast, f)?;
+            }
+        }
+        AstNode::CatchClause {
+            variable_name,
+            ty,
+            condition,
+            body,
+        } => {
+            w.out.bool(variable_name.is_some());
+            if let Some(name) = &variable_name {
+                w.string(name);
+            }
+            w.out.bool(ty.is_some());
+            if let Some(t) = ty {
+                w.ty(t);
+            }
+            w.out.bool(condition.is_some());
+            if let Some(c) = condition {
+                node(w, ast, c)?;
+            }
+            node(w, ast, body)?;
+        }
+        AstNode::Lock { expression, body } => {
+            node(w, ast, expression)?;
+            node(w, ast, body)?;
         }
         AstNode::OutDirection {
             expression,

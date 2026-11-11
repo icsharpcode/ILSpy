@@ -69,6 +69,9 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		public const byte Cast = 24;
 		public const byte TypeOf = 25;
 		public const byte OutDirection = 26;
+		public const byte TryCatch = 27;
+		public const byte CatchClause = 28;
+		public const byte Lock = 29;
 
 		public byte Kind;
 		/// <summary>The instructions the node is annotated with, in order.</summary>
@@ -300,6 +303,33 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					}
 					return binary;
 				}
+				case RustBodyNode.TryCatch:
+				{
+					var statement = new TryCatchStatement { TryBlock = (BlockStatement)Build(node.Children[0], exprBuilder) };
+					int clauses = node.Children.Length - (node.Flag ? 2 : 1);
+					for (int i = 1; i <= clauses; i++)
+						statement.CatchClauses.Add((CatchClause)Build(node.Children[i], exprBuilder));
+					if (node.Flag)
+						statement.FinallyBlock = (BlockStatement)Build(node.Children[^1], exprBuilder);
+					return Annotate(statement, node);
+				}
+				case RustBodyNode.CatchClause:
+				{
+					var clause = new CatchClause();
+					if (node.Value != null)
+						clause.VariableName = (string)node.Value;
+					if (node.Type != null)
+						clause.Type = exprBuilder.ConvertType(node.Type);
+					if (node.Children.Length == 2)
+						clause.Condition = (Expression)Build(node.Children[1], exprBuilder);
+					clause.Body = (BlockStatement)Build(node.Children[0], exprBuilder);
+					return Annotate(clause, node);
+				}
+				case RustBodyNode.Lock:
+					return Annotate(new LockStatement {
+						Expression = (Expression)Build(node.Children[0], exprBuilder),
+						EmbeddedStatement = (Statement)Build(node.Children[1], exprBuilder)
+					}, node);
 				case RustBodyNode.OutDirection:
 				{
 					var direction = Annotate(new DirectionExpression(FieldDirection.Out, (Expression)Build(node.Children[0], exprBuilder)), node);

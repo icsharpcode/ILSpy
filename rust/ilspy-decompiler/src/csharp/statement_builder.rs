@@ -118,13 +118,28 @@ impl Builder<'_, '_, '_, '_> {
                 let s = self.ast.add(AstNode::Throw { expression: None });
                 Ok(self.ast.with_il(s, inst))
             }
+            Inst::TryCatch {
+                try_block,
+                handlers,
+            } => self.visit_try_catch(inst, try_block, &handlers),
+            Inst::TryFinally {
+                try_block,
+                finally_block,
+            } => self.visit_try_finally(inst, try_block, finally_block),
+            // `VisitLockInstruction`
+            Inst::Lock {
+                on_expression,
+                body,
+            } => {
+                let expression = self.translate(on_expression, None)?.expression;
+                let body = self.convert_as_block(body)?;
+                let s = self.ast.add(AstNode::Lock { expression, body });
+                Ok(self.ast.with_il(s, inst))
+            }
             Inst::Switch { .. }
             | Inst::Branch { .. }
             | Inst::YieldReturn { .. }
-            | Inst::TryCatch { .. }
-            | Inst::TryFinally { .. }
             | Inst::TryFault { .. }
-            | Inst::Lock { .. }
             | Inst::Using { .. }
             | Inst::PinnedRegion { .. }
             | Inst::Initblk { .. }
@@ -146,6 +161,112 @@ impl Builder<'_, '_, '_, '_> {
                 Ok(s)
             }
         }
+    }
+
+    /// `ConvertAsBlock(inst)`: the statement with the instruction (again), in a block.
+    fn convert_as_block(&mut self, inst: NodeId) -> Result<AstId, Unsupported> {
+        let s = self.convert(inst)?;
+        self.ast.with_il(s, inst);
+        Ok(self.as_block(s))
+    }
+
+    /// `stmt as BlockStatement ?? new BlockStatement { stmt }`.
+    fn as_block(&mut self, s: AstId) -> AstId {
+        if matches!(self.ast.node(s), AstNode::Block { .. }) {
+            s
+        } else {
+            self.ast.add(AstNode::Block {
+                statements: vec![s],
+            })
+        }
+    }
+
+    /// `VisitTryCatch`: a catch clause per handler, with its type and variable where the
+    /// handler needs them and its filter as `when` condition.
+    fn visit_try_catch(
+        &mut self,
+        inst: NodeId,
+        try_block: NodeId,
+        handlers: &[NodeId],
+    ) -> Result<AstId, Unsupported> {
+        let try_block = self.convert_as_block(try_block)?;
+        let mut catch_clauses = Vec::with_capacity(handlers.len());
+        for &handler in handlers {
+            let Inst::TryCatchHandler {
+                filter,
+                body,
+                variable,
+                ..
+            } = *self.f.inst(handler)
+            else {
+                return Err("a catch handler of another kind".to_owned());
+            };
+            let v = self.f.var(variable);
+            let (name, ty) = (v.name.clone(), v.ty);
+            let (variable_name, clause_type) =
+                if v.store_count() > 1 || v.load_count() > 0 || v.address_count() > 0 {
+                    (Some(name), Some(ty))
+                } else if !self.ts.is_known(ty, KnownTypeCode::Object) {
+                    (None, Some(ty))
+                } else {
+                    (None, None)
+                };
+            let condition = if matches!(*self.f.inst(filter), Inst::LdcI4 { value: 1 }) {
+                None
+            } else {
+                Some(self.translate_condition(filter)?.expression)
+            };
+            let body = self.convert_as_block(body)?;
+            let c = self.ast.add(AstNode::CatchClause {
+                variable_name,
+                ty: clause_type,
+                condition,
+                body,
+            });
+            // The handler, then the variable's resolve result.
+            self.ast.with_il(c, handler);
+            self.ast.with_rr(c, Rr::Variable { var: variable, ty });
+            catch_clauses.push(c);
+        }
+        let s = self.ast.add(AstNode::TryCatch {
+            try_block,
+            catch_clauses,
+            finally_block: None,
+        });
+        Ok(self.ast.with_il(s, inst))
+    }
+
+    /// `VisitTryFinally` with `MakeTryCatch`: a try-catch without finally block gets the finally
+    /// block, anything else becomes the try block of a new statement.
+    fn visit_try_finally(
+        &mut self,
+        inst: NodeId,
+        try_block: NodeId,
+        finally_block: NodeId,
+    ) -> Result<AstId, Unsupported> {
+        let converted = self.convert(try_block)?;
+        let extend = matches!(
+            self.ast.node(converted),
+            AstNode::TryCatch {
+                finally_block: None,
+                ..
+            }
+        );
+        let s = if extend {
+            converted
+        } else {
+            let try_block = self.as_block(converted);
+            self.ast.add(AstNode::TryCatch {
+                try_block,
+                catch_clauses: Vec::new(),
+                finally_block: None,
+            })
+        };
+        let finally = self.convert_as_block(finally_block)?;
+        if let AstNode::TryCatch { finally_block, .. } = self.ast.node_mut(s) {
+            *finally_block = Some(finally);
+        }
+        Ok(self.ast.with_il(s, inst))
     }
 
     /// `VisitIfInstruction`: `if (condition) true_inst else false_inst`, without `else` for a

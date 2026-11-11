@@ -94,6 +94,22 @@ pub enum AstNode {
     },
     /// `TypeOfExpression` of `ExpressionBuilder.ConvertType(ty)`.
     TypeOf { ty: TypeId },
+    /// `TryCatchStatement`.
+    TryCatch {
+        try_block: AstId,
+        catch_clauses: Vec<AstId>,
+        finally_block: Option<AstId>,
+    },
+    /// `CatchClause`: `catch (Type name) when (condition) body`, without the parts that are
+    /// `None`.
+    CatchClause {
+        variable_name: Option<String>,
+        ty: Option<TypeId>,
+        condition: Option<AstId>,
+        body: AstId,
+    },
+    /// `LockStatement`.
+    Lock { expression: AstId, body: AstId },
     /// `ThrowStatement`, a rethrow without an expression.
     Throw { expression: Option<AstId> },
     /// `ObjectCreateExpression` of `ExpressionBuilder.ConvertType(ty)`, which the host builds.

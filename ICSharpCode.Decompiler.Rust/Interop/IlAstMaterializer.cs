@@ -706,6 +706,30 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					node.Children = [BodyNode()];
 					node.Flag = Bool();
 					break;
+				case RustBodyNode.TryCatch:
+				{
+					var tryBlock = BodyNode();
+					var clauses = new RustBodyNode[Len()];
+					for (int i = 0; i < clauses.Length; i++)
+						clauses[i] = BodyNode();
+					// The finally block, if any, comes last; Flag says whether there is one.
+					node.Flag = Bool();
+					node.Children = node.Flag ? [tryBlock, .. clauses, BodyNode()] : [tryBlock, .. clauses];
+					break;
+				}
+				case RustBodyNode.CatchClause:
+				{
+					node.Value = Bool() ? Str() : null;
+					node.Type = Bool() ? Type() : null;
+					bool hasCondition = Bool();
+					var condition = hasCondition ? BodyNode() : null;
+					var body = BodyNode();
+					node.Children = condition != null ? [body, condition] : [body];
+					break;
+				}
+				case RustBodyNode.Lock:
+					node.Children = [BodyNode(), BodyNode()];
+					break;
 				case RustBodyNode.Cast:
 					node.Type = Type();
 					node.Children = [BodyNode()];

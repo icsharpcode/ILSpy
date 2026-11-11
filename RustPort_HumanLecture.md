@@ -3019,6 +3019,20 @@ constants, and the engine took the failed question for a "no". The question now 
 by-reference arguments and `out var`s (as `GetArgumentResolveResults` gives them), and a
 question the host cannot answer makes the body fall back instead.
 
+### 3.109 Try and lock statements (item 68y1)
+
+The construct groups ran past the letters of item 68, so they continue as 68y1, 68y2 and on.
+
+`VisitTryCatch` writes a catch clause per handler: the clause carries the handler instruction
+and the `ILVariableResolveResult` of the exception variable, names the variable when the body
+uses it (or stores it more than once), states the type unless it is `object`, and turns a
+filter other than `1` into a `when` condition. `VisitTryFinally` goes through `MakeTryCatch`,
+which gives an existing try-catch without finally block its finally block and otherwise puts
+the converted try block into a new statement, without adding the instruction to it again as
+`ConvertAsBlock` does. `lock` is the expression and the body. The engine follows all three
+and gained `ConvertAsBlock` on the way; try-fault blocks fall back. The share rose from
+57.0 % to 58.1 %.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |
