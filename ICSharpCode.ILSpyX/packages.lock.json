@@ -16,13 +16,13 @@
       },
       "Microsoft.SourceLink.GitHub": {
         "type": "Direct",
-        "requested": "[10.0.403, )",
-        "resolved": "10.0.403",
-        "contentHash": "T4WYxWydJGNQRe/EgURFlhPZ1cHYgivrCCHSomCcfQzGzhkDYGNn5bUwwjs4/PHuMxsmGaLvPv2puG8lluA1IA==",
+        "requested": "[10.0.404, )",
+        "resolved": "10.0.404",
+        "contentHash": "2zWwk1VVU66YJeCkKbZbEuc3I9quqWrd8u7jQrj87y89Cb21QRcua04rX60u6hXUZvCs7w8vLbh6BwRzVtoG7g==",
         "dependencies": {
-          "Microsoft.Build.Tasks.Git": "10.0.403",
-          "Microsoft.SourceLink.Common": "10.0.403",
-          "System.IO.Hashing": "10.0.14"
+          "Microsoft.Build.Tasks.Git": "10.0.404",
+          "Microsoft.SourceLink.Common": "10.0.404",
+          "System.IO.Hashing": "10.0.15"
         }
       },
       "Mono.Cecil": {
@@ -33,15 +33,15 @@
       },
       "System.Composition.AttributedModel": {
         "type": "Direct",
-        "requested": "[10.0.14, )",
-        "resolved": "10.0.14",
-        "contentHash": "4Ncs1bXuDV7LCCN0Vpy6zgltYnxleYbaB4LpfPjAT3WJZhle84nUlEW/bhNYtH03ZyULEaOY4s7B+oySLMkj+Q=="
+        "requested": "[10.0.15, )",
+        "resolved": "10.0.15",
+        "contentHash": "oqwGfyF9UorDJVX7wpfHS1zm+KoTlO2hQC56csL9nfd8FmLi+GXu5ialGKOPgQALtOXaeNSWJiEVKrepNU7RrQ=="
       },
       "System.Reflection.Metadata": {
         "type": "Direct",
-        "requested": "[10.0.14, )",
-        "resolved": "10.0.14",
-        "contentHash": "FdxZ2h1tgX+np5HKupjYCdiq+OqEwX9EV9Qm6ajY0VQ0EOCuRHQAlx6OOitoRRNQncieWUjWDyi193tfl/7xGA=="
+        "requested": "[10.0.15, )",
+        "resolved": "10.0.15",
+        "contentHash": "xezPrkB6GghajaKfct8fGB4YLoIG38tlezmbO90tc9kT8K/O2XPKwGbLut6LTLtia6svlSj+ILS3gBZjBigv1g=="
       },
       "System.Runtime.CompilerServices.Unsafe": {
         "type": "Direct",
@@ -57,21 +57,21 @@
       },
       "Microsoft.Build.Tasks.Git": {
         "type": "Transitive",
-        "resolved": "10.0.403",
-        "contentHash": "1furteBFeemMmZ4s+ORjQb7YtO+wG63NJahbQbRUi91FV6V87BdV0U3vX1jbMC6iKSELYYoXWssSzLu3mx0i2w==",
+        "resolved": "10.0.404",
+        "contentHash": "SMywJ542jorXpeGtJUMSYmZ9i/FxT8tc0qkbIGI3amqh0Wl7AKDYRfFNzImVGeLT8mkUPTRgpoWHgxoZQT1b5A==",
         "dependencies": {
-          "System.IO.Hashing": "10.0.14"
+          "System.IO.Hashing": "10.0.15"
         }
       },
       "Microsoft.SourceLink.Common": {
         "type": "Transitive",
-        "resolved": "10.0.403",
-        "contentHash": "SvzUeqFGrcQxlIgjmcoSGiV5UWcPa0NCTuH69/40uSDsSD/26c6p9cH7XLAxpn+I8+2Zhl1qp+WMugl0oOwBMg=="
+        "resolved": "10.0.404",
+        "contentHash": "jQuH8U7EpZEO7XrV3Ql7PvgpyQGsytm74HNawvOdgKGQc97x8bLDlxGx4pT2kCU+3lLu/f42jEoKixGMkm8Ynw=="
       },
       "System.IO.Hashing": {
         "type": "Transitive",
-        "resolved": "10.0.14",
-        "contentHash": "lVqovhCt3HlZe7ONG5ydaj6BYwYI004gldVfMMkJl/lR5ueeCtWNpW4nejOX75sPmzm8vXCxB69GqwHaYCnyUQ=="
+        "resolved": "10.0.15",
+        "contentHash": "8dyz8adVemyDILwoEFTCq2NsB6XgqOgVHbnv0XgnttQac76XUR3S5L2qcIkJJqOw97mjQttCTWccyk4DKtfm3Q=="
       },
       "icsharpcode.decompiler": {
         "type": "Project",
@@ -82,9 +82,9 @@
       },
       "System.Collections.Immutable": {
         "type": "CentralTransitive",
-        "requested": "[10.0.14, )",
-        "resolved": "10.0.14",
-        "contentHash": "7kqcjP+kmcr4zaPDi+VjaImd8ESFGGPYbr9wJo5ddRrtX9JQ9p2DJlUBBvdjJmeC0KBZxYi6L5UIKcXlaq/FDw=="
+        "requested": "[10.0.15, )",
+        "resolved": "10.0.15",
+        "contentHash": "pfmwjvSb2GWhvGuFTYoa3b1XvrzM53jEHg95mYoCVh5eww/FxDupyX86sF6QM8gp5/n4sRglICCFFCbHDXXWcQ=="
       }
     },
     "net10.0/any": {},
