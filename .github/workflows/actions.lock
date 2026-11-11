@@ -5,17 +5,17 @@ version: 'v0.0.3'
 workflows:
     '.github/workflows/build-frontends.yml':
         - 'actions/checkout@v7.0.1'
-        - 'actions/setup-dotnet@v6.0.0'
+        - 'actions/setup-dotnet@v6.1.0'
         - 'actions/upload-artifact@v7.0.2'
     '.github/workflows/build-ilspy.yml':
         - 'actions/checkout@v7.0.1'
-        - 'actions/setup-dotnet@v6.0.0'
+        - 'actions/setup-dotnet@v6.1.0'
         - 'actions/upload-artifact@v7.0.2'
         - 'microsoft/setup-msbuild@v3.0.0'
         - 'test-summary/action@v2'
     '.github/workflows/codeql-analysis.yml':
         - 'actions/checkout@v7.0.1'
-        - 'actions/setup-dotnet@v6.0.0'
+        - 'actions/setup-dotnet@v6.1.0'
         - 'github/codeql-action@v4.39.3'
     '.github/workflows/generate-bom.yml':
         - 'actions/checkout@v7.0.1'
@@ -36,9 +36,9 @@ dependencies:
         commit: 'sha1-3d3c42e5aac5ba805825da76410c181273ba90b1'
         owner_id: 44036562
         repo_id: 197814629
-    'actions/setup-dotnet@v6.0.0':
-        ref: 'v6.0.0'
-        commit: 'sha1-a98b56852c35b8e3190ac28c8c2271da59106c68'
+    'actions/setup-dotnet@v6.1.0':
+        ref: 'v6.1.0'
+        commit: 'sha1-0f4a354dd5547a28c70b7853dbd95d5b67886e73'
         owner_id: 44036562
         repo_id: 192625306
     'actions/upload-artifact@v7.0.2':

@@ -50,7 +50,7 @@ jobs:
         fetch-depth: 0
         persist-credentials: false
 
-    - uses: actions/setup-dotnet@v6.0.0
+    - uses: actions/setup-dotnet@v6.1.0
       with:
         dotnet-version: ${{ env.DOTNET_SDK_VERSION }}
         dotnet-quality: ${{ env.DOTNET_SDK_QUALITY }}
@@ -333,7 +333,7 @@ jobs:
         fetch-depth: 0
         persist-credentials: false
 
-    - uses: actions/setup-dotnet@v6.0.0
+    - uses: actions/setup-dotnet@v6.1.0
       with:
         dotnet-version: ${{ env.DOTNET_SDK_VERSION }}
         dotnet-quality: ${{ env.DOTNET_SDK_QUALITY }}
@@ -493,7 +493,7 @@ jobs:
         fetch-depth: 0
         persist-credentials: false
 
-    - uses: actions/setup-dotnet@v6.0.0
+    - uses: actions/setup-dotnet@v6.1.0
       with:
         dotnet-version: ${{ env.DOTNET_SDK_VERSION }}
         dotnet-quality: ${{ env.DOTNET_SDK_QUALITY }}
@@ -583,7 +583,7 @@ jobs:
         fetch-depth: 0
         persist-credentials: false
 
-    - uses: actions/setup-dotnet@v6.0.0
+    - uses: actions/setup-dotnet@v6.1.0
       with:
         dotnet-version: ${{ env.DOTNET_SDK_VERSION }}
         dotnet-quality: ${{ env.DOTNET_SDK_QUALITY }}
