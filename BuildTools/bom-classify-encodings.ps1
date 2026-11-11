@@ -1,3 +1,5 @@
+#!/usr/bin/env pwsh
+
 <#
 .SYNOPSIS
 Classify text files by encoding under the current subtree, respecting .gitignore.
