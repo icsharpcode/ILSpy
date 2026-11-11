@@ -2807,6 +2807,17 @@ invocation; its arguments are the rest. The share rose from 48.3 % to 48.6 %. Ma
 calls are LINQ with lambdas, so `the instruction Function` (36) now shows up, behind string
 concatenation (50) and `??` (47).
 
+### 3.97 string.Concat (item 68m)
+
+Item 68e treated every `string.Concat` and `string.Format` call as a form with syntax of its
+own. For `Concat` that was too broad: `CallBuilder.Build` only rewrites the span-based
+overload whose parameters are all `ReadOnlySpan<char>` (into `+` over the original operands);
+every other `Concat` is an ordinary call, which the AST transform
+`ReplaceMethodCallsWithOperators` turns into `+` later, on the managed side. The engine now
+falls back only for the span-based overload. `Format` stays apart, since it may become an
+interpolated string. The share rose from 48.6 % to 49.8 %; `??` (47), member access on value
+types (45) and lambdas (43) lead now.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

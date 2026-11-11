@@ -642,9 +642,19 @@ impl Builder<'_, '_, '_, '_> {
                 .and_then(|d| ts.comp.type_def(d).ok())
                 .is_some_and(|i| i.full_name.top.ns == ns && i.full_name.name() == name)
         };
+        // `IsSpanBasedStringConcat`: a `string.Concat` of `ReadOnlySpan<char>` parameters only;
+        // any other `Concat` is an ordinary call.
+        let span_concat = method.name == "Concat"
+            && method.is_static
+            && method.parameters.iter().all(|p| {
+                ts.is_known(p.ty, KnownTypeCode::ReadOnlySpanOfT)
+                    && ts
+                        .first_type_argument(p.ty)
+                        .is_some_and(|a| ts.is_known(a, KnownTypeCode::Char))
+            });
         let special = (kind == TypeKind::Delegate && method.name == "Invoke")
             || (ts.is_known(declaring, KnownTypeCode::String)
-                && matches!(method.name.as_str(), "Format" | "Concat"))
+                && (method.name == "Format" || span_concat))
             || in_namespace(
                 "System.Runtime.CompilerServices",
                 "FormattableStringFactory",
