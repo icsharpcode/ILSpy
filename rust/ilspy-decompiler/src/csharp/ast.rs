@@ -98,6 +98,7 @@ pub enum BinaryOp {
     ConditionalOr = 4,
     Equality = 8,
     InEquality = 9,
+    NullCoalescing = 20,
 }
 
 /// `ResolveResult` annotations.

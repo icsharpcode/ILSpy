@@ -2867,6 +2867,18 @@ models the resolve result the host's node will have, for the null literal (item 
 integers, and the minimum and maximum values the AST builder writes as member references
 (those fall back).
 
+### 3.100 Null coalescing (item 68p)
+
+`VisitNullCoalescingInstruction` translates both operands without type hint, adjusts a
+constant fallback to the value's type, and asks `ResolveBinaryOperator` for `??`, which goes
+to `ResolveNullCoalescingOperator`: for a nullable value type the fallback is converted to
+the underlying type, otherwise to the value's type, otherwise the value to the fallback's.
+When the fallback already has the value's type (and the value is no nullable value type),
+the conversion is the identity and the `OperatorResolveResult` of `Coalesce` keeps both
+operands' resolve results; the engine translates that case. Everything else, including the
+error path that casts the operands, falls back. The share stayed at 51.8 %: most of these
+bodies now stop at casts (`castclass`, 28) and lifted operations (`NullableRewrap`, 29).
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

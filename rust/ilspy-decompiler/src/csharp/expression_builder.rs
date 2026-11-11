@@ -101,6 +101,9 @@ impl Builder<'_, '_, '_, '_> {
             Inst::Call(c) => self.call(inst, &c, super::call_builder::CallOp::Call),
             Inst::CallVirt(c) => self.call(inst, &c, super::call_builder::CallOp::CallVirt),
             Inst::NewObj(c) => self.new_obj(inst, &c),
+            Inst::NullCoalescing {
+                value, fallback, ..
+            } => self.null_coalescing(inst, value, fallback),
             Inst::If {
                 condition,
                 true_inst,
@@ -606,5 +609,42 @@ impl Builder<'_, '_, '_, '_> {
             }
             _ => false,
         }
+    }
+    /// `VisitNullCoalescingInstruction` where `ResolveNullCoalescingOperator` needs no
+    /// conversion: a value that is no nullable value type and a fallback of its type.
+    fn null_coalescing(
+        &mut self,
+        inst: NodeId,
+        value: NodeId,
+        fallback: NodeId,
+    ) -> Result<TranslatedExpression, Unsupported> {
+        let value = self.translate(value, None)?;
+        let fallback = self.translate(fallback, None)?;
+        let fallback = self.adjust_constant_expression_to_type(fallback, value.ty)?;
+        for t in [value.ty, fallback.ty] {
+            if self.ts.kind(t) == TypeKind::Dynamic {
+                return Err("a dynamic ??".to_owned());
+            }
+        }
+        if self.ts.is_known(value.ty, KnownTypeCode::NullableOfT) {
+            return Err("a ?? of a nullable value type".to_owned());
+        }
+        // `TryConvert(ref rhs, lhs.Type)` leaves the fallback alone only for the same type.
+        if fallback.ty != value.ty
+            || matches!(self.ts.kind(value.ty), TypeKind::Null | TypeKind::None)
+        {
+            return Err("a ?? that needs conversions".to_owned());
+        }
+        let e = self.ast.add(AstNode::BinaryOperator {
+            op: BinaryOp::NullCoalescing,
+            left: value.expression,
+            right: fallback.expression,
+        });
+        self.ast.with_il(e, inst);
+        self.ast.with_rr(e, Rr::Operator { ty: value.ty });
+        Ok(TranslatedExpression {
+            expression: e,
+            ty: value.ty,
+        })
     }
 }
