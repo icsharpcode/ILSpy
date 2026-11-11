@@ -67,6 +67,18 @@ pub enum AstNode {
         true_expression: AstId,
         false_expression: AstId,
     },
+    /// `IdentifierExpression` with type arguments, which the host builds with `ConvertType`.
+    GenericIdentifier {
+        name: String,
+        type_arguments: Vec<TypeId>,
+    },
+    /// `MemberReferenceExpression` with type arguments, which the host builds with
+    /// `ConvertType`.
+    GenericMemberReference {
+        target: AstId,
+        name: String,
+        type_arguments: Vec<TypeId>,
+    },
     /// `ThrowStatement`, a rethrow without an expression.
     Throw { expression: Option<AstId> },
     /// `ObjectCreateExpression` of `ExpressionBuilder.ConvertType(ty)`, which the host builds.

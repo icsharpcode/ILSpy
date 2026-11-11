@@ -62,6 +62,8 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		public const byte Throw = 19;
 		public const byte ObjectCreate = 20;
 		public const byte Conditional = 21;
+		public const byte GenericIdentifier = 22;
+		public const byte GenericMemberReference = 23;
 
 		public byte Kind;
 		/// <summary>The instructions the node is annotated with, in order.</summary>
@@ -76,6 +78,8 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		public Leave? ImplicitReturn;
 		public RustBodyNode[] Children = [];
 		public IType? Type;
+		/// <summary>For a generic name: the type arguments written with it.</summary>
+		public IType[] TypeArguments = [];
 		public object? Value;
 		public bool Flag;
 	}
@@ -271,6 +275,12 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					}
 					return Annotate(new BinaryOperatorExpression(left, op, right), node);
 				}
+				case RustBodyNode.GenericIdentifier:
+					return Annotate(new IdentifierExpression((string)node.Value!,
+						node.TypeArguments.Select(exprBuilder.ConvertType)), node);
+				case RustBodyNode.GenericMemberReference:
+					return Annotate(new MemberReferenceExpression((Expression)Build(node.Children[0], exprBuilder), (string)node.Value!,
+						node.TypeArguments.Select(exprBuilder.ConvertType)), node);
 				case RustBodyNode.Conditional:
 				{
 					var condition = (Expression)Build(node.Children[0], exprBuilder);

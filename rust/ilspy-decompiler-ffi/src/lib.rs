@@ -515,8 +515,11 @@ impl Resolver for HostResolver {
         ts: &TypeSystem<'_, '_>,
         name: &str,
         target: Option<ilspy_decompiler::il::transforms::LookupTarget>,
+        type_arguments: &[ilspy_decompiler::typesystem::types::TypeId],
     ) -> Option<Vec<ilspy_decompiler::il::transforms::MethodGroupList>> {
-        let bytes = ilspy_decompiler::wire::ilast::method_group_query(ts, name, target).ok()?;
+        let bytes =
+            ilspy_decompiler::wire::ilast::method_group_query(ts, name, target, type_arguments)
+                .ok()?;
         let answer = self.ask_data(&bytes)?;
         ilspy_decompiler::wire::ilast::method_group_answer(&answer)
     }

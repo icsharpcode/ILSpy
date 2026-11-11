@@ -534,3 +534,21 @@ fn read_only_span_of_string_preferred_over_read_only_span_of_object() {
         assert_eq!(r.best_candidate(), Some(&better));
     });
 }
+
+/// `ValidateConstraints` for `Nullable<U>` where `U : struct`: a type parameter with a
+/// `struct` or `new()` constraint has the dummy parameterless constructor
+/// `AbstractTypeParameter.GetConstructors` yields, so it satisfies `Nullable<T>`'s constraints.
+#[test]
+fn struct_constrained_type_parameter_satisfies_nullable_constraints() {
+    let f = Fixture::new();
+    f.run(|c| {
+        let nullable = c.ts.known_type(KnownTypeCode::NullableOfT);
+        let t = c.ts.type_arguments(nullable)[0];
+        let u = common::csharp::type_parameter(c.ts, true, 0, "U", false, true, true, Vec::new());
+        assert!(
+            ilspy_decompiler::semantics::overload_resolution::validate_constraints(
+                c, t, u, None, None
+            )
+        );
+    });
+}

@@ -335,6 +335,12 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 						query.CausesNonVirtualInvocation = reader.Bool();
 					query.Target = reader.Type();
 				}
+				if (query.Kind == RustResolverQuery.MethodGroupKind)
+				{
+					query.TypeArguments = new IType[reader.Len()];
+					for (int i = 0; i < query.TypeArguments.Length; i++)
+						query.TypeArguments[i] = reader.Type();
+				}
 				if (!reader.AtEnd)
 					throw new InvalidOperationException("Trailing bytes after the resolver query");
 				return query;
@@ -655,6 +661,17 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				case RustBodyNode.Conditional:
 					node.Children = [BodyNode(), BodyNode(), BodyNode()];
 					break;
+				case RustBodyNode.GenericIdentifier:
+				case RustBodyNode.GenericMemberReference:
+				{
+					if (node.Kind == RustBodyNode.GenericMemberReference)
+						node.Children = [BodyNode()];
+					node.Value = Str();
+					node.TypeArguments = new IType[Len()];
+					for (int i = 0; i < node.TypeArguments.Length; i++)
+						node.TypeArguments[i] = Type();
+					break;
+				}
 				case RustBodyNode.ObjectCreate:
 				{
 					node.Type = Type();

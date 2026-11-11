@@ -10,7 +10,10 @@ use crate::il::ast::{CallData, Inst, MethodOperand, NodeId};
 use crate::il::transforms::{AccessorBinding, LookupTarget, MethodGroupList};
 use crate::semantics::overload_resolution::OverloadResolutionErrors;
 use crate::semantics::types::TypeKind;
-use crate::semantics::{Conversions, Method, MethodKey, MethodList, OverloadResolution};
+use crate::semantics::{
+    Conversions, Method, MethodKey, MethodList, OverloadResolution, TypeInference,
+    TypeInferenceAlgorithm,
+};
 use crate::typesystem::attrs::ACC_PROTECTED;
 use crate::typesystem::compilation::TypeDefId;
 use crate::typesystem::fnptr::Normalization;
@@ -93,9 +96,6 @@ impl Builder<'_, '_, '_, '_> {
         }
         let method =
             Method::from_resolved(self.ts, resolved).ok_or("a call of an unresolved method")?;
-        if !method.type_parameters.is_empty() {
-            return Err("a call of a generic method".to_owned());
-        }
         if self
             .ts
             .is_explicit_interface_implementation(id)
@@ -166,19 +166,38 @@ impl Builder<'_, '_, '_, '_> {
                 target.expression,
                 base_needed,
             );
-        let require =
+        let (require, require_type_arguments) =
             self.disambiguate_call(&method, id, op, &target, &mut list, require, declaring)?;
 
         // the invocation
-        let callee = if require {
-            self.ast.add(AstNode::MemberReference {
+        let type_arguments = match &method.method_args {
+            Some(args) if require_type_arguments => args.clone(),
+            _ => Vec::new(),
+        };
+        // The managed builder leaves out type arguments with anonymous types.
+        if type_arguments
+            .iter()
+            .any(|&t| self.may_contain_anonymous_type(t))
+        {
+            return Err("type arguments that may be anonymous types".to_owned());
+        }
+        let callee = match (require, type_arguments.is_empty()) {
+            (true, true) => self.ast.add(AstNode::MemberReference {
                 target: target.expression,
                 name: method.name.clone(),
-            })
-        } else {
-            self.ast.add(AstNode::Identifier {
+            }),
+            (false, true) => self.ast.add(AstNode::Identifier {
                 name: method.name.clone(),
-            })
+            }),
+            (true, false) => self.ast.add(AstNode::GenericMemberReference {
+                target: target.expression,
+                name: method.name.clone(),
+                type_arguments,
+            }),
+            (false, false) => self.ast.add(AstNode::GenericIdentifier {
+                name: method.name.clone(),
+                type_arguments,
+            }),
         };
         let names = list.argument_names();
         let mut arguments = Vec::with_capacity(list.arguments.len());
@@ -357,7 +376,8 @@ impl Builder<'_, '_, '_, '_> {
         let mut spent_names = false;
         let mut spent_cast_arguments = false;
         loop {
-            let errors = self.probe_group(&group, method.declaring, method, CallOp::Call, list);
+            let errors =
+                self.probe_group(&group, method.declaring, method, CallOp::Call, list, &[])?;
             if errors == OverloadResolutionErrors::NONE {
                 return Ok(());
             }
@@ -550,7 +570,7 @@ impl Builder<'_, '_, '_, '_> {
         list: &mut ArgumentList,
         require: bool,
         declaring: TypeId,
-    ) -> Result<bool, Unsupported> {
+    ) -> Result<(bool, bool), Unsupported> {
         let resolver = self
             .resolver
             .ok_or("a member reference without the host's resolver")?;
@@ -588,19 +608,39 @@ impl Builder<'_, '_, '_, '_> {
         let mut spent_cast_target = false;
         let mut spent_type_arguments = false;
         let mut spent_explicit_in = false;
+        // `RequireTypeArguments`, which a non-generic method takes too, with none to write.
+        let mut type_arguments = false;
+        // `WriteTypeArgumentsInferenceCannotReach`
+        // shortcut: the engine's base types lack the nullability annotations of interface
+        // implementations, so its type inference fails where the managed one finds an annotated
+        // base type; a call whose type arguments inference does not reach falls back. Upgrade
+        // when `all_base_types` carries those annotations.
+        if !method.type_parameters.is_empty() && !self.can_infer_type_arguments(method, list) {
+            return Err("a generic call whose type arguments inference does not reach".to_owned());
+        }
         loop {
             let probe_target = require.then_some(lookup_target);
-            let errors = self.probe_call(resolver, method, op, probe_target, target, list);
+            let written = if type_arguments {
+                method.method_args.clone().unwrap_or_default()
+            } else {
+                Vec::new()
+            };
+            let errors =
+                self.probe_call(resolver, method, op, probe_target, target, list, &written)?;
             if errors == OverloadResolutionErrors::NONE {
-                return Ok(require);
+                return Ok((require, type_arguments));
             }
-            // `TryRepair`
-            if (errors == OverloadResolutionErrors::TYPE_INFERENCE_FAILED
-                || errors == OverloadResolutionErrors::WRONG_NUMBER_OF_TYPE_ARGUMENTS)
+            // `TryRepair`, where a failed inference falls back for the reason above.
+            if errors == OverloadResolutionErrors::TYPE_INFERENCE_FAILED {
+                return Err(
+                    "a generic call whose type arguments inference does not reach".to_owned(),
+                );
+            }
+            if errors == OverloadResolutionErrors::WRONG_NUMBER_OF_TYPE_ARGUMENTS
                 && !spent_type_arguments
             {
-                // A non-generic method has no type arguments to write.
                 spent_type_arguments = true;
+                type_arguments = true;
                 continue;
             }
             // `Escalate`
@@ -637,6 +677,7 @@ impl Builder<'_, '_, '_, '_> {
             }
             if !spent_type_arguments {
                 spent_type_arguments = true;
+                type_arguments = true;
                 continue;
             }
             if !spent_explicit_in {
@@ -645,12 +686,50 @@ impl Builder<'_, '_, '_, '_> {
                 continue;
             }
             // No spelling resolves; the most explicit one is written anyway.
-            return Ok(require);
+            return Ok((require, type_arguments));
+        }
+    }
+
+    /// `CanInferTypeArgumentsFromArguments`: whether type inference from the arguments
+    /// succeeds for the method definition, with the expression builder's improved algorithm.
+    fn can_infer_type_arguments(&mut self, method: &Method, list: &ArgumentList) -> bool {
+        let arguments: Vec<_> = list
+            .arguments
+            .iter()
+            .map(|a| self.semantic_rr(a.expression, a.ty))
+            .collect();
+        let parameters: Vec<TypeId> = method.definition_parameters.iter().map(|p| p.ty).collect();
+        let mut conversions = Conversions::new(self.ts);
+        let mut ti = TypeInference::new(&mut conversions);
+        ti.algorithm = TypeInferenceAlgorithm::Improved;
+        ti.infer_type_arguments(&method.type_parameters, &arguments, &parameters, None)
+            .1
+    }
+
+    /// Whether `t` may contain an anonymous type, which `WriteTypeArgumentsInferenceCannotReach`
+    /// treats apart: a type definition named like one (as `IsAnonymousType` checks the name),
+    /// or any type the check does not look into.
+    fn may_contain_anonymous_type(&self, t: TypeId) -> bool {
+        match self.ts.data(t) {
+            TypeData::Def(def) => self.ts.comp.type_def(*def).map_or(true, |i| {
+                i.full_name.top.ns.is_empty()
+                    && (i.full_name.name().contains("AnonType")
+                        || i.full_name.name().contains("AnonymousType"))
+            }),
+            TypeData::Inst { generic, args } => {
+                self.may_contain_anonymous_type(*generic)
+                    || args.iter().any(|&a| self.may_contain_anonymous_type(a))
+            }
+            TypeData::Array { elem, .. } => self.may_contain_anonymous_type(*elem),
+            TypeData::Pointer(e) | TypeData::ByRef(e) => self.may_contain_anonymous_type(*e),
+            TypeData::TypeParam { .. } => false,
+            _ => true,
         }
     }
 
     /// `Disambiguator.ProbeCall`: the overload resolution of the current spelling, over the
     /// method group the host looks the name up to.
+    #[allow(clippy::too_many_arguments)]
     fn probe_call(
         &mut self,
         resolver: &dyn crate::il::transforms::Resolver,
@@ -659,12 +738,15 @@ impl Builder<'_, '_, '_, '_> {
         lookup_target: Option<LookupTarget>,
         target: &TranslatedExpression,
         list: &ArgumentList,
-    ) -> OverloadResolutionErrors {
-        let Some(group) = resolver.method_group(self.ts, &method.name, lookup_target) else {
-            return OverloadResolutionErrors::AMBIGUOUS_MATCH;
+        type_arguments: &[TypeId],
+    ) -> Result<OverloadResolutionErrors, Unsupported> {
+        let Some(group) =
+            resolver.method_group(self.ts, &method.name, lookup_target, type_arguments)
+        else {
+            return Ok(OverloadResolutionErrors::AMBIGUOUS_MATCH);
         };
         let lookup_type = lookup_target.map(|_| target.ty);
-        self.probe_group(&group, lookup_type, method, op, list)
+        self.probe_group(&group, lookup_type, method, op, list, type_arguments)
     }
 
     /// The overload resolution of `IsUnambiguousCall` over a method group, with
@@ -676,7 +758,8 @@ impl Builder<'_, '_, '_, '_> {
         method: &Method,
         op: CallOp,
         list: &ArgumentList,
-    ) -> OverloadResolutionErrors {
+        type_arguments: &[TypeId],
+    ) -> Result<OverloadResolutionErrors, Unsupported> {
         let lists = self.method_lists(group, lookup_type);
         let arguments = list
             .arguments
@@ -685,27 +768,32 @@ impl Builder<'_, '_, '_, '_> {
             .collect();
         let names = list.argument_names();
         let mut conversions = Conversions::new(self.ts);
-        let mut or = OverloadResolution::new(arguments, names, Vec::new());
+        let mut or = OverloadResolution::new(arguments, names, type_arguments.to_vec());
         or.add_method_lists(&mut conversions, &lists);
         // `CheckBestCandidate`
         let errors = or.best_candidate_errors(&mut conversions);
         if errors != OverloadResolutionErrors::NONE {
-            return errors;
+            return Ok(errors);
         }
         if or.is_ambiguous() {
-            return OverloadResolutionErrors::AMBIGUOUS_MATCH;
+            return Ok(OverloadResolutionErrors::AMBIGUOUS_MATCH);
         }
         let Some(found) = or.best_candidate_with_substituted_type_arguments(self.ts) else {
-            return OverloadResolutionErrors::AMBIGUOUS_MATCH;
+            return Ok(OverloadResolutionErrors::AMBIGUOUS_MATCH);
         };
-        if !self.is_appropriate_call_target(op, method, &found) {
-            return OverloadResolutionErrors::AMBIGUOUS_MATCH;
+        if !self.is_appropriate_call_target(op, method, &found)? {
+            return Ok(OverloadResolutionErrors::AMBIGUOUS_MATCH);
         }
         // The normal form was meant; no argument was left out.
         if or.best_candidate_is_expanded_form() {
-            return OverloadResolutionErrors::AMBIGUOUS_MATCH;
+            return Ok(OverloadResolutionErrors::AMBIGUOUS_MATCH);
         }
-        OverloadResolutionErrors::NONE
+        // The resolve result names the method found, whose inferred type arguments may differ
+        // from the call's in tuple names or nullability.
+        if found.method_args != method.method_args {
+            return Err("a generic call whose inferred type arguments differ".to_owned());
+        }
+        Ok(OverloadResolutionErrors::NONE)
     }
 
     /// The host's method group as the overload resolution's method lists: each definition
@@ -814,12 +902,12 @@ impl Builder<'_, '_, '_, '_> {
         op: CallOp,
         expected: &Method,
         actual: &Method,
-    ) -> bool {
+    ) -> Result<bool, Unsupported> {
         if self.same_method_after_type_erasure(expected, actual) {
-            return true;
+            return Ok(true);
         }
         let MethodKey::Def(actual_id) = actual.key else {
-            return false;
+            return Ok(false);
         };
         if op != CallOp::CallVirt
             || !self
@@ -827,11 +915,12 @@ impl Builder<'_, '_, '_, '_> {
                 .method_modifiers_of(actual_id)
                 .is_ok_and(|m| m.is_override)
         {
-            return false;
+            return Ok(false);
         }
-        // shortcut: an override found in place of the base method would be written as a call of
-        // the override, with its resolve result; such calls are not translated yet. Upgrade with
-        // the base member chain (`InheritanceHelper.GetBaseMembers`) when they are.
-        false
+        // shortcut: an override found in place of the method called is written as a call of the
+        // override, with its resolve result, when it overrides that method; such calls are not
+        // translated. Upgrade with the base member chain (`InheritanceHelper.GetBaseMembers`)
+        // when they are.
+        Err("a call whose name binds to an override".to_owned())
     }
 }

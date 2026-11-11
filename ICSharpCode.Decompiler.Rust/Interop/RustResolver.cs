@@ -80,6 +80,8 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		/// <summary>The target variable's type and its single store's value type.</summary>
 		public (IType Variable, IType Value)? TargetStore;
 		public IType[] Arguments = [];
+		/// <summary>For <see cref="MethodGroupKind"/>: the type arguments written with the name.</summary>
+		public IType[] TypeArguments = [];
 	}
 
 	/// <summary>
@@ -288,12 +290,12 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 			ResolveResult? result;
 			if (!query.HasTarget)
 			{
-				result = resolver.ResolveSimpleName(query.Name, EmptyList<IType>.Instance, isInvocationTarget: true);
+				result = resolver.ResolveSimpleName(query.Name, query.TypeArguments, isInvocationTarget: true);
 			}
 			else
 			{
 				var lookup = new MemberLookup(resolver.CurrentTypeDefinition, resolver.CurrentTypeDefinition.ParentModule);
-				result = lookup.Lookup(TargetResolveResult(query), query.Name, EmptyList<IType>.Instance, isInvocation: true);
+				result = lookup.Lookup(TargetResolveResult(query), query.Name, query.TypeArguments, isInvocation: true);
 			}
 			if (result is not MethodGroupResolveResult group)
 				return [0];

@@ -2748,6 +2748,45 @@ The share rose from 47.8 % to 48.3 %. Most of the 91 `if` instructions only move
 further in: pattern matching (`match`, 26) and relational comparisons (20) now show up,
 behind generic method calls (64) and string concatenation (50).
 
+### 3.95 Generic method calls (item 68k)
+
+For a generic method, `Disambiguator.ForCall` first asks whether type inference from the
+arguments reaches the method definition's type parameters at all
+(`WriteTypeArgumentsInferenceCannotReach`, with the expression builder's improved inference
+algorithm), and writes the type arguments from the start if not; a failed inference during
+the probes is repaired the same way. The engine passes the written type arguments to its
+overload resolution, and the host's method group lookup now receives them too, since
+`MemberLookup` filters by them. The written name carries them as `AstType`s the host
+converts, through two new node kinds. For the calls the engine translates, inference does
+reach the type arguments, so they are written only as the late `RequireTypeArguments` step.
+
+The gate runs found three differences, and each is now handled. First, where inference does
+not reach, the engine's result can differ from the managed one: the managed type system gives
+the base types a class inherits through an interface implementation (`DepthFirstAstVisitor<T>
+: IAstVisitor<T>`) the nullability annotations of that implementation, the engine's
+`all_base_types` does not, so inferring `T` for an annotated `IAstVisitor<T>` parameter from
+such a class fails in the engine only. Until the base types carry those annotations, a call
+whose type arguments inference does not reach falls back (4 bodies of the corpus). Second, the
+host's lookup can find the override of the method called (a virtual generic method called
+through `this` in the class that overrides it); the managed builder accepts it through the
+base member chain and names it in the resolve result, so the engine now falls back there
+instead of escalating to a longer spelling, which it did for non-generic calls as well. Third,
+the ported constraint check rejected a type parameter of the calling method for a `struct`
+constraint (calling a method on `Nullable<T>` from a method with `T : struct`):
+`AbstractTypeParameter.GetConstructors` yields a dummy parameterless constructor for such a
+parameter, which the engine's constructor lookup does not; `validate_constraints` now asks the
+type parameter's flags, with a test.
+
+Two more cases fall back by design. Type arguments that may contain anonymous types are left
+out or pinned by the managed builder; the engine recognizes such types by name. And the managed
+resolve result names the method overload resolution found, whose type arguments come from
+inference and can differ from the call's in tuple names or nullability; the engine only accepts
+a found method whose type arguments are exactly the call's.
+
+The share stayed at 48.3 %: the bodies with generic calls (64) now fall back further in,
+mostly on extension method calls (49) and by-reference arguments (23), which the next steps
+take on.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

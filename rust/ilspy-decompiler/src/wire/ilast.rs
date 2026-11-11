@@ -1651,7 +1651,8 @@ pub fn field_kind_query(
 }
 
 /// A `method_group` question in the `resolver_query` format: kind 5, the name, and the
-/// target as `field_reference_query` writes it after a byte saying whether there is one.
+/// target as `field_reference_query` writes it after a byte saying whether there is one, then
+/// the number of type arguments and the types.
 /// The answer is 0 for no method group, or 1, the number of lists and per list the declaring
 /// type's module index and TypeDef row and its methods' module indices and MethodDef rows, as
 /// unsigned LEB128.
@@ -1659,6 +1660,7 @@ pub fn method_group_query(
     ts: &TypeSystem<'_, '_>,
     name: &str,
     target: Option<crate::il::transforms::LookupTarget>,
+    type_arguments: &[crate::typesystem::types::TypeId],
 ) -> Result<Vec<u8>, String> {
     use crate::il::transforms::LookupTarget;
     query_message(ts, |w| {
@@ -1683,6 +1685,10 @@ pub fn method_group_query(
                 w.out.u8(2);
                 w.ty(ty);
             }
+        }
+        w.out.len(type_arguments.len());
+        for &t in type_arguments {
+            w.ty(t);
         }
         Ok(())
     })

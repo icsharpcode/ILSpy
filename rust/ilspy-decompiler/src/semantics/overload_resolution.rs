@@ -1093,31 +1093,39 @@ pub fn validate_constraints(
     }
     if info.default_ctor {
         let ts = &mut *conversions.ts;
-        if let Some(def) = ts.definition(argument)
-            // TypeAttributes.Abstract
-            && ts.comp.type_def(def).is_ok_and(|i| i.flags & 0x80 != 0)
-        {
-            return false;
-        }
-        let constructors = ts
-            .get_constructors(
-                argument,
-                MemberOptions {
-                    ignore_inherited: true,
-                    definitions: true,
-                },
-            )
-            .unwrap_or_default();
-        let has_public_parameterless = constructors.iter().any(|m| {
-            m.base_params.is_empty()
-                && match m.origin {
-                    MethodOrigin::Def(id) => ts
-                        .method_accessibility_of(id)
-                        .is_ok_and(|a| a == ACC_PUBLIC),
-                    MethodOrigin::DummyConstructor(_) => true,
-                    MethodOrigin::Fake => false,
+        // `AbstractTypeParameter.GetConstructors`: a type parameter has the dummy public
+        // parameterless constructor exactly when it has a `struct` or `new()` constraint.
+        let has_public_parameterless =
+            if let TypeData::TypeParam { owner, index } = *ts.data(argument) {
+                ts.type_parameter_info(owner, index)
+                    .is_some_and(|i| i.default_ctor || i.value_type)
+            } else {
+                if let Some(def) = ts.definition(argument)
+                    // TypeAttributes.Abstract
+                    && ts.comp.type_def(def).is_ok_and(|i| i.flags & 0x80 != 0)
+                {
+                    return false;
                 }
-        });
+                let constructors = ts
+                    .get_constructors(
+                        argument,
+                        MemberOptions {
+                            ignore_inherited: true,
+                            definitions: true,
+                        },
+                    )
+                    .unwrap_or_default();
+                constructors.iter().any(|m| {
+                    m.base_params.is_empty()
+                        && match m.origin {
+                            MethodOrigin::Def(id) => ts
+                                .method_accessibility_of(id)
+                                .is_ok_and(|a| a == ACC_PUBLIC),
+                            MethodOrigin::DummyConstructor(_) => true,
+                            MethodOrigin::Fake => false,
+                        }
+                })
+            };
         if !has_public_parameterless {
             return false;
         }

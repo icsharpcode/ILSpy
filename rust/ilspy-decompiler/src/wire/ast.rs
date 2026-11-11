@@ -43,6 +43,8 @@ mod kind {
     pub const THROW: u8 = 19;
     pub const OBJECT_CREATE: u8 = 20;
     pub const CONDITIONAL: u8 = 21;
+    pub const GENERIC_IDENTIFIER: u8 = 22;
+    pub const GENERIC_MEMBER_REFERENCE: u8 = 23;
 }
 
 pub(super) fn write_body(
@@ -196,6 +198,8 @@ fn node(w: &mut FunctionWriter<'_, '_, '_, '_>, ast: &Ast, id: AstId) -> Result<
         AstNode::Throw { .. } => kind::THROW,
         AstNode::ObjectCreate { .. } => kind::OBJECT_CREATE,
         AstNode::Conditional { .. } => kind::CONDITIONAL,
+        AstNode::GenericIdentifier { .. } => kind::GENERIC_IDENTIFIER,
+        AstNode::GenericMemberReference { .. } => kind::GENERIC_MEMBER_REFERENCE,
     });
     w.out.len(a.il.len());
     for &inst in &a.il {
@@ -259,6 +263,28 @@ fn node(w: &mut FunctionWriter<'_, '_, '_, '_>, ast: &Ast, id: AstId) -> Result<
         AstNode::NamedArgument { name, expression } => {
             w.string(&name);
             node(w, ast, expression)?;
+        }
+        AstNode::GenericIdentifier {
+            name,
+            type_arguments,
+        } => {
+            w.string(&name);
+            w.out.len(type_arguments.len());
+            for t in type_arguments {
+                w.ty(t);
+            }
+        }
+        AstNode::GenericMemberReference {
+            target,
+            name,
+            type_arguments,
+        } => {
+            node(w, ast, target)?;
+            w.string(&name);
+            w.out.len(type_arguments.len());
+            for t in type_arguments {
+                w.ty(t);
+            }
         }
         AstNode::Conditional {
             condition,

@@ -463,7 +463,11 @@ the reasons. This file holds only the ordered steps, their gates and their rules
   - [x] 68j. `if` instructions in expressions: `&&` and `||` with a `bool` on the right, and the
     conditional operator with branches of the same type (lecture 3.94). Subject:
     `Translate logic operators and conditional expressions to C# in the engine`.
-  - [ ] 68k-68y. Further construct groups, in the order of the fallback reasons the ratchet test
+  - [x] 68k. Calls of generic methods whose type arguments inference reaches: the
+    `RequireTypeArguments` step and the type arguments in the lookup and the written name
+    (lecture 3.95).
+    Subject: `Translate generic method calls to C# in the engine`.
+  - [ ] 68l-68y. Further construct groups, in the order of the fallback reasons the ratchet test
     prints, until no body of the corpus falls back. Subject pattern:
     `Translate <construct group> to C# in the engine`.
   - [ ] 68z. Request-level seam 2. Subject: `Add the Rust C# AST builders and the AST materializer`.

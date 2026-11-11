@@ -301,8 +301,8 @@ pub trait Resolver {
         target_is_this: bool,
     ) -> FieldKind;
 
-    /// `Disambiguator.LookUpName` for an invocation without type arguments: the method group
-    /// `name` resolves to from `target` (`MemberLookup.Lookup`) or unqualified
+    /// `Disambiguator.LookUpName` for an invocation with the written `type_arguments`: the
+    /// method group `name` resolves to from `target` (`MemberLookup.Lookup`) or unqualified
     /// (`ResolveSimpleName`), its method definitions grouped by declaring type, base types
     /// first; `None` when the name is no method group.
     fn method_group(
@@ -310,6 +310,7 @@ pub trait Resolver {
         ts: &TypeSystem<'_, '_>,
         name: &str,
         target: Option<LookupTarget>,
+        type_arguments: &[TypeId],
     ) -> Option<Vec<MethodGroupList>>;
 
     /// `Disambiguator.IsUnambiguousAccess` for a property without parameters: what the name of
