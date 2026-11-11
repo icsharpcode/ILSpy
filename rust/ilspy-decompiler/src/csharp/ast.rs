@@ -99,6 +99,13 @@ pub enum Rr {
         method: Box<crate::il::ast::MethodOperand>,
         ty: TypeId,
     },
+    /// `MemberResolveResult` of the property (of the given type) `accessor` belongs to, with
+    /// the target's resolve result.
+    Property {
+        target: Box<Rr>,
+        accessor: Box<crate::il::ast::MethodOperand>,
+        ty: TypeId,
+    },
 }
 
 /// The annotations of a node.

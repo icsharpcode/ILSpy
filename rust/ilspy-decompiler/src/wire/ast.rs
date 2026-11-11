@@ -141,6 +141,13 @@ fn rr(w: &mut FunctionWriter<'_, '_, '_, '_>, rr: Option<&Rr>) -> Result<(), Str
             self::rr(w, Some(target))?;
             w.call_method(method)?;
         }
+        Some(Rr::Property {
+            target, accessor, ..
+        }) => {
+            w.out.u8(10);
+            self::rr(w, Some(target))?;
+            w.call_method(accessor)?;
+        }
     }
     Ok(())
 }

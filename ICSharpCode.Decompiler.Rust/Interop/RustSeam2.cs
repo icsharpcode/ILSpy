@@ -201,8 +201,12 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				{
 					var left = (Expression)Build(node.Children[0], exprBuilder);
 					var right = (Expression)Build(node.Children[1], exprBuilder);
-					node.ResolveResult = new OperatorResolveResult(node.AssignmentType!, System.Linq.Expressions.ExpressionType.Assign,
-						left.GetResolveResult(), right.GetResolveResult());
+					// A property setter's assignment comes with a resolve result of its own.
+					if (node.AssignmentType != null)
+					{
+						node.ResolveResult = new OperatorResolveResult(node.AssignmentType, System.Linq.Expressions.ExpressionType.Assign,
+							left.GetResolveResult(), right.GetResolveResult());
+					}
 					return Annotate(new AssignmentExpression(left, right), node);
 				}
 				case RustBodyNode.Invocation:

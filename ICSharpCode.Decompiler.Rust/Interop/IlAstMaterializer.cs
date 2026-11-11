@@ -316,9 +316,17 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 			reader.context = new GenericContext(reader.mainModule.GetDefinition(MetadataTokens.MethodDefinitionHandle(row)));
 			reader.ReadContexts();
 			var query = new RustResolverQuery { Kind = reader.U8() };
-			if (query.Kind == RustResolverQuery.MethodGroupKind)
+			if (query.Kind is RustResolverQuery.MethodGroupKind or RustResolverQuery.AccessorKind)
 			{
-				query.Name = reader.Str();
+				if (query.Kind == RustResolverQuery.AccessorKind)
+				{
+					query.Method = reader.CallMethod();
+					query.CallVirt = reader.Bool();
+				}
+				else
+				{
+					query.Name = reader.Str();
+				}
 				query.HasTarget = reader.Bool();
 				if (query.HasTarget)
 				{
@@ -682,6 +690,13 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					var target = BodyResolveResult(out _);
 					pendingInvocation = (target, CallMethod());
 					return null;
+				}
+				case 10:
+				{
+					var target = BodyResolveResult(out _);
+					var accessor = CallMethod();
+					return new MemberResolveResult(target, accessor.AccessorOwner
+						?? throw new InvalidOperationException("Property resolve result of a method that is no accessor"));
 				}
 				case 8:
 				{

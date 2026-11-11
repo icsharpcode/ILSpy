@@ -520,6 +520,26 @@ impl Resolver for HostResolver {
         let answer = self.ask_data(&bytes)?;
         ilspy_decompiler::wire::ilast::method_group_answer(&answer)
     }
+
+    fn accessor_reference(
+        &self,
+        ts: &TypeSystem<'_, '_>,
+        accessor: &ilspy_decompiler::il::ast::MethodOperand,
+        target: Option<ilspy_decompiler::il::transforms::LookupTarget>,
+        callvirt: bool,
+    ) -> ilspy_decompiler::il::transforms::AccessorBinding {
+        use ilspy_decompiler::il::transforms::AccessorBinding;
+        let Ok(bytes) =
+            ilspy_decompiler::wire::ilast::accessor_reference_query(ts, accessor, target, callvirt)
+        else {
+            return AccessorBinding::None;
+        };
+        match self.ask(&bytes) {
+            1 => AccessorBinding::Owner,
+            2 => AccessorBinding::Other,
+            _ => AccessorBinding::None,
+        }
+    }
 }
 
 /// The names AssignVariableNames' root scope collects, as `RustEngine.RootNames` writes them:

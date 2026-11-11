@@ -311,6 +311,28 @@ pub trait Resolver {
         name: &str,
         target: Option<LookupTarget>,
     ) -> Option<Vec<MethodGroupList>>;
+
+    /// `Disambiguator.IsUnambiguousAccess` for a property without parameters: what the name of
+    /// the property `accessor` belongs to binds to, written as a simple name (`target` is
+    /// `None`) or as a member access on `target`, with `IsAppropriateCallTarget` for `callvirt`.
+    fn accessor_reference(
+        &self,
+        ts: &TypeSystem<'_, '_>,
+        accessor: &super::ast::MethodOperand,
+        target: Option<LookupTarget>,
+        callvirt: bool,
+    ) -> AccessorBinding;
+}
+
+/// What a property name binds to (`Resolver::accessor_reference`).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum AccessorBinding {
+    /// No member, an error, or a member the accessor is not an appropriate call of.
+    None,
+    /// The accessor's own property.
+    Owner,
+    /// Another member an accessor call of it may write, such as the declaration it overrides.
+    Other,
 }
 
 /// The methods of a method group one type declares (`MethodListWithDeclaringType`), as

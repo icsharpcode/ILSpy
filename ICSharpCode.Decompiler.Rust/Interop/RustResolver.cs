@@ -53,6 +53,8 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		public const byte FieldKindKind = 4;
 		/// <summary><c>Disambiguator.LookUpName</c> for an invocation: the method group of <see cref="Name"/>.</summary>
 		public const byte MethodGroupKind = 5;
+		/// <summary><c>Disambiguator.IsUnambiguousAccess</c> for the property of the accessor <see cref="Method"/>.</summary>
+		public const byte AccessorKind = 6;
 
 		/// <summary><see cref="TargetKind"/>: <c>this</c> or <c>base</c>.</summary>
 		public const byte ThisTarget = 0;
@@ -70,6 +72,8 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		/// <summary>For <see cref="MethodGroupKind"/>: the name, and whether <see cref="Target"/> is set.</summary>
 		public string Name = "";
 		public bool HasTarget;
+		/// <summary>For <see cref="AccessorKind"/>: whether the accessor is called with <c>callvirt</c>.</summary>
+		public bool CallVirt;
 		public IType? Target;
 		/// <summary>The target variable's type and its single store's value type.</summary>
 		public (IType Variable, IType Value)? TargetStore;
@@ -140,6 +144,8 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				var q = IlAstMaterializer.ReadResolverQuery(wire, row, compilation, modules, settings);
 				if (q.Kind == RustResolverQuery.FieldKindKind)
 					return ClassifyField(q.Field, q.TargetIsThis);
+				if (q.Kind == RustResolverQuery.AccessorKind)
+					return AccessorReference(q);
 				if (q.Kind == RustResolverQuery.MethodGroupKind)
 				{
 					// The full answer's length; the engine asks again when it does not fit.
@@ -334,6 +340,34 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				}
 				return -1;
 			}
+		}
+
+		/// <summary>
+		/// <c>Disambiguator.IsUnambiguousAccess</c> for a property without parameters: 0 when its
+		/// name binds to no member the accessor call may write, 1 when it binds to the accessor's
+		/// property, 2 when it binds to another member the call may write.
+		/// </summary>
+		int AccessorReference(RustResolverQuery query)
+		{
+			var context = body ?? throw new InvalidOperationException("The engine asked about a C# body without the body's context");
+			var resolver = context.Resolver;
+			var owner = query.Method.AccessorOwner ?? throw new InvalidOperationException("The engine asked about an accessor of no property");
+			ResolveResult? result;
+			if (!query.HasTarget)
+			{
+				result = resolver.ResolveSimpleName(owner.Name, EmptyList<IType>.Instance, isInvocationTarget: false);
+			}
+			else
+			{
+				var lookup = new MemberLookup(resolver.CurrentTypeDefinition, resolver.CurrentTypeDefinition.ParentModule);
+				result = lookup.Lookup(TargetResolveResult(query), owner.Name, EmptyList<IType>.Instance, isInvocation: false);
+			}
+			if (result is not MemberResolveResult { IsError: false } resolved)
+				return 0;
+			var details = new ExpectedTargetDetails { CallOpCode = query.CallVirt ? OpCode.CallVirt : OpCode.Call };
+			if (!Disambiguator.IsAppropriateCallTarget(details, owner, resolved.Member))
+				return 0;
+			return resolved.Member.Equals(owner) ? 1 : 2;
 		}
 
 		/// <summary>The resolve result a member lookup sees for the query's target.</summary>

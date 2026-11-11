@@ -6,8 +6,8 @@
 //! string concatenation and interpolation, ranges, accessors, operators, extension methods,
 //! span helpers) fall back.
 
-use crate::il::ast::{CallData, Inst, NodeId};
-use crate::il::transforms::{LookupTarget, MethodGroupList};
+use crate::il::ast::{CallData, Inst, MethodOperand, NodeId};
+use crate::il::transforms::{AccessorBinding, LookupTarget, MethodGroupList};
 use crate::semantics::overload_resolution::OverloadResolutionErrors;
 use crate::semantics::types::TypeKind;
 use crate::semantics::{Conversions, Method, MethodKey, MethodList, OverloadResolution};
@@ -21,6 +21,10 @@ use crate::typesystem::types::{TypeData, TypeId};
 
 use super::ast::{AstNode, Rr};
 use super::{Builder, TranslatedExpression, Unsupported};
+
+/// `MethodSemanticsAttributes.Setter` and `Getter`.
+const ACCESSOR_SETTER: u16 = 0x01;
+const ACCESSOR_GETTER: u16 = 0x02;
 
 /// The opcode of the call (`ExpectedTargetDetails.CallOpCode`).
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -99,18 +103,38 @@ impl Builder<'_, '_, '_, '_> {
         {
             return Err("a call of an explicit interface implementation".to_owned());
         }
-        let accessor_owner = self.ts.accessor_owner(id);
-        if accessor_owner.is_some() {
-            return Err("an accessor call".to_owned());
-        }
-        if self.ts.method_flags(id, None).extension {
-            return Err("an extension method call".to_owned());
-        }
-        if method.is_operator {
-            return Err("an operator call".to_owned());
-        }
         let declaring = method.declaring.ok_or("a method without declaring type")?;
-        self.check_special_calls(&method, declaring)?;
+        // `IsWrittenAsMemberAccess`: the name of the property the accessor belongs to.
+        let property = match self.ts.accessor_owner(id) {
+            None => None,
+            Some((token, semantics)) => {
+                if token >> 24 != 0x17 {
+                    return Err("an event accessor call".to_owned());
+                }
+                let parameters = usize::from(semantics == ACCESSOR_SETTER);
+                if !matches!(semantics, ACCESSOR_GETTER | ACCESSOR_SETTER)
+                    || method.parameters.len() != parameters
+                {
+                    return Err("an indexer or parameterized property access".to_owned());
+                }
+                // `HandleRangeConstruction` comes first and writes `..` for `Range.All`.
+                if self.ts.is_known(declaring, KnownTypeCode::Range)
+                    || self.ts.is_known(declaring, KnownTypeCode::Index)
+                {
+                    return Err("a property of Range or Index".to_owned());
+                }
+                Some(self.property_info(id.module, token & 0x00FF_FFFF)?.0)
+            }
+        };
+        if property.is_none() {
+            if self.ts.method_flags(id, None).extension {
+                return Err("an extension method call".to_owned());
+            }
+            if method.is_operator {
+                return Err("an operator call".to_owned());
+            }
+            self.check_special_calls(&method, declaring)?;
+        }
 
         // the target
         let first_param = usize::from(!method.is_static);
@@ -158,6 +182,10 @@ impl Builder<'_, '_, '_, '_> {
             list.is_primitive_value.push(primitive);
             let arg = self.convert_to(arg, parameter.ty, true)?;
             list.arguments.push(arg);
+        }
+
+        if let Some(name) = property {
+            return self.accessor_call(inst, operand, &method, op, target, list, name, declaring);
         }
 
         // `GetRequiredTransformationsForCall`
@@ -215,6 +243,127 @@ impl Builder<'_, '_, '_, '_> {
             expression: e,
             ty: method.return_type,
         })
+    }
+
+    /// `HandleAccessorCall` for a property without parameters: `target.Name` or `Name`, and
+    /// for a setter the assignment of its value to that.
+    #[allow(clippy::too_many_arguments)]
+    fn accessor_call(
+        &mut self,
+        inst: NodeId,
+        operand: &MethodOperand,
+        method: &Method,
+        op: CallOp,
+        target: TranslatedExpression,
+        list: ArgumentList,
+        name: String,
+        declaring: TypeId,
+    ) -> Result<TranslatedExpression, Unsupported> {
+        let declaring_def = self.ts.definition(declaring);
+        let require = self.requires_qualifier_dispatching(
+            &name,
+            method.is_static,
+            declaring_def,
+            target.expression,
+            op != CallOp::CallVirt && method.is_overridable,
+        );
+        let require = self.disambiguate_accessor(operand, op, &target, require, declaring)?;
+        // A setter's only argument is the value, which is not part of the member reference.
+        let value = list.arguments.first().copied();
+        let ty = match value {
+            Some(_) => method.parameters[0].ty,
+            None => method.return_type,
+        };
+        let reference = if require {
+            self.ast.add(AstNode::MemberReference {
+                target: target.expression,
+                name,
+            })
+        } else {
+            self.ast.add(AstNode::Identifier { name })
+        };
+        let target_rr = self.rr_of(target.expression);
+        self.ast.with_rr(
+            reference,
+            Rr::Property {
+                target: Box::new(target_rr),
+                accessor: Box::new(operand.clone()),
+                ty,
+            },
+        );
+        let Some(value) = value else {
+            self.ast.with_il(reference, inst);
+            return Ok(TranslatedExpression {
+                expression: reference,
+                ty,
+            });
+        };
+        let e = self.ast.add(AstNode::Assignment {
+            left: reference,
+            right: value.expression,
+        });
+        self.ast.with_rr(e, Rr::Type(ty));
+        self.ast.with_il(e, inst);
+        Ok(TranslatedExpression { expression: e, ty })
+    }
+
+    /// `Disambiguator.ForAccessor` without arguments to cast: whether the property is written
+    /// with its target, qualified and then cast while its name does not bind back to it.
+    fn disambiguate_accessor(
+        &mut self,
+        accessor: &MethodOperand,
+        op: CallOp,
+        target: &TranslatedExpression,
+        require: bool,
+        declaring: TypeId,
+    ) -> Result<bool, Unsupported> {
+        let resolver = self
+            .resolver
+            .ok_or("a member reference without the host's resolver")?;
+        let lookup_target = match self.rr_of(target.expression) {
+            Rr::This {
+                ty,
+                causes_non_virtual_invocation,
+                ..
+            } => LookupTarget::This {
+                ty,
+                causes_non_virtual_invocation,
+            },
+            Rr::Type(ty) => LookupTarget::Type(ty),
+            _ => LookupTarget::Expression(target.ty),
+        };
+        let mut require = require;
+        let mut spent_require = require;
+        let mut spent_cast = false;
+        loop {
+            let probe_target = require.then_some(lookup_target);
+            match resolver.accessor_reference(
+                self.ts,
+                accessor,
+                probe_target,
+                op == CallOp::CallVirt,
+            ) {
+                AccessorBinding::Owner => return Ok(require),
+                // The resolve result would name the member found.
+                AccessorBinding::Other => {
+                    return Err("a property name that binds to another declaration".to_owned());
+                }
+                AccessorBinding::None => {}
+            }
+            if !spent_require {
+                require = true;
+                spent_require = true;
+                continue;
+            }
+            if !spent_cast {
+                spent_cast = true;
+                // `Target.ConvertTo(declaringType)`
+                self.convert_to(*target, declaring, false)?;
+                continue;
+            }
+            // No spelling resolves; the most explicit one is emitted anyway.
+            return Ok(require);
+        }
     }
 
     /// The forms of `CallBuilder.Build` that are no plain invocation.

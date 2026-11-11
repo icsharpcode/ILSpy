@@ -2629,6 +2629,28 @@ resolve result and the method the engine names, with the arguments' resolve resu
 named argument contributes its expression's). The share rose from 29.9 % to 38.5 %. The
 largest groups now are `if` statements (183), accessor calls (92) and `newobj` (60).
 
+### 3.90 Property access (item 68f)
+
+An accessor call is written as a member access (`HandleAccessorCall`) when it is the getter
+or setter of a property without parameters; the engine now translates those as
+`target.Name` or `Name`, and a setter as the assignment of its value to that. The value is
+translated and converted like any argument, then split off, since it is not part of the
+member reference. Indexers, parameterized properties, event accessors and the properties of
+`Range` and `Index` (which `HandleRangeConstruction` writes as range syntax first) fall back.
+
+Whether the property is written with its target follows `Disambiguator.ForAccessor`, which
+for an access without arguments only qualifies and then casts the target. Like a field, the
+check is a name lookup, not an overload resolution, so the host answers it in one question:
+it looks the property's name up unqualified or on the target and applies
+`IsAppropriateCallTarget`. The answer distinguishes the accessor's own property from another
+member the call may still write (the virtual declaration an override hides); the second
+falls back, because the managed resolve result names the member found.
+
+The getter's `MemberResolveResult` is rebuilt on the host from the accessor's
+`AccessorOwner`. A setter's assignment carries a `TypeResolveResult` of the property type
+instead of the `OperatorResolveResult` of a plain assignment. The share rose from 38.5 % to
+40.7 %; `if` statements (188) and `newobj` (62) are now the largest groups.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

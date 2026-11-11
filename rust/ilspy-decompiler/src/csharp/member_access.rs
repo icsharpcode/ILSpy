@@ -29,7 +29,8 @@ impl Builder<'_, '_, '_, '_> {
             | Rr::This { ty, .. }
             | Rr::Type(ty)
             | Rr::Assign { ty }
-            | Rr::Invocation { ty, .. } => *ty,
+            | Rr::Invocation { ty, .. }
+            | Rr::Property { ty, .. } => *ty,
             Rr::Field { field, .. } => field.field.ty,
             Rr::Event { ty, .. } => *ty,
             Rr::ByReference(element) => {
@@ -259,7 +260,7 @@ impl Builder<'_, '_, '_, '_> {
     }
 
     /// The name of a Property row and whether its accessors are static.
-    fn property_info(
+    pub(crate) fn property_info(
         &self,
         module: crate::typesystem::compilation::ModuleId,
         row: u32,

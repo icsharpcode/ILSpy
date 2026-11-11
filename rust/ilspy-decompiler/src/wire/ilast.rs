@@ -1688,6 +1688,45 @@ pub fn method_group_query(
     })
 }
 
+/// An `accessor_reference` question in the `resolver_query` format: kind 6, the accessor as
+/// `call_method` writes it, whether the call is a `callvirt`, and the target as
+/// `method_group_query` writes it. The answer is 0 for `AccessorBinding::None`, 1 for
+/// `Owner` and 2 for `Other`.
+pub fn accessor_reference_query(
+    ts: &TypeSystem<'_, '_>,
+    accessor: &crate::il::ast::MethodOperand,
+    target: Option<crate::il::transforms::LookupTarget>,
+    callvirt: bool,
+) -> Result<Vec<u8>, String> {
+    use crate::il::transforms::LookupTarget;
+    query_message(ts, |w| {
+        w.out.u8(6);
+        w.call_method(accessor)?;
+        w.out.bool(callvirt);
+        w.out.bool(target.is_some());
+        match target {
+            None => {}
+            Some(LookupTarget::This {
+                ty,
+                causes_non_virtual_invocation,
+            }) => {
+                w.out.u8(0);
+                w.out.bool(causes_non_virtual_invocation);
+                w.ty(ty);
+            }
+            Some(LookupTarget::Type(ty)) => {
+                w.out.u8(1);
+                w.ty(ty);
+            }
+            Some(LookupTarget::Expression(ty)) => {
+                w.out.u8(2);
+                w.ty(ty);
+            }
+        }
+        Ok(())
+    })
+}
+
 /// Decodes a `method_group_query` answer.
 pub fn method_group_answer(bytes: &[u8]) -> Option<Vec<crate::il::transforms::MethodGroupList>> {
     use crate::il::transforms::MethodGroupList;
