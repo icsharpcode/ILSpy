@@ -2984,6 +2984,20 @@ always are the defaults of the method found, since the engine only accepts the m
 itself there. `OptionalArguments` became settings bit 56. The share rose from 55.9 % to
 56.8 %; lambdas (53) and `using` (47) lead the fallback reasons.
 
+### 3.107 Ref arguments (item 68w)
+
+An argument of a by-reference parameter is translated with the parameter's `ref` type as
+hint, so a local, a field or a by-reference variable arrives as a `ref` expression with a
+`ByReferenceResolveResult`, which `ChangeDirectionExpressionTo` then adjusts to the
+parameter's kind. For a `ref` parameter nothing changes. What the engine was missing is the
+resolve result its overload resolution sees for such an argument: it treated every
+non-constant argument as a plain expression of its type, which a `ref` parameter does not
+accept; a `ref` expression now resolves as a by-reference argument of kind `ref`. `out`
+arguments still fall back, because `GetArgumentResolveResults` turns them into
+`OutVarResolveResult`s for an implicitly typed `out var` (in the resolution and in the
+invocation's resolve result), and so do `in` arguments, which the disambiguator may make
+explicit. The share rose from 56.8 % to 56.9 %; most by-reference arguments are `out` (23).
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

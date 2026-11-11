@@ -46,6 +46,15 @@ impl Builder<'_, '_, '_, '_> {
                 ty: *ty,
                 value: value.clone(),
             },
+            // `ByReferenceResolveResult` of a `ref` expression.
+            Some(Rr::ByReference(_)) => match *self.ts.data(ty) {
+                TypeData::ByRef(element) => ResolveResult::ByReference {
+                    ty,
+                    element,
+                    ref_kind: crate::typesystem::members::RefKind::Ref,
+                },
+                _ => ResolveResult::Expression(ty),
+            },
             _ => ResolveResult::Expression(ty),
         }
     }

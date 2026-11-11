@@ -388,8 +388,10 @@ impl Builder<'_, '_, '_, '_> {
         };
         let declaring_is_nullable = self.ts.is_known(declaring, KnownTypeCode::NullableOfT);
         for (i, parameter) in method.parameters.iter().enumerate() {
-            if parameter.ref_kind != RefKind::None {
-                return Err("a by-reference argument".to_owned());
+            // `out` arguments resolve as `OutVarResolveResult`s and `in` arguments may be made
+            // explicit, which is not translated.
+            if !matches!(parameter.ref_kind, RefKind::None | RefKind::Ref) {
+                return Err("an out or in argument".to_owned());
             }
             if parameter.is_params {
                 return Err("a params argument".to_owned());

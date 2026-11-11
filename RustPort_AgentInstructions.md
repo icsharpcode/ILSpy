@@ -497,7 +497,9 @@ the reasons. This file holds only the ordered steps, their gates and their rules
   - [x] 68v. Arguments of optional parameters: trailing defaults are left out, with the
     `NoOptionalArgumentAllowed` step and repair (lecture 3.106). Subject:
     `Translate optional arguments to C# in the engine`.
-  - [ ] 68w-68y. Further construct groups, in the order of the fallback reasons the ratchet test
+  - [x] 68w. Arguments of `ref` parameters, resolved as by-reference resolve results
+    (lecture 3.107). Subject: `Translate ref arguments to C# in the engine`.
+  - [ ] 68x-68y. Further construct groups, in the order of the fallback reasons the ratchet test
     prints, until no body of the corpus falls back. Subject pattern:
     `Translate <construct group> to C# in the engine`.
   - [ ] 68z. Request-level seam 2. Subject: `Add the Rust C# AST builders and the AST materializer`.
