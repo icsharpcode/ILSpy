@@ -11,7 +11,7 @@ use crate::il::transforms::{AccessorBinding, LookupTarget, MethodGroupList};
 use crate::semantics::overload_resolution::OverloadResolutionErrors;
 use crate::semantics::types::TypeKind;
 use crate::semantics::{
-    Conversions, Method, MethodKey, MethodList, OverloadResolution, TypeInference,
+    Conversions, Method, MethodKey, MethodList, OverloadResolution, ResolveResult, TypeInference,
     TypeInferenceAlgorithm,
 };
 use crate::typesystem::attrs::ACC_PROTECTED;
@@ -22,7 +22,7 @@ use crate::typesystem::members::{ConstValue, RefKind};
 use crate::typesystem::resolve::MethodOrigin;
 use crate::typesystem::types::{TypeData, TypeId};
 
-use super::ast::{AstNode, Rr};
+use super::ast::{AstId, AstNode, Rr};
 use super::{Builder, TranslatedExpression, Unsupported};
 
 /// `MethodSemanticsAttributes.Setter` and `Getter`.
@@ -45,6 +45,10 @@ struct ArgumentList {
     /// `FirstOptionalArgumentIndex`: -2 for no optional arguments, -1 where they are not
     /// allowed, else the first of the trailing arguments that are the parameters' defaults.
     first_optional: i32,
+    /// The parameters' reference kinds, in argument order.
+    ref_kinds: Vec<RefKind>,
+    /// `UseImplicitlyTypedOut`: `out` arguments are written and resolved as `out var`.
+    use_implicitly_typed_out: bool,
 }
 
 impl ArgumentList {
@@ -217,17 +221,7 @@ impl Builder<'_, '_, '_, '_> {
                 type_arguments,
             }),
         };
-        let names = list.argument_names();
-        let mut arguments = Vec::with_capacity(list.arguments.len());
-        for (i, a) in list.arguments[..list.actual_count()].iter().enumerate() {
-            match names.as_ref().and_then(|n| n[i].clone()) {
-                Some(name) => arguments.push(self.ast.add(AstNode::NamedArgument {
-                    name,
-                    expression: a.expression,
-                })),
-                None => arguments.push(a.expression),
-            }
-        }
+        let arguments = self.written_arguments(&list, 0);
         let e = self.ast.add(AstNode::Invocation {
             target: callee,
             arguments,
@@ -284,7 +278,7 @@ impl Builder<'_, '_, '_, '_> {
         }
         if matches!(
             self.ast.node(first.expression),
-            AstNode::RefDirection { .. }
+            AstNode::RefDirection { .. } | AstNode::OutDirection { .. }
         ) {
             return Err("an extension method call on a reference".to_owned());
         }
@@ -292,22 +286,23 @@ impl Builder<'_, '_, '_, '_> {
             .resolver
             .ok_or("a member reference without the host's resolver")?;
         let target = self.semantic_rr(first.expression, first.ty);
-        let arguments: Vec<_> = list.arguments[1..list.actual_count()]
-            .iter()
-            .map(|a| self.semantic_rr(a.expression, a.ty))
-            .collect();
+        // `GetArgumentResolveResults(skipCount: 1)`
+        let arguments = self.argument_resolve_results(list).split_off(1);
         let remaining = names
             .as_ref()
             .map(|n| n[1..].to_vec())
             .filter(|n| n.iter().any(Option::is_some));
-        if !resolver.can_use_extension_method_syntax(
-            self.ts,
-            operand,
-            type_arguments,
-            &target,
-            &arguments,
-            remaining.as_deref(),
-        ) {
+        let can = resolver
+            .can_use_extension_method_syntax(
+                self.ts,
+                operand,
+                type_arguments,
+                &target,
+                &arguments,
+                remaining.as_deref(),
+            )
+            .ok_or("an extension method question the host cannot answer")?;
+        if !can {
             return Ok(None);
         }
         let callee = if type_arguments.is_empty() {
@@ -322,20 +317,7 @@ impl Builder<'_, '_, '_, '_> {
                 type_arguments: type_arguments.to_vec(),
             })
         };
-        let mut rest = Vec::with_capacity(list.arguments.len() - 1);
-        for (i, a) in list.arguments[..list.actual_count()]
-            .iter()
-            .enumerate()
-            .skip(1)
-        {
-            match names.as_ref().and_then(|n| n[i].clone()) {
-                Some(name) => rest.push(self.ast.add(AstNode::NamedArgument {
-                    name,
-                    expression: a.expression,
-                })),
-                None => rest.push(a.expression),
-            }
-        }
+        let rest = self.written_arguments(list, 1);
         let e = self.ast.add(AstNode::Invocation {
             target: callee,
             arguments: rest,
@@ -385,13 +367,18 @@ impl Builder<'_, '_, '_, '_> {
             } else {
                 -1
             },
+            ref_kinds: method.parameters.iter().map(|p| p.ref_kind).collect(),
+            use_implicitly_typed_out: true,
         };
         let declaring_is_nullable = self.ts.is_known(declaring, KnownTypeCode::NullableOfT);
         for (i, parameter) in method.parameters.iter().enumerate() {
             // `out` arguments resolve as `OutVarResolveResult`s and `in` arguments may be made
             // explicit, which is not translated.
-            if !matches!(parameter.ref_kind, RefKind::None | RefKind::Ref) {
-                return Err("an out or in argument".to_owned());
+            if !matches!(
+                parameter.ref_kind,
+                RefKind::None | RefKind::Ref | RefKind::Out
+            ) {
+                return Err("an in argument".to_owned());
             }
             if parameter.is_params {
                 return Err("a params argument".to_owned());
@@ -417,10 +404,82 @@ impl Builder<'_, '_, '_, '_> {
                     list.first_optional = -2;
                 }
             }
-            let arg = self.convert_to(arg, parameter.ty, true)?;
+            let mut arg = self.convert_to(arg, parameter.ty, true)?;
+            if parameter.ref_kind == RefKind::Out {
+                arg = self.change_direction_to_out(arg);
+            }
             list.arguments.push(arg);
         }
         Ok(list)
+    }
+
+    /// `GetArgumentExpressions(skipCount)`: the written arguments from `skip` on, named where
+    /// the list names them, with `out` arguments marked as `out var` while the list writes
+    /// them so.
+    fn written_arguments(&mut self, list: &ArgumentList, skip: usize) -> Vec<AstId> {
+        let names = list.argument_names();
+        let mut written = Vec::with_capacity(list.actual_count());
+        for (i, a) in list.arguments[..list.actual_count()]
+            .iter()
+            .enumerate()
+            .skip(skip)
+        {
+            if list.use_implicitly_typed_out
+                && let AstNode::OutDirection {
+                    implicitly_typed, ..
+                } = self.ast.node_mut(a.expression)
+            {
+                *implicitly_typed = true;
+            }
+            match names.as_ref().and_then(|n| n[i].clone()) {
+                Some(name) => written.push(self.ast.add(AstNode::NamedArgument {
+                    name,
+                    expression: a.expression,
+                })),
+                None => written.push(a.expression),
+            }
+        }
+        written
+    }
+
+    /// `ChangeDirectionExpressionTo(arg, ReferenceKind.Out)`: `ref x` becomes `out x`, with the
+    /// `ref`'s instructions and an `out` resolve result.
+    fn change_direction_to_out(&mut self, arg: TranslatedExpression) -> TranslatedExpression {
+        let AstNode::RefDirection { expression } = *self.ast.node(arg.expression) else {
+            return arg;
+        };
+        let Some(Rr::ByReference(element)) = self.ast.annotations(arg.expression).rr.clone() else {
+            return arg;
+        };
+        let d = self.ast.add(AstNode::OutDirection {
+            expression,
+            implicitly_typed: false,
+        });
+        for inst in self.ast.annotations(arg.expression).il.clone() {
+            self.ast.with_il(d, inst);
+        }
+        self.ast.with_rr(d, Rr::ByReferenceOut(element));
+        TranslatedExpression {
+            expression: d,
+            ty: arg.ty,
+        }
+    }
+
+    /// `GetArgumentResolveResults()`: the written arguments' resolve results, an `out` argument
+    /// as `OutVarResolveResult` of its element type while the list writes `out var`.
+    fn argument_resolve_results(&self, list: &ArgumentList) -> Vec<ResolveResult> {
+        list.arguments[..list.actual_count()]
+            .iter()
+            .zip(&list.ref_kinds)
+            .map(|(a, &kind)| match *self.ts.data(a.ty) {
+                TypeData::ByRef(element)
+                    if list.use_implicitly_typed_out && kind == RefKind::Out =>
+                {
+                    ResolveResult::OutVar(element)
+                }
+                _ => self.semantic_rr(a.expression, a.ty),
+            })
+            .collect()
     }
 
     /// `IsOptionalArgument`: a constant argument of an optional parameter that is its default
@@ -517,17 +576,7 @@ impl Builder<'_, '_, '_, '_> {
         };
         let mut list = self.argument_list(call, &method, id, 0, declaring, false)?;
         self.disambiguate_constructor(operand, &method, &mut list)?;
-        let names = list.argument_names();
-        let mut arguments = Vec::with_capacity(list.arguments.len());
-        for (i, a) in list.arguments[..list.actual_count()].iter().enumerate() {
-            match names.as_ref().and_then(|n| n[i].clone()) {
-                Some(name) => arguments.push(self.ast.add(AstNode::NamedArgument {
-                    name,
-                    expression: a.expression,
-                })),
-                None => arguments.push(a.expression),
-            }
-        }
+        let arguments = self.written_arguments(&list, 0);
         let e = self.ast.add(AstNode::ObjectCreate {
             ty: declaring,
             arguments,
@@ -847,6 +896,12 @@ impl Builder<'_, '_, '_, '_> {
             if errors == OverloadResolutionErrors::NONE {
                 return Ok((require, type_arguments));
             }
+            if errors == OverloadResolutionErrors::OUT_VAR_TYPE_MISMATCH
+                && list.use_implicitly_typed_out
+            {
+                list.use_implicitly_typed_out = false;
+                continue;
+            }
             // `TryRepair`, where a failed inference falls back for the reason above.
             if errors == OverloadResolutionErrors::TYPE_INFERENCE_FAILED {
                 return Err(
@@ -882,6 +937,8 @@ impl Builder<'_, '_, '_, '_> {
             }
             if !spent_cast_arguments {
                 spent_cast_arguments = true;
+                // Cast arguments are written with their types, not as `out var`.
+                list.use_implicitly_typed_out = false;
                 // `CastArguments`: a cast to the parameter type, translated only where it
                 // is none.
                 let n = Normalization::IGNORE_NULLABILITY_AND_TUPLES;
@@ -995,10 +1052,13 @@ impl Builder<'_, '_, '_, '_> {
         type_arguments: &[TypeId],
     ) -> Result<OverloadResolutionErrors, Unsupported> {
         let lists = self.method_lists(group, lookup_type);
-        // `GetArgumentResolveResults()`: the written arguments.
-        let arguments = list.arguments[..list.actual_count()]
+        let arguments = self.argument_resolve_results(list);
+        let out_vars: Vec<Option<TypeId>> = arguments
             .iter()
-            .map(|a| self.semantic_rr(a.expression, a.ty))
+            .map(|a| match a {
+                ResolveResult::OutVar(t) => Some(*t),
+                _ => None,
+            })
             .collect();
         let names = list.argument_names();
         let mut conversions = Conversions::new(self.ts);
@@ -1017,6 +1077,20 @@ impl Builder<'_, '_, '_, '_> {
         };
         if !self.is_appropriate_call_target(op, method, &found)? {
             return Ok(OverloadResolutionErrors::AMBIGUOUS_MATCH);
+        }
+        // An `out var` must declare the type of the parameter found.
+        for (i, out_var) in out_vars.iter().enumerate() {
+            if let Some(element) = *out_var
+                && let Some(p) = found.parameters.get(i)
+            {
+                let parameter = match *self.ts.data(p.ty) {
+                    TypeData::ByRef(e) => e,
+                    _ => p.ty,
+                };
+                if parameter != element {
+                    return Ok(OverloadResolutionErrors::OUT_VAR_TYPE_MISMATCH);
+                }
+            }
         }
         // The normal form was meant. The omitted arguments are the defaults of the method
         // found, which is the one called (`OmittedArgumentsAreDefaultsOf`); writing them out

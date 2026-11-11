@@ -68,6 +68,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		public const byte GenericMemberReference = 23;
 		public const byte Cast = 24;
 		public const byte TypeOf = 25;
+		public const byte OutDirection = 26;
 
 		public byte Kind;
 		/// <summary>The instructions the node is annotated with, in order.</summary>
@@ -298,6 +299,14 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 							: CSharp.Transforms.AddCheckedBlocks.UncheckedAnnotation);
 					}
 					return binary;
+				}
+				case RustBodyNode.OutDirection:
+				{
+					var direction = Annotate(new DirectionExpression(FieldDirection.Out, (Expression)Build(node.Children[0], exprBuilder)), node);
+					// `GetArgumentExpressions` marks an `out` argument written as `out var`.
+					if (node.Flag)
+						direction.AddAnnotation(UseImplicitlyTypedOutAnnotation.Instance);
+					return direction;
 				}
 				case RustBodyNode.TypeOf:
 					return Annotate(new TypeOfExpression(exprBuilder.ConvertType(node.Type!)), node);

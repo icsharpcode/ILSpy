@@ -552,18 +552,21 @@ impl Resolver for HostResolver {
         target: &ilspy_decompiler::semantics::ResolveResult,
         arguments: &[ilspy_decompiler::semantics::ResolveResult],
         names: Option<&[Option<String>]>,
-    ) -> bool {
-        let Ok(bytes) = ilspy_decompiler::wire::ilast::extension_method_syntax_query(
+    ) -> Option<bool> {
+        let bytes = ilspy_decompiler::wire::ilast::extension_method_syntax_query(
             ts,
             method,
             type_arguments,
             target,
             arguments,
             names,
-        ) else {
-            return false;
-        };
-        self.ask(&bytes) == 1
+        )
+        .ok()?;
+        match self.ask(&bytes) {
+            0 => Some(false),
+            1 => Some(true),
+            _ => None,
+        }
     }
 
     fn constructors(

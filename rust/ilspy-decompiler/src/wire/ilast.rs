@@ -1735,9 +1735,11 @@ pub fn accessor_reference_query(
 
 /// A `can_use_extension_method_syntax` question in the `resolver_query` format: kind 8, the
 /// method as `call_method` writes it, the type arguments (count and types), the target and
-/// the arguments (count first), each 0 and its type for an expression or 1, its type and the
-/// constant as `wire::ast` writes it, and the argument names (0 for none, else 1 and per
-/// argument whether it has a name and the name). The answer is 1 for yes.
+/// the arguments (count first), each 0 and its type for an expression, 1, its type and the
+/// constant as `wire::ast` writes it, 2, the element type and the `RefKind` (in the order of
+/// `ReferenceKind`) for a by-reference argument, 3 and the type for an `out var`, and the
+/// argument names (0 for none, else 1 and per argument whether it has a name and the name).
+/// The answer is 1 for yes.
 pub fn extension_method_syntax_query(
     ts: &TypeSystem<'_, '_>,
     method: &crate::il::ast::MethodOperand,
@@ -1765,7 +1767,18 @@ pub fn extension_method_syntax_query(
                     w.ty(*ty);
                     super::ast::constant(w, value);
                 }
-                _ => return Err("an operand that is no expression or constant".to_owned()),
+                ResolveResult::ByReference {
+                    element, ref_kind, ..
+                } => {
+                    w.out.u8(2);
+                    w.ty(*element);
+                    w.out.u8(*ref_kind as u8);
+                }
+                ResolveResult::OutVar(ty) => {
+                    w.out.u8(3);
+                    w.ty(*ty);
+                }
+                _ => return Err("an operand of another kind".to_owned()),
             }
             Ok(())
         };

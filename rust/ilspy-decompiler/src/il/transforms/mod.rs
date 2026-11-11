@@ -342,7 +342,7 @@ pub trait Resolver {
         target: &crate::semantics::ResolveResult,
         arguments: &[crate::semantics::ResolveResult],
         names: Option<&[Option<String>]>,
-    ) -> bool;
+    ) -> Option<bool>;
 
     /// The constructors `IsUnambiguousCall` adds as candidates for `newobj` of `constructor`:
     /// those of its declaring type that the decompiled method can access, as one list;

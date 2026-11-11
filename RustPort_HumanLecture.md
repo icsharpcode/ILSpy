@@ -2998,6 +2998,27 @@ arguments still fall back, because `GetArgumentResolveResults` turns them into
 invocation's resolve result), and so do `in` arguments, which the disambiguator may make
 explicit. The share rose from 56.8 % to 56.9 %; most by-reference arguments are `out` (23).
 
+### 3.108 Out arguments (item 68x)
+
+An `out` argument starts like a `ref` argument; `ChangeDirectionExpressionTo` turns the
+`ref x` into `out x`, keeping its IL instructions, with a `ByReferenceResolveResult` of kind
+`out`. The argument list then writes it as `out var x` (`UseImplicitlyTypedOutAnnotation`)
+and, in `GetArgumentResolveResults`, resolves it as an `OutVarResolveResult` of the element
+type, so that overload resolution sees an implicitly typed declaration. The disambiguator
+checks that the parameter found has exactly that element type, and repairs an
+`OutVarTypeMismatch` by writing the out arguments with their types; casting the arguments
+does the same for a call (a constructor keeps `out var`). The invocation's own resolve result
+uses the arguments' resolve results directly, which the host takes from the children as
+before. `in` arguments still fall back, since the disambiguator may make them explicit.
+The share rose from 56.9 % to 57.0 %; the generic calls these bodies also contain mostly stop
+at the type inference gap of item 68k.
+
+The first gate run found that an extension method call with an `out` argument was written as
+the static call: the resolver question of item 68l could only carry expressions and
+constants, and the engine took the failed question for a "no". The question now carries
+by-reference arguments and `out var`s (as `GetArgumentResolveResults` gives them), and a
+question the host cannot answer makes the body fall back instead.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

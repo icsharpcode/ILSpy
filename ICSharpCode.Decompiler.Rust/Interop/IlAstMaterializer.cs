@@ -392,12 +392,22 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 			return query;
 		}
 
-		/// <summary>An operand of a resolver query: 0 and the type of an expression, 1, the type and the constant.</summary>
+		/// <summary>
+		/// An operand of a resolver query: 0 and the type of an expression, 1, the type and the
+		/// constant, 2, the element type and the <see cref="ReferenceKind"/> of a by-reference
+		/// argument, 3 and the type of an <c>out var</c>.
+		/// </summary>
 		ResolveResult QueryOperand()
 		{
-			bool constant = U8() != 0;
+			byte kind = U8();
 			var type = Type();
-			return constant ? new ConstantResolveResult(type, Constant()) : new ResolveResult(type);
+			return kind switch {
+				0 => new ResolveResult(type),
+				1 => new ConstantResolveResult(type, Constant()),
+				2 => new ByReferenceResolveResult(type, (ReferenceKind)U8()),
+				3 => new OutVarResolveResult(type),
+				_ => throw new InvalidOperationException("Unknown resolver query operand"),
+			};
 		}
 
 		/// <summary><c>ILFunction.helperVariableCount</c>, which <see cref="ILFunction.RegisterVariable"/> continues.</summary>
@@ -692,6 +702,10 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				case RustBodyNode.TypeOf:
 					node.Type = Type();
 					break;
+				case RustBodyNode.OutDirection:
+					node.Children = [BodyNode()];
+					node.Flag = Bool();
+					break;
 				case RustBodyNode.Cast:
 					node.Type = Type();
 					node.Children = [BodyNode()];
@@ -804,6 +818,8 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					var type = Type();
 					return new TypeOfResolveResult(type, Type());
 				}
+				case 15:
+					return new ByReferenceResolveResult(BodyResolveResult(out _)!, ReferenceKind.Out);
 				case 8:
 				{
 					var target = BodyResolveResult(out _);

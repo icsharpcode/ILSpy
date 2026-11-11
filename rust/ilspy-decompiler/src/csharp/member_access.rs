@@ -38,7 +38,7 @@ impl Builder<'_, '_, '_, '_> {
             | Rr::TypeOf { ty, .. } => *ty,
             Rr::Field { field, .. } => field.field.ty,
             Rr::Event { ty, .. } => *ty,
-            Rr::ByReference(element) => {
+            Rr::ByReference(element) | Rr::ByReferenceOut(element) => {
                 let e = self.rr_type(element);
                 self.ts.intern(TypeData::ByRef(e))
             }

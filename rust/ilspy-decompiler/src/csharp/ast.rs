@@ -86,6 +86,12 @@ pub enum AstNode {
         expression: AstId,
         unchecked: bool,
     },
+    /// `DirectionExpression` with `FieldDirection.Out`, with `UseImplicitlyTypedOutAnnotation`
+    /// when `implicitly_typed` (`out var`).
+    OutDirection {
+        expression: AstId,
+        implicitly_typed: bool,
+    },
     /// `TypeOfExpression` of `ExpressionBuilder.ConvertType(ty)`.
     TypeOf { ty: TypeId },
     /// `ThrowStatement`, a rethrow without an expression.
@@ -167,6 +173,8 @@ pub enum Rr {
     },
     /// `ByReferenceResolveResult` with `ReferenceKind.Ref` of the element's resolve result.
     ByReference(Box<Rr>),
+    /// `ByReferenceResolveResult` with `ReferenceKind.Out` of the element's resolve result.
+    ByReferenceOut(Box<Rr>),
     /// `OperatorResolveResult` of the node's operator (an assignment, `!`, a binary or the conditional
     /// operator), of
     /// the given

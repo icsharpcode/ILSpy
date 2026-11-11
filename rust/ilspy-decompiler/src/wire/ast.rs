@@ -47,6 +47,7 @@ mod kind {
     pub const GENERIC_MEMBER_REFERENCE: u8 = 23;
     pub const CAST: u8 = 24;
     pub const TYPE_OF: u8 = 25;
+    pub const OUT_DIRECTION: u8 = 26;
 }
 
 pub(super) fn write_body(
@@ -101,7 +102,8 @@ fn var_index(
 /// property as a call operand, then whether the host looks the member up again); 11 the `CSharpInvocationResolveResult` of a constructor
 /// call (the constructor as a call operand; no target, the arguments are the object
 /// creation's); 12 a plain `ResolveResult` (type); 13 the `ResolveCast` of a cast, which the host
-/// computes from the cast's type and operand; 14 `TypeOfResolveResult` (type, referenced type). A field's target is
+/// computes from the cast's type and operand; 14 `TypeOfResolveResult` (type, referenced type); 15
+/// `ByReferenceResolveResult` with `ReferenceKind.Out` (the element's resolve result). A field's target is
 /// absent (0) for the `field` keyword.
 fn rr(w: &mut FunctionWriter<'_, '_, '_, '_>, rr: Option<&Rr>) -> Result<(), String> {
     match rr {
@@ -146,6 +148,10 @@ fn rr(w: &mut FunctionWriter<'_, '_, '_, '_>, rr: Option<&Rr>) -> Result<(), Str
         }
         Some(Rr::ByReference(element)) => {
             w.out.u8(6);
+            self::rr(w, Some(element))?;
+        }
+        Some(Rr::ByReferenceOut(element)) => {
+            w.out.u8(15);
             self::rr(w, Some(element))?;
         }
         Some(Rr::Operator { ty }) => {
@@ -222,6 +228,7 @@ fn node(w: &mut FunctionWriter<'_, '_, '_, '_>, ast: &Ast, id: AstId) -> Result<
         AstNode::GenericMemberReference { .. } => kind::GENERIC_MEMBER_REFERENCE,
         AstNode::Cast { .. } => kind::CAST,
         AstNode::TypeOf { .. } => kind::TYPE_OF,
+        AstNode::OutDirection { .. } => kind::OUT_DIRECTION,
     });
     w.out.len(a.il.len());
     for &inst in &a.il {
@@ -285,6 +292,13 @@ fn node(w: &mut FunctionWriter<'_, '_, '_, '_>, ast: &Ast, id: AstId) -> Result<
         AstNode::NamedArgument { name, expression } => {
             w.string(&name);
             node(w, ast, expression)?;
+        }
+        AstNode::OutDirection {
+            expression,
+            implicitly_typed,
+        } => {
+            node(w, ast, expression)?;
+            w.out.bool(implicitly_typed);
         }
         AstNode::Cast {
             ty,
