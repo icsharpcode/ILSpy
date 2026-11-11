@@ -1,6 +1,6 @@
 //! `StatementBuilder`: the C# statements of an ILAst function body.
 
-use crate::il::ast::{BlockKind, ContainerKind, FunctionKind, Inst, NodeId};
+use crate::il::ast::{BlockKind, BranchTarget, ContainerKind, FunctionKind, Inst, NodeId};
 use crate::il::reader::ReadFunction;
 use crate::typesystem::known::KnownTypeCode;
 use crate::typesystem::types::TypeSystem;
@@ -50,6 +50,9 @@ pub fn convert_body(
             .iter()
             .map(|&v| f.var(v).name.clone())
             .collect(),
+        continue_target: None,
+        continue_count: 0,
+        break_target: None,
     };
     let stmt = b.convert(body)?;
     b.ast.with_il(stmt, body);
@@ -135,6 +138,14 @@ impl Builder<'_, '_, '_, '_> {
                 let expression = self.translate(on_expression, None)?.expression;
                 let body = self.convert_as_block(body)?;
                 let s = self.ast.add(AstNode::Lock { expression, body });
+                Ok(self.ast.with_il(s, inst))
+            }
+            // `VisitBranch`: `continue` for the loop's continue target; a goto is not translated.
+            Inst::Branch {
+                target: BranchTarget::Block(target),
+            } if Some(target) == self.continue_target => {
+                self.continue_count += 1;
+                let s = self.ast.add(AstNode::Continue);
                 Ok(self.ast.with_il(s, inst))
             }
             Inst::Switch { .. }
@@ -303,20 +314,7 @@ impl Builder<'_, '_, '_, '_> {
     ) -> Result<AstId, Unsupported> {
         let mut statements = Vec::with_capacity(instructions.len() + 1);
         for (i, &s) in instructions.iter().enumerate() {
-            // `TransformToForeachWithoutDispose` looks for a store followed by a while loop.
-            if matches!(self.f.inst(s), Inst::StLoc { .. })
-                && instructions.get(i + 1).is_some_and(|&n| {
-                    matches!(
-                        self.f.inst(n),
-                        Inst::BlockContainer {
-                            kind: ContainerKind::While,
-                            ..
-                        }
-                    )
-                })
-            {
-                return Err("a foreach without Dispose".to_owned());
-            }
+            self.check_foreach_without_dispose(instructions, i)?;
             statements.push(self.convert(s)?);
         }
         if !matches!(self.f.inst(final_inst), Inst::Nop { .. }) {
@@ -342,8 +340,14 @@ impl Builder<'_, '_, '_, '_> {
         blocks: &[NodeId],
     ) -> Result<AstId, Unsupported> {
         let entry = *blocks.first().ok_or("an empty container")?;
-        if kind != ContainerKind::Normal {
-            return Err(format!("a {} container", kind.name()));
+        if kind != ContainerKind::Normal && self.f.node(entry).incoming_edge_count > 1 {
+            let saved = (self.continue_target, self.continue_count, self.break_target);
+            let converted = self.convert_loop(container, kind, blocks);
+            (self.continue_target, self.continue_count, self.break_target) = saved;
+            let l = converted?;
+            // The container as annotation, then as instruction.
+            self.ast.with_il(l, container);
+            return Ok(self.ast.with_il(l, container));
         }
         if let Inst::Block { instructions, .. } = self.f.inst(entry)
             && instructions.len() == 1
@@ -351,21 +355,23 @@ impl Builder<'_, '_, '_, '_> {
         {
             return Err("a switch".to_owned());
         }
-        let block = self.convert_block_container(container, blocks)?;
+        let block = self.convert_block_container(container, blocks, false)?;
         Ok(self.ast.with_il(block, container))
     }
 
-    /// `ConvertBlockContainer(container, isLoop: false)`.
+    /// `ConvertBlockContainer(container, isLoop)` for a container whose blocks need no labels;
+    /// a loop's entry gets one that `ConvertLoop` checks and removes.
     fn convert_block_container(
         &mut self,
         container: NodeId,
         blocks: &[NodeId],
+        is_loop: bool,
     ) -> Result<AstId, Unsupported> {
         let block_statement = self.ast.add(AstNode::Block {
             statements: Vec::new(),
         });
         for (index, &block) in blocks.iter().enumerate() {
-            if self.f.node(block).incoming_edge_count > 1 || index != 0 {
+            if index != 0 || (self.f.node(block).incoming_edge_count > 1 && !is_loop) {
                 return Err("a labeled block".to_owned());
             }
             let Inst::Block {
@@ -377,7 +383,9 @@ impl Builder<'_, '_, '_, '_> {
                 return Err("a container without blocks".to_owned());
             };
             for (i, &inst) in instructions.iter().enumerate() {
-                if let Inst::Leave { .. } = self.f.inst(inst)
+                self.check_foreach_without_dispose(&instructions, i)?;
+                if !is_loop
+                    && let Inst::Leave { .. } = self.f.inst(inst)
                     && self.is_final_leave(
                         inst,
                         i,
@@ -416,6 +424,209 @@ impl Builder<'_, '_, '_, '_> {
         Ok(block_statement)
     }
 
+    /// `TransformToForeachWithoutDispose` looks for a store followed by a while loop; such
+    /// pairs are not translated.
+    fn check_foreach_without_dispose(
+        &self,
+        instructions: &[NodeId],
+        i: usize,
+    ) -> Result<(), Unsupported> {
+        if matches!(self.f.inst(instructions[i]), Inst::StLoc { .. })
+            && instructions.get(i + 1).is_some_and(|&n| {
+                matches!(
+                    self.f.inst(n),
+                    Inst::BlockContainer {
+                        kind: ContainerKind::While,
+                        ..
+                    }
+                )
+            })
+        {
+            return Err("a foreach without Dispose".to_owned());
+        }
+        Ok(())
+    }
+
+    /// `ConvertLoop` for `while (true)` and `while (condition)` loops whose jumps are all
+    /// `break` and `continue`, so that no label is written.
+    fn convert_loop(
+        &mut self,
+        container: NodeId,
+        kind: ContainerKind,
+        blocks: &[NodeId],
+    ) -> Result<AstId, Unsupported> {
+        self.continue_count = 0;
+        self.break_target = Some(container);
+        let entry = blocks[0];
+        let incoming = self.f.node(entry).incoming_edge_count;
+        match kind {
+            ContainerKind::Loop => {
+                self.continue_target = Some(entry);
+                let body = self.convert_block_container(container, blocks, true)?;
+                // The entry's label goes when every jump to it became `continue`.
+                if incoming != self.continue_count + 1 {
+                    return Err("a loop with a jump to its start".to_owned());
+                }
+                self.remove_trailing_continue(body);
+                Ok(self.ast.add(AstNode::While {
+                    condition: None,
+                    body,
+                }))
+            }
+            ContainerKind::While => {
+                self.continue_target = Some(entry);
+                let (condition, body_block) = self
+                    .match_condition_block(container, entry)
+                    .ok_or("an invalid condition block in a while loop")?;
+                if blocks.len() != 2 || blocks[1] != body_block {
+                    return Err("a while loop with labeled blocks".to_owned());
+                }
+                let body = self.convert_as_block(body_block)?;
+                if !self
+                    .f
+                    .has_flag(body_block, crate::il::ast::Flags::END_POINT_UNREACHABLE)
+                {
+                    let b = self.ast.add(AstNode::Break);
+                    if let AstNode::Block { statements } = self.ast.node_mut(body) {
+                        statements.push(b);
+                    }
+                }
+                if self.continue_count + 1 < incoming {
+                    return Err("a while loop with a jump to its condition".to_owned());
+                }
+                self.remove_trailing_continue(body);
+                let condition = self.translate_condition(condition)?.expression;
+                Ok(self.ast.add(AstNode::While {
+                    condition: Some(condition),
+                    body,
+                }))
+            }
+            ContainerKind::DoWhile => {
+                let condition_block = *blocks.last().ok_or("an empty do-while loop")?;
+                self.continue_target = Some(condition_block);
+                let (condition, _) = self
+                    .match_condition_block(container, condition_block)
+                    .ok_or("an invalid condition block in a do-while loop")?;
+                if blocks.len() != 2 {
+                    return Err("a do-while loop with labeled blocks".to_owned());
+                }
+                let body = self.convert_block_container(container, &blocks[..1], true)?;
+                // The entry's label goes when only the loop's own two edges reach it.
+                if incoming != 2 {
+                    return Err("a do-while loop with a jump to its start".to_owned());
+                }
+                self.remove_trailing_continue(body);
+                if self.f.node(condition_block).incoming_edge_count > self.continue_count {
+                    return Err("a do-while loop with a jump to its condition".to_owned());
+                }
+                let condition = self.translate_condition(condition)?.expression;
+                let empty = matches!(self.ast.node(body), AstNode::Block { statements } if statements.is_empty());
+                Ok(self.ast.add(if empty {
+                    AstNode::While {
+                        condition: Some(condition),
+                        body,
+                    }
+                } else {
+                    AstNode::DoWhile { body, condition }
+                }))
+            }
+            ContainerKind::For => {
+                let increment = *blocks.last().ok_or("an empty for loop")?;
+                self.continue_target = Some(increment);
+                let (condition, body_block) = self
+                    .match_condition_block(container, entry)
+                    .ok_or("an invalid condition block in a for loop")?;
+                let body = self.convert_as_block(body_block)?;
+                if !self
+                    .f
+                    .has_flag(body_block, crate::il::ast::Flags::END_POINT_UNREACHABLE)
+                {
+                    let b = self.ast.add(AstNode::Break);
+                    if let AstNode::Block { statements } = self.ast.node_mut(body) {
+                        statements.push(b);
+                    }
+                }
+                // `MatchIncrementBlock`: the increments end in the branch back to the condition.
+                let Inst::Block { instructions, .. } = self.f.inst(increment).clone() else {
+                    return Err("an invalid increment block in a for loop".to_owned());
+                };
+                let ends_in_branch = instructions.last().is_some_and(|&l| {
+                    matches!(
+                        *self.f.inst(l),
+                        Inst::Branch { target: BranchTarget::Block(t) } if t == entry
+                    )
+                });
+                if !ends_in_branch {
+                    return Err("an invalid increment block in a for loop".to_owned());
+                }
+                if blocks.len() != 3 || blocks[1] != body_block {
+                    return Err("a for loop with labeled blocks".to_owned());
+                }
+                let condition = self.translate_condition(condition)?.expression;
+                self.remove_trailing_continue(body);
+                let mut iterators = Vec::with_capacity(instructions.len() - 1);
+                for &i in &instructions[..instructions.len() - 1] {
+                    iterators.push(self.convert(i)?);
+                }
+                if self.f.node(increment).incoming_edge_count > self.continue_count {
+                    return Err("a for loop with a jump to its increment".to_owned());
+                }
+                Ok(self.ast.add(AstNode::For {
+                    condition,
+                    iterators,
+                    body,
+                }))
+            }
+            _ => Err(format!("a {} container", kind.name())),
+        }
+    }
+
+    /// `if (blockStatement.LastOrDefault() is ContinueStatement continueStmt) continueStmt.Remove()`
+    fn remove_trailing_continue(&mut self, block: AstId) {
+        let last = match self.ast.node(block) {
+            AstNode::Block { statements } => statements.last().copied(),
+            _ => None,
+        };
+        if last.is_some_and(|s| matches!(self.ast.node(s), AstNode::Continue))
+            && let AstNode::Block { statements } = self.ast.node_mut(block)
+        {
+            statements.pop();
+        }
+    }
+
+    /// `BlockContainer.MatchConditionBlock`: a block of one `if (condition) br body; else
+    /// leave container`, as the condition and the body's block.
+    fn match_condition_block(&self, container: NodeId, block: NodeId) -> Option<(NodeId, NodeId)> {
+        let Inst::Block { instructions, .. } = self.f.inst(block) else {
+            return None;
+        };
+        let [only] = instructions[..] else {
+            return None;
+        };
+        let Inst::If {
+            condition,
+            true_inst,
+            false_inst,
+            ..
+        } = *self.f.inst(only)
+        else {
+            return None;
+        };
+        let Inst::Leave { target, value } = *self.f.inst(false_inst) else {
+            return None;
+        };
+        if target != Some(container) || !matches!(self.f.inst(value), Inst::Nop { .. }) {
+            return None;
+        }
+        let Inst::Branch {
+            target: BranchTarget::Block(body),
+        } = *self.f.inst(true_inst)
+        else {
+            return None;
+        };
+        Some((condition, body))
+    }
+
     /// `IsFinalLeave`: a `leave` without value that ends the last block of its target.
     #[allow(clippy::too_many_arguments)]
     fn is_final_leave(
@@ -446,6 +657,10 @@ impl Builder<'_, '_, '_, '_> {
         target: Option<NodeId>,
         value: NodeId,
     ) -> Result<AstId, Unsupported> {
+        if target.is_some() && target == self.break_target {
+            let s = self.ast.add(AstNode::Break);
+            return Ok(self.ast.with_il(s, inst));
+        }
         if target != Some(self.return_container) {
             return Err("a leave out of a nested container".to_owned());
         }

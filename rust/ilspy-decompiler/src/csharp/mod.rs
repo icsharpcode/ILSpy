@@ -38,6 +38,12 @@ pub(crate) struct Builder<'f, 't, 'c, 'a> {
     pub(crate) current_type: Option<crate::typesystem::compilation::TypeDefId>,
     /// The names of `currentFunction.Variables`.
     pub(crate) variable_names: Vec<String>,
+    /// `continueTarget`: the block a branch to is written as `continue`.
+    pub(crate) continue_target: Option<NodeId>,
+    /// `continueCount`: the branches written as `continue` so far.
+    pub(crate) continue_count: u32,
+    /// `breakTarget`: the container a leave of is written as `break`.
+    pub(crate) break_target: Option<NodeId>,
 }
 
 /// The variant name of an instruction, for the reasons of untranslated bodies.

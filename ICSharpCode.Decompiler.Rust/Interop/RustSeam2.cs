@@ -72,6 +72,11 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		public const byte TryCatch = 27;
 		public const byte CatchClause = 28;
 		public const byte Lock = 29;
+		public const byte While = 30;
+		public const byte Break = 31;
+		public const byte Continue = 32;
+		public const byte DoWhile = 33;
+		public const byte For = 34;
 
 		public byte Kind;
 		/// <summary>The instructions the node is annotated with, in order.</summary>
@@ -325,6 +330,34 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					clause.Body = (BlockStatement)Build(node.Children[0], exprBuilder);
 					return Annotate(clause, node);
 				}
+				case RustBodyNode.While:
+				{
+					// `while (true)` has a plain literal without resolve result.
+					var condition = node.Flag
+						? (Expression)Build(node.Children[0], exprBuilder)
+						: new PrimitiveExpression(true);
+					var body = (Statement)Build(node.Children[^1], exprBuilder);
+					return Annotate(new WhileStatement(condition, body), node);
+				}
+				case RustBodyNode.DoWhile:
+					return Annotate(new DoWhileStatement {
+						EmbeddedStatement = (Statement)Build(node.Children[0], exprBuilder),
+						Condition = (Expression)Build(node.Children[1], exprBuilder)
+					}, node);
+				case RustBodyNode.For:
+				{
+					var statement = new ForStatement {
+						Condition = (Expression)Build(node.Children[0], exprBuilder),
+						EmbeddedStatement = (Statement)Build(node.Children[^1], exprBuilder)
+					};
+					for (int i = 1; i < node.Children.Length - 1; i++)
+						statement.Iterators.Add((Statement)Build(node.Children[i], exprBuilder));
+					return Annotate(statement, node);
+				}
+				case RustBodyNode.Break:
+					return Annotate(new BreakStatement(), node);
+				case RustBodyNode.Continue:
+					return Annotate(new ContinueStatement(), node);
 				case RustBodyNode.Lock:
 					return Annotate(new LockStatement {
 						Expression = (Expression)Build(node.Children[0], exprBuilder),

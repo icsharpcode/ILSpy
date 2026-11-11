@@ -3057,6 +3057,23 @@ classification of `ILInlining.ClassifyExpression` is ported for locals and array
 loads and stores through references need its read-only reference analysis, which lives in
 the transform context, and fall back. The share rose from 59.2 % to 59.6 %.
 
+### 3.112 Loops (item 68y4)
+
+A container of a loop kind whose entry has more than one incoming edge is a loop for
+`ConvertLoop`; it writes branches to the loop's continue target as `continue` and leaves of
+the loop as `break`, keeps a label for every other jump, and removes the labels and the
+trailing `continue` that turn out to be redundant. The shapes come from the loop detection:
+a `while` loop is a condition block (`if (c) br body; else leave`) and a body, a do-while
+loop has the condition block last, and a `for` loop also ends in an increment block whose
+instructions become the iterators. The engine ports the four kinds for loops that need no
+label, which it can tell from the incoming edge counts once the body is converted: every
+jump to the start or to the condition must have become `continue`. The loop is annotated
+with its container twice, as an annotation and as the instruction, like the managed
+statement. A store followed by a `while` loop (`TransformToForeachWithoutDispose`) falls
+back in blocks of containers too now; the check only existed for plain blocks, which did not
+matter while no loop was translated. The share rose from 59.6 % to 59.8 %; array elements
+(20), conversions (21) and operator calls (20) are among the groups the loops uncovered.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

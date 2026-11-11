@@ -51,6 +51,11 @@ mod kind {
     pub const TRY_CATCH: u8 = 27;
     pub const CATCH_CLAUSE: u8 = 28;
     pub const LOCK: u8 = 29;
+    pub const WHILE: u8 = 30;
+    pub const BREAK: u8 = 31;
+    pub const CONTINUE: u8 = 32;
+    pub const DO_WHILE: u8 = 33;
+    pub const FOR: u8 = 34;
 }
 
 pub(super) fn write_body(
@@ -242,6 +247,11 @@ fn node(w: &mut FunctionWriter<'_, '_, '_, '_>, ast: &Ast, id: AstId) -> Result<
         AstNode::TryCatch { .. } => kind::TRY_CATCH,
         AstNode::CatchClause { .. } => kind::CATCH_CLAUSE,
         AstNode::Lock { .. } => kind::LOCK,
+        AstNode::While { .. } => kind::WHILE,
+        AstNode::Break => kind::BREAK,
+        AstNode::Continue => kind::CONTINUE,
+        AstNode::DoWhile { .. } => kind::DO_WHILE,
+        AstNode::For { .. } => kind::FOR,
     });
     w.out.len(a.il.len());
     for &inst in &a.il {
@@ -341,6 +351,29 @@ fn node(w: &mut FunctionWriter<'_, '_, '_, '_>, ast: &Ast, id: AstId) -> Result<
             }
             node(w, ast, body)?;
         }
+        AstNode::DoWhile { body, condition } => {
+            node(w, ast, body)?;
+            node(w, ast, condition)?;
+        }
+        AstNode::For {
+            condition,
+            iterators,
+            body,
+        } => {
+            node(w, ast, condition)?;
+            w.out.len(iterators.len());
+            for i in iterators {
+                node(w, ast, i)?;
+            }
+            node(w, ast, body)?;
+        }
+        AstNode::While { condition, body } => {
+            w.out.bool(condition.is_some());
+            if let Some(c) = condition {
+                node(w, ast, c)?;
+            }
+            node(w, ast, body)?;
+        }
         AstNode::Lock { expression, body } => {
             node(w, ast, expression)?;
             node(w, ast, body)?;
@@ -428,7 +461,12 @@ fn node(w: &mut FunctionWriter<'_, '_, '_, '_>, ast: &Ast, id: AstId) -> Result<
                 node(w, ast, s)?;
             }
         }
-        AstNode::Empty | AstNode::Null | AstNode::This | AstNode::Base => {}
+        AstNode::Empty
+        | AstNode::Null
+        | AstNode::This
+        | AstNode::Base
+        | AstNode::Break
+        | AstNode::Continue => {}
     }
     Ok(())
 }

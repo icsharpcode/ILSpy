@@ -108,6 +108,23 @@ pub enum AstNode {
         condition: Option<AstId>,
         body: AstId,
     },
+    /// `WhileStatement`; a condition of `None` is the literal `true` without resolve result.
+    While {
+        condition: Option<AstId>,
+        body: AstId,
+    },
+    /// `DoWhileStatement`.
+    DoWhile { body: AstId, condition: AstId },
+    /// `ForStatement` without initializers.
+    For {
+        condition: AstId,
+        iterators: Vec<AstId>,
+        body: AstId,
+    },
+    /// `BreakStatement`.
+    Break,
+    /// `ContinueStatement`.
+    Continue,
     /// `LockStatement`.
     Lock { expression: AstId, body: AstId },
     /// `ThrowStatement`, a rethrow without an expression.

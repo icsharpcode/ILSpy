@@ -730,6 +730,26 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				case RustBodyNode.Lock:
 					node.Children = [BodyNode(), BodyNode()];
 					break;
+				case RustBodyNode.DoWhile:
+					node.Children = [BodyNode(), BodyNode()];
+					break;
+				case RustBodyNode.For:
+				{
+					// The condition, the iterators and the body last.
+					var condition = BodyNode();
+					var iterators = new RustBodyNode[Len()];
+					for (int i = 0; i < iterators.Length; i++)
+						iterators[i] = BodyNode();
+					node.Children = [condition, .. iterators, BodyNode()];
+					break;
+				}
+				case RustBodyNode.While:
+				{
+					// Flag: whether a condition precedes the body.
+					node.Flag = Bool();
+					node.Children = node.Flag ? [BodyNode(), BodyNode()] : [BodyNode()];
+					break;
+				}
 				case RustBodyNode.Cast:
 					node.Type = Type();
 					node.Children = [BodyNode()];
