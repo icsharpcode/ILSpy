@@ -115,6 +115,7 @@ pub const SETTING_NAMES: &[&str] = &[
     "DoWhileStatement",
     "ScopedRef",
     "FieldKeyword",
+    "AlwaysQualifyMemberReferences",
 ];
 
 /// The values of `SETTING_NAMES`.
@@ -173,6 +174,7 @@ pub struct Settings {
     pub do_while_statement: bool,
     pub scoped_ref: bool,
     pub field_keyword: bool,
+    pub always_qualify_member_references: bool,
 }
 
 impl Settings {
@@ -233,6 +235,7 @@ impl Settings {
             do_while_statement: bit(50),
             scoped_ref: bit(51),
             field_keyword: bit(52),
+            always_qualify_member_references: bit(53),
         }
     }
 }
@@ -275,6 +278,30 @@ pub trait Resolver {
         ts: &TypeSystem<'_, '_>,
         query: &ExtensionMethodQuery<'_>,
     ) -> bool;
+
+    /// `Disambiguator.ProbeField`: whether `field`, written as a simple name (`target` is
+    /// `None`) or as a member access on `target`, binds back to the field, as the decompiled
+    /// method's `ExpressionBuilder` resolves names (its current type and member included).
+    fn field_reference_binds(
+        &self,
+        ts: &TypeSystem<'_, '_>,
+        field: &super::ast::FieldOperand,
+        target: Option<LookupTarget>,
+    ) -> bool;
+}
+
+/// The target of a member lookup, as its resolve result presents it to the resolver.
+#[derive(Clone, Copy, Debug)]
+pub enum LookupTarget {
+    /// `this` or `base` (`ThisResolveResult`) of the given type.
+    This {
+        ty: TypeId,
+        causes_non_virtual_invocation: bool,
+    },
+    /// A type name (`TypeResolveResult`).
+    Type(TypeId),
+    /// Any other expression of the given type.
+    Expression(TypeId),
 }
 
 /// A `CanTransformToExtensionMethodCall` question.

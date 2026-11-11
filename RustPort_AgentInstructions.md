@@ -431,7 +431,12 @@ the reasons. This file holds only the ordered steps, their gates and their rules
     constructs: the function body container, `return`, the implicit final return, `nop`,
     `ldc.i4`, `ldstr`, `ldnull`, `ldloc` and the identity case of `ConvertTo`. Subject:
     `Translate the first method bodies to C# in the engine`.
-  - [ ] 68b-68y. Further construct groups, in the order of the fallback reasons the ratchet test
+  - [x] 68b. Field access and assignments: `ldobj` and `stobj` through `ldflda` and
+    `ldsflda`, `stloc` to a variable that is no stack slot, and expression statements, with
+    `ConvertField`, `TranslateTarget` and the field `Disambiguator`, whose checks ask the
+    host's resolver (human decision; lecture 3.86). Subject: `Translate field access and
+    assignments to C# in the engine`.
+  - [ ] 68c-68y. Further construct groups, in the order of the fallback reasons the ratchet test
     prints, until no body of the corpus falls back. Subject pattern:
     `Translate <construct group> to C# in the engine`.
   - [ ] 68z. Request-level seam 2. Subject: `Add the Rust C# AST builders and the AST materializer`.

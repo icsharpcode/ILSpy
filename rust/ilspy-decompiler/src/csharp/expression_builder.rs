@@ -62,6 +62,24 @@ impl Builder<'_, '_, '_, '_> {
                 self.ast.with_il(e.expression, inst);
                 Ok(e)
             }
+            Inst::LdObj {
+                target,
+                ty,
+                unaligned,
+                ..
+            } => self.ld_obj(inst, target, ty.ty, unaligned, hint),
+            // `DelayExceptions` (set for the `ldfld` the reader splits into `ldobj(ldflda)`)
+            // does not change the translation.
+            Inst::LdFlda { target, field, .. } => self.ld_flda(inst, Some(target), &field),
+            Inst::LdsFlda { field } => self.ld_flda(inst, None, &field),
+            Inst::StObj {
+                target,
+                value,
+                ty,
+                unaligned,
+                ..
+            } => self.st_obj(inst, target, value, ty.ty, unaligned),
+            Inst::StLoc { var, value, .. } => self.st_loc(inst, var, value),
             other => Err(format!("the instruction {}", super::inst_name(&other))),
         }
     }

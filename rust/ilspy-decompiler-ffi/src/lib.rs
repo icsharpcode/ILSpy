@@ -421,6 +421,20 @@ impl Resolver for HostResolver {
         // SAFETY: the host contract above; `bytes` outlives the call.
         unsafe { (self.callback)(self.ctx, bytes.as_ptr(), bytes.len()) == 1 }
     }
+
+    fn field_reference_binds(
+        &self,
+        ts: &TypeSystem<'_, '_>,
+        field: &ilspy_decompiler::il::ast::FieldOperand,
+        target: Option<ilspy_decompiler::il::transforms::LookupTarget>,
+    ) -> bool {
+        let Ok(bytes) = ilspy_decompiler::wire::ilast::field_reference_query(ts, field, target)
+        else {
+            return false;
+        };
+        // SAFETY: the host contract above; `bytes` outlives the call.
+        unsafe { (self.callback)(self.ctx, bytes.as_ptr(), bytes.len()) == 1 }
+    }
 }
 
 /// The names AssignVariableNames' root scope collects, as `RustEngine.RootNames` writes them:

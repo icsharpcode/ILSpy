@@ -204,7 +204,7 @@ impl FunctionWriter<'_, '_, '_, '_> {
 
     /// A member token, shifted left by one; bit 0 says the generic context it resolves in
     /// (`MethodOperand::context`) follows, which is otherwise the function's own.
-    fn member(&mut self, token: u32, context: u32) {
+    pub(super) fn member(&mut self, token: u32, context: u32) {
         self.out
             .uvar(u64::from(token) << 1 | u64::from(context != 0));
         if context != 0 {
@@ -1532,7 +1532,8 @@ pub fn read_function(
     if analysis {
         crate::il::transforms::combine_exits_transform::run(&mut f, &mut ctx);
     }
-    let translated = translate_body.then(|| crate::csharp::convert_body(ts, &f));
+    let translated =
+        translate_body.then(|| crate::csharp::convert_body(ts, &f, settings, resolver));
     let mut w = ModuleWriter::new(ts);
     w.function(method.row, &f, translated.as_ref())?;
     Ok(w.finish())
@@ -1565,6 +1566,77 @@ pub fn resolver_query(
     query: &crate::il::transforms::ExtensionMethodQuery<'_>,
 ) -> Result<Vec<u8>, String> {
     use crate::il::transforms::ExtensionMethodQuery;
+    query_message(ts, |w| {
+        match query {
+            ExtensionMethodQuery::Call {
+                method,
+                target,
+                target_store,
+                arguments,
+            } => {
+                w.out.u8(0);
+                w.call_method(method)?;
+                w.ty(*target);
+                w.out.bool(target_store.is_some());
+                if let Some((variable, value)) = *target_store {
+                    w.ty(variable);
+                    w.ty(value);
+                }
+                w.out.len(arguments.len());
+                for &a in arguments {
+                    w.ty(a);
+                }
+            }
+            ExtensionMethodQuery::Method { method } => {
+                w.out.u8(1);
+                w.call_method(method)?;
+            }
+        }
+        Ok(())
+    })
+}
+
+/// A `field_reference_binds` question in the `resolver_query` format: kind 2 with the field
+/// for a simple name; kind 3 with the field, the target's kind (0 `this`/`base` followed by
+/// whether it causes a non-virtual invocation, 1 a type, 2 another expression) and the
+/// target's type for a member access.
+pub fn field_reference_query(
+    ts: &TypeSystem<'_, '_>,
+    field: &crate::il::ast::FieldOperand,
+    target: Option<crate::il::transforms::LookupTarget>,
+) -> Result<Vec<u8>, String> {
+    use crate::il::transforms::LookupTarget;
+    query_message(ts, |w| {
+        w.out.u8(if target.is_some() { 3 } else { 2 });
+        w.member(field.token, field.context);
+        match target {
+            None => {}
+            Some(LookupTarget::This {
+                ty,
+                causes_non_virtual_invocation,
+            }) => {
+                w.out.u8(0);
+                w.out.bool(causes_non_virtual_invocation);
+                w.ty(ty);
+            }
+            Some(LookupTarget::Type(ty)) => {
+                w.out.u8(1);
+                w.ty(ty);
+            }
+            Some(LookupTarget::Expression(ty)) => {
+                w.out.u8(2);
+                w.ty(ty);
+            }
+        }
+        Ok(())
+    })
+}
+
+/// A resolver question: the tables, the explicit generic contexts and what `write` adds.
+fn query_message(
+    ts: &TypeSystem<'_, '_>,
+    write: impl FnOnce(&mut FunctionWriter<'_, '_, '_, '_>) -> Result<(), String>,
+) -> Result<Vec<u8>, String> {
     let mut tables = Tables::default();
     let empty = Function::default();
     let mut w = FunctionWriter {
@@ -1579,31 +1651,7 @@ pub fn resolver_query(
         written: HashMap::new(),
     };
     w.contexts();
-    match query {
-        ExtensionMethodQuery::Call {
-            method,
-            target,
-            target_store,
-            arguments,
-        } => {
-            w.out.u8(0);
-            w.call_method(method)?;
-            w.ty(*target);
-            w.out.bool(target_store.is_some());
-            if let Some((variable, value)) = *target_store {
-                w.ty(variable);
-                w.ty(value);
-            }
-            w.out.len(arguments.len());
-            for &a in arguments {
-                w.ty(a);
-            }
-        }
-        ExtensionMethodQuery::Method { method } => {
-            w.out.u8(1);
-            w.call_method(method)?;
-        }
-    }
+    write(&mut w)?;
     let payload = std::mem::take(&mut w.out);
     Ok(tables.finish(VERSION, payload))
 }

@@ -1,13 +1,13 @@
 //! The C# translation of a function body, after the function in the `read_module` format;
-//! `RustBodyReader.cs` mirrors it.
+//! `IlAstMaterializer.BodyNode` reads it and `RustSeam2.cs` builds the syntax.
 //!
 //! A trailer byte follows every function: 0 when no translation was asked for, 1 and a
 //! string when the body is not translated (the reason), 2 and the `BlockStatement` when it
 //! is. A node is its kind, its annotations and then its payload and children in slot order:
 //! - annotations: the IL instructions (`WithILInstruction`, as indices of the function's
-//!   nodes in completion order), the resolve result (0 none, 1 `ConstantResolveResult` with
-//!   type and constant, 2 `ILVariableResolveResult` with variable index and type) and the
-//!   `ImplicitReturnAnnotation` (0 none, else the `leave`'s index + 1);
+//!   nodes in completion order), whether they were added before the resolve result, the
+//!   resolve result (see `rr`) and the `ImplicitReturnAnnotation` (0 none, else the
+//!   `leave`'s index + 1);
 //! - a constant is a tag (`ConstValue` order) and its value.
 
 use crate::csharp::Unsupported;
@@ -29,6 +29,12 @@ mod kind {
     pub const NULL: u8 = 5;
     pub const IDENTIFIER: u8 = 6;
     pub const THIS: u8 = 7;
+    pub const BASE: u8 = 8;
+    pub const MEMBER_REFERENCE: u8 = 9;
+    pub const TYPE_REFERENCE: u8 = 10;
+    pub const REF_DIRECTION: u8 = 11;
+    pub const ASSIGNMENT: u8 = 12;
+    pub const EXPRESSION_STATEMENT: u8 = 13;
 }
 
 pub(super) fn write_body(
@@ -59,6 +65,68 @@ fn il_index(
         .ok_or_else(|| "a C# node annotated with an instruction outside the function".to_owned())
 }
 
+fn var_index(
+    w: &FunctionWriter<'_, '_, '_, '_>,
+    var: crate::il::ast::VarId,
+) -> Result<usize, String> {
+    w.vars
+        .get(&var)
+        .copied()
+        .ok_or_else(|| "a C# node refers to a variable outside the function".to_owned())
+}
+
+/// A resolve result: 0 none; 1 `ConstantResolveResult` (type, constant); 2
+/// `ILVariableResolveResult` (variable, type); 3 `ThisResolveResult` (variable, type, whether
+/// it causes a non-virtual invocation); 4 `TypeResolveResult` (type); 5 the
+/// `MemberResolveResult` of a field (the target's resolve result, the field as a member
+/// token); 6 `ByReferenceResolveResult` (the element's resolve result); 7 the
+/// `OperatorResolveResult` of an assignment (type; the operands are the children's).
+fn rr(w: &mut FunctionWriter<'_, '_, '_, '_>, rr: Option<&Rr>) -> Result<(), String> {
+    match rr {
+        None => w.out.u8(0),
+        Some(Rr::Constant { ty, value }) => {
+            w.out.u8(1);
+            w.ty(*ty);
+            constant(w, value);
+        }
+        Some(Rr::Variable { var, ty }) => {
+            w.out.u8(2);
+            let i = var_index(w, *var)?;
+            w.out.len(i);
+            w.ty(*ty);
+        }
+        Some(Rr::This {
+            var,
+            ty,
+            causes_non_virtual_invocation,
+        }) => {
+            w.out.u8(3);
+            let i = var_index(w, *var)?;
+            w.out.len(i);
+            w.ty(*ty);
+            w.out.bool(*causes_non_virtual_invocation);
+        }
+        Some(Rr::Type(ty)) => {
+            w.out.u8(4);
+            w.ty(*ty);
+        }
+        Some(Rr::Field { target, field }) => {
+            w.out.u8(5);
+            self::rr(w, Some(target))?;
+            w.member(field.token, field.context);
+        }
+        Some(Rr::ByReference(element)) => {
+            w.out.u8(6);
+            self::rr(w, Some(element))?;
+        }
+        Some(Rr::Assign { ty }) => {
+            w.out.u8(7);
+            w.ty(*ty);
+        }
+    }
+    Ok(())
+}
+
 fn node(w: &mut FunctionWriter<'_, '_, '_, '_>, ast: &Ast, id: AstId) -> Result<(), String> {
     let n = ast.node(id).clone();
     let a = ast.annotations(id).clone();
@@ -71,29 +139,20 @@ fn node(w: &mut FunctionWriter<'_, '_, '_, '_>, ast: &Ast, id: AstId) -> Result<
         AstNode::Null => kind::NULL,
         AstNode::Identifier { .. } => kind::IDENTIFIER,
         AstNode::This => kind::THIS,
+        AstNode::Base => kind::BASE,
+        AstNode::MemberReference { .. } => kind::MEMBER_REFERENCE,
+        AstNode::TypeReference { .. } => kind::TYPE_REFERENCE,
+        AstNode::RefDirection { .. } => kind::REF_DIRECTION,
+        AstNode::Assignment { .. } => kind::ASSIGNMENT,
+        AstNode::ExpressionStatement { .. } => kind::EXPRESSION_STATEMENT,
     });
     w.out.len(a.il.len());
     for &inst in &a.il {
         let i = il_index(w, inst)?;
         w.out.len(i);
     }
-    match &a.rr {
-        None => w.out.u8(0),
-        Some(Rr::Constant { ty, value }) => {
-            w.out.u8(1);
-            w.ty(*ty);
-            constant(w, value);
-        }
-        Some(Rr::Variable { var, ty }) => {
-            w.out.u8(2);
-            let i = *w
-                .vars
-                .get(var)
-                .ok_or("a C# node refers to a variable outside the function")?;
-            w.out.len(i);
-            w.ty(*ty);
-        }
-    }
+    w.out.bool(a.il_before_rr);
+    rr(w, a.rr.as_ref())?;
     match a.implicit_return {
         None => w.out.u8(0),
         Some(leave) => {
@@ -125,7 +184,19 @@ fn node(w: &mut FunctionWriter<'_, '_, '_, '_>, ast: &Ast, id: AstId) -> Result<
         }
         AstNode::StringLiteral { value } => utf16(w, &value),
         AstNode::Identifier { name } => w.string(&name),
-        AstNode::Empty | AstNode::Null | AstNode::This => {}
+        AstNode::MemberReference { target, name } => {
+            node(w, ast, target)?;
+            w.string(&name);
+        }
+        AstNode::TypeReference { ty } => w.ty(ty),
+        AstNode::RefDirection { expression } | AstNode::ExpressionStatement { expression } => {
+            node(w, ast, expression)?;
+        }
+        AstNode::Assignment { left, right } => {
+            node(w, ast, left)?;
+            node(w, ast, right)?;
+        }
+        AstNode::Empty | AstNode::Null | AstNode::This | AstNode::Base => {}
     }
     Ok(())
 }

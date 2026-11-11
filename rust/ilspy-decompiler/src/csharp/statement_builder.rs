@@ -12,6 +12,8 @@ use super::{Builder, Unsupported};
 pub fn convert_body(
     ts: &mut TypeSystem<'_, '_>,
     read: &ReadFunction,
+    settings: crate::il::transforms::Settings,
+    resolver: Option<&dyn crate::il::transforms::Resolver>,
 ) -> Result<(Ast, AstId), Unsupported> {
     let f = &read.function;
     let body = f.body.ok_or("a function without body")?;
@@ -30,12 +32,23 @@ pub fn convert_body(
     let method = ts
         .method_definition(read.method)
         .map_err(|e| e.to_string())?;
+    let current_type = ts
+        .method_declaring(read.method)
+        .map_err(|e| e.to_string())?;
     let mut b = Builder {
         f,
         ts,
         ast: Ast::default(),
         return_container: body,
         result_type: method.ret,
+        settings,
+        resolver,
+        current_type,
+        variable_names: read
+            .variables
+            .iter()
+            .map(|&v| f.var(v).name.clone())
+            .collect(),
     };
     let stmt = b.convert(body)?;
     b.ast.with_il(stmt, body);
@@ -57,8 +70,50 @@ impl Builder<'_, '_, '_, '_> {
                 let s = self.ast.add(AstNode::Empty);
                 Ok(self.ast.with_il(s, inst))
             }
-            other => Err(format!("the statement {}", super::inst_name(&other))),
+            // `VisitStLoc` and `VisitStObj` strip a top-level `ref` of a ref reassignment, which
+            // the expression builder does not produce.
+            Inst::StLoc { .. } | Inst::StObj { .. } => self.expression_statement(inst),
+            Inst::If { .. }
+            | Inst::Switch { .. }
+            | Inst::Branch { .. }
+            | Inst::Throw { .. }
+            | Inst::Rethrow
+            | Inst::YieldReturn { .. }
+            | Inst::TryCatch { .. }
+            | Inst::TryFinally { .. }
+            | Inst::TryFault { .. }
+            | Inst::Lock { .. }
+            | Inst::Using { .. }
+            | Inst::PinnedRegion { .. }
+            | Inst::Block { .. }
+            | Inst::Initblk { .. }
+            | Inst::Cpblk { .. }
+            | Inst::Ckfinite { .. }
+            | Inst::IsInst { .. } => Err(format!(
+                "the statement {}",
+                super::inst_name(self.f.inst(inst))
+            )),
+            // `Default`: an expression statement.
+            _ => {
+                let s = self.expression_statement(inst)?;
+                let AstNode::ExpressionStatement { expression } = *self.ast.node(s) else {
+                    unreachable!("an expression statement");
+                };
+                if matches!(self.ast.node(expression), AstNode::RefDirection { .. }) {
+                    return Err("a ref expression as statement".to_owned());
+                }
+                Ok(s)
+            }
         }
+    }
+
+    /// `new ExpressionStatement(exprBuilder.Translate(inst)).WithILInstruction(inst)`.
+    fn expression_statement(&mut self, inst: NodeId) -> Result<AstId, Unsupported> {
+        let e = self.translate(inst, None)?;
+        let s = self.ast.add(AstNode::ExpressionStatement {
+            expression: e.expression,
+        });
+        Ok(self.ast.with_il(s, inst))
     }
 
     fn visit_block_container(

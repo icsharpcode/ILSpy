@@ -47,11 +47,21 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		public const byte Null = 5;
 		public const byte Identifier = 6;
 		public const byte This = 7;
+		public const byte Base = 8;
+		public const byte MemberReference = 9;
+		public const byte TypeReference = 10;
+		public const byte RefDirection = 11;
+		public const byte Assignment = 12;
+		public const byte ExpressionStatement = 13;
 
 		public byte Kind;
 		/// <summary>The instructions the node is annotated with, in order.</summary>
 		public ILInstruction[] IL = [];
+		/// <summary>Whether the instructions were annotated before the resolve result.</summary>
+		public bool ILBeforeResolveResult;
 		public ResolveResult? ResolveResult;
+		/// <summary>For an assignment: the type of its <see cref="OperatorResolveResult"/>, whose operands are the children's.</summary>
+		public IType? AssignmentType;
 		public Leave? ImplicitReturn;
 		public RustBodyNode[] Children = [];
 		public IType? Type;
@@ -145,45 +155,64 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 						block.Add((Statement)Build(child, exprBuilder));
 					if (node.ImplicitReturn != null)
 						block.AddAnnotation(new ImplicitReturnAnnotation(node.ImplicitReturn));
-					return WithIL(block, node);
+					return Annotate(block, node);
 				}
 				case RustBodyNode.Return:
 				{
 					var statement = node.Children.Length == 1
 						? new ReturnStatement((Expression)Build(node.Children[0], exprBuilder))
 						: new ReturnStatement();
-					return WithIL(statement, node);
+					return Annotate(statement, node);
 				}
 				case RustBodyNode.Empty:
-					return WithIL(new EmptyStatement(), node);
+					return Annotate(new EmptyStatement(), node);
 				case RustBodyNode.ConstantValue:
 				{
+					// The AST builder annotates the constant itself.
 					var expression = exprBuilder.ConvertConstantValue(new ConstantResolveResult(node.Type!, node.Value), node.Flag).Expression;
-					return WithIL(expression, node);
+					foreach (var inst in node.IL)
+						expression.AddAnnotation(inst);
+					return expression;
 				}
 				case RustBodyNode.StringLiteral:
-					return WithRR(WithIL(new PrimitiveExpression(node.Value!), node), node);
+					return Annotate(new PrimitiveExpression(node.Value!), node);
 				case RustBodyNode.Null:
-					return WithIL(WithRR(new NullReferenceExpression(), node), node);
+					return Annotate(new NullReferenceExpression(), node);
 				case RustBodyNode.Identifier:
-					return WithIL(WithRR(new IdentifierExpression((string)node.Value!), node), node);
+					return Annotate(new IdentifierExpression((string)node.Value!), node);
 				case RustBodyNode.This:
-					return WithIL(WithRR(new ThisReferenceExpression(), node), node);
+					return Annotate(new ThisReferenceExpression(), node);
+				case RustBodyNode.Base:
+					return Annotate(new BaseReferenceExpression(), node);
+				case RustBodyNode.MemberReference:
+					return Annotate(new MemberReferenceExpression((Expression)Build(node.Children[0], exprBuilder), (string)node.Value!), node);
+				case RustBodyNode.TypeReference:
+					return Annotate(new TypeReferenceExpression(exprBuilder.ConvertType(node.Type!)), node);
+				case RustBodyNode.RefDirection:
+					return Annotate(new DirectionExpression(FieldDirection.Ref, (Expression)Build(node.Children[0], exprBuilder)), node);
+				case RustBodyNode.ExpressionStatement:
+					return Annotate(new ExpressionStatement((Expression)Build(node.Children[0], exprBuilder)), node);
+				case RustBodyNode.Assignment:
+				{
+					var left = (Expression)Build(node.Children[0], exprBuilder);
+					var right = (Expression)Build(node.Children[1], exprBuilder);
+					node.ResolveResult = new OperatorResolveResult(node.AssignmentType!, System.Linq.Expressions.ExpressionType.Assign,
+						left.GetResolveResult(), right.GetResolveResult());
+					return Annotate(new AssignmentExpression(left, right), node);
+				}
 				default:
 					throw new RustEngineException($"unknown C# node kind {node.Kind}");
 			}
 		}
 
-		static T WithIL<T>(T syntax, RustBodyNode node) where T : AstNode
+		/// <summary>The node's instructions and resolve result, in the order the managed builder adds them.</summary>
+		static T Annotate<T>(T syntax, RustBodyNode node) where T : AstNode
 		{
+			if (!node.ILBeforeResolveResult && node.ResolveResult != null)
+				syntax.AddAnnotation(node.ResolveResult);
 			foreach (var inst in node.IL)
 				syntax.AddAnnotation(inst);
-			return syntax;
-		}
-
-		static T WithRR<T>(T syntax, RustBodyNode node) where T : AstNode
-		{
-			if (node.ResolveResult != null)
+			if (node.ILBeforeResolveResult && node.ResolveResult != null)
 				syntax.AddAnnotation(node.ResolveResult);
 			return syntax;
 		}

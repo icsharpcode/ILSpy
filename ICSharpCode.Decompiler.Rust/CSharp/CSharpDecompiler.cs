@@ -2460,7 +2460,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					rustSuspendedILTransforms = null;
 				}
 				var rustRemainingTransforms = Rust.Interop.RustSeam1.Serve(typeSystem, method, entityDecl, parameterOffset,
-					SelectILTransforms(localSettings.DecompileMemberBodies), RecordSteps, DebugInfoProvider, ref function, ref context);
+					SelectILTransforms(localSettings.DecompileMemberBodies), RecordSteps, DebugInfoProvider, decompilationContext, ref function, ref context);
 				if (rustRemainingTransforms != null)
 				{
 					function.RunTransforms(rustRemainingTransforms, context);

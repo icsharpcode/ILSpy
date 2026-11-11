@@ -98,12 +98,13 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		/// reserves around the method come from the type system and <paramref name="usingScope"/>.
 		/// <paramref name="combineExits"/> runs CombineExitsTransform after the prefix.
 		/// <paramref name="translateBody"/> also has the engine translate the body into C#, which
-		/// <see cref="RustSeam2.ServeBody"/> hands to the decompiler.
+		/// <see cref="RustSeam2.ServeBody"/> hands to the decompiler. <paramref name="astResolver"/> answers the
+		/// body translation's name lookups as the method's ExpressionBuilder resolves them.
 		/// <see cref="RustStatus.Unsupported"/> leaves <paramref name="function"/>
 		/// null; an engine error or panic throws <see cref="RustEngineException"/>.
 		/// </summary>
 		public RustStatus ReadFunction(MethodDefinitionHandle method, int ilPrefix, DecompilerSettings settings,
-			IDebugInfoProvider? debugInfo, out ILFunction? function, out string? unsupportedReason, CSharpResolver? resolver = null, UsingScope? usingScope = null, bool combineExits = false, bool translateBody = false)
+			IDebugInfoProvider? debugInfo, out ILFunction? function, out string? unsupportedReason, CSharpResolver? resolver = null, UsingScope? usingScope = null, bool combineExits = false, bool translateBody = false, CSharpResolver? astResolver = null)
 		{
 			function = null;
 			unsupportedReason = null;
@@ -114,7 +115,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				flags |= 4;
 			var bridge = debugInfo == null ? null : new RustDebugInfo(debugInfo);
 			var resolverBridge = resolver == null ? null
-				: new RustResolver(resolver, MetadataTokens.GetRowNumber(method), typeSystem, modules, settings);
+				: new RustResolver(resolver, MetadataTokens.GetRowNumber(method), typeSystem, modules, settings, astResolver);
 			var declaringType = ((MetadataModule)typeSystem.MainModule).GetDefinition(method).DeclaringTypeDefinition;
 			byte[] rootNames = declaringType == null ? [] : RootNames(declaringType, usingScope);
 			var status = NativeMethods.ilspy_session_read_function(session, (uint)MetadataTokens.GetToken(method), (uint)ilPrefix,

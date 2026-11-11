@@ -2520,6 +2520,45 @@ decompiles every fixture image and ICSharpCode.Decompiler.dll with and without t
 body translations and compares the text. It passes. The red step was the ratchet test
 failing with no body served through seam 2.
 
+### 3.86 Field access through the host's resolver (item 68b)
+
+Every member reference of `ExpressionBuilder` goes through `Disambiguator`. It finds the
+shortest spelling that still resolves back to the member: unqualified, qualified with the
+target, then with the target cast, and for calls also with type arguments and argument
+casts. Each candidate is re-resolved with the managed `CSharpResolver`, which needs member
+lookup, the using scope and overload resolution. The human decided that the engine ports
+the `Disambiguator`'s control flow and asks the host for the re-resolution, as the IL steps
+already ask it about extension methods. Porting `CSharpResolver`'s name lookup and
+`MemberLookup` into the engine is a later, separately gated step before the engine-only end
+state.
+
+The question goes over the same resolver callback of `ilspy_session_read_function` (query
+kinds 2 and 3 of `wire::ilast::field_reference_query`): the field, and for a qualified
+spelling the target as `this` or `base` (with its non-virtual flag), a type name or another
+expression, each with its type. The host answers with the resolver the statement builder's
+`ExpressionBuilder` creates: the compilation, the using scope of the current type's
+namespace, the current type and the current member. That is a second resolver on
+`RustResolver`, built by seam 1 from the decompilation context, because the IL steps'
+resolver has no current type. `MemberLookup` only checks whether the target is a
+`ThisResolveResult`, so the host gives it a placeholder `this` variable.
+
+68b translates `ldobj` and `stobj` through a managed reference produced by `ldflda` or
+`ldsflda`, the field reference itself (`TranslateTarget` for a reference-type target,
+`base` and a static field's type, `RequiresQualifier` with the new settings bit 53
+`AlwaysQualifyMemberReferences`), assignments, `stloc` to variables that are not stack
+slots (the managed builder retypes stack slots as a side effect), and expression
+statements. Annotations now record whether the IL instructions or the resolve result came
+first, because the managed builders add them in both orders. The `DelayExceptions` flag of
+`ldflda` does not change the translation: the reader sets it for every `ldfld`. Backing
+fields of automatic properties and events, the C# 14 `field` keyword, value-type targets and
+casts of the target fall back for now. The first G-ast(0) run of this group failed 61 images:
+the backing-field guard knew only the C# name `<Name>k__BackingField`, not the VB `_Name` of
+a property `Name`, which `PatternStatementTransform` recognizes as well, so VB automatic
+properties lost their `{ get; set; }` form. The guard now covers both patterns.
+
+The share of bodies seam 2 serves rose from 3.5 % to 8.0 %. The largest fallback groups are
+now calls (329 `call`, 100 `callvirt`), backing fields (301) and `if` statements (169).
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

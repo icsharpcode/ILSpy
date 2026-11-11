@@ -25,6 +25,8 @@ using System.Reflection.Metadata;
 using System.Threading;
 
 using ICSharpCode.Decompiler.CSharp;
+using ICSharpCode.Decompiler.CSharp.Resolver;
+using ICSharpCode.Decompiler.TypeSystem.Implementation;
 using ICSharpCode.Decompiler.Semantics;
 using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.DebugInfo;
@@ -69,7 +71,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		/// </summary>
 		internal static IEnumerable<IILTransform>? Serve(IDecompilerTypeSystem typeSystem, IMethod method, EntityDeclaration entityDecl,
 			int parameterOffset, IEnumerable<IILTransform> transforms, bool recordSteps, IDebugInfoProvider? debugInfo,
-			ref ILFunction function, ref ILTransformContext context)
+			ITypeResolveContext decompilationContext, ref ILFunction function, ref ILTransformContext context)
 		{
 			var pipeline = transforms.ToList();
 			// The Debug Steps pane and per-transform tracing (ILTransformExecuted events) need every
@@ -84,10 +86,16 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 			var settings = context.Settings;
 			// The body translation (seam 2) needs the whole IL pipeline to have run in the engine.
 			bool translateBody = topLevelCount == pipeline.Count && settings.DecompileMemberBodies && RustSeam2.Enabled;
+			// The resolver the statement builder's ExpressionBuilder creates.
+			var astResolver = !translateBody ? null : new CSharpResolver(new CSharpTypeResolveContext(
+				decompilationContext.Compilation.MainModule,
+				context.DecompileRun!.GetUsingScopeFor(decompilationContext.CurrentTypeDefinition?.Namespace),
+				decompilationContext.CurrentTypeDefinition,
+				decompilationContext.CurrentMember));
 			var status = engine.ReadFunction((MethodDefinitionHandle)method.MetadataToken, prefix,
 				settings, settings.UseDebugSymbols ? debugInfo : null,
 				out var rustFunction, out reason, resolver: context.CSharpResolver, usingScope: context.UsingScope,
-				translateBody: translateBody);
+				translateBody: translateBody, astResolver: astResolver);
 			if (status != RustStatus.Ok)
 				return Fallback(reason);
 

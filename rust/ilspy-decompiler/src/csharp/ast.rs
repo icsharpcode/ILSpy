@@ -34,6 +34,18 @@ pub enum AstNode {
     Identifier { name: String },
     /// `ThisReferenceExpression`.
     This,
+    /// `BaseReferenceExpression`.
+    Base,
+    /// `MemberReferenceExpression`: `target.name`.
+    MemberReference { target: AstId, name: String },
+    /// `TypeReferenceExpression` of `ExpressionBuilder.ConvertType(ty)`, which the host builds.
+    TypeReference { ty: TypeId },
+    /// `DirectionExpression` with `FieldDirection.Ref`.
+    RefDirection { expression: AstId },
+    /// `AssignmentExpression` with `=`.
+    Assignment { left: AstId, right: AstId },
+    /// `ExpressionStatement`.
+    ExpressionStatement { expression: AstId },
 }
 
 /// `ResolveResult` annotations.
@@ -46,6 +58,24 @@ pub enum Rr {
         var: crate::il::ast::VarId,
         ty: TypeId,
     },
+    /// `ThisResolveResult` of the `this` parameter.
+    This {
+        var: crate::il::ast::VarId,
+        ty: TypeId,
+        causes_non_virtual_invocation: bool,
+    },
+    /// `TypeResolveResult`.
+    Type(TypeId),
+    /// `MemberResolveResult` of a field with the target's resolve result.
+    Field {
+        target: Box<Rr>,
+        field: crate::il::ast::FieldOperand,
+    },
+    /// `ByReferenceResolveResult` with `ReferenceKind.Ref` of the element's resolve result.
+    ByReference(Box<Rr>),
+    /// `OperatorResolveResult` of an assignment, of the given type, whose operands are the
+    /// resolve results of the node's children.
+    Assign { ty: TypeId },
 }
 
 /// The annotations of a node.
@@ -54,6 +84,9 @@ pub struct Annotations {
     /// `WithILInstruction`, in the order they were added (an instruction can repeat).
     pub il: Vec<NodeId>,
     pub rr: Option<Rr>,
+    /// Whether the IL instructions were annotated before the resolve result (the managed
+    /// builders add them in either order).
+    pub il_before_rr: bool,
     /// `ImplicitReturnAnnotation`: the final `leave` a block falls out of.
     pub implicit_return: Option<NodeId>,
 }
@@ -87,7 +120,11 @@ impl Ast {
 
     /// `WithILInstruction(inst)`.
     pub fn with_il(&mut self, id: AstId, inst: NodeId) -> AstId {
-        self.annotations_mut(id).il.push(inst);
+        let a = self.annotations_mut(id);
+        if a.il.is_empty() && a.rr.is_none() {
+            a.il_before_rr = true;
+        }
+        a.il.push(inst);
         id
     }
 

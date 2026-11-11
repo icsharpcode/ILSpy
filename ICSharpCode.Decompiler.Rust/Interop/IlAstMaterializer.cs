@@ -315,7 +315,22 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 			var reader = new IlAstMaterializer(wire, compilation, modules, settings);
 			reader.context = new GenericContext(reader.mainModule.GetDefinition(MetadataTokens.MethodDefinitionHandle(row)));
 			reader.ReadContexts();
-			var query = new RustResolverQuery { Kind = reader.U8(), Method = reader.CallMethod() };
+			var query = new RustResolverQuery { Kind = reader.U8() };
+			if (query.Kind is RustResolverQuery.FieldSimpleNameKind or RustResolverQuery.FieldMemberAccessKind)
+			{
+				query.Field = reader.Field();
+				if (query.Kind == RustResolverQuery.FieldMemberAccessKind)
+				{
+					query.TargetKind = reader.U8();
+					if (query.TargetKind == RustResolverQuery.ThisTarget)
+						query.CausesNonVirtualInvocation = reader.Bool();
+					query.Target = reader.Type();
+				}
+				if (!reader.AtEnd)
+					throw new InvalidOperationException("Trailing bytes after the resolver query");
+				return query;
+			}
+			query.Method = reader.CallMethod();
 			if (query.Kind == RustResolverQuery.CallKind)
 			{
 				query.Target = reader.Type();
@@ -544,21 +559,8 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 			node.IL = new ILInstruction[Len()];
 			for (int i = 0; i < node.IL.Length; i++)
 				node.IL[i] = materialized[Len()];
-			switch (U8())
-			{
-				case 1:
-				{
-					var type = Type();
-					node.ResolveResult = new ConstantResolveResult(type, Constant());
-					break;
-				}
-				case 2:
-				{
-					var variable = variables[Len()];
-					node.ResolveResult = new ILVariableResolveResult(variable, Type());
-					break;
-				}
-			}
+			node.ILBeforeResolveResult = Bool();
+			node.ResolveResult = BodyResolveResult(out node.AssignmentType);
 			int implicitReturn = Len();
 			if (implicitReturn != 0)
 				node.ImplicitReturn = (Leave)materialized[implicitReturn - 1];
@@ -583,8 +585,65 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				case RustBodyNode.Identifier:
 					node.Value = Str();
 					break;
+				case RustBodyNode.MemberReference:
+					node.Children = [BodyNode()];
+					node.Value = Str();
+					break;
+				case RustBodyNode.TypeReference:
+					node.Type = Type();
+					break;
+				case RustBodyNode.RefDirection:
+				case RustBodyNode.ExpressionStatement:
+					node.Children = [BodyNode()];
+					break;
+				case RustBodyNode.Assignment:
+					node.Children = [BodyNode(), BodyNode()];
+					break;
 			}
 			return node;
+		}
+
+		/// <summary>
+		/// A resolve result of the body translation; an assignment's, whose operands are its
+		/// children's, comes back as null with its type in <paramref name="assignmentType"/>.
+		/// </summary>
+		ResolveResult? BodyResolveResult(out IType? assignmentType)
+		{
+			assignmentType = null;
+			switch (U8())
+			{
+				case 0:
+					return null;
+				case 1:
+				{
+					var type = Type();
+					return new ConstantResolveResult(type, Constant());
+				}
+				case 2:
+				{
+					var variable = variables[Len()];
+					return new ILVariableResolveResult(variable, Type());
+				}
+				case 3:
+				{
+					var variable = variables[Len()];
+					return new ThisResolveResult(variable, Type(), Bool());
+				}
+				case 4:
+					return new TypeResolveResult(Type());
+				case 5:
+				{
+					var target = BodyResolveResult(out _);
+					return new MemberResolveResult(target, Field());
+				}
+				case 6:
+					return new ByReferenceResolveResult(BodyResolveResult(out _)!, ReferenceKind.Ref);
+				case 7:
+					assignmentType = Type();
+					return null;
+				default:
+					throw new InvalidOperationException("Unknown resolve result tag");
+			}
 		}
 
 		/// <summary>A constant of the body translation, as the CLR value <see cref="ConstantResolveResult"/> holds.</summary>
