@@ -42,9 +42,20 @@ struct ArgumentList {
     parameter_names: Vec<String>,
     is_primitive_value: Vec<bool>,
     add_names_to_primitive_values: bool,
+    /// `FirstOptionalArgumentIndex`: -2 for no optional arguments, -1 where they are not
+    /// allowed, else the first of the trailing arguments that are the parameters' defaults.
+    first_optional: i32,
 }
 
 impl ArgumentList {
+    /// `GetActualArgumentCount()`: the arguments written.
+    fn actual_count(&self) -> usize {
+        match usize::try_from(self.first_optional) {
+            Ok(first) => first,
+            Err(_) => self.arguments.len(),
+        }
+    }
+
     /// `GetArgumentNames()`: names for the bool literals, where every parameter has a name.
     fn argument_names(&self) -> Option<Vec<Option<String>>> {
         if !self.add_names_to_primitive_values
@@ -53,10 +64,12 @@ impl ArgumentList {
         {
             return None;
         }
+        // The names of the written arguments.
         Some(
             self.is_primitive_value
                 .iter()
                 .zip(&self.parameter_names)
+                .take(self.actual_count())
                 .map(|(&primitive, name)| primitive.then(|| name.clone()))
                 .collect(),
         )
@@ -146,7 +159,8 @@ impl Builder<'_, '_, '_, '_> {
             self.translate_target(this_arg, op == CallOp::Call, method.is_static, declaring)?;
 
         // the arguments
-        let mut list = self.argument_list(call, &method, first_param, declaring)?;
+        let is_setter = property.is_some() && method.parameters.len() == 1;
+        let mut list = self.argument_list(call, &method, id, first_param, declaring, is_setter)?;
 
         if let Some(name) = property {
             return self.accessor_call(inst, operand, &method, op, target, list, name, declaring);
@@ -205,7 +219,7 @@ impl Builder<'_, '_, '_, '_> {
         };
         let names = list.argument_names();
         let mut arguments = Vec::with_capacity(list.arguments.len());
-        for (i, a) in list.arguments.iter().enumerate() {
+        for (i, a) in list.arguments[..list.actual_count()].iter().enumerate() {
             match names.as_ref().and_then(|n| n[i].clone()) {
                 Some(name) => arguments.push(self.ast.add(AstNode::NamedArgument {
                     name,
@@ -246,7 +260,10 @@ impl Builder<'_, '_, '_, '_> {
         type_arguments: &[TypeId],
     ) -> Result<Option<TranslatedExpression>, Unsupported> {
         // Without using declarations an extension method's namespace is not imported.
-        if list.arguments.is_empty() || !self.settings.using_declarations {
+        if list.arguments.is_empty()
+            || list.first_optional == 0
+            || !self.settings.using_declarations
+        {
             return Ok(None);
         }
         // The target is the first argument, written first and positionally.
@@ -275,7 +292,7 @@ impl Builder<'_, '_, '_, '_> {
             .resolver
             .ok_or("a member reference without the host's resolver")?;
         let target = self.semantic_rr(first.expression, first.ty);
-        let arguments: Vec<_> = list.arguments[1..]
+        let arguments: Vec<_> = list.arguments[1..list.actual_count()]
             .iter()
             .map(|a| self.semantic_rr(a.expression, a.ty))
             .collect();
@@ -306,7 +323,11 @@ impl Builder<'_, '_, '_, '_> {
             })
         };
         let mut rest = Vec::with_capacity(list.arguments.len() - 1);
-        for (i, a) in list.arguments.iter().enumerate().skip(1) {
+        for (i, a) in list.arguments[..list.actual_count()]
+            .iter()
+            .enumerate()
+            .skip(1)
+        {
             match names.as_ref().and_then(|n| n[i].clone()) {
                 Some(name) => rest.push(self.ast.add(AstNode::NamedArgument {
                     name,
@@ -341,9 +362,15 @@ impl Builder<'_, '_, '_, '_> {
         &mut self,
         call: &CallData,
         method: &Method,
+        id: crate::typesystem::members::MethodDefId,
         first_param: usize,
         declaring: TypeId,
+        is_setter: bool,
     ) -> Result<ArgumentList, Unsupported> {
+        let infos = self.ts.method_signature(id).1;
+        if infos.len() != method.parameters.len() {
+            return Err("a call with mismatched parameters".to_owned());
+        }
         if call.args.len() != first_param + method.parameters.len() {
             return Err("a call with mismatched arguments".to_owned());
         }
@@ -353,6 +380,11 @@ impl Builder<'_, '_, '_, '_> {
             is_primitive_value: Vec::with_capacity(method.parameters.len()),
             add_names_to_primitive_values: self.settings.named_arguments
                 && self.settings.non_trailing_named_arguments,
+            first_optional: if self.settings.optional_arguments {
+                -2
+            } else {
+                -1
+            },
         };
         let declaring_is_nullable = self.ts.is_known(declaring, KnownTypeCode::NullableOfT);
         for (i, parameter) in method.parameters.iter().enumerate() {
@@ -361,9 +393,6 @@ impl Builder<'_, '_, '_, '_> {
             }
             if parameter.is_params {
                 return Err("a params argument".to_owned());
-            }
-            if parameter.is_optional {
-                return Err("an argument of an optional parameter".to_owned());
             }
             if self.ts.kind(parameter.ty) == TypeKind::Dynamic {
                 return Err("an argument of a dynamic parameter".to_owned());
@@ -376,13 +405,62 @@ impl Builder<'_, '_, '_, '_> {
                 && !declaring_is_nullable
                 && self.ts.is_known(parameter.ty, KnownTypeCode::Boolean);
             list.is_primitive_value.push(primitive);
+            // The assigned value of a setter does not end the run of optional arguments.
+            if !(is_setter && i + 1 == method.parameters.len()) {
+                if self.is_optional_argument(id, &infos[i], arg)? {
+                    if list.first_optional == -2 {
+                        list.first_optional = i as i32;
+                    }
+                } else if list.first_optional != -1 {
+                    list.first_optional = -2;
+                }
+            }
             let arg = self.convert_to(arg, parameter.ty, true)?;
             list.arguments.push(arg);
         }
         Ok(list)
     }
 
-    /// `CallBuilder.Build` for `newobj` of an ordinary constructor: `new T(arguments)`.
+    /// `IsOptionalArgument`: a constant argument of an optional parameter that is its default
+    /// value, unless the parameter is filled in by the compiler (caller information).
+    fn is_optional_argument(
+        &mut self,
+        method: crate::typesystem::members::MethodDefId,
+        info: &crate::typesystem::members::ParamInfo,
+        arg: TranslatedExpression,
+    ) -> Result<bool, Unsupported> {
+        if !info.optional {
+            return Ok(false);
+        }
+        let Rr::Constant { value, .. } = self.rr_of(arg.expression) else {
+            return Ok(false);
+        };
+        if info.row != 0 {
+            let md = &self.ts.comp.module(method.module).md;
+            let ns = "System.Runtime.CompilerServices";
+            let caller_info = [
+                "CallerMemberNameAttribute",
+                "CallerFilePathAttribute",
+                "CallerLineNumberAttribute",
+            ]
+            .iter()
+            .any(|name| {
+                crate::typesystem::flags::has_attribute(
+                    md,
+                    crate::metadata::tables::TableId::Param,
+                    info.row,
+                    ns,
+                    name,
+                )
+            });
+            if caller_info {
+                return Ok(false);
+            }
+        }
+        Ok(info.value == value)
+    }
+
+    /// `CallBuilder.Build` for `newobj` of an ordinary constructor): `new T(arguments)`.
     pub(crate) fn new_obj(
         &mut self,
         inst: NodeId,
@@ -432,11 +510,14 @@ impl Builder<'_, '_, '_, '_> {
         if special {
             return Err("an object creation with syntax of its own".to_owned());
         }
-        let mut list = self.argument_list(call, &method, 0, declaring)?;
+        let MethodOrigin::Def(id) = resolved.origin else {
+            return Err("a call of an unresolved method".to_owned());
+        };
+        let mut list = self.argument_list(call, &method, id, 0, declaring, false)?;
         self.disambiguate_constructor(operand, &method, &mut list)?;
         let names = list.argument_names();
         let mut arguments = Vec::with_capacity(list.arguments.len());
-        for (i, a) in list.arguments.iter().enumerate() {
+        for (i, a) in list.arguments[..list.actual_count()].iter().enumerate() {
             match names.as_ref().and_then(|n| n[i].clone()) {
                 Some(name) => arguments.push(self.ast.add(AstNode::NamedArgument {
                     name,
@@ -479,6 +560,7 @@ impl Builder<'_, '_, '_, '_> {
             .constructors(self.ts, operand)
             .ok_or("constructors the host cannot list")?;
         let mut spent_names = false;
+        let mut spent_optional = false;
         let mut spent_cast_arguments = false;
         loop {
             let errors =
@@ -486,9 +568,23 @@ impl Builder<'_, '_, '_, '_> {
             if errors == OverloadResolutionErrors::NONE {
                 return Ok(());
             }
+            // `TryRepair` for a missing argument, then the `ConstructorCallSteps`.
+            if errors == OverloadResolutionErrors::MISSING_ARGUMENT_FOR_REQUIRED_PARAMETER
+                && !spent_optional
+                && list.first_optional >= 0
+            {
+                spent_optional = true;
+                list.first_optional = -1;
+                continue;
+            }
             if !spent_names && list.add_names_to_primitive_values {
                 spent_names = true;
                 list.add_names_to_primitive_values = false;
+                continue;
+            }
+            if !spent_optional && list.first_optional >= 0 {
+                spent_optional = true;
+                list.first_optional = -1;
                 continue;
             }
             if !spent_cast_arguments {
@@ -723,6 +819,7 @@ impl Builder<'_, '_, '_, '_> {
         let mut spent_names = false;
         let mut spent_cast_arguments = false;
         let mut spent_require = require;
+        let mut spent_optional = false;
         let mut spent_cast_target = false;
         let mut spent_type_arguments = false;
         let mut spent_explicit_in = false;
@@ -761,10 +858,24 @@ impl Builder<'_, '_, '_, '_> {
                 type_arguments = true;
                 continue;
             }
+            if errors == OverloadResolutionErrors::MISSING_ARGUMENT_FOR_REQUIRED_PARAMETER
+                && !spent_optional
+                && list.first_optional >= 0
+            {
+                spent_optional = true;
+                list.first_optional = -1;
+                continue;
+            }
             // `Escalate`
             if !spent_names && list.add_names_to_primitive_values {
                 spent_names = true;
                 list.add_names_to_primitive_values = false;
+                continue;
+            }
+            // `NoOptionalArgumentAllowed`, also the repair for a missing argument.
+            if !spent_optional && list.first_optional >= 0 {
+                spent_optional = true;
+                list.first_optional = -1;
                 continue;
             }
             if !spent_cast_arguments {
@@ -882,8 +993,8 @@ impl Builder<'_, '_, '_, '_> {
         type_arguments: &[TypeId],
     ) -> Result<OverloadResolutionErrors, Unsupported> {
         let lists = self.method_lists(group, lookup_type);
-        let arguments = list
-            .arguments
+        // `GetArgumentResolveResults()`: the written arguments.
+        let arguments = list.arguments[..list.actual_count()]
             .iter()
             .map(|a| self.semantic_rr(a.expression, a.ty))
             .collect();
@@ -905,9 +1016,15 @@ impl Builder<'_, '_, '_, '_> {
         if !self.is_appropriate_call_target(op, method, &found)? {
             return Ok(OverloadResolutionErrors::AMBIGUOUS_MATCH);
         }
-        // The normal form was meant; no argument was left out.
+        // The normal form was meant. The omitted arguments are the defaults of the method
+        // found, which is the one called (`OmittedArgumentsAreDefaultsOf`); writing them out
+        // again corrects a resolution that reached the expanded form.
         if or.best_candidate_is_expanded_form() {
-            return Ok(OverloadResolutionErrors::AMBIGUOUS_MATCH);
+            return Ok(if list.first_optional >= 0 {
+                OverloadResolutionErrors::MISSING_ARGUMENT_FOR_REQUIRED_PARAMETER
+            } else {
+                OverloadResolutionErrors::AMBIGUOUS_MATCH
+            });
         }
         // The resolve result names the method found, whose inferred type arguments may differ
         // from the call's in tuple names or nullability.

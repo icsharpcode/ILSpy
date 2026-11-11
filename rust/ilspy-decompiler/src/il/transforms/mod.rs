@@ -118,6 +118,7 @@ pub const SETTING_NAMES: &[&str] = &[
     "AlwaysQualifyMemberReferences",
     "NonTrailingNamedArguments",
     "UsingDeclarations",
+    "OptionalArguments",
 ];
 
 /// The values of `SETTING_NAMES`.
@@ -179,6 +180,7 @@ pub struct Settings {
     pub always_qualify_member_references: bool,
     pub non_trailing_named_arguments: bool,
     pub using_declarations: bool,
+    pub optional_arguments: bool,
 }
 
 impl Settings {
@@ -242,6 +244,7 @@ impl Settings {
             always_qualify_member_references: bit(53),
             non_trailing_named_arguments: bit(54),
             using_declarations: bit(55),
+            optional_arguments: bit(56),
         }
     }
 }

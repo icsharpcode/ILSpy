@@ -2965,6 +2965,25 @@ treated every non-constant cast as a valid conversion, while the managed one ret
 then goes through `object` between unrelated reference types (`(string)(object)a`); the
 engine now does the same, recursively, where it fell back before.
 
+### 3.106 Optional arguments (item 68v)
+
+`BuildArgumentList` tracks the run of trailing arguments that could be left out: an
+argument is optional (`IsOptionalArgument`) when its parameter is optional, the argument is
+a constant equal to the parameter's default value, and the parameter is not filled in by the
+compiler (`CallerMemberName`, `CallerFilePath`, `CallerLineNumber`); a non-optional argument
+ends the run, and the assigned value of a setter is not part of it. The written arguments
+stop where the run begins (`GetActualArgumentCount`), and so do the argument names and the
+arguments the disambiguator resolves with. The engine reads the default values and the
+attributes from the Param rows it already decodes for the type system.
+
+The disambiguator escalates with `NoOptionalArgumentAllowed`, which writes all arguments
+again, as the second of the call and constructor steps, and the same step repairs a
+resolution that reports a missing argument. The probe asks for it too when the resolution
+reached the expanded form of the method with arguments left out. The omitted arguments
+always are the defaults of the method found, since the engine only accepts the method called
+itself there. `OptionalArguments` became settings bit 56. The share rose from 55.9 % to
+56.8 %; lambdas (53) and `using` (47) lead the fallback reasons.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |
