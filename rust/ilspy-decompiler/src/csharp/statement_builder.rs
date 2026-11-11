@@ -5,7 +5,7 @@ use crate::il::reader::ReadFunction;
 use crate::typesystem::known::KnownTypeCode;
 use crate::typesystem::types::TypeSystem;
 
-use super::ast::{Ast, AstId, AstNode};
+use super::ast::{Ast, AstId, AstNode, Rr};
 use super::{Builder, Unsupported};
 
 /// `new StatementBuilder(...).ConvertAsBlock(function.Body)` for a top-level function: the
@@ -53,6 +53,24 @@ pub fn convert_body(
     };
     let stmt = b.convert(body)?;
     b.ast.with_il(stmt, body);
+    // A resolve result inside another one is read without a node of its own, so it cannot
+    // be a cast's, which the host computes from the cast's node.
+    let nested_cast = b.ast.nodes.iter().any(|(_, a)| match &a.rr {
+        Some(
+            Rr::Field {
+                target: Some(inner),
+                ..
+            }
+            | Rr::Event { target: inner, .. }
+            | Rr::ByReference(inner)
+            | Rr::Invocation { target: inner, .. }
+            | Rr::Property { target: inner, .. },
+        ) => matches!(**inner, Rr::Conversion { .. }),
+        _ => false,
+    });
+    if nested_cast {
+        return Err("a cast as the target of a member or reference".to_owned());
+    }
     // `stmt as BlockStatement ?? new BlockStatement { stmt }`: a container is a block.
     Ok((b.ast, stmt))
 }

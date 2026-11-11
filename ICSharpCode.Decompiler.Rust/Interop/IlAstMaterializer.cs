@@ -618,6 +618,8 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 			node.ResolveResult = BodyResolveResult(out node.OperatorType);
 			node.Call = pendingInvocation;
 			pendingInvocation = null;
+			node.ResolveCast = pendingResolveCast;
+			pendingResolveCast = false;
 			int implicitReturn = Len();
 			if (implicitReturn != 0)
 				node.ImplicitReturn = (Leave)materialized[implicitReturn - 1];
@@ -685,6 +687,14 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				case RustBodyNode.Conditional:
 					node.Children = [BodyNode(), BodyNode(), BodyNode()];
 					break;
+				case RustBodyNode.TypeOf:
+					node.Type = Type();
+					break;
+				case RustBodyNode.Cast:
+					node.Type = Type();
+					node.Children = [BodyNode()];
+					node.Flag = Bool();
+					break;
 				case RustBodyNode.GenericIdentifier:
 				case RustBodyNode.GenericMemberReference:
 				{
@@ -715,6 +725,9 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 
 		/// <summary>The target and method of the invocation resolve result the last <see cref="BodyResolveResult"/> read.</summary>
 		(ResolveResult? Target, IMethod Method, bool IsExtension)? pendingInvocation;
+
+		/// <summary>Whether the last <see cref="BodyResolveResult"/> read was the <c>ResolveCast</c> of a cast.</summary>
+		bool pendingResolveCast;
 
 		/// <summary>
 		/// A resolve result of the body translation; an operator's, whose operands are its
@@ -774,6 +787,15 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					return null;
 				case 12:
 					return new ResolveResult(Type());
+				case 13:
+					// RustSeam2 resolves the cast over its operand.
+					pendingResolveCast = true;
+					return null;
+				case 14:
+				{
+					var type = Type();
+					return new TypeOfResolveResult(type, Type());
+				}
 				case 8:
 				{
 					var target = BodyResolveResult(out _);

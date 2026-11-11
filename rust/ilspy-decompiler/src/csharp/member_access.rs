@@ -33,7 +33,9 @@ impl Builder<'_, '_, '_, '_> {
             | Rr::Invocation { ty, .. }
             | Rr::Property { ty, .. }
             | Rr::ObjectCreation { ty, .. }
-            | Rr::Plain(ty) => *ty,
+            | Rr::Plain(ty)
+            | Rr::Conversion { ty }
+            | Rr::TypeOf { ty, .. } => *ty,
             Rr::Field { field, .. } => field.field.ty,
             Rr::Event { ty, .. } => *ty,
             Rr::ByReference(element) => {
@@ -561,7 +563,10 @@ impl Builder<'_, '_, '_, '_> {
             if !spent_cast {
                 spent_cast = true;
                 // `Target.ConvertTo(declaringType)`
-                self.convert_to(*target, declaring, false)?;
+                // A cast of the target is not translated.
+                if self.convert_to(*target, declaring, false)?.expression != target.expression {
+                    return Err("a reference that needs a cast of its target".to_owned());
+                }
                 continue;
             }
             // No spelling resolves; the most explicit one is emitted anyway.

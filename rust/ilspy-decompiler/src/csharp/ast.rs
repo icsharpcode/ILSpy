@@ -79,6 +79,15 @@ pub enum AstNode {
         name: String,
         type_arguments: Vec<TypeId>,
     },
+    /// `CastExpression` to `ExpressionBuilder.ConvertType(ty)`, with
+    /// `AddCheckedBlocks.UncheckedAnnotation` when `unchecked`.
+    Cast {
+        ty: TypeId,
+        expression: AstId,
+        unchecked: bool,
+    },
+    /// `TypeOfExpression` of `ExpressionBuilder.ConvertType(ty)`.
+    TypeOf { ty: TypeId },
     /// `ThrowStatement`, a rethrow without an expression.
     Throw { expression: Option<AstId> },
     /// `ObjectCreateExpression` of `ExpressionBuilder.ConvertType(ty)`, which the host builds.
@@ -151,6 +160,11 @@ pub enum Rr {
     },
     /// A plain `ResolveResult` of the given type.
     Plain(TypeId),
+    /// `TypeOfResolveResult` of the type `ty` for the referenced type.
+    TypeOf { ty: TypeId, referenced: TypeId },
+    /// `resolver.ResolveCast(ty, operand)` of a cast, over the resolve result of the cast's
+    /// operand, which the host computes.
+    Conversion { ty: TypeId },
     /// `CSharpInvocationResolveResult` without target of the constructor `method` of the type
     /// `ty`, whose arguments are the resolve results of the object creation's arguments.
     ObjectCreation {

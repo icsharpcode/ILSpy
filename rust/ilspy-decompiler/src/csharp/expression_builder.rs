@@ -101,6 +101,40 @@ impl Builder<'_, '_, '_, '_> {
             Inst::Call(c) => self.call(inst, &c, super::call_builder::CallOp::Call),
             Inst::CallVirt(c) => self.call(inst, &c, super::call_builder::CallOp::CallVirt),
             Inst::NewObj(c) => self.new_obj(inst, &c),
+            // `VisitLdTypeToken`: `typeof(T).TypeHandle`.
+            Inst::LdTypeToken { ty } => {
+                let type_type = self.ts.known_type(KnownTypeCode::Type);
+                let handle = self.ts.known_type(KnownTypeCode::RuntimeTypeHandle);
+                let t = self.ast.add(AstNode::TypeOf { ty: ty.ty });
+                self.ast.with_rr(
+                    t,
+                    Rr::TypeOf {
+                        ty: type_type,
+                        referenced: ty.ty,
+                    },
+                );
+                let m = self.ast.add(AstNode::MemberReference {
+                    target: t,
+                    name: "TypeHandle".to_owned(),
+                });
+                self.ast.with_il(m, inst);
+                self.ast.with_rr(
+                    m,
+                    Rr::TypeOf {
+                        ty: handle,
+                        referenced: ty.ty,
+                    },
+                );
+                Ok(TranslatedExpression {
+                    expression: m,
+                    ty: handle,
+                })
+            }
+            // `VisitCastClass`
+            Inst::CastClass { arg, ty } => {
+                let e = self.translate(arg, None)?;
+                self.convert_to(e, ty.ty, false)
+            }
             Inst::NullCoalescing {
                 value, fallback, ..
             } => self.null_coalescing(inst, value, fallback),

@@ -45,6 +45,8 @@ mod kind {
     pub const CONDITIONAL: u8 = 21;
     pub const GENERIC_IDENTIFIER: u8 = 22;
     pub const GENERIC_MEMBER_REFERENCE: u8 = 23;
+    pub const CAST: u8 = 24;
+    pub const TYPE_OF: u8 = 25;
 }
 
 pub(super) fn write_body(
@@ -98,7 +100,8 @@ fn var_index(
 /// `MemberResolveResult` of a property (the target's resolve result and an accessor of the
 /// property as a call operand); 11 the `CSharpInvocationResolveResult` of a constructor
 /// call (the constructor as a call operand; no target, the arguments are the object
-/// creation's); 12 a plain `ResolveResult` (type). A field's target is
+/// creation's); 12 a plain `ResolveResult` (type); 13 the `ResolveCast` of a cast, which the host
+/// computes from the cast's type and operand; 14 `TypeOfResolveResult` (type, referenced type). A field's target is
 /// absent (0) for the `field` keyword.
 fn rr(w: &mut FunctionWriter<'_, '_, '_, '_>, rr: Option<&Rr>) -> Result<(), String> {
     match rr {
@@ -167,6 +170,12 @@ fn rr(w: &mut FunctionWriter<'_, '_, '_, '_>, rr: Option<&Rr>) -> Result<(), Str
             self::rr(w, Some(target))?;
             w.call_method(accessor)?;
         }
+        Some(Rr::Conversion { .. }) => w.out.u8(13),
+        Some(Rr::TypeOf { ty, referenced }) => {
+            w.out.u8(14);
+            w.ty(*ty);
+            w.ty(*referenced);
+        }
         Some(Rr::Plain(ty)) => {
             w.out.u8(12);
             w.ty(*ty);
@@ -207,6 +216,8 @@ fn node(w: &mut FunctionWriter<'_, '_, '_, '_>, ast: &Ast, id: AstId) -> Result<
         AstNode::Conditional { .. } => kind::CONDITIONAL,
         AstNode::GenericIdentifier { .. } => kind::GENERIC_IDENTIFIER,
         AstNode::GenericMemberReference { .. } => kind::GENERIC_MEMBER_REFERENCE,
+        AstNode::Cast { .. } => kind::CAST,
+        AstNode::TypeOf { .. } => kind::TYPE_OF,
     });
     w.out.len(a.il.len());
     for &inst in &a.il {
@@ -250,7 +261,7 @@ fn node(w: &mut FunctionWriter<'_, '_, '_, '_>, ast: &Ast, id: AstId) -> Result<
             node(w, ast, target)?;
             w.string(&name);
         }
-        AstNode::TypeReference { ty } => w.ty(ty),
+        AstNode::TypeReference { ty } | AstNode::TypeOf { ty } => w.ty(ty),
         AstNode::RefDirection { expression }
         | AstNode::ExpressionStatement { expression }
         | AstNode::LogicNot { expression } => {
@@ -270,6 +281,15 @@ fn node(w: &mut FunctionWriter<'_, '_, '_, '_>, ast: &Ast, id: AstId) -> Result<
         AstNode::NamedArgument { name, expression } => {
             w.string(&name);
             node(w, ast, expression)?;
+        }
+        AstNode::Cast {
+            ty,
+            expression,
+            unchecked,
+        } => {
+            w.ty(ty);
+            node(w, ast, expression)?;
+            w.out.bool(unchecked);
         }
         AstNode::GenericIdentifier {
             name,

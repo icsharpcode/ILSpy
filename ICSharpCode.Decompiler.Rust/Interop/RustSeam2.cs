@@ -64,6 +64,8 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		public const byte Conditional = 21;
 		public const byte GenericIdentifier = 22;
 		public const byte GenericMemberReference = 23;
+		public const byte Cast = 24;
+		public const byte TypeOf = 25;
 
 		public byte Kind;
 		/// <summary>The instructions the node is annotated with, in order.</summary>
@@ -78,6 +80,8 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		public Leave? ImplicitReturn;
 		public RustBodyNode[] Children = [];
 		public IType? Type;
+		/// <summary>For a cast: whether its resolve result is <c>ResolveCast</c> over the operand's.</summary>
+		public bool ResolveCast;
 		/// <summary>For a generic name: the type arguments written with it.</summary>
 		public IType[] TypeArguments = [];
 		public object? Value;
@@ -274,6 +278,19 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 							left.GetResolveResult(), right.GetResolveResult());
 					}
 					return Annotate(new BinaryOperatorExpression(left, op, right), node);
+				}
+				case RustBodyNode.TypeOf:
+					return Annotate(new TypeOfExpression(exprBuilder.ConvertType(node.Type!)), node);
+				case RustBodyNode.Cast:
+				{
+					var operand = (Expression)Build(node.Children[0], exprBuilder);
+					var cast = new CastExpression(exprBuilder.ConvertType(node.Type!), operand);
+					// `TranslatedExpression.ConvertTo` marks a cast to an integer type unchecked.
+					if (node.Flag)
+						cast.AddAnnotation(CSharp.Transforms.AddCheckedBlocks.UncheckedAnnotation);
+					if (node.ResolveCast)
+						node.ResolveResult = exprBuilder.resolver.WithCheckForOverflow(false).ResolveCast(node.Type!, operand.GetResolveResult());
+					return Annotate(cast, node);
 				}
 				case RustBodyNode.GenericIdentifier:
 					return Annotate(new IdentifierExpression((string)node.Value!,

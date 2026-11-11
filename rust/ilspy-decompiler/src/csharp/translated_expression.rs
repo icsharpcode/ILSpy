@@ -63,6 +63,14 @@ impl Builder<'_, '_, '_, '_> {
         allow_implicit_conversion: bool,
     ) -> Result<TranslatedExpression, Unsupported> {
         let ty = e.ty;
+        // A cast may be unwrapped or made implicit again (`CastCanBeMadeImplicit`), which is
+        // not translated.
+        if matches!(
+            self.ast.annotations(e.expression).rr,
+            Some(Rr::Conversion { .. })
+        ) {
+            return Err("a conversion of a cast".to_owned());
+        }
         let n = Normalization::IGNORE_NULLABILITY_AND_TUPLES;
         if self.ts.normalize_with(ty, n) == self.ts.normalize_with(target, n) {
             return Ok(e);
@@ -144,7 +152,26 @@ impl Builder<'_, '_, '_, '_> {
         if allow_implicit_conversion && Conversions::new(self.ts).implicit(&rr, target).is_valid() {
             return Ok(e);
         }
-        Err("a conversion that needs a cast".to_owned())
+        // The cast, with the resolve result of `ResolveCast`, and an unchecked annotation for
+        // an integer target.
+        if matches!(self.ast.node(e.expression), AstNode::Base) {
+            return Err("a cast of base".to_owned());
+        }
+        if matches!(rr, ResolveResult::Constant { .. })
+            && matches!(self.ts.kind(target_utype), TypeKind::NInt | TypeKind::NUInt)
+        {
+            return Err("a constant cast to a native integer".to_owned());
+        }
+        let c = self.ast.add(AstNode::Cast {
+            ty: target,
+            expression: e.expression,
+            unchecked: target_ustack.is_integer(),
+        });
+        self.ast.with_rr(c, Rr::Conversion { ty: target });
+        Ok(TranslatedExpression {
+            expression: c,
+            ty: target,
+        })
     }
 
     /// `CSharpResolver.ResolveCast(targetType, expression)` as far as `ConvertTo` reads it.

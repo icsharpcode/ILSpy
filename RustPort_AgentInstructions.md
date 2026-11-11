@@ -480,7 +480,10 @@ the reasons. This file holds only the ordered steps, their gates and their rules
     `Translate enum, char and small integer constants to C# in the engine`.
   - [x] 68p. `??` where the fallback already has the value's type (lecture 3.100). Subject:
     `Translate null coalescing to C# in the engine`.
-  - [ ] 68q-68y. Further construct groups, in the order of the fallback reasons the ratchet test
+  - [x] 68q. Casts: the cast at the end of `ConvertTo` (and `castclass`), with the host
+    computing its `ResolveCast` over the operand, and `typeof(T).TypeHandle` for `ldtoken`
+    (lecture 3.101). Subject: `Translate casts and typeof to C# in the engine`.
+  - [ ] 68r-68y. Further construct groups, in the order of the fallback reasons the ratchet test
     prints, until no body of the corpus falls back. Subject pattern:
     `Translate <construct group> to C# in the engine`.
   - [ ] 68z. Request-level seam 2. Subject: `Add the Rust C# AST builders and the AST materializer`.

@@ -621,7 +621,10 @@ impl Builder<'_, '_, '_, '_> {
             if !spent_cast {
                 spent_cast = true;
                 // `Target.ConvertTo(declaringType)`
-                self.convert_to(*target, declaring, false)?;
+                // A cast of the target is not translated.
+                if self.convert_to(*target, declaring, false)?.expression != target.expression {
+                    return Err("a reference that needs a cast of its target".to_owned());
+                }
                 continue;
             }
             // No spelling resolves; the most explicit one is emitted anyway.
@@ -786,7 +789,10 @@ impl Builder<'_, '_, '_, '_> {
                 if skip_target_cast && require != initially_required {
                     require = false;
                 } else {
-                    self.convert_to(*target, declaring, false)?;
+                    // A cast of the target is not translated.
+                    if self.convert_to(*target, declaring, false)?.expression != target.expression {
+                        return Err("a reference that needs a cast of its target".to_owned());
+                    }
                 }
                 continue;
             }

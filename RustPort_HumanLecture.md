@@ -2879,6 +2879,26 @@ operands' resolve results; the engine translates that case. Everything else, inc
 error path that casts the operands, falls back. The share stayed at 51.8 %: most of these
 bodies now stop at casts (`castclass`, 28) and lifted operations (`NullableRewrap`, 29).
 
+### 3.101 Casts and typeof (item 68q)
+
+Until now every conversion that needed a cast fell back. The managed `ConvertTo` ends in the
+cast itself: `(T)expr` with the resolve result of `ResolveCast`, and an unchecked annotation
+for an integer target (in an unchecked context, which is all the engine translates). The
+engine now emits that cast, and `castclass` translates its argument and converts it without
+implicit conversions. The resolve result is the one place where the engine does not build
+the value itself: it would need the explicit `Conversion` object with all its fields, so the
+host calls the expression builder's `ResolveCast` over the operand's resolve result when it
+builds the node, which is exactly what the managed builder does. Two things follow from the
+resolve result being computed on the host. It cannot appear inside another resolve result
+(a member access on a cast's result), since nested resolve results are read without a node;
+such bodies fall back. And converting an expression that already is a cast may unwrap it
+again (`CastCanBeMadeImplicit`), which is not ported; that falls back too, as does a cast
+of `base`, and the disambiguators' steps that would cast a member's target.
+
+The casts uncovered `ldtoken` of a type, which the engine now writes as
+`typeof(T).TypeHandle` with the two `TypeOfResolveResult`s of the managed builder. The share
+rose from 51.8 % to 52.0 %; lambdas (47) and `using` statements (43) lead.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |
