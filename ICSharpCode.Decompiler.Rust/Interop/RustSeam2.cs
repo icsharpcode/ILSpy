@@ -26,10 +26,12 @@ using System.Runtime.CompilerServices;
 using System.Threading;
 
 using ICSharpCode.Decompiler.CSharp;
+using ICSharpCode.Decompiler.CSharp.Resolver;
 using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Semantics;
 using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.Rust.Interop
 {
@@ -82,6 +84,8 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		public IType? Type;
 		/// <summary>For an arithmetic operator: its <c>AddCheckedBlocks</c> annotation, 0 none, 1 checked, 2 unchecked.</summary>
 		public byte Overflow;
+		/// <summary>For a member reference or name: whether its resolve result names the member the name is looked up to.</summary>
+		public bool LookUpMember;
 		/// <summary>For a cast: whether its resolve result is <c>ResolveCast</c> over the operand's.</summary>
 		public bool ResolveCast;
 		/// <summary>For a generic name: the type arguments written with it.</summary>
@@ -200,13 +204,20 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				case RustBodyNode.Null:
 					return Annotate(new NullReferenceExpression(), node);
 				case RustBodyNode.Identifier:
+					if (node.LookUpMember)
+						node.ResolveResult = LookUpMember(exprBuilder, (MemberResolveResult)node.ResolveResult!, null);
 					return Annotate(new IdentifierExpression((string)node.Value!), node);
 				case RustBodyNode.This:
 					return Annotate(new ThisReferenceExpression(), node);
 				case RustBodyNode.Base:
 					return Annotate(new BaseReferenceExpression(), node);
 				case RustBodyNode.MemberReference:
-					return Annotate(new MemberReferenceExpression((Expression)Build(node.Children[0], exprBuilder), (string)node.Value!), node);
+				{
+					var target = (Expression)Build(node.Children[0], exprBuilder);
+					if (node.LookUpMember)
+						node.ResolveResult = LookUpMember(exprBuilder, (MemberResolveResult)node.ResolveResult!, target.GetResolveResult());
+					return Annotate(new MemberReferenceExpression(target, (string)node.Value!), node);
+				}
 				case RustBodyNode.TypeReference:
 					return Annotate(new TypeReferenceExpression(exprBuilder.ConvertType(node.Type!)), node);
 				case RustBodyNode.RefDirection:
@@ -319,6 +330,23 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				default:
 					throw new RustEngineException($"unknown C# node kind {node.Kind}");
 			}
+		}
+
+		/// <summary>
+		/// The resolve result <c>HandleAccessorCall</c> gives a property access whose name binds to another
+		/// member than the accessor's property: the member the name is looked up to, unqualified
+		/// or on <paramref name="target"/>, as <c>Disambiguator.IsUnambiguousAccess</c> found it.
+		/// </summary>
+		static ResolveResult LookUpMember(ExpressionBuilder exprBuilder, MemberResolveResult result, ResolveResult? target)
+		{
+			var resolver = exprBuilder.resolver;
+			var found = target == null
+				? resolver.ResolveSimpleName(result.Member.Name, EmptyList<IType>.Instance, isInvocationTarget: false)
+				: new MemberLookup(resolver.CurrentTypeDefinition, resolver.CurrentTypeDefinition.ParentModule)
+					.Lookup(target, result.Member.Name, EmptyList<IType>.Instance, isInvocation: false);
+			if (found is not MemberResolveResult { IsError: false } member)
+				throw new RustEngineException($"The name {result.Member.Name} no longer binds to a member");
+			return new MemberResolveResult(result.TargetResult, member.Member);
 		}
 
 		/// <summary>The node's instructions and resolve result, in the order the managed builder adds them.</summary>

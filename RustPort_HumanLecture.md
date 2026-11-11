@@ -2931,6 +2931,19 @@ folds, and which may need an explicit `unchecked`), and bitwise operations with 
 operand, whose constants `HandleBinaryNumeric` writes anew (in hexadecimal where that reads
 better). The share rose from 52.2 % to 53.0 %.
 
+### 3.104 Overriding properties (item 68t)
+
+When a property access calls the getter of an override, the property name looks up to the
+virtual declaration, and `IsAppropriateCallTarget` accepts it through the base member chain.
+The managed `HandleAccessorCall` then names the member found in its `MemberResolveResult`,
+not the accessor's own property. Item 68f fell back there, because the engine cannot name a
+member it has no identity for on the wire. It does not need to: the host already answered
+that the name binds to another member the call may write, and it has everything to find that
+member again when it builds the node, namely the same lookup (unqualified for a simple name,
+on the target's resolve result for a member access) in the same resolver. The engine marks
+the property's resolve result accordingly, and the host replaces the member with the one the
+lookup finds. The share rose from 53.0 % to 54.2 %.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

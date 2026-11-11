@@ -98,7 +98,7 @@ fn var_index(
 /// the method as a call operand, then whether it is an extension method invocation; the
 /// arguments are the invocation's); 10 the
 /// `MemberResolveResult` of a property (the target's resolve result and an accessor of the
-/// property as a call operand); 11 the `CSharpInvocationResolveResult` of a constructor
+/// property as a call operand, then whether the host looks the member up again); 11 the `CSharpInvocationResolveResult` of a constructor
 /// call (the constructor as a call operand; no target, the arguments are the object
 /// creation's); 12 a plain `ResolveResult` (type); 13 the `ResolveCast` of a cast, which the host
 /// computes from the cast's type and operand; 14 `TypeOfResolveResult` (type, referenced type). A field's target is
@@ -164,11 +164,15 @@ fn rr(w: &mut FunctionWriter<'_, '_, '_, '_>, rr: Option<&Rr>) -> Result<(), Str
             w.out.bool(*extension);
         }
         Some(Rr::Property {
-            target, accessor, ..
+            target,
+            accessor,
+            found_by_lookup,
+            ..
         }) => {
             w.out.u8(10);
             self::rr(w, Some(target))?;
             w.call_method(accessor)?;
+            w.out.bool(*found_by_lookup);
         }
         Some(Rr::Conversion { .. }) => w.out.u8(13),
         Some(Rr::TypeOf { ty, referenced }) => {

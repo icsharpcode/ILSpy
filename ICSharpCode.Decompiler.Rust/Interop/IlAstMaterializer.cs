@@ -620,6 +620,8 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 			pendingInvocation = null;
 			node.ResolveCast = pendingResolveCast;
 			pendingResolveCast = false;
+			node.LookUpMember = pendingLookUpMember;
+			pendingLookUpMember = false;
 			int implicitReturn = Len();
 			if (implicitReturn != 0)
 				node.ImplicitReturn = (Leave)materialized[implicitReturn - 1];
@@ -730,6 +732,9 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		/// <summary>Whether the last <see cref="BodyResolveResult"/> read was the <c>ResolveCast</c> of a cast.</summary>
 		bool pendingResolveCast;
 
+		/// <summary>Whether the last <see cref="BodyResolveResult"/> read names a member found by looking its name up again.</summary>
+		bool pendingLookUpMember;
+
 		/// <summary>
 		/// A resolve result of the body translation; an operator's, whose operands are its
 		/// children's, comes back as null with its type in <paramref name="operatorType"/>.
@@ -779,6 +784,8 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				{
 					var target = BodyResolveResult(out _);
 					var accessor = CallMethod();
+					// RustSeam2 looks the member up again when the name binds to another one.
+					pendingLookUpMember = Bool();
 					return new MemberResolveResult(target, accessor.AccessorOwner
 						?? throw new InvalidOperationException("Property resolve result of a method that is no accessor"));
 				}

@@ -530,7 +530,8 @@ impl Builder<'_, '_, '_, '_> {
             target.expression,
             op != CallOp::CallVirt && method.is_overridable,
         );
-        let require = self.disambiguate_accessor(operand, op, &target, require, declaring)?;
+        let (require, found_by_lookup) =
+            self.disambiguate_accessor(operand, op, &target, require, declaring)?;
         // A setter's only argument is the value, which is not part of the member reference.
         let value = list.arguments.first().copied();
         let ty = match value {
@@ -552,6 +553,7 @@ impl Builder<'_, '_, '_, '_> {
                 target: Box::new(target_rr),
                 accessor: Box::new(operand.clone()),
                 ty,
+                found_by_lookup,
             },
         );
         let Some(value) = value else {
@@ -579,7 +581,7 @@ impl Builder<'_, '_, '_, '_> {
         target: &TranslatedExpression,
         require: bool,
         declaring: TypeId,
-    ) -> Result<bool, Unsupported> {
+    ) -> Result<(bool, bool), Unsupported> {
         let resolver = self
             .resolver
             .ok_or("a member reference without the host's resolver")?;
@@ -606,11 +608,9 @@ impl Builder<'_, '_, '_, '_> {
                 probe_target,
                 op == CallOp::CallVirt,
             ) {
-                AccessorBinding::Owner => return Ok(require),
-                // The resolve result would name the member found.
-                AccessorBinding::Other => {
-                    return Err("a property name that binds to another declaration".to_owned());
-                }
+                AccessorBinding::Owner => return Ok((require, false)),
+                // The resolve result names the member found, which the host looks up again.
+                AccessorBinding::Other => return Ok((require, true)),
                 AccessorBinding::None => {}
             }
             if !spent_require {
@@ -628,7 +628,7 @@ impl Builder<'_, '_, '_, '_> {
                 continue;
             }
             // No spelling resolves; the most explicit one is emitted anyway.
-            return Ok(require);
+            return Ok((require, false));
         }
     }
 

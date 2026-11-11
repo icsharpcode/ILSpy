@@ -197,10 +197,13 @@ pub enum Rr {
     },
     /// `MemberResolveResult` of the property (of the given type) `accessor` belongs to, with
     /// the target's resolve result.
+    /// `found_by_lookup` when the name binds to another member the call may write (the
+    /// declaration an override overrides), which the host looks up again for the result.
     Property {
         target: Box<Rr>,
         accessor: Box<crate::il::ast::MethodOperand>,
         ty: TypeId,
+        found_by_lookup: bool,
     },
 }
 
