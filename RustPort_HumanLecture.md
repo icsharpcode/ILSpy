@@ -3044,6 +3044,19 @@ becomes `array.Length` (`LongLength` for a 64-bit result) with the `MemberResolv
 that property of `System.Array`; the host looks the property up when it builds the resolve
 result, as the managed builder does. The share rose from 58.1 % to 59.2 %.
 
+### 3.111 Address-of temporaries (item 68y3)
+
+The ILAst `AddressOf` copies a value to a temporary and takes its address, typically to call
+a method on a value type. C# writes `ref value`, but calling a method on a mutable l-value
+would modify the original, so `VisitAddressOf` inserts a redundant identity cast that makes
+the C# compiler copy; it skips the cast when the address is only read through (under field
+addresses into a load, `CanIgnoreCopy`) or the value already is a cast. The engine follows
+this with the cast node of item 68q (without the unchecked annotation, as the identity cast
+has none; the host's `ResolveCast` gives the identity conversion). The l-value
+classification of `ILInlining.ClassifyExpression` is ported for locals and array getters;
+loads and stores through references need its read-only reference analysis, which lives in
+the transform context, and fall back. The share rose from 59.2 % to 59.6 %.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

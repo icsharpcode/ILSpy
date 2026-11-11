@@ -207,6 +207,69 @@ impl Builder<'_, '_, '_, '_> {
                 );
                 Ok(TranslatedExpression { expression: e, ty })
             }
+            // `VisitAddressOf`: `ref value`, through a copy (a redundant cast) where the value is
+            // a mutable l-value whose address a method call could otherwise modify.
+            Inst::AddressOf { value, ty } => {
+                let target = ty.ty;
+                // `ILInlining.ClassifyExpression`
+                let mutable_lvalue = match *self.f.inst(value) {
+                    Inst::LdLoc { var } | Inst::StLoc { var, .. } => {
+                        let v = self.f.var(var);
+                        !(v.is_ref_read_only
+                            || matches!(
+                                v.kind,
+                                VariableKind::ForeachLocal | VariableKind::UsingLocal
+                            ))
+                    }
+                    Inst::LdObj { .. } | Inst::StObj { .. } => {
+                        return Err("the address of a loaded or stored value".to_owned());
+                    }
+                    Inst::Call(ref c) => matches!(
+                        c.method.method.declaring.map(|t| self.ts.data(t)),
+                        Some(TypeData::Array { .. })
+                    ),
+                    _ => false,
+                };
+                // `CanIgnoreCopy`: the address is only read through, under field addresses.
+                let mut load_address = inst;
+                while let Some(parent) = self.f.node(load_address).parent
+                    && matches!(self.f.inst(parent), Inst::LdFlda { .. })
+                {
+                    load_address = parent;
+                }
+                let ignore_copy = self
+                    .f
+                    .node(load_address)
+                    .parent
+                    .is_some_and(|p| matches!(self.f.inst(p), Inst::LdObj { .. }));
+                let v = self.translate(value, Some(target))?;
+                let mut v = self.convert_to(v, target, false)?;
+                if mutable_lvalue
+                    && !ignore_copy
+                    && !matches!(self.ast.node(v.expression), AstNode::Cast { .. })
+                {
+                    // An identity cast, whose resolve result is the host's `ResolveCast`; it
+                    // has no checked or unchecked annotation.
+                    let c = self.ast.add(AstNode::Cast {
+                        ty: target,
+                        expression: v.expression,
+                        unchecked: false,
+                    });
+                    self.ast.with_rr(c, Rr::Conversion { ty: target });
+                    v = TranslatedExpression {
+                        expression: c,
+                        ty: target,
+                    };
+                }
+                let element = self.rr_of(v.expression);
+                let d = self.ast.add(AstNode::RefDirection {
+                    expression: v.expression,
+                });
+                self.ast.with_il(d, inst);
+                self.ast.with_rr(d, Rr::ByReference(Box::new(element)));
+                let ty = self.ts.intern(TypeData::ByRef(target));
+                Ok(TranslatedExpression { expression: d, ty })
+            }
             // `VisitCastClass`
             Inst::CastClass { arg, ty } => {
                 let e = self.translate(arg, None)?;

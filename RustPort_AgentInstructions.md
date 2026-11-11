@@ -505,7 +505,9 @@ the reasons. This file holds only the ordered steps, their gates and their rules
     `Translate try and lock statements to C# in the engine`.
   - [x] 68y2. `box` as the cast to object and `ldlen` as `Length` or `LongLength` (lecture
     3.110). Subject: `Translate box and array length to C# in the engine`.
-  - [ ] 68y3-. Further construct groups (numbered on from 68y1), in the order of the fallback reasons the ratchet test
+  - [x] 68y3. `AddressOf`: `ref value`, through an identity cast where a call could modify a
+    mutable l-value (lecture 3.111). Subject: `Translate address-of temporaries to C# in the engine`.
+  - [ ] 68y4-. Further construct groups (numbered on from 68y1), in the order of the fallback reasons the ratchet test
     prints, until no body of the corpus falls back. Subject pattern:
     `Translate <construct group> to C# in the engine`.
   - [ ] 68z. Request-level seam 2. Subject: `Add the Rust C# AST builders and the AST materializer`.
