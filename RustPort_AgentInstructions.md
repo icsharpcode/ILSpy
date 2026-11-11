@@ -475,7 +475,10 @@ the reasons. This file holds only the ordered steps, their gates and their rules
   - [x] 68n. Member access on value types through `ldloca`, field addresses and by-reference
     variables, written without the `ref` (lecture 3.98). Subject:
     `Translate member access on value types to C# in the engine`.
-  - [ ] 68o-68y. Further construct groups, in the order of the fallback reasons the ratchet test
+  - [x] 68o. Constants adjusted to enum, char and small integer type hints through the
+    resolver's cast, checked where it narrows (lecture 3.99). Subject:
+    `Translate enum, char and small integer constants to C# in the engine`.
+  - [ ] 68p-68y. Further construct groups, in the order of the fallback reasons the ratchet test
     prints, until no body of the corpus falls back. Subject pattern:
     `Translate <construct group> to C# in the engine`.
   - [ ] 68z. Request-level seam 2. Subject: `Add the Rust C# AST builders and the AST materializer`.

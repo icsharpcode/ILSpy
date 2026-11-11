@@ -2844,6 +2844,29 @@ goes around it. Type inference then found `T` in the engine only, and the engine
 type argument the managed builder writes. The folded constant now gets the null literal's
 type there, as the host's node has.
 
+### 3.99 Enum, char and small integer constants (item 68o)
+
+`AdjustConstantToType` turns an IL constant into the type the context expects where nothing
+is lost: `0` and `1` become `false` and `true` for a `bool` hint, and for an enum, `char` or
+small integer hint the constant goes through `ResolveCast`. An IL constant is a bit pattern,
+so the cast only checks for overflow where it narrows (the constant's type wider than the
+hint, or not an integer at all); a cast that overflows, or yields no constant, leaves the
+constant as it was. The engine's `ResolveCast` from item 68d did this unchecked; a checked
+variant now compares the value before and after. The adjusted constant goes to the host as
+a `ConstantValue` node of the hint type, so `ConvertConstantValue` writes the enum member,
+the character or the small number as the managed builder does. The share rose from 50.9 %
+to 51.8 %; `??` (48) and lambdas (45) lead.
+
+The first gate run showed that the engine's resolve result of such a constant has to follow
+the AST builder, not the cast: C# has no literals of the small integer types, so
+`TypeSystemAstBuilder.ConvertConstantValue` writes a `byte` constant as an `int` literal with
+an `int` resolve result, and the expression builder keeps that annotation when no cast goes
+around it. A conditional of two adjusted `byte` constants therefore has type `int` in the
+managed builder (and gets a cast on return), while the engine had `byte`. One helper now
+models the resolve result the host's node will have, for the null literal (item 68n), small
+integers, and the minimum and maximum values the AST builder writes as member references
+(those fall back).
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

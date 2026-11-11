@@ -117,19 +117,8 @@ impl Builder<'_, '_, '_, '_> {
                     value: value.clone(),
                     allow_implicit_conversion,
                 });
-                // `TypeSystemAstBuilder.ConvertConstantValue` writes a null of a reference,
-                // nullable or pointer type as the null literal, with the literal's resolve result
-                // unless a cast to the type goes around it.
-                let null_literal = matches!(value, ConstValue::Null)
-                    && (allow_implicit_conversion || self.ts.kind(target) == TypeKind::Null)
-                    && (self.ts.is_reference_type(target) == Some(true)
-                        || self.ts.is_known(target, KnownTypeCode::NullableOfT)
-                        || self.ts.kind(target).is_any_pointer());
-                let ty = if null_literal {
-                    self.ts.intern(TypeData::Null)
-                } else {
-                    target
-                };
+                let (ty, value) =
+                    self.constant_value_rr(target, value, allow_implicit_conversion)?;
                 self.ast.with_rr(c, Rr::Constant { ty, value });
                 for inst in il {
                     self.ast.with_il(c, inst);
@@ -196,6 +185,81 @@ impl Builder<'_, '_, '_, '_> {
         Ok(CastResult::Conversion)
     }
 
+    /// The resolve result `ExpressionBuilder.ConvertConstantValue(new ConstantResolveResult(ty,
+    /// value), allow_implicit_conversion)` gives its expression, which the host builds for a
+    /// `ConstantValue` node: the annotation `TypeSystemAstBuilder.ConvertConstantValue` adds,
+    /// unless a cast goes around the literal. A null of a reference, nullable or pointer type
+    /// is the null literal (`NullType`), and a small integer an `int` literal; enum members and
+    /// other literals keep the constant's type.
+    pub(crate) fn constant_value_rr(
+        &mut self,
+        ty: TypeId,
+        value: ConstValue,
+        allow_implicit_conversion: bool,
+    ) -> Result<(TypeId, ConstValue), Unsupported> {
+        let underlying = self.ts.nullable_underlying(ty);
+        if matches!(value, ConstValue::Null) {
+            let literal = (allow_implicit_conversion || self.ts.kind(ty) == TypeKind::Null)
+                && (self.ts.is_reference_type(ty) == Some(true)
+                    || self.ts.is_known(ty, KnownTypeCode::NullableOfT)
+                    || self.ts.kind(ty).is_any_pointer());
+            return Ok(if literal {
+                (self.ts.intern(TypeData::Null), value)
+            } else {
+                (ty, value)
+            });
+        }
+        // SByte, Byte, Int16, UInt16 outside of enums.
+        if allow_implicit_conversion
+            && self.ts.kind(underlying) != TypeKind::Enum
+            && (5..=8).contains(&self.ts.type_code(underlying))
+        {
+            // `IsSpecialConstant` writes the type's MinValue or MaxValue as a member reference.
+            if matches!(
+                value,
+                ConstValue::SByte(i8::MIN | i8::MAX)
+                    | ConstValue::Byte(u8::MAX)
+                    | ConstValue::Int16(i16::MIN | i16::MAX)
+                    | ConstValue::UInt16(u16::MAX)
+            ) {
+                return Err("a small integer constant written as MinValue or MaxValue".to_owned());
+            }
+            let v = integral_value(&value).ok_or("a small integer constant of another kind")?;
+            let int = self.ts.known_type(KnownTypeCode::Int32);
+            return Ok((int, ConstValue::Int32(v as i32)));
+        }
+        Ok((ty, value))
+    }
+
+    /// `resolver.WithCheckForOverflow(checked).ResolveCast(target, constant)` where the result
+    /// is a constant: its value, or `None` for no constant (a conversion, or an error such as
+    /// the overflow a checked narrowing reports).
+    pub(crate) fn resolve_constant_cast(
+        &mut self,
+        target: TypeId,
+        ty: TypeId,
+        value: &ConstValue,
+        checked: bool,
+    ) -> Result<Option<ConstValue>, Unsupported> {
+        let rr = ResolveResult::Constant {
+            ty,
+            value: value.clone(),
+        };
+        let CastResult::Constant(result) = self.resolve_cast(target, &rr)? else {
+            return Ok(None);
+        };
+        if checked {
+            // `CSharpPrimitiveCast` in a checked context throws where the value changes.
+            match (integral_value(value), integral_value(&result)) {
+                (Some(a), Some(b)) if a == b => {}
+                (Some(_), Some(_)) => return Ok(None),
+                _ if result == *value => {}
+                _ => return Err("a checked constant cast of a non-integral value".to_owned()),
+            }
+        }
+        Ok(Some(result))
+    }
+
     /// `IType.GetEnumUnderlyingType()`.
     fn enum_underlying(&mut self, t: TypeId) -> TypeId {
         let underlying = self
@@ -209,6 +273,22 @@ impl Builder<'_, '_, '_, '_> {
             None => t,
         }
     }
+}
+
+/// The numeric value of an integral or char constant.
+fn integral_value(value: &ConstValue) -> Option<i128> {
+    Some(match *value {
+        ConstValue::Char(c) => i128::from(c),
+        ConstValue::SByte(v) => i128::from(v),
+        ConstValue::Byte(v) => i128::from(v),
+        ConstValue::Int16(v) => i128::from(v),
+        ConstValue::UInt16(v) => i128::from(v),
+        ConstValue::Int32(v) => i128::from(v),
+        ConstValue::UInt32(v) => i128::from(v),
+        ConstValue::Int64(v) => i128::from(v),
+        ConstValue::UInt64(v) => i128::from(v),
+        _ => return None,
+    })
 }
 
 /// `CSharpPrimitiveCast.Cast(targetType, input, checkForOverflow: false)` for integral, char

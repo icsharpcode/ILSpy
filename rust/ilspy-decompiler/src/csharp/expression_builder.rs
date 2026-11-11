@@ -143,8 +143,7 @@ impl Builder<'_, '_, '_, '_> {
             value: value.clone(),
             allow_implicit_conversion: true,
         });
-        // `ConvertConstantValue` annotates the expression with the constant when the AST
-        // builder did not.
+        let (ty, value) = self.constant_value_rr(ty, value, true)?;
         self.ast.with_rr(e, Rr::Constant { ty, value });
         self.ast.with_il(e, inst);
         Ok(TranslatedExpression { expression: e, ty })
@@ -176,7 +175,16 @@ impl Builder<'_, '_, '_, '_> {
             || self.ts.is_known(hint, KnownTypeCode::Char)
             || small
         {
-            return Err("a constant cast to an enum, char or small integer type".to_owned());
+            // An IL constant is a bit pattern: converting it to an integer type at least as
+            // wide only reinterprets it, so only a narrowing cast checks for overflow.
+            let may_be_lossy = !self.ts.stack_type(ty).is_integer()
+                || self.ts.type_size(ty) > self.ts.type_size(hint);
+            return Ok(
+                match self.resolve_constant_cast(hint, ty, &value, may_be_lossy)? {
+                    Some(cast) => (hint, cast),
+                    None => (ty, value),
+                },
+            );
         }
         if self.ts.kind(hint).is_any_pointer() {
             return Err("a constant converted to a pointer type".to_owned());
@@ -373,20 +381,12 @@ impl Builder<'_, '_, '_, '_> {
             value: new_value.clone(),
             allow_implicit_conversion: true,
         });
-        self.ast.with_rr(
-            n,
-            Rr::Constant {
-                ty: new_ty,
-                value: new_value,
-            },
-        );
+        let (ty, value) = self.constant_value_rr(new_ty, new_value, true)?;
+        self.ast.with_rr(n, Rr::Constant { ty, value });
         for inst in self.ast.annotations(e.expression).il.clone() {
             self.ast.with_il(n, inst);
         }
-        Ok(TranslatedExpression {
-            expression: n,
-            ty: new_ty,
-        })
+        Ok(TranslatedExpression { expression: n, ty })
     }
 
     /// `IsSpecialCasedReferenceComparisonWithNull`: a string or delegate compared with the
