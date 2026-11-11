@@ -140,11 +140,13 @@ pub enum Rr {
     Operator { ty: TypeId },
     /// `CSharpInvocationResolveResult` of a call of `method` (of the given return type) on the
     /// target's resolve result, whose arguments are the resolve results of the invocation's
-    /// arguments.
+    /// arguments; `extension` for an extension method call written on its first argument
+    /// (`isExtensionMethodInvocation`).
     Invocation {
         target: Box<Rr>,
         method: Box<crate::il::ast::MethodOperand>,
         ty: TypeId,
+        extension: bool,
     },
     /// A plain `ResolveResult` of the given type.
     Plain(TypeId),

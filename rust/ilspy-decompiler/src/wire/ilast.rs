@@ -1733,6 +1733,63 @@ pub fn accessor_reference_query(
     })
 }
 
+/// A `can_use_extension_method_syntax` question in the `resolver_query` format: kind 8, the
+/// method as `call_method` writes it, the type arguments (count and types), the target and
+/// the arguments (count first), each 0 and its type for an expression or 1, its type and the
+/// constant as `wire::ast` writes it, and the argument names (0 for none, else 1 and per
+/// argument whether it has a name and the name). The answer is 1 for yes.
+pub fn extension_method_syntax_query(
+    ts: &TypeSystem<'_, '_>,
+    method: &crate::il::ast::MethodOperand,
+    type_arguments: &[crate::typesystem::types::TypeId],
+    target: &crate::semantics::ResolveResult,
+    arguments: &[crate::semantics::ResolveResult],
+    names: Option<&[Option<String>]>,
+) -> Result<Vec<u8>, String> {
+    use crate::semantics::ResolveResult;
+    query_message(ts, |w| {
+        w.out.u8(8);
+        w.call_method(method)?;
+        w.out.len(type_arguments.len());
+        for &t in type_arguments {
+            w.ty(t);
+        }
+        let operand = |w: &mut FunctionWriter<'_, '_, '_, '_>, rr: &ResolveResult| {
+            match rr {
+                ResolveResult::Expression(ty) => {
+                    w.out.u8(0);
+                    w.ty(*ty);
+                }
+                ResolveResult::Constant { ty, value } => {
+                    w.out.u8(1);
+                    w.ty(*ty);
+                    super::ast::constant(w, value);
+                }
+                _ => return Err("an operand that is no expression or constant".to_owned()),
+            }
+            Ok(())
+        };
+        operand(w, target)?;
+        w.out.len(arguments.len());
+        for a in arguments {
+            operand(w, a)?;
+        }
+        match names {
+            None => w.out.u8(0),
+            Some(names) => {
+                w.out.u8(1);
+                for n in names {
+                    w.out.bool(n.is_some());
+                    if let Some(n) = n {
+                        w.string(n);
+                    }
+                }
+            }
+        }
+        Ok(())
+    })
+}
+
 /// A `constructors` question in the `resolver_query` format: kind 7 and the constructor as
 /// `call_method` writes it. The answer is encoded as for `method_group_query`.
 pub fn constructors_query(

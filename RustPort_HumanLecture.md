@@ -2787,6 +2787,26 @@ The share stayed at 48.3 %: the bodies with generic calls (64) now fall back fur
 mostly on extension method calls (49) and by-reference arguments (23), which the next steps
 take on.
 
+### 3.96 Extension method calls (item 68l)
+
+The managed call builder first disambiguates an extension method call as the static call it
+is in IL, then `TryUseExtensionMethodSyntax` rewrites it as `first.Name(rest)` when the first
+argument is written first and positionally, using declarations are on (otherwise the
+method's namespace is not imported and no member access can find it), and
+`CSharpResolver.CanTransformToExtensionMethodCall` finds the method again from the first
+argument with the remaining arguments and names. The engine does the same, and the last
+check is a new resolver question answered by the expression builder's resolver: it is a
+member lookup that includes the extension methods in scope, which depends on the using
+scope the host has. The arguments go over as expressions or constants, since constants
+convert more freely (a literal `0` to an enum). A null literal or `ref` first argument,
+which needs a cast or the `ref` extension rules, falls back. `UsingDeclarations` became
+settings bit 55.
+
+The resolve result keeps the first argument as target and marks the extension method
+invocation; its arguments are the rest. The share rose from 48.3 % to 48.6 %. Many of these
+calls are LINQ with lambdas, so `the instruction Function` (36) now shows up, behind string
+concatenation (50) and `??` (47).
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

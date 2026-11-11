@@ -57,6 +57,8 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		public const byte AccessorKind = 6;
 		/// <summary>The accessible constructors of the declaring type of <see cref="Method"/>.</summary>
 		public const byte ConstructorsKind = 7;
+		/// <summary><c>CanTransformToExtensionMethodCall</c> with the body's resolver, for <c>TryUseExtensionMethodSyntax</c>.</summary>
+		public const byte ExtensionSyntaxKind = 8;
 
 		/// <summary><see cref="TargetKind"/>: <c>this</c> or <c>base</c>.</summary>
 		public const byte ThisTarget = 0;
@@ -82,6 +84,10 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		public IType[] Arguments = [];
 		/// <summary>For <see cref="MethodGroupKind"/>: the type arguments written with the name.</summary>
 		public IType[] TypeArguments = [];
+		/// <summary>For <see cref="ExtensionSyntaxKind"/>: the target, the other arguments and their names.</summary>
+		public ResolveResult? TargetResult;
+		public ResolveResult[] ArgumentResults = [];
+		public string?[]? ArgumentNames;
 	}
 
 	/// <summary>
@@ -148,6 +154,8 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				var q = IlAstMaterializer.ReadResolverQuery(wire, row, compilation, modules, settings);
 				if (q.Kind == RustResolverQuery.FieldKindKind)
 					return ClassifyField(q.Field, q.TargetIsThis);
+				if (q.Kind == RustResolverQuery.ExtensionSyntaxKind)
+					return CanUseExtensionMethodSyntax(q) ? 1 : 0;
 				if (q.Kind == RustResolverQuery.AccessorKind)
 					return AccessorReference(q);
 				if (q.Kind is RustResolverQuery.MethodGroupKind or RustResolverQuery.ConstructorsKind)
@@ -400,6 +408,14 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 			if (!Disambiguator.IsAppropriateCallTarget(details, owner, resolved.Member))
 				return 0;
 			return resolved.Member.Equals(owner) ? 1 : 2;
+		}
+
+		/// <summary><c>CallBuilder.TryUseExtensionMethodSyntax</c>'s question to the expression builder's resolver.</summary>
+		bool CanUseExtensionMethodSyntax(RustResolverQuery query)
+		{
+			var context = body ?? throw new InvalidOperationException("The engine asked about a C# body without the body's context");
+			return context.Resolver.CanTransformToExtensionMethodCall(query.Method, query.TypeArguments,
+				query.TargetResult!, query.ArgumentResults, query.ArgumentNames!);
 		}
 
 		/// <summary>The resolve result a member lookup sees for the query's target.</summary>

@@ -544,6 +544,28 @@ impl Resolver for HostResolver {
         }
     }
 
+    fn can_use_extension_method_syntax(
+        &self,
+        ts: &TypeSystem<'_, '_>,
+        method: &ilspy_decompiler::il::ast::MethodOperand,
+        type_arguments: &[ilspy_decompiler::typesystem::types::TypeId],
+        target: &ilspy_decompiler::semantics::ResolveResult,
+        arguments: &[ilspy_decompiler::semantics::ResolveResult],
+        names: Option<&[Option<String>]>,
+    ) -> bool {
+        let Ok(bytes) = ilspy_decompiler::wire::ilast::extension_method_syntax_query(
+            ts,
+            method,
+            type_arguments,
+            target,
+            arguments,
+            names,
+        ) else {
+            return false;
+        };
+        self.ask(&bytes) == 1
+    }
+
     fn constructors(
         &self,
         ts: &TypeSystem<'_, '_>,

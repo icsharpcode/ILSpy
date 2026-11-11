@@ -371,9 +371,33 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				for (int i = 0; i < query.Arguments.Length; i++)
 					query.Arguments[i] = reader.Type();
 			}
+			if (query.Kind == RustResolverQuery.ExtensionSyntaxKind)
+			{
+				query.TypeArguments = new IType[reader.Len()];
+				for (int i = 0; i < query.TypeArguments.Length; i++)
+					query.TypeArguments[i] = reader.Type();
+				query.TargetResult = reader.QueryOperand();
+				query.ArgumentResults = new ResolveResult[reader.Len()];
+				for (int i = 0; i < query.ArgumentResults.Length; i++)
+					query.ArgumentResults[i] = reader.QueryOperand();
+				if (reader.U8() != 0)
+				{
+					query.ArgumentNames = new string?[query.ArgumentResults.Length];
+					for (int i = 0; i < query.ArgumentNames.Length; i++)
+						query.ArgumentNames[i] = reader.Bool() ? reader.Str() : null;
+				}
+			}
 			if (!reader.AtEnd)
 				throw new InvalidOperationException("Trailing bytes after the resolver query");
 			return query;
+		}
+
+		/// <summary>An operand of a resolver query: 0 and the type of an expression, 1, the type and the constant.</summary>
+		ResolveResult QueryOperand()
+		{
+			bool constant = U8() != 0;
+			var type = Type();
+			return constant ? new ConstantResolveResult(type, Constant()) : new ResolveResult(type);
 		}
 
 		/// <summary><c>ILFunction.helperVariableCount</c>, which <see cref="ILFunction.RegisterVariable"/> continues.</summary>
@@ -690,7 +714,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		}
 
 		/// <summary>The target and method of the invocation resolve result the last <see cref="BodyResolveResult"/> read.</summary>
-		(ResolveResult? Target, IMethod Method)? pendingInvocation;
+		(ResolveResult? Target, IMethod Method, bool IsExtension)? pendingInvocation;
 
 		/// <summary>
 		/// A resolve result of the body translation; an operator's, whose operands are its
@@ -734,7 +758,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				{
 					// The arguments are the invocation's; RustSeam2 completes the resolve result.
 					var target = BodyResolveResult(out _);
-					pendingInvocation = (target, CallMethod());
+					pendingInvocation = (target, CallMethod(), Bool());
 					return null;
 				}
 				case 10:
@@ -746,7 +770,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				}
 				case 11:
 					// A constructor call has no target; RustSeam2 completes the resolve result.
-					pendingInvocation = (null, CallMethod());
+					pendingInvocation = (null, CallMethod(), false);
 					return null;
 				case 12:
 					return new ResolveResult(Type());

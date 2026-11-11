@@ -467,7 +467,10 @@ the reasons. This file holds only the ordered steps, their gates and their rules
     `RequireTypeArguments` step and the type arguments in the lookup and the written name
     (lecture 3.95).
     Subject: `Translate generic method calls to C# in the engine`.
-  - [ ] 68l-68y. Further construct groups, in the order of the fallback reasons the ratchet test
+  - [x] 68l. Extension method calls written on their first argument, where the host's
+    `CanTransformToExtensionMethodCall` agrees (lecture 3.96). Subject:
+    `Translate extension method calls to C# in the engine`.
+  - [ ] 68m-68y. Further construct groups, in the order of the fallback reasons the ratchet test
     prints, until no body of the corpus falls back. Subject pattern:
     `Translate <construct group> to C# in the engine`.
   - [ ] 68z. Request-level seam 2. Subject: `Add the Rust C# AST builders and the AST materializer`.

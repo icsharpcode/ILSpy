@@ -117,6 +117,7 @@ pub const SETTING_NAMES: &[&str] = &[
     "FieldKeyword",
     "AlwaysQualifyMemberReferences",
     "NonTrailingNamedArguments",
+    "UsingDeclarations",
 ];
 
 /// The values of `SETTING_NAMES`.
@@ -177,6 +178,7 @@ pub struct Settings {
     pub field_keyword: bool,
     pub always_qualify_member_references: bool,
     pub non_trailing_named_arguments: bool,
+    pub using_declarations: bool,
 }
 
 impl Settings {
@@ -239,6 +241,7 @@ impl Settings {
             field_keyword: bit(52),
             always_qualify_member_references: bit(53),
             non_trailing_named_arguments: bit(54),
+            using_declarations: bit(55),
         }
     }
 }
@@ -323,6 +326,20 @@ pub trait Resolver {
         target: Option<LookupTarget>,
         callvirt: bool,
     ) -> AccessorBinding;
+
+    /// `CSharpResolver.CanTransformToExtensionMethodCall(method, type_arguments, target,
+    /// arguments, names)` as the decompiled method's `ExpressionBuilder` resolves it, for
+    /// `CallBuilder.TryUseExtensionMethodSyntax`; the target and the arguments are expressions
+    /// or constants.
+    fn can_use_extension_method_syntax(
+        &self,
+        ts: &TypeSystem<'_, '_>,
+        method: &super::ast::MethodOperand,
+        type_arguments: &[TypeId],
+        target: &crate::semantics::ResolveResult,
+        arguments: &[crate::semantics::ResolveResult],
+        names: Option<&[Option<String>]>,
+    ) -> bool;
 
     /// The constructors `IsUnambiguousCall` adds as candidates for `newobj` of `constructor`:
     /// those of its declaring type that the decompiled method can access, as one list;

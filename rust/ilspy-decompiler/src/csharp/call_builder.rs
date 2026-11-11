@@ -18,7 +18,7 @@ use crate::typesystem::attrs::ACC_PROTECTED;
 use crate::typesystem::compilation::TypeDefId;
 use crate::typesystem::fnptr::Normalization;
 use crate::typesystem::known::KnownTypeCode;
-use crate::typesystem::members::RefKind;
+use crate::typesystem::members::{ConstValue, RefKind};
 use crate::typesystem::resolve::MethodOrigin;
 use crate::typesystem::types::{TypeData, TypeId};
 
@@ -126,10 +126,8 @@ impl Builder<'_, '_, '_, '_> {
                 Some(self.property_info(id.module, token & 0x00FF_FFFF)?.0)
             }
         };
+        let is_extension = self.ts.method_flags(id, None).extension;
         if property.is_none() {
-            if self.ts.method_flags(id, None).extension {
-                return Err("an extension method call".to_owned());
-            }
             if method.is_operator {
                 return Err("an operator call".to_owned());
             }
@@ -181,6 +179,12 @@ impl Builder<'_, '_, '_, '_> {
         {
             return Err("type arguments that may be anonymous types".to_owned());
         }
+        if is_extension
+            && let Some(e) =
+                self.extension_method_call(inst, operand, &method, &list, &type_arguments)?
+        {
+            return Ok(e);
+        }
         let callee = match (require, type_arguments.is_empty()) {
             (true, true) => self.ast.add(AstNode::MemberReference {
                 target: target.expression,
@@ -221,6 +225,7 @@ impl Builder<'_, '_, '_, '_> {
                 target: Box::new(target_rr),
                 method: Box::new(operand.clone()),
                 ty: method.return_type,
+                extension: false,
             },
         );
         self.ast.with_il(e, inst);
@@ -228,6 +233,106 @@ impl Builder<'_, '_, '_, '_> {
             expression: e,
             ty: method.return_type,
         })
+    }
+
+    /// `TryUseExtensionMethodSyntax`: `first.Name(rest)` where the resolver finds the method
+    /// with the first argument as its target; `None` keeps the static call.
+    fn extension_method_call(
+        &mut self,
+        inst: NodeId,
+        operand: &MethodOperand,
+        method: &Method,
+        list: &ArgumentList,
+        type_arguments: &[TypeId],
+    ) -> Result<Option<TranslatedExpression>, Unsupported> {
+        // Without using declarations an extension method's namespace is not imported.
+        if list.arguments.is_empty() || !self.settings.using_declarations {
+            return Ok(None);
+        }
+        // The target is the first argument, written first and positionally.
+        let names = list.argument_names();
+        if names.as_ref().is_some_and(|n| n[0].is_some()) {
+            return Ok(None);
+        }
+        let first = list.arguments[0];
+        let target_rr = self.rr_of(first.expression);
+        if matches!(
+            target_rr,
+            Rr::Constant {
+                value: ConstValue::Null,
+                ..
+            }
+        ) {
+            return Err("an extension method call on null".to_owned());
+        }
+        if matches!(
+            self.ast.node(first.expression),
+            AstNode::RefDirection { .. }
+        ) {
+            return Err("an extension method call on a reference".to_owned());
+        }
+        let resolver = self
+            .resolver
+            .ok_or("a member reference without the host's resolver")?;
+        let target = self.semantic_rr(first.expression, first.ty);
+        let arguments: Vec<_> = list.arguments[1..]
+            .iter()
+            .map(|a| self.semantic_rr(a.expression, a.ty))
+            .collect();
+        let remaining = names
+            .as_ref()
+            .map(|n| n[1..].to_vec())
+            .filter(|n| n.iter().any(Option::is_some));
+        if !resolver.can_use_extension_method_syntax(
+            self.ts,
+            operand,
+            type_arguments,
+            &target,
+            &arguments,
+            remaining.as_deref(),
+        ) {
+            return Ok(None);
+        }
+        let callee = if type_arguments.is_empty() {
+            self.ast.add(AstNode::MemberReference {
+                target: first.expression,
+                name: method.name.clone(),
+            })
+        } else {
+            self.ast.add(AstNode::GenericMemberReference {
+                target: first.expression,
+                name: method.name.clone(),
+                type_arguments: type_arguments.to_vec(),
+            })
+        };
+        let mut rest = Vec::with_capacity(list.arguments.len() - 1);
+        for (i, a) in list.arguments.iter().enumerate().skip(1) {
+            match names.as_ref().and_then(|n| n[i].clone()) {
+                Some(name) => rest.push(self.ast.add(AstNode::NamedArgument {
+                    name,
+                    expression: a.expression,
+                })),
+                None => rest.push(a.expression),
+            }
+        }
+        let e = self.ast.add(AstNode::Invocation {
+            target: callee,
+            arguments: rest,
+        });
+        self.ast.with_rr(
+            e,
+            Rr::Invocation {
+                target: Box::new(target_rr),
+                method: Box::new(operand.clone()),
+                ty: method.return_type,
+                extension: true,
+            },
+        );
+        self.ast.with_il(e, inst);
+        Ok(Some(TranslatedExpression {
+            expression: e,
+            ty: method.return_type,
+        }))
     }
 
     /// `BuildArgumentList` for by-value arguments without `params`, optional or dynamic

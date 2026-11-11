@@ -93,7 +93,8 @@ fn var_index(
 /// `OperatorResolveResult` of an assignment, `!`, a binary or the conditional operator (type; the operands are the children's); 8 the
 /// `MemberResolveResult` of an event (the target's resolve result, the event as a member
 /// token); 9 the `CSharpInvocationResolveResult` of a call (the target's resolve result and
-/// the method as a call operand; the arguments are the invocation's); 10 the
+/// the method as a call operand, then whether it is an extension method invocation; the
+/// arguments are the invocation's); 10 the
 /// `MemberResolveResult` of a property (the target's resolve result and an accessor of the
 /// property as a call operand); 11 the `CSharpInvocationResolveResult` of a constructor
 /// call (the constructor as a call operand; no target, the arguments are the object
@@ -148,10 +149,16 @@ fn rr(w: &mut FunctionWriter<'_, '_, '_, '_>, rr: Option<&Rr>) -> Result<(), Str
             w.out.u8(7);
             w.ty(*ty);
         }
-        Some(Rr::Invocation { target, method, .. }) => {
+        Some(Rr::Invocation {
+            target,
+            method,
+            extension,
+            ..
+        }) => {
             w.out.u8(9);
             self::rr(w, Some(target))?;
             w.call_method(method)?;
+            w.out.bool(*extension);
         }
         Some(Rr::Property {
             target, accessor, ..
@@ -339,7 +346,7 @@ fn utf16(w: &mut FunctionWriter<'_, '_, '_, '_>, value: &[u16]) {
 
 /// A constant: the `ConstValue` variant's position, then its value (integers as signed or
 /// unsigned variable-length numbers, floating point and decimal as their bits).
-fn constant(w: &mut FunctionWriter<'_, '_, '_, '_>, value: &ConstValue) {
+pub(super) fn constant(w: &mut FunctionWriter<'_, '_, '_, '_>, value: &ConstValue) {
     match value {
         ConstValue::Null => w.out.u8(0),
         ConstValue::Boolean(b) => {
