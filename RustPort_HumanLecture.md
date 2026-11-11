@@ -2818,6 +2818,32 @@ falls back only for the span-based overload. `Format` stays apart, since it may 
 interpolated string. The share rose from 48.6 % to 49.8 %; `??` (47), member access on value
 types (45) and lambdas (43) lead now.
 
+### 3.98 Member access on value types (item 68n)
+
+A member of a value type is reached through a managed reference: the address of a local
+(`ldloca`), of a field, or a by-reference variable such as `this` in a struct method.
+`TranslateTarget` translates the target with a by-reference type hint, requires a reference
+of the member's declaring type (casting otherwise, issue #1333), and writes `(ref x).member`
+as `x.member`. The engine now does the same, and translates the two missing sources of
+`ref` expressions: `ldloca` (the name, with the instruction on the name and the `ref` around
+it) and the load of a by-reference variable (the name with the element type's resolve
+result, inside a `ref` with a `ByReferenceResolveResult`). Storing to a by-reference
+variable is a ref reassignment and still falls back, as do targets that need a reference
+conversion and pointers.
+
+Taking the `ref` away is `UnwrapChild`, which moves the IL instructions of the dropped node
+onto the child. The engine's version did not, which did not matter while no `ref` carried
+an instruction; a by-reference variable's load puts its instruction on the `ref`, so it does
+now. The share rose from 49.8 % to 50.9 %, past half of the corpus bodies.
+
+The first gate run found a difference this step only exposed: a `null` argument converted
+to a reference parameter type (`Enumerable.Repeat<string>(null, n)`). The engine modelled
+the converted constant's resolve result as a `string` constant, while the managed
+`ConvertConstantValue` keeps the null literal's own resolve result (`NullType`) when no cast
+goes around it. Type inference then found `T` in the engine only, and the engine left out a
+type argument the managed builder writes. The folded constant now gets the null literal's
+type there, as the host's node has.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

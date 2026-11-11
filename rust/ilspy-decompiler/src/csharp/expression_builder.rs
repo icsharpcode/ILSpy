@@ -64,6 +64,22 @@ impl Builder<'_, '_, '_, '_> {
                 self.ast.with_il(e.expression, inst);
                 Ok(e)
             }
+            // `VisitLdLoca`: `ref name`, with the instruction on the name, which a dereference
+            // keeps.
+            Inst::LdLoca { var } => {
+                if matches!(self.ts.data(self.f.var(var).ty), TypeData::ByRef(_)) {
+                    return Err("the address of a by-reference variable".to_owned());
+                }
+                let e = self.convert_variable(var)?;
+                self.ast.with_il(e.expression, inst);
+                let element = self.rr_of(e.expression);
+                let d = self.ast.add(AstNode::RefDirection {
+                    expression: e.expression,
+                });
+                self.ast.with_rr(d, Rr::ByReference(Box::new(element)));
+                let ty = self.ts.intern(TypeData::ByRef(e.ty));
+                Ok(TranslatedExpression { expression: d, ty })
+            }
             Inst::LdObj {
                 target,
                 ty,
@@ -175,9 +191,6 @@ impl Builder<'_, '_, '_, '_> {
     ) -> Result<TranslatedExpression, Unsupported> {
         let v = self.f.var(var);
         let ty = v.ty;
-        if matches!(self.ts.data(ty), TypeData::ByRef(_)) {
-            return Err("a by-reference variable".to_owned());
-        }
         let e = if v.kind == VariableKind::Parameter && v.index.is_some_and(|i| i < 0) {
             self.ast.add(AstNode::This)
         } else {
@@ -185,6 +198,14 @@ impl Builder<'_, '_, '_, '_> {
                 name: v.name.clone(),
             })
         };
+        // A by-reference variable is `ref name`, the name with the element type's resolve result.
+        if let TypeData::ByRef(element) = *self.ts.data(ty) {
+            let element_rr = Rr::Variable { var, ty: element };
+            self.ast.with_rr(e, element_rr.clone());
+            let d = self.ast.add(AstNode::RefDirection { expression: e });
+            self.ast.with_rr(d, Rr::ByReference(Box::new(element_rr)));
+            return Ok(TranslatedExpression { expression: d, ty });
+        }
         self.ast.with_rr(e, Rr::Variable { var, ty });
         Ok(TranslatedExpression { expression: e, ty })
     }

@@ -8,6 +8,7 @@ use crate::il::types::StackType;
 use crate::metadata::tables::rows;
 use crate::semantics::types::TypeKind;
 use crate::typesystem::compilation::TypeDefId;
+use crate::typesystem::fnptr::Normalization;
 use crate::typesystem::resolve::FieldOrigin;
 use crate::typesystem::types::{TypeData, TypeId};
 
@@ -42,8 +43,12 @@ impl Builder<'_, '_, '_, '_> {
         }
     }
 
-    /// `TranslatedExpression.UnwrapChild(child)`: the child with its own resolve result.
-    fn unwrap_child(&mut self, child: AstId) -> TranslatedExpression {
+    /// `TranslatedExpression.UnwrapChild(child)`: the child of `parent` with its own resolve
+    /// result, given the parent's IL instructions.
+    pub(crate) fn unwrap_child(&mut self, parent: AstId, child: AstId) -> TranslatedExpression {
+        for inst in self.ast.annotations(parent).il.clone() {
+            self.ast.with_il(child, inst);
+        }
         let rr = self
             .ast
             .annotations(child)
@@ -118,7 +123,7 @@ impl Builder<'_, '_, '_, '_> {
         let AstNode::RefDirection { expression } = *self.ast.node(address.expression) else {
             return Err("a load through a reference that is no ref expression".to_owned());
         };
-        let result = self.unwrap_child(expression);
+        let result = self.unwrap_child(address.expression, expression);
         self.ast.with_il(result.expression, inst);
         Ok(result)
     }
@@ -401,17 +406,38 @@ impl Builder<'_, '_, '_, '_> {
             None => StackType::Unknown,
         };
         let target_result = self.f.result_type(self.ts, target);
-        if expected == StackType::Ref
-            || (expected == StackType::Unknown && target_result == StackType::Ref)
-        {
-            return Err("a member access on a value type".to_owned());
+        let requires_managed_reference = expected == StackType::Ref
+            || (expected == StackType::Unknown && target_result == StackType::Ref);
+        let hint = if !requires_managed_reference {
+            declaring
+        } else if target_result == StackType::Ref {
+            self.ts.intern(TypeData::ByRef(declaring))
+        } else {
+            return Err("a member access through a pointer".to_owned());
+        };
+        let mut translated = self.translate(target, Some(hint))?;
+        if requires_managed_reference {
+            // A reference of the declaring type, not of another type (issue #1333).
+            let n = Normalization::TYPE_ERASURE;
+            let same = match *self.ts.data(translated.ty) {
+                TypeData::ByRef(element) => {
+                    self.ts.normalize_with(element, n) == self.ts.normalize_with(declaring, n)
+                }
+                _ => false,
+            };
+            if !same {
+                return Err("a member access that needs a reference conversion".to_owned());
+            }
         }
-        let translated = self.translate(target, Some(declaring))?;
-        if matches!(
-            self.ast.node(translated.expression),
-            AstNode::RefDirection { .. }
-        ) {
-            return Err("a member access on a ref expression".to_owned());
+        // (ref x).member => x.member
+        match *self.ast.node(translated.expression) {
+            AstNode::RefDirection { expression } => {
+                translated = self.unwrap_child(translated.expression, expression);
+            }
+            _ if requires_managed_reference => {
+                return Err("a member access on a ref expression".to_owned());
+            }
+            _ => {}
         }
         if matches!(self.ast.node(translated.expression), AstNode::This)
             && let Some(Rr::Variable { var, .. }) = self.ast.annotations(translated.expression).rr
@@ -581,7 +607,7 @@ impl Builder<'_, '_, '_, '_> {
         let AstNode::RefDirection { expression } = *self.ast.node(pointer.expression) else {
             return Err("a store through a reference that is no ref expression".to_owned());
         };
-        let target = self.unwrap_child(expression);
+        let target = self.unwrap_child(pointer.expression, expression);
         let value = self.translate(value, Some(target.ty))?;
         if matches!(
             self.ast.node(target.expression),
@@ -605,6 +631,9 @@ impl Builder<'_, '_, '_, '_> {
         let value = self.translate(value, Some(var_type))?;
         if self.f.var(var).kind == VariableKind::StackSlot {
             return Err("a store to a stack slot".to_owned());
+        }
+        if matches!(self.ts.data(var_type), TypeData::ByRef(_)) {
+            return Err("a ref reassignment".to_owned());
         }
         let left = self.convert_variable(var)?;
         let e = self.assignment(left, value)?;

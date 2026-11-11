@@ -117,14 +117,24 @@ impl Builder<'_, '_, '_, '_> {
                     value: value.clone(),
                     allow_implicit_conversion,
                 });
-                self.ast.with_rr(c, Rr::Constant { ty: target, value });
+                // `TypeSystemAstBuilder.ConvertConstantValue` writes a null of a reference,
+                // nullable or pointer type as the null literal, with the literal's resolve result
+                // unless a cast to the type goes around it.
+                let null_literal = matches!(value, ConstValue::Null)
+                    && (allow_implicit_conversion || self.ts.kind(target) == TypeKind::Null)
+                    && (self.ts.is_reference_type(target) == Some(true)
+                        || self.ts.is_known(target, KnownTypeCode::NullableOfT)
+                        || self.ts.kind(target).is_any_pointer());
+                let ty = if null_literal {
+                    self.ts.intern(TypeData::Null)
+                } else {
+                    target
+                };
+                self.ast.with_rr(c, Rr::Constant { ty, value });
                 for inst in il {
                     self.ast.with_il(c, inst);
                 }
-                return Ok(TranslatedExpression {
-                    expression: c,
-                    ty: target,
-                });
+                return Ok(TranslatedExpression { expression: c, ty });
             }
             CastResult::Error => {
                 if self.ts.is_reference_type(target) == Some(true)

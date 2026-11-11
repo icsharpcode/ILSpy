@@ -472,7 +472,10 @@ the reasons. This file holds only the ordered steps, their gates and their rules
     `Translate extension method calls to C# in the engine`.
   - [x] 68m. `string.Concat` as the ordinary call it is for `CallBuilder`, apart from the
     span-based overload (lecture 3.97). Subject: `Translate string.Concat calls to C# in the engine`.
-  - [ ] 68n-68y. Further construct groups, in the order of the fallback reasons the ratchet test
+  - [x] 68n. Member access on value types through `ldloca`, field addresses and by-reference
+    variables, written without the `ref` (lecture 3.98). Subject:
+    `Translate member access on value types to C# in the engine`.
+  - [ ] 68o-68y. Further construct groups, in the order of the fallback reasons the ratchet test
     prints, until no body of the corpus falls back. Subject pattern:
     `Translate <construct group> to C# in the engine`.
   - [ ] 68z. Request-level seam 2. Subject: `Add the Rust C# AST builders and the AST materializer`.
