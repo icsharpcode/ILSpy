@@ -1,3 +1,4 @@
+#!/usr/bin/env pwsh
 if (-not ($PSVersionTable.PSCompatibleVersions -contains "5.0")) {
 	Write-Error "This script requires at least powershell version 5.0!";
 	return 255;

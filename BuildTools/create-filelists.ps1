@@ -1,3 +1,4 @@
+#!/usr/bin/env pwsh
 $ErrorActionPreference = "Stop";
 
 $Utf8NoBomEncoding = New-Object System.Text.UTF8Encoding $False

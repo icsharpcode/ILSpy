@@ -1,3 +1,5 @@
+#!/usr/bin/env pwsh
+
 <#
 .SYNOPSIS
 Strip UTF-8 BOM from selected text files under the current subtree, respecting

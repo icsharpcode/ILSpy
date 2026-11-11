@@ -1,3 +1,4 @@
+#!/usr/bin/env pwsh
 $ErrorActionPreference = "Stop";
 
 [Reflection.Assembly]::LoadWithPartialName("System.Xml.Linq") | Out-Null
