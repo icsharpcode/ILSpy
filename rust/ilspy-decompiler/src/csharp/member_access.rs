@@ -28,7 +28,7 @@ impl Builder<'_, '_, '_, '_> {
             | Rr::Variable { ty, .. }
             | Rr::This { ty, .. }
             | Rr::Type(ty)
-            | Rr::Assign { ty }
+            | Rr::Operator { ty }
             | Rr::Invocation { ty, .. }
             | Rr::Property { ty, .. } => *ty,
             Rr::Field { field, .. } => field.field.ty,
@@ -552,7 +552,7 @@ impl Builder<'_, '_, '_, '_> {
             left: left.expression,
             right: right.expression,
         });
-        self.ast.with_rr(e, Rr::Assign { ty: left.ty });
+        self.ast.with_rr(e, Rr::Operator { ty: left.ty });
         Ok(TranslatedExpression {
             expression: e,
             ty: left.ty,

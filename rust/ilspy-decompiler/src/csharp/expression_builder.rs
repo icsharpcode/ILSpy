@@ -1,7 +1,7 @@
 //! `ExpressionBuilder`: the C# expression of an ILAst instruction.
 
-use crate::il::ast::{Inst, NodeId, VariableKind};
-use crate::il::types::Sign;
+use crate::il::ast::{ComparisonKind, ComparisonLiftingKind, Inst, NodeId, VariableKind};
+use crate::il::types::{Sign, StackType};
 use crate::typesystem::known::KnownTypeCode;
 use crate::typesystem::members::ConstValue;
 use crate::typesystem::types::{TypeData, TypeId};
@@ -82,6 +82,14 @@ impl Builder<'_, '_, '_, '_> {
             Inst::StLoc { var, value, .. } => self.st_loc(inst, var, value),
             Inst::Call(c) => self.call(inst, &c, super::call_builder::CallOp::Call),
             Inst::CallVirt(c) => self.call(inst, &c, super::call_builder::CallOp::CallVirt),
+            Inst::Comp {
+                kind,
+                lifting,
+                input,
+                left,
+                right,
+                ..
+            } => self.comp(inst, kind, lifting, input, left, right),
             other => Err(format!("the instruction {}", super::inst_name(&other))),
         }
     }
@@ -170,5 +178,85 @@ impl Builder<'_, '_, '_, '_> {
         };
         self.ast.with_rr(e, Rr::Variable { var, ty });
         Ok(TranslatedExpression { expression: e, ty })
+    }
+    /// `TranslateCondition(condition)`: the condition as a `bool`.
+    pub(crate) fn translate_condition(
+        &mut self,
+        condition: NodeId,
+    ) -> Result<TranslatedExpression, Unsupported> {
+        let boolean = self.ts.known_type(KnownTypeCode::Boolean);
+        let e = self.translate(condition, Some(boolean))?;
+        // `ConvertToBoolean` returns a bool unchanged.
+        if !self.ts.is_known(e.ty, KnownTypeCode::Boolean) {
+            return Err("a condition that is no bool".to_owned());
+        }
+        Ok(e)
+    }
+
+    /// `VisitComp` for the equality of a bool with 0 or 1, which `TranslateCeq` writes as the
+    /// bool or its negation.
+    fn comp(
+        &mut self,
+        inst: NodeId,
+        kind: ComparisonKind,
+        lifting: ComparisonLiftingKind,
+        input: StackType,
+        left: NodeId,
+        right: NodeId,
+    ) -> Result<TranslatedExpression, Unsupported> {
+        if lifting == ComparisonLiftingKind::ThreeValuedLogic {
+            return Err("a comparison with three-valued logic".to_owned());
+        }
+        if input == StackType::Ref {
+            return Err("a comparison of references".to_owned());
+        }
+        if !kind.is_equality_or_inequality() {
+            return Err("a relational comparison".to_owned());
+        }
+        let is_inst = |b: &Self, n: NodeId| matches!(b.f.inst(n), Inst::IsInst { .. });
+        let is_null = |b: &Self, n: NodeId| matches!(b.f.inst(n), Inst::LdNull);
+        if (is_inst(self, left) && is_null(self, right))
+            || (is_inst(self, right) && is_null(self, left))
+        {
+            return Err("a type test".to_owned());
+        }
+        let l = self.translate(left, None)?;
+        let r = self.translate(right, None)?;
+        let ldc = |b: &Self, n: NodeId| match *b.f.inst(n) {
+            Inst::LdcI4 { value } => Some(value),
+            _ => None,
+        };
+        // Remove redundant bool comparisons.
+        let (result, constant) = if self.ts.is_known(l.ty, KnownTypeCode::Boolean) {
+            (l, ldc(self, right))
+        } else if self.ts.is_known(r.ty, KnownTypeCode::Boolean) {
+            (r, ldc(self, left))
+        } else {
+            return Err("a comparison".to_owned());
+        };
+        let negate = match constant {
+            Some(0) => kind == ComparisonKind::Equality,
+            Some(1) => kind == ComparisonKind::Inequality,
+            _ => return Err("a comparison".to_owned()),
+        };
+        if !negate {
+            return Ok(result);
+        }
+        let e = self.logic_not(result);
+        self.ast.with_il(e.expression, inst);
+        Ok(e)
+    }
+
+    /// `LogicNot(expr)`: `!expr`.
+    pub(crate) fn logic_not(&mut self, expr: TranslatedExpression) -> TranslatedExpression {
+        let boolean = self.ts.known_type(KnownTypeCode::Boolean);
+        let e = self.ast.add(AstNode::LogicNot {
+            expression: expr.expression,
+        });
+        self.ast.with_rr(e, Rr::Operator { ty: boolean });
+        TranslatedExpression {
+            expression: e,
+            ty: boolean,
+        }
     }
 }

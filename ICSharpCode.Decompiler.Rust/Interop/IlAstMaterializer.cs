@@ -585,7 +585,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 			for (int i = 0; i < node.IL.Length; i++)
 				node.IL[i] = materialized[Len()];
 			node.ILBeforeResolveResult = Bool();
-			node.ResolveResult = BodyResolveResult(out node.AssignmentType);
+			node.ResolveResult = BodyResolveResult(out node.OperatorType);
 			node.Call = pendingInvocation;
 			pendingInvocation = null;
 			int implicitReturn = Len();
@@ -639,6 +639,16 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					node.Value = Str();
 					node.Children = [BodyNode()];
 					break;
+				case RustBodyNode.IfElse:
+				{
+					var condition = BodyNode();
+					var trueStatement = BodyNode();
+					node.Children = Bool() ? [condition, trueStatement, BodyNode()] : [condition, trueStatement];
+					break;
+				}
+				case RustBodyNode.LogicNot:
+					node.Children = [BodyNode()];
+					break;
 			}
 			return node;
 		}
@@ -647,12 +657,12 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		(ResolveResult? Target, IMethod Method)? pendingInvocation;
 
 		/// <summary>
-		/// A resolve result of the body translation; an assignment's, whose operands are its
-		/// children's, comes back as null with its type in <paramref name="assignmentType"/>.
+		/// A resolve result of the body translation; an operator's, whose operands are its
+		/// children's, comes back as null with its type in <paramref name="operatorType"/>.
 		/// </summary>
-		ResolveResult? BodyResolveResult(out IType? assignmentType)
+		ResolveResult? BodyResolveResult(out IType? operatorType)
 		{
-			assignmentType = null;
+			operatorType = null;
 			switch (U8())
 			{
 				case 0:
@@ -682,7 +692,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				case 6:
 					return new ByReferenceResolveResult(BodyResolveResult(out _)!, ReferenceKind.Ref);
 				case 7:
-					assignmentType = Type();
+					operatorType = Type();
 					return null;
 				case 9:
 				{

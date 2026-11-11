@@ -450,7 +450,10 @@ the reasons. This file holds only the ordered steps, their gates and their rules
   - [x] 68f. Property access: getters and setters of properties without parameters, written as
     `target.Name` or `Name` (and assigned for a setter) where the host's member lookup binds the
     name back to the property (lecture 3.90). Subject: `Translate property access to C# in the engine`.
-  - [ ] 68g-68y. Further construct groups, in the order of the fallback reasons the ratchet test
+  - [x] 68g. `if` statements and blocks without container, with conditions that are bools and
+    the comparison of a bool with 0 or 1 written as the bool or `!` (lecture 3.91). Subject:
+    `Translate if statements and logical not to C# in the engine`.
+  - [ ] 68h-68y. Further construct groups, in the order of the fallback reasons the ratchet test
     prints, until no body of the corpus falls back. Subject pattern:
     `Translate <construct group> to C# in the engine`.
   - [ ] 68z. Request-level seam 2. Subject: `Add the Rust C# AST builders and the AST materializer`.

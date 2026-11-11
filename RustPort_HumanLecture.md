@@ -2651,6 +2651,28 @@ The getter's `MemberResolveResult` is rebuilt on the host from the accessor's
 instead of the `OperatorResolveResult` of a plain assignment. The share rose from 38.5 % to
 40.7 %; `if` statements (188) and `newobj` (62) are now the largest groups.
 
+### 3.91 If statements and logical not (item 68g)
+
+`VisitIfInstruction` is short: the condition through `TranslateCondition`, the branches
+through `Convert`, no `else` for a `nop`. The branches are usually blocks without a
+container, which `VisitBlock` turns into a block statement of their instructions; the engine
+now does both. The block falls back when an instruction is a store followed by a `while`
+container, the shape `TransformToForeachWithoutDispose` rewrites, since loops are not
+translated yet.
+
+`TranslateCondition` translates with a `bool` type hint and then calls `ConvertToBoolean`,
+which leaves a `bool` alone and otherwise builds a comparison with zero; only the first case
+is taken. Most conditions are comparisons (`comp`), and the cheapest of those need no
+resolver: `TranslateCeq` writes the comparison of a `bool` with 0 or 1 as the `bool` or its
+negation. That is also how the ILAst spells logical not. The negation is `!` with an
+`OperatorResolveResult` whose operand the host takes from the child, like an assignment's,
+so the assignment resolve result became a general operator one. When the comparison is
+dropped, the `comp` instruction itself is annotated nowhere, as in the managed builder.
+
+Every other comparison falls back, because it needs `ResolveBinaryOperator`, which is not in
+the engine yet. The share rose from 40.7 % to 41.4 %; comparisons (99) are now the largest
+group, ahead of `if` instructions in expressions (82) and `newobj` (63).
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

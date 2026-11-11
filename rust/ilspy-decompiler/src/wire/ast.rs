@@ -37,6 +37,8 @@ mod kind {
     pub const EXPRESSION_STATEMENT: u8 = 13;
     pub const INVOCATION: u8 = 14;
     pub const NAMED_ARGUMENT: u8 = 15;
+    pub const IF_ELSE: u8 = 16;
+    pub const LOGIC_NOT: u8 = 17;
 }
 
 pub(super) fn write_body(
@@ -82,10 +84,12 @@ fn var_index(
 /// it causes a non-virtual invocation); 4 `TypeResolveResult` (type); 5 the
 /// `MemberResolveResult` of a field (the target's resolve result, the field as a member
 /// token); 6 `ByReferenceResolveResult` (the element's resolve result); 7 the
-/// `OperatorResolveResult` of an assignment (type; the operands are the children's); 8 the
+/// `OperatorResolveResult` of an assignment or `!` (type; the operands are the children's); 8 the
 /// `MemberResolveResult` of an event (the target's resolve result, the event as a member
 /// token); 9 the `CSharpInvocationResolveResult` of a call (the target's resolve result and
-/// the method as a call operand; the arguments are the invocation's). A field's target is
+/// the method as a call operand; the arguments are the invocation's); 10 the
+/// `MemberResolveResult` of a property (the target's resolve result and an accessor of the
+/// property as a call operand). A field's target is
 /// absent (0) for the `field` keyword.
 fn rr(w: &mut FunctionWriter<'_, '_, '_, '_>, rr: Option<&Rr>) -> Result<(), String> {
     match rr {
@@ -132,7 +136,7 @@ fn rr(w: &mut FunctionWriter<'_, '_, '_, '_>, rr: Option<&Rr>) -> Result<(), Str
             w.out.u8(6);
             self::rr(w, Some(element))?;
         }
-        Some(Rr::Assign { ty }) => {
+        Some(Rr::Operator { ty }) => {
             w.out.u8(7);
             w.ty(*ty);
         }
@@ -172,6 +176,8 @@ fn node(w: &mut FunctionWriter<'_, '_, '_, '_>, ast: &Ast, id: AstId) -> Result<
         AstNode::ExpressionStatement { .. } => kind::EXPRESSION_STATEMENT,
         AstNode::Invocation { .. } => kind::INVOCATION,
         AstNode::NamedArgument { .. } => kind::NAMED_ARGUMENT,
+        AstNode::IfElse { .. } => kind::IF_ELSE,
+        AstNode::LogicNot { .. } => kind::LOGIC_NOT,
     });
     w.out.len(a.il.len());
     for &inst in &a.il {
@@ -216,7 +222,9 @@ fn node(w: &mut FunctionWriter<'_, '_, '_, '_>, ast: &Ast, id: AstId) -> Result<
             w.string(&name);
         }
         AstNode::TypeReference { ty } => w.ty(ty),
-        AstNode::RefDirection { expression } | AstNode::ExpressionStatement { expression } => {
+        AstNode::RefDirection { expression }
+        | AstNode::ExpressionStatement { expression }
+        | AstNode::LogicNot { expression } => {
             node(w, ast, expression)?;
         }
         AstNode::Assignment { left, right } => {
@@ -233,6 +241,18 @@ fn node(w: &mut FunctionWriter<'_, '_, '_, '_>, ast: &Ast, id: AstId) -> Result<
         AstNode::NamedArgument { name, expression } => {
             w.string(&name);
             node(w, ast, expression)?;
+        }
+        AstNode::IfElse {
+            condition,
+            true_statement,
+            false_statement,
+        } => {
+            node(w, ast, condition)?;
+            node(w, ast, true_statement)?;
+            w.out.bool(false_statement.is_some());
+            if let Some(s) = false_statement {
+                node(w, ast, s)?;
+            }
         }
         AstNode::Empty | AstNode::Null | AstNode::This | AstNode::Base => {}
     }

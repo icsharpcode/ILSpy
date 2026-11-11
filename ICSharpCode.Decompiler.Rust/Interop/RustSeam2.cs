@@ -56,6 +56,8 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		public const byte ExpressionStatement = 13;
 		public const byte Invocation = 14;
 		public const byte NamedArgument = 15;
+		public const byte IfElse = 16;
+		public const byte LogicNot = 17;
 
 		public byte Kind;
 		/// <summary>The instructions the node is annotated with, in order.</summary>
@@ -63,8 +65,8 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		/// <summary>Whether the instructions were annotated before the resolve result.</summary>
 		public bool ILBeforeResolveResult;
 		public ResolveResult? ResolveResult;
-		/// <summary>For an assignment: the type of its <see cref="OperatorResolveResult"/>, whose operands are the children's.</summary>
-		public IType? AssignmentType;
+		/// <summary>For an assignment or <c>!</c>: the type of its <see cref="OperatorResolveResult"/>, whose operands are the children's.</summary>
+		public IType? OperatorType;
 		/// <summary>For an invocation: the target and method of its <see cref="CSharpInvocationResolveResult"/>, whose arguments are the invocation's.</summary>
 		public (ResolveResult? Target, IMethod Method)? Call;
 		public Leave? ImplicitReturn;
@@ -202,9 +204,9 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					var left = (Expression)Build(node.Children[0], exprBuilder);
 					var right = (Expression)Build(node.Children[1], exprBuilder);
 					// A property setter's assignment comes with a resolve result of its own.
-					if (node.AssignmentType != null)
+					if (node.OperatorType != null)
 					{
-						node.ResolveResult = new OperatorResolveResult(node.AssignmentType, System.Linq.Expressions.ExpressionType.Assign,
+						node.ResolveResult = new OperatorResolveResult(node.OperatorType, System.Linq.Expressions.ExpressionType.Assign,
 							left.GetResolveResult(), right.GetResolveResult());
 					}
 					return Annotate(new AssignmentExpression(left, right), node);
@@ -223,6 +225,19 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				}
 				case RustBodyNode.NamedArgument:
 					return Annotate(new NamedArgumentExpression((string)node.Value!, (Expression)Build(node.Children[0], exprBuilder)), node);
+				case RustBodyNode.IfElse:
+				{
+					var condition = (Expression)Build(node.Children[0], exprBuilder);
+					var trueStatement = (Statement)Build(node.Children[1], exprBuilder);
+					var falseStatement = node.Children.Length == 3 ? (Statement)Build(node.Children[2], exprBuilder) : null;
+					return Annotate(new IfElseStatement(condition, trueStatement, falseStatement), node);
+				}
+				case RustBodyNode.LogicNot:
+				{
+					var operand = (Expression)Build(node.Children[0], exprBuilder);
+					node.ResolveResult = new OperatorResolveResult(node.OperatorType!, System.Linq.Expressions.ExpressionType.Not, operand.GetResolveResult());
+					return Annotate(new UnaryOperatorExpression(UnaryOperatorType.Not, operand), node);
+				}
 				default:
 					throw new RustEngineException($"unknown C# node kind {node.Kind}");
 			}

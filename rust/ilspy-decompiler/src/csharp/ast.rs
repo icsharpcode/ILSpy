@@ -53,6 +53,14 @@ pub enum AstNode {
     },
     /// `NamedArgumentExpression`: `name: expression`.
     NamedArgument { name: String, expression: AstId },
+    /// `IfElseStatement`, without `else` when `false_statement` is `None`.
+    IfElse {
+        condition: AstId,
+        true_statement: AstId,
+        false_statement: Option<AstId>,
+    },
+    /// `UnaryOperatorExpression` with `UnaryOperatorType.Not`.
+    LogicNot { expression: AstId },
 }
 
 /// `ResolveResult` annotations.
@@ -88,9 +96,9 @@ pub enum Rr {
     },
     /// `ByReferenceResolveResult` with `ReferenceKind.Ref` of the element's resolve result.
     ByReference(Box<Rr>),
-    /// `OperatorResolveResult` of an assignment, of the given type, whose operands are the
-    /// resolve results of the node's children.
-    Assign { ty: TypeId },
+    /// `OperatorResolveResult` of the node's operator (an assignment or `!`), of the given
+    /// type, whose operands are the resolve results of the node's children.
+    Operator { ty: TypeId },
     /// `CSharpInvocationResolveResult` of a call of `method` (of the given return type) on the
     /// target's resolve result, whose arguments are the resolve results of the invocation's
     /// arguments.

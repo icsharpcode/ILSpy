@@ -1,6 +1,6 @@
 //! `StatementBuilder`: the C# statements of an ILAst function body.
 
-use crate::il::ast::{ContainerKind, FunctionKind, Inst, NodeId};
+use crate::il::ast::{BlockKind, ContainerKind, FunctionKind, Inst, NodeId};
 use crate::il::reader::ReadFunction;
 use crate::typesystem::types::TypeSystem;
 
@@ -73,8 +73,18 @@ impl Builder<'_, '_, '_, '_> {
             // `VisitStLoc` and `VisitStObj` strip a top-level `ref` of a ref reassignment, which
             // the expression builder does not produce.
             Inst::StLoc { .. } | Inst::StObj { .. } => self.expression_statement(inst),
-            Inst::If { .. }
-            | Inst::Switch { .. }
+            Inst::If {
+                condition,
+                true_inst,
+                false_inst,
+                ..
+            } => self.visit_if(inst, condition, true_inst, false_inst),
+            Inst::Block {
+                kind: BlockKind::ControlFlow,
+                instructions,
+                final_inst,
+            } => self.visit_block(inst, &instructions, final_inst),
+            Inst::Switch { .. }
             | Inst::Branch { .. }
             | Inst::Throw { .. }
             | Inst::Rethrow
@@ -85,7 +95,6 @@ impl Builder<'_, '_, '_, '_> {
             | Inst::Lock { .. }
             | Inst::Using { .. }
             | Inst::PinnedRegion { .. }
-            | Inst::Block { .. }
             | Inst::Initblk { .. }
             | Inst::Cpblk { .. }
             | Inst::Ckfinite { .. }
@@ -105,6 +114,62 @@ impl Builder<'_, '_, '_, '_> {
                 Ok(s)
             }
         }
+    }
+
+    /// `VisitIfInstruction`: `if (condition) true_inst else false_inst`, without `else` for a
+    /// `nop`.
+    fn visit_if(
+        &mut self,
+        inst: NodeId,
+        condition: NodeId,
+        true_inst: NodeId,
+        false_inst: NodeId,
+    ) -> Result<AstId, Unsupported> {
+        let condition = self.translate_condition(condition)?;
+        let true_statement = self.convert(true_inst)?;
+        let false_statement = if matches!(self.f.inst(false_inst), Inst::Nop { .. }) {
+            None
+        } else {
+            Some(self.convert(false_inst)?)
+        };
+        let s = self.ast.add(AstNode::IfElse {
+            condition: condition.expression,
+            true_statement,
+            false_statement,
+        });
+        Ok(self.ast.with_il(s, inst))
+    }
+
+    /// `VisitBlock` for a block without container: its instructions as a block statement.
+    fn visit_block(
+        &mut self,
+        inst: NodeId,
+        instructions: &[NodeId],
+        final_inst: NodeId,
+    ) -> Result<AstId, Unsupported> {
+        let mut statements = Vec::with_capacity(instructions.len() + 1);
+        for (i, &s) in instructions.iter().enumerate() {
+            // `TransformToForeachWithoutDispose` looks for a store followed by a while loop.
+            if matches!(self.f.inst(s), Inst::StLoc { .. })
+                && instructions.get(i + 1).is_some_and(|&n| {
+                    matches!(
+                        self.f.inst(n),
+                        Inst::BlockContainer {
+                            kind: ContainerKind::While,
+                            ..
+                        }
+                    )
+                })
+            {
+                return Err("a foreach without Dispose".to_owned());
+            }
+            statements.push(self.convert(s)?);
+        }
+        if !matches!(self.f.inst(final_inst), Inst::Nop { .. }) {
+            statements.push(self.convert(final_inst)?);
+        }
+        let s = self.ast.add(AstNode::Block { statements });
+        Ok(self.ast.with_il(s, inst))
     }
 
     /// `new ExpressionStatement(exprBuilder.Translate(inst)).WithILInstruction(inst)`.
