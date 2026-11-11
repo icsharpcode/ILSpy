@@ -63,16 +63,38 @@ impl Builder<'_, '_, '_, '_> {
         allow_implicit_conversion: bool,
     ) -> Result<TranslatedExpression, Unsupported> {
         let ty = e.ty;
-        // A cast may be unwrapped or made implicit again (`CastCanBeMadeImplicit`), which is
-        // not translated.
-        if matches!(
-            self.ast.annotations(e.expression).rr,
-            Some(Rr::Conversion { .. })
-        ) {
-            return Err("a conversion of a cast".to_owned());
-        }
         let n = Normalization::IGNORE_NULLABILITY_AND_TUPLES;
-        if self.ts.normalize_with(ty, n) == self.ts.normalize_with(target, n) {
+        let same = self.ts.normalize_with(ty, n) == self.ts.normalize_with(target, n);
+        // A cast the engine made: `CastCanBeMadeImplicit` may unwrap it again.
+        if let AstNode::Cast {
+            expression: inner, ..
+        } = *self.ast.node(e.expression)
+        {
+            let input = self.rr_of(inner);
+            let input_ty = self.rr_type(&input);
+            let input_rr = self.semantic_rr(inner, input_ty);
+            let conversion = Conversions::new(self.ts).explicit(&input_rr, ty);
+            if conversion.is_user_defined() {
+                // An unwrapped user-defined conversion keeps an `ImplicitConversionAnnotation`.
+                return Err("a conversion of a user-defined cast".to_owned());
+            }
+            let implicit = self.cast_can_be_made_implicit(&conversion, input_ty, ty, target)?;
+            if same {
+                return Ok(if allow_implicit_conversion && implicit {
+                    self.unwrap_child(e.expression, inner)
+                } else {
+                    e
+                });
+            }
+            if implicit {
+                let unwrapped = self.unwrap_child(e.expression, inner);
+                if allow_implicit_conversion {
+                    return Ok(unwrapped);
+                }
+                return self.convert_to(unwrapped, target, allow_implicit_conversion);
+            }
+        }
+        if same {
             return Ok(e);
         }
         match self.ts.kind(target) {
@@ -134,10 +156,15 @@ impl Builder<'_, '_, '_, '_> {
                 return Ok(TranslatedExpression { expression: c, ty });
             }
             CastResult::Error => {
+                // Between unrelated reference types the conversion goes through object.
                 if self.ts.is_reference_type(target) == Some(true)
                     && self.ts.is_reference_type(ty) == Some(true)
+                    && !self.ts.is_known(target, KnownTypeCode::Object)
+                    && !self.ts.is_known(ty, KnownTypeCode::Object)
                 {
-                    return Err("a conversion through object".to_owned());
+                    let object = self.ts.known_type(KnownTypeCode::Object);
+                    let via = self.convert_to(e, object, false)?;
+                    return self.convert_to(via, target, allow_implicit_conversion);
                 }
             }
             CastResult::Conversion => {
@@ -181,7 +208,14 @@ impl Builder<'_, '_, '_, '_> {
         rr: &ResolveResult,
     ) -> Result<CastResult, Unsupported> {
         let ResolveResult::Constant { value, .. } = rr else {
-            return Ok(CastResult::Conversion);
+            // A `ConversionResolveResult`, which is an error without an explicit conversion.
+            return Ok(
+                if Conversions::new(self.ts).explicit(rr, target).is_valid() {
+                    CastResult::Conversion
+                } else {
+                    CastResult::Error
+                },
+            );
         };
         let c = Conversions::new(self.ts).explicit(rr, target);
         if c.is_user_defined() {
@@ -210,6 +244,34 @@ impl Builder<'_, '_, '_, '_> {
             return Err("a constant converted to a native integer".to_owned());
         }
         Ok(CastResult::Conversion)
+    }
+
+    /// `TranslatedExpression.CastCanBeMadeImplicit`: whether the cast of `input` to `old` with
+    /// `conversion` can be left out when the result is converted to `new` anyway.
+    fn cast_can_be_made_implicit(
+        &mut self,
+        conversion: &crate::semantics::Conversion,
+        input: TypeId,
+        old: TypeId,
+        new: TypeId,
+    ) -> Result<bool, Unsupported> {
+        // If the cast was required for the old conversion, it stays.
+        if !conversion.is_implicit() {
+            return Ok(false);
+        }
+        // nint has an identity conversion with IntPtr, but other implicit conversions.
+        let native = |b: &Self, t: TypeId| matches!(b.ts.kind(t), TypeKind::NInt | TypeKind::NUInt);
+        if native(self, old) || native(self, new) {
+            return Ok(false);
+        }
+        if conversion.is_interpolated_string() || conversion.is_implicit_span() {
+            return Err("a cast of an interpolated string or span".to_owned());
+        }
+        let mut conversions = Conversions::new(self.ts);
+        if conversion.is_boxing() {
+            return Ok(conversions.is_boxing_or_involving_type_parameter(input, new));
+        }
+        Ok(conversions.identity(old, new))
     }
 
     /// The resolve result `ExpressionBuilder.ConvertConstantValue(new ConstantResolveResult(ty,

@@ -2944,6 +2944,27 @@ on the target's resolve result for a member access) in the same resolver. The en
 the property's resolve result accordingly, and the host replaces the member with the one the
 lookup finds. The share rose from 53.0 % to 54.2 %.
 
+### 3.105 Casts made implicit again (item 68u)
+
+`ConvertTo` looks at an expression that already is a cast before it adds another: if the
+cast's conversion was implicit and the new target makes it redundant
+(`CastCanBeMadeImplicit`: an identity conversion between the old and the new target, or for
+a boxing conversion one from the cast's input to the new target), the cast is unwrapped,
+with its IL instructions moving to the operand. With the same type and implicit conversions
+allowed this happens at the start; otherwise it happens after the special targets, and the
+operand is then converted to the new target. Item 68q fell back on every such expression,
+because the conversion lives on the host. The engine recomputes it instead: the cast's
+resolve result is `ResolveCast` over a non-constant operand, which is the explicit
+conversion its ported `Conversions` gives. A user-defined conversion keeps an
+`ImplicitConversionAnnotation` when unwrapped, and interpolated string and span conversions
+compose differently; those fall back. The share rose from 54.2 % to 55.9 %.
+
+The first gate run found a gap from item 68q this step exposed: the engine's `ResolveCast`
+treated every non-constant cast as a valid conversion, while the managed one returns a
+`ConversionResolveResult` that is an error when no explicit conversion exists. `ConvertTo`
+then goes through `object` between unrelated reference types (`(string)(object)a`); the
+engine now does the same, recursively, where it fell back before.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |
