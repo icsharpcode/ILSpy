@@ -4,6 +4,7 @@
 //! Integers are LEB128 varints (signed ones zigzag-encoded); strings and types are indices into
 //! their tables. A type entry only refers to entries before it.
 
+pub mod ast;
 pub mod ilast;
 
 use std::collections::HashMap;

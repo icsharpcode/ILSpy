@@ -18,6 +18,7 @@
 
 using System;
 using System.IO;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -38,7 +39,7 @@ namespace ICSharpCode.Decompiler.Rust.Tests;
 [NonParallelizable]
 public class PortStatusRatchetTests
 {
-	sealed record PortStatus(int IlPrefix, int AstPrefix, double MethodsServedPct);
+	sealed record PortStatus(int IlPrefix, int AstPrefix, double MethodsServedPct, double BodiesServedPct);
 
 	static string RepositoryRoot([CallerFilePath] string thisFile = "")
 		=> Path.GetFullPath(Path.Combine(Path.GetDirectoryName(thisFile)!, ".."));
@@ -49,11 +50,13 @@ public class PortStatusRatchetTests
 
 	/// <summary>
 	/// The share of method bodies seam 1 serves when decompiling this test assembly and
-	/// ICSharpCode.ILSpyX, in percent rounded down to one decimal.
+	/// ICSharpCode.ILSpyX, and of those the share whose statements seam 2 serves, in percent
+	/// rounded down to one decimal.
 	/// </summary>
-	static double MeasureServedPct()
+	static (double Methods, double Bodies) MeasureServedPct()
 	{
 		RustSeam1.ResetCounters();
+		RustSeam2.ResetCounters();
 		foreach (var type in new[] { typeof(Corpus), typeof(ICSharpCode.ILSpyX.PdbProvider.DebugInfoUtils) })
 		{
 			// A method that fails is not counted at all, so failures must be ruled out first.
@@ -63,7 +66,11 @@ public class PortStatusRatchetTests
 		}
 		long served = RustSeam1.Served, total = served + RustSeam1.Fallbacks;
 		Assert.That(total, Is.GreaterThan(0), "no method body went through seam 1");
-		return Math.Floor(served * 1000.0 / total) / 10;
+		long bodiesServed = RustSeam2.Served, bodiesTotal = bodiesServed + RustSeam2.Fallbacks;
+		foreach (var (reason, count) in RustSeam2.FallbackReasons.OrderByDescending(r => r.Value).Take(40))
+			TestContext.Out.WriteLine($"seam 2 fallback: {count,6} {reason}");
+		Assert.That(bodiesTotal, Is.GreaterThan(0), "no method body went through seam 2");
+		return (Math.Floor(served * 1000.0 / total) / 10, Math.Floor(bodiesServed * 1000.0 / bodiesTotal) / 10);
 	}
 
 	[Test]
@@ -72,8 +79,10 @@ public class PortStatusRatchetTests
 		var committed = Committed();
 		Assert.That(RustEngine.ILPrefix, Is.EqualTo(committed.IlPrefix), "il_prefix must equal the engine's IL_PREFIX");
 		Assert.That(committed.AstPrefix, Is.Zero, "seam 2 serves no AST transforms yet");
-		double measured = MeasureServedPct();
-		Assert.That(measured, Is.GreaterThanOrEqualTo(committed.MethodsServedPct), "methods_served_pct dropped");
-		Assert.That(measured, Is.EqualTo(committed.MethodsServedPct), "methods_served_pct rose: commit the measured value");
+		var measured = MeasureServedPct();
+		Assert.That(measured.Methods, Is.GreaterThanOrEqualTo(committed.MethodsServedPct), "methods_served_pct dropped");
+		Assert.That(measured.Methods, Is.EqualTo(committed.MethodsServedPct), "methods_served_pct rose: commit the measured value");
+		Assert.That(measured.Bodies, Is.GreaterThanOrEqualTo(committed.BodiesServedPct), "bodies_served_pct dropped");
+		Assert.That(measured.Bodies, Is.EqualTo(committed.BodiesServedPct), "bodies_served_pct rose: commit the measured value");
 	}
 }

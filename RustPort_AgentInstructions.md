@@ -54,7 +54,8 @@ the reasons. This file holds only the ordered steps, their gates and their rules
   object model (`ILFunction` / `ILInstruction` for seam 1, `SyntaxTree` with annotations for
   seam 2).
 - **ratchet**: `rust/port-status.json` with `{ "il_prefix": N, "ast_prefix": K,
-  "methods_served_pct": ... }`, enforced by a shim test.
+  "methods_served_pct": ..., "bodies_served_pct": ... }`, enforced by a shim test
+  (`bodies_served_pct`: the share of seam 1 bodies whose statements seam 2 serves).
 - **strict**: environment variable `ILSPY_RUST_STRICT=1` disables all fallback; a request
   the engine cannot serve then fails the test.
 - **fixture assemblies**: the compiled outputs of `ICSharpCode.Decompiler.Tests/TestCases/**`
@@ -76,7 +77,9 @@ the reasons. This file holds only the ordered steps, their gates and their rules
   `rust/ilast-divergence-allowlist.json` (each with transform name, fixture, method and reason).
 - **G-ast(K)**: shim test `AstPrefixEquality` over every fixture request: materialized Rust
   AST after AST prefix `K`, then managed transforms `K+1..`, printed with `CSharpOutputVisitor`,
-  equals the fully managed output.
+  equals the fully managed output. While seam 2 serves bodies only (item 68), the test
+  decompiles every fixture image and ICSharpCode.Decompiler.dll with and without the engine's
+  body translations.
 - **G-ratchet**: shim test `PortStatusRatchet` passes (values in `rust/port-status.json` are
   not lower than what the run measured, and the committed file is updated when they rise).
 - **G-ui**: `./runuitests.ps1` green.
@@ -416,25 +419,41 @@ the reasons. This file holds only the ordered steps, their gates and their rules
   - Gate: G-rust with `ConversionTests` (130), `ExplicitConversionTest` (67),
     `TypeInferenceTests` (66), `OverloadResolutionTests` (22) ported as `cargo test`.
 
-- [ ] **68. C# AST arena, expression and statement builders, wire v2, AST materializer, seam 2 at K = 0.** Size L. Subject: `Add the Rust C# AST builders and the AST materializer`.
-  - `csharp/ast/`: arena with roles, one struct per node kind, a side table of annotations
-    (symbol, resolve result, IL node id, variable id, let-identifier, implicit return, member
-    initializer markers). `expression_builder.rs`, `call_builder.rs`,
-    `statement_builder.rs`, `translated_expression.rs`.
-  - Wire v2: AST, `ResolveResult` variants consulted by the AST transforms and
-    `TextTokenWriter` (Member, Invocation, Local, Conversion, MethodGroup, Constant, Type,
-    Namespace, Operator, Dynamic*, Lambda, Tuple, ByReference, This); entity references as
-    `(module id, token, generic argument list)`; a `TypeRef` tree.
-  - Also from 4e: `ExtensionInfo` (C# 14 extension blocks, `TypeSystemOptions.ExtensionMembers`),
-    which the AST builders consult, with its loader test `ExtensionEverything`.
-  - Shim: `Interop/AstMaterializer.cs` resolves entity references through
-    `MetadataModule.ResolveEntity` and `Specialize`, builds the link-compiled `SyntaxTree`.
-  - Seam 2 block: request-level; caller transforms positioned before the built-in list are
-    matched by type name against a small recognized set (`RemoveEmbeddedAttributes`,
-    `RemoveCompilerAttribute`, `RemoveNamespaceMy` from the tests become engine flags);
-    unknown early transforms force managed fallback for the request. Requests with
-    `RecordSteps` set always run managed.
-  - Gate: G-dotnet, G-oracle, G-ratchet, G-ast(0).
+- [ ] **68. C# AST builders, wire v2, materializer, seam 2 at K = 0.** Size L. Split into gated
+  commits, one construct group each (human decision; lecture 3.85). Seam 2 first serves method
+  bodies: the engine translates the ILAst it handed over through seam 1, declarations stay
+  managed, and a body with a construct the engine does not translate yet falls back to the
+  managed statement builder. Fallback is counted as `bodies_served_pct` in
+  `rust/port-status.json`, which only rises. Types and constants become syntax in the
+  materializer through the managed `TypeSystemAstBuilder` until 68z. Gate per commit: G-rust,
+  G-dotnet, G-oracle, G-ratchet, G-ast(0).
+  - [x] 68a. AST arena, the wire v2 body trailer, `RustSeam2` and the body block, and the first
+    constructs: the function body container, `return`, the implicit final return, `nop`,
+    `ldc.i4`, `ldstr`, `ldnull`, `ldloc` and the identity case of `ConvertTo`. Subject:
+    `Translate the first method bodies to C# in the engine`.
+  - [ ] 68b-68y. Further construct groups, in the order of the fallback reasons the ratchet test
+    prints, until no body of the corpus falls back. Subject pattern:
+    `Translate <construct group> to C# in the engine`.
+  - [ ] 68z. Request-level seam 2. Subject: `Add the Rust C# AST builders and the AST materializer`.
+    - `csharp/ast/`: arena with roles, one struct per node kind, a side table of annotations
+      (symbol, resolve result, IL node id, variable id, let-identifier, implicit return, member
+      initializer markers). `expression_builder.rs`, `call_builder.rs`,
+      `statement_builder.rs`, `translated_expression.rs`; `TypeSystemAstBuilder` moves into
+      the engine.
+    - Wire v2: AST, `ResolveResult` variants consulted by the AST transforms and
+      `TextTokenWriter` (Member, Invocation, Local, Conversion, MethodGroup, Constant, Type,
+      Namespace, Operator, Dynamic*, Lambda, Tuple, ByReference, This); entity references as
+      `(module id, token, generic argument list)`; a `TypeRef` tree.
+    - Also from 4e: `ExtensionInfo` (C# 14 extension blocks, `TypeSystemOptions.ExtensionMembers`),
+      which the AST builders consult, with its loader test `ExtensionEverything`.
+    - Shim: `Interop/AstMaterializer.cs` resolves entity references through
+      `MetadataModule.ResolveEntity` and `Specialize`, builds the link-compiled `SyntaxTree`.
+    - Seam 2 block: request-level; caller transforms positioned before the built-in list are
+      matched by type name against a small recognized set (`RemoveEmbeddedAttributes`,
+      `RemoveCompilerAttribute`, `RemoveNamespaceMy` from the tests become engine flags);
+      unknown early transforms force managed fallback for the request. Requests with
+      `RecordSteps` set always run managed.
+    - Gate: G-dotnet, G-oracle, G-ratchet, G-ast(0).
 
 - [ ] **69-84. One AST transform per commit, in order.** Subject pattern:
   `Port <TransformName> to Rust (AST prefix <K>)`. Gate per commit: G-rust, G-oracle,

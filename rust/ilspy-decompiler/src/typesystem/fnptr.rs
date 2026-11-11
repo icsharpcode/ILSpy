@@ -57,6 +57,13 @@ impl Normalization {
         ..Self::MEMBER_LOOKUP
     };
 
+    /// `NormalizeTypeVisitor.IgnoreNullabilityAndTuples`.
+    pub const IGNORE_NULLABILITY_AND_TUPLES: Normalization = Normalization {
+        dynamic_and_object: false,
+        intptr_to_nint: false,
+        ..Self::TYPE_ERASURE
+    };
+
     /// `NormalizeTypeVisitor.KeyForTypeMerging`.
     pub const KEY_FOR_TYPE_MERGING: Normalization = Normalization {
         class_dummy: false,

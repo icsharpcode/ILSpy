@@ -2494,7 +2494,18 @@ namespace ICSharpCode.Decompiler.CSharp
 					// end and the C# AST steps begin, it is the only handle on the fully transformed
 					// ILAst: every IL step shows the state before some transform, never after the last.
 					context.Step("Convert ILAst to C#", function.Body);
+					// RUST-SEAM-2 BEGIN
+					var rustBody = Rust.Interop.RustSeam2.ServeBody(function, statementBuilder);
+					if (rustBody != null)
+					{
+						body = rustBody;
+						goto rustBodyServed;
+					}
+					// RUST-SEAM-2 END
 					body = statementBuilder.ConvertAsBlock(function.Body);
+					// RUST-SEAM-2 BEGIN
+					rustBodyServed:
+					// RUST-SEAM-2 END
 
 					var warningAnchor = body.Statements.FirstOrDefault();
 					foreach (string warning in function.Warnings)

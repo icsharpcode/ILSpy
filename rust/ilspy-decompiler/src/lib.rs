@@ -3,6 +3,7 @@
 //! Hosted by the C# shim `ICSharpCode.Decompiler.Rust` through the `ilspy-decompiler-ffi`
 //! crate. See `RustPort_HumanLecture.md` at the repository root for the architecture.
 
+pub mod csharp;
 pub mod flow_analysis;
 pub mod il;
 pub mod metadata;

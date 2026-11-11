@@ -82,9 +82,12 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 			if (engine == null)
 				return Fallback(reason);
 			var settings = context.Settings;
+			// The body translation (seam 2) needs the whole IL pipeline to have run in the engine.
+			bool translateBody = topLevelCount == pipeline.Count && settings.DecompileMemberBodies && RustSeam2.Enabled;
 			var status = engine.ReadFunction((MethodDefinitionHandle)method.MetadataToken, prefix,
 				settings, settings.UseDebugSymbols ? debugInfo : null,
-				out var rustFunction, out reason, resolver: context.CSharpResolver, usingScope: context.UsingScope);
+				out var rustFunction, out reason, resolver: context.CSharpResolver, usingScope: context.UsingScope,
+				translateBody: translateBody);
 			if (status != RustStatus.Ok)
 				return Fallback(reason);
 

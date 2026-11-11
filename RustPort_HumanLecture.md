@@ -2471,6 +2471,55 @@ The plan also lists member lookup and the parts of `CSharpResolver` the expressi
 uses. Which parts those are is only known once the builder exists, and no gate test covers
 them. They come with item 68, where the first caller needs them.
 
+### 3.85 Seam 2 at body level (item 68a)
+
+Item 68 as planned was one request-level seam: the whole syntax tree from the engine, gated by
+G-ast(0). About 30,000 managed lines (the three builders, the syntax tree, the type system AST
+builder, the resolver's operators) would have had to be exact before the first green gate.
+The human took three decisions instead:
+
+- Seam 2 grows at body level first. The engine translates each method body after seam 1;
+  declarations stay managed. A body with a construct the engine does not translate falls back
+  to the managed statement builder, and the fallback is counted. Request-level seam 2 comes
+  last (68z).
+- Types and constants become syntax in the materializer, through the managed
+  `TypeSystemAstBuilder`, which chooses the shortest name with the resolver and using scope as
+  the original does. Its port into the engine comes with 68z, before the engine-only end state.
+- Item 68 lands as several commits, one construct group each, every one gated.
+
+The engine side lives in `src/csharp/`: an arena of syntax nodes (`ast.rs`) with the
+annotations later steps read (the IL instructions, the resolve result and the implicit
+return), and `statement_builder.rs`, `expression_builder.rs` and `translated_expression.rs`
+mirroring the managed builders. `convert_body` answers with the block or with the reason it
+does not translate the body. Seam 1 asks for the translation only when the engine ran the
+whole IL pipeline (not for Debug Steps or per-transform tracing, and not without member
+bodies). The translation travels as a trailer after each function in the IL wire, now
+version 2 (`wire/ast.rs`). It shares the wire's string and type tables. It refers to
+instructions by their completion-order index, which the IL materializer already keeps for
+shared nodes, so every annotation points at the same `ILInstruction` objects the managed
+transforms see. Variables refer to the function's variable list the same way. Constants are
+sent as the constant, and the host expands them with `ExpressionBuilder.ConvertConstantValue`.
+The null, no-type and intersection types got wire tags for later resolve results.
+
+On the host, `IlAstMaterializer` decodes the trailer into `RustBodyNode`s. `RustSeam2.ServeBody`
+turns them into syntax with the managed `ExpressionBuilder` of the statement builder the
+decompiler created. The annotations go on in the order the managed builder adds them. The
+seam block in the fork jumps past the managed `ConvertAsBlock` with a `goto` to a label in a
+second seam block. An `if` without braces around the original line would have been re-indented
+by the format hook, which would break the drift test. Seam 2 fallback is not affected by
+`ILSPY_RUST_STRICT` until item 85.
+
+68a translates the function body container (one block without labels), `return`, the
+implicit final return, `nop`, `ldc.i4` (adjusted to an int, uint or bool type hint), `ldstr`,
+`ldnull` and `ldloc`. It translates only the identity case of `ConvertTo`. On the ratchet
+corpus that serves 3.5 % of the bodies; `rust/port-status.json` records it as
+`bodies_served_pct`. The ratchet test prints the fallback reasons by frequency, which sets
+the order of the next construct groups: `ldobj` (243), calls as statements (170), `stobj`
+(169), `if` (164) and `stloc` (142) lead. G-ast(0) (`AstPrefixEqualityTests`, 3261 images)
+decompiles every fixture image and ICSharpCode.Decompiler.dll with and without the engine's
+body translations and compares the text. It passes. The red step was the ratchet test
+failing with no body served through seam 2.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

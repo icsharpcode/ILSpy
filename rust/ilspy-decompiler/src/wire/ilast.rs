@@ -15,7 +15,7 @@ use crate::typesystem::types::{TypeId, TypeSystem};
 
 use super::{Bytes, Tables};
 
-pub const VERSION: u32 = 1;
+pub const VERSION: u32 = 2;
 
 /// Node tags; `IlAstMaterializer.cs` mirrors them.
 mod op {
@@ -140,7 +140,14 @@ impl<'t, 'c, 'a> ModuleWriter<'t, 'c, 'a> {
         self.functions.uvar(u64::from(s));
     }
 
-    pub fn function(&mut self, row: u32, r: &ReadFunction) -> Result<(), String> {
+    /// One function; `body` is the C# translation of its body when it was asked for, which
+    /// follows the function (see `wire::ast`).
+    pub fn function(
+        &mut self,
+        row: u32,
+        r: &ReadFunction,
+        body: Option<&super::ast::Body>,
+    ) -> Result<(), String> {
         let nested = nested_variables(&r.function);
         let mut w = FunctionWriter {
             ts: self.ts,
@@ -160,6 +167,7 @@ impl<'t, 'c, 'a> ModuleWriter<'t, 'c, 'a> {
             written: HashMap::new(),
         };
         w.write(r, &nested)?;
+        super::ast::write_body(&mut w, body)?;
         self.count += 1;
         self.functions.uvar(u64::from(row));
         self.functions.u8(0);
@@ -174,22 +182,22 @@ impl<'t, 'c, 'a> ModuleWriter<'t, 'c, 'a> {
     }
 }
 
-struct FunctionWriter<'w, 't, 'c, 'a> {
+pub(super) struct FunctionWriter<'w, 't, 'c, 'a> {
     ts: &'t TypeSystem<'c, 'a>,
     tables: &'w mut Tables,
     f: &'w Function,
-    out: Bytes,
-    vars: HashMap<VarId, usize>,
+    pub(super) out: Bytes,
+    pub(super) vars: HashMap<VarId, usize>,
     blocks: HashMap<NodeId, usize>,
     block_order: Vec<NodeId>,
     containers: HashMap<NodeId, usize>,
     /// The nodes written so far, numbered in completion order; a node with two parents is
     /// written once and then referenced (`op::NODE_REFERENCE`).
-    written: HashMap<NodeId, usize>,
+    pub(super) written: HashMap<NodeId, usize>,
 }
 
 impl FunctionWriter<'_, '_, '_, '_> {
-    fn ty(&mut self, t: TypeId) {
+    pub(super) fn ty(&mut self, t: TypeId) {
         let i = self.tables.ty(self.ts, t);
         self.out.uvar(u64::from(i));
     }
@@ -215,7 +223,7 @@ impl FunctionWriter<'_, '_, '_, '_> {
         }
     }
 
-    fn string(&mut self, s: &str) {
+    pub(super) fn string(&mut self, s: &str) {
         let i = self.tables.string(s);
         self.out.uvar(u64::from(i));
     }
@@ -1467,7 +1475,7 @@ pub fn read_module(
     let mut w = ModuleWriter::new(ts);
     for (row, r) in &results {
         let written = match r {
-            Ok(f) => w.function(*row, f),
+            Ok(f) => w.function(*row, f, None),
             Err(e) => Err(e.clone()),
         };
         if let Err(e) = written {
@@ -1492,6 +1500,7 @@ pub fn read_function(
     resolver: Option<&dyn crate::il::transforms::Resolver>,
     root_names: Option<&crate::il::transforms::RootNames>,
     analysis: bool,
+    translate_body: bool,
 ) -> Result<Vec<u8>, String> {
     use crate::metadata::tables::rows;
     let md = &ts.comp.module(method.module).md;
@@ -1523,8 +1532,9 @@ pub fn read_function(
     if analysis {
         crate::il::transforms::combine_exits_transform::run(&mut f, &mut ctx);
     }
+    let translated = translate_body.then(|| crate::csharp::convert_body(ts, &f));
     let mut w = ModuleWriter::new(ts);
-    w.function(method.row, &f)?;
+    w.function(method.row, &f, translated.as_ref())?;
     Ok(w.finish())
 }
 

@@ -29,6 +29,7 @@ using System.Text;
 using ICSharpCode.Decompiler.DebugInfo;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.IL.Transforms;
+using ICSharpCode.Decompiler.Semantics;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
 using ICSharpCode.Decompiler.Util;
@@ -263,7 +264,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 	/// </summary>
 	internal sealed class IlAstMaterializer : WireReader
 	{
-		public const uint Version = 1;
+		public const uint Version = 2;
 
 		readonly MetadataModule mainModule;
 		readonly DecompilerSettings settings;
@@ -521,7 +522,113 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				function.AsyncDebugInfo = info;
 			function.SequencePointCandidates = sequencePoints;
 			function.Warnings.AddRange(warnings);
+			switch (U8())
+			{
+				case 1:
+					RustSeam2.Attach(function, null, Str());
+					break;
+				case 2:
+					RustSeam2.Attach(function, BodyNode(), null);
+					break;
+			}
 			return function;
+		}
+
+		/// <summary>
+		/// A node of the C# translation of the function body (rust/ilspy-decompiler/src/wire/ast.rs),
+		/// with its instructions, variables and types resolved.
+		/// </summary>
+		RustBodyNode BodyNode()
+		{
+			var node = new RustBodyNode { Kind = U8() };
+			node.IL = new ILInstruction[Len()];
+			for (int i = 0; i < node.IL.Length; i++)
+				node.IL[i] = materialized[Len()];
+			switch (U8())
+			{
+				case 1:
+				{
+					var type = Type();
+					node.ResolveResult = new ConstantResolveResult(type, Constant());
+					break;
+				}
+				case 2:
+				{
+					var variable = variables[Len()];
+					node.ResolveResult = new ILVariableResolveResult(variable, Type());
+					break;
+				}
+			}
+			int implicitReturn = Len();
+			if (implicitReturn != 0)
+				node.ImplicitReturn = (Leave)materialized[implicitReturn - 1];
+			switch (node.Kind)
+			{
+				case RustBodyNode.Block:
+					node.Children = new RustBodyNode[Len()];
+					for (int i = 0; i < node.Children.Length; i++)
+						node.Children[i] = BodyNode();
+					break;
+				case RustBodyNode.Return:
+					node.Children = Bool() ? [BodyNode()] : [];
+					break;
+				case RustBodyNode.ConstantValue:
+					node.Type = Type();
+					node.Value = Constant();
+					node.Flag = Bool();
+					break;
+				case RustBodyNode.StringLiteral:
+					node.Value = String();
+					break;
+				case RustBodyNode.Identifier:
+					node.Value = Str();
+					break;
+			}
+			return node;
+		}
+
+		/// <summary>A constant of the body translation, as the CLR value <see cref="ConstantResolveResult"/> holds.</summary>
+		object? Constant()
+		{
+			switch (U8())
+			{
+				case 0:
+					return null;
+				case 1:
+					return Bool();
+				case 2:
+					return (char)UVar();
+				case 3:
+					return (sbyte)IVar();
+				case 4:
+					return (byte)UVar();
+				case 5:
+					return (short)IVar();
+				case 6:
+					return (ushort)UVar();
+				case 7:
+					return (int)IVar();
+				case 8:
+					return (uint)UVar();
+				case 9:
+					return IVar();
+				case 10:
+					return UVar();
+				case 11:
+					return BitConverter.ToSingle(Raw(4), 0);
+				case 12:
+					return BitConverter.ToDouble(Raw(8), 0);
+				case 13:
+					return String();
+				case 14:
+				{
+					var bits = Raw(16);
+					return new decimal([BitConverter.ToInt32(bits, 0), BitConverter.ToInt32(bits, 4),
+						BitConverter.ToInt32(bits, 8), BitConverter.ToInt32(bits, 12)]);
+				}
+				default:
+					throw new InvalidOperationException("Unknown constant tag");
+			}
 		}
 
 		ILVariable ReadVariable()
