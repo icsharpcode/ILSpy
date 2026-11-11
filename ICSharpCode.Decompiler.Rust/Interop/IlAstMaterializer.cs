@@ -844,6 +844,18 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				}
 				case 15:
 					return new ByReferenceResolveResult(BodyResolveResult(out _)!, ReferenceKind.Out);
+				case 16:
+				{
+					// `VisitLdLen`: the Length or LongLength property of System.Array.
+					var target = BodyResolveResult(out _);
+					bool isLong = Bool();
+					string name = isLong ? "LongLength" : "Length";
+					var arrayType = compilation.FindType(KnownTypeCode.Array);
+					var member = arrayType.GetProperties(p => p.Name == name).FirstOrDefault();
+					return member == null
+						? new ResolveResult(compilation.FindType(isLong ? KnownTypeCode.Int64 : KnownTypeCode.Int32))
+						: new MemberResolveResult(target, member);
+				}
 				case 8:
 				{
 					var target = BodyResolveResult(out _);

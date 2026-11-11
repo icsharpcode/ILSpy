@@ -64,6 +64,7 @@ pub fn convert_body(
             | Rr::Event { target: inner, .. }
             | Rr::ByReference(inner)
             | Rr::ByReferenceOut(inner)
+            | Rr::ArrayLength { target: inner, .. }
             | Rr::Invocation { target: inner, .. }
             | Rr::Property { target: inner, .. },
         ) => matches!(**inner, Rr::Conversion { .. }),

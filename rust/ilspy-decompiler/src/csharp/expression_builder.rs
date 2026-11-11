@@ -154,6 +154,59 @@ impl Builder<'_, '_, '_, '_> {
                     ty: handle,
                 })
             }
+            // `VisitBox`: `(object)arg`, its boxing conversion resolved by the host's `ResolveCast`.
+            Inst::Box { arg, ty } => {
+                let target = ty.ty;
+                if self.ts.is_known(target, KnownTypeCode::IntPtr)
+                    || self.ts.is_known(target, KnownTypeCode::UIntPtr)
+                {
+                    return Err("a box of a native integer".to_owned());
+                }
+                let a = self.translate(arg, Some(target))?;
+                let a = self.convert_to(a, target, false)?;
+                let object = self.ts.known_type(KnownTypeCode::Object);
+                let c = self.ast.add(AstNode::Cast {
+                    ty: object,
+                    expression: a.expression,
+                    unchecked: false,
+                });
+                self.ast.with_il(c, inst);
+                self.ast.with_rr(c, Rr::Conversion { ty: object });
+                Ok(TranslatedExpression {
+                    expression: c,
+                    ty: object,
+                })
+            }
+            // `VisitLdLen`: `array.Length` or `array.LongLength`.
+            Inst::LdLen { array, result } => {
+                let array_type = self.ts.known_type(KnownTypeCode::Array);
+                let mut a = self.translate(array, Some(array_type))?;
+                if self.ts.kind(a.ty) != TypeKind::Array {
+                    a = self.convert_to(a, array_type, false)?;
+                }
+                let long = result != StackType::I4;
+                let (name, code) = if long {
+                    ("LongLength", KnownTypeCode::Int64)
+                } else {
+                    ("Length", KnownTypeCode::Int32)
+                };
+                let ty = self.ts.known_type(code);
+                let e = self.ast.add(AstNode::MemberReference {
+                    target: a.expression,
+                    name: name.to_owned(),
+                });
+                let target = self.rr_of(a.expression);
+                self.ast.with_il(e, inst);
+                self.ast.with_rr(
+                    e,
+                    Rr::ArrayLength {
+                        target: Box::new(target),
+                        long,
+                        ty,
+                    },
+                );
+                Ok(TranslatedExpression { expression: e, ty })
+            }
             // `VisitCastClass`
             Inst::CastClass { arg, ty } => {
                 let e = self.translate(arg, None)?;

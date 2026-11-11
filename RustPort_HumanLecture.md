@@ -3033,6 +3033,17 @@ the converted try block into a new statement, without adding the instruction to 
 and gained `ConvertAsBlock` on the way; try-fault blocks fall back. The share rose from
 57.0 % to 58.1 %.
 
+### 3.110 Box and array length (item 68y2)
+
+`VisitBox` converts the value to the boxed type and writes `(object)value` with a
+`ConversionResolveResult` of the boxing conversion. The engine emits the cast node of item
+68q, whose resolve result the host computes with `ResolveCast` to `object`: for a value
+type that is the same boxing conversion, so nothing new is needed on the host; boxes of
+native integers, where `PreferNativeIntegerType` may change the type, fall back. `ldlen`
+becomes `array.Length` (`LongLength` for a 64-bit result) with the `MemberResolveResult` of
+that property of `System.Array`; the host looks the property up when it builds the resolve
+result, as the managed builder does. The share rose from 58.1 % to 59.2 %.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

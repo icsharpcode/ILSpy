@@ -106,7 +106,9 @@ fn var_index(
 /// call (the constructor as a call operand; no target, the arguments are the object
 /// creation's); 12 a plain `ResolveResult` (type); 13 the `ResolveCast` of a cast, which the host
 /// computes from the cast's type and operand; 14 `TypeOfResolveResult` (type, referenced type); 15
-/// `ByReferenceResolveResult` with `ReferenceKind.Out` (the element's resolve result). A field's target is
+/// `ByReferenceResolveResult` with `ReferenceKind.Out` (the element's resolve result); 16 the
+/// `MemberResolveResult` of `Array.Length` or `LongLength` (the target's resolve result, whether
+/// it is `LongLength`). A field's target is
 /// absent (0) for the `field` keyword.
 fn rr(w: &mut FunctionWriter<'_, '_, '_, '_>, rr: Option<&Rr>) -> Result<(), String> {
     match rr {
@@ -152,6 +154,11 @@ fn rr(w: &mut FunctionWriter<'_, '_, '_, '_>, rr: Option<&Rr>) -> Result<(), Str
         Some(Rr::ByReference(element)) => {
             w.out.u8(6);
             self::rr(w, Some(element))?;
+        }
+        Some(Rr::ArrayLength { target, long, .. }) => {
+            w.out.u8(16);
+            self::rr(w, Some(target))?;
+            w.out.bool(*long);
         }
         Some(Rr::ByReferenceOut(element)) => {
             w.out.u8(15);

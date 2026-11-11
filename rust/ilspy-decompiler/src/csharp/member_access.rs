@@ -35,7 +35,8 @@ impl Builder<'_, '_, '_, '_> {
             | Rr::ObjectCreation { ty, .. }
             | Rr::Plain(ty)
             | Rr::Conversion { ty }
-            | Rr::TypeOf { ty, .. } => *ty,
+            | Rr::TypeOf { ty, .. }
+            | Rr::ArrayLength { ty, .. } => *ty,
             Rr::Field { field, .. } => field.field.ty,
             Rr::Event { ty, .. } => *ty,
             Rr::ByReference(element) | Rr::ByReferenceOut(element) => {

@@ -208,6 +208,14 @@ pub enum Rr {
     },
     /// A plain `ResolveResult` of the given type.
     Plain(TypeId),
+    /// The `MemberResolveResult` of `System.Array.Length` (`LongLength` when `long`) with the
+    /// target's resolve result, which the host looks the property up for; `ty` is `int` or
+    /// `long`.
+    ArrayLength {
+        target: Box<Rr>,
+        long: bool,
+        ty: TypeId,
+    },
     /// `TypeOfResolveResult` of the type `ty` for the referenced type.
     TypeOf { ty: TypeId, referenced: TypeId },
     /// `resolver.ResolveCast(ty, operand)` of a cast, over the resolve result of the cast's
