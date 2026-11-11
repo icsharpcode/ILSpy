@@ -2700,6 +2700,33 @@ type, as `TryUniteEqualityOperandType` does.
 The share rose from 41.4 % to 43.0 %. Comparisons are no longer a large group;
 `if` instructions in expressions (89), `newobj` (68) and `throw` (60) lead now.
 
+### 3.93 Throw statements and object creation (item 68i)
+
+`VisitThrow` translates the exception with `Exception` as type hint and does not convert it;
+a rethrow is a `throw;` without expression. Most thrown exceptions are created on the spot,
+so `newobj` came in the same step.
+
+`CallBuilder.Build` for `newobj` first takes the forms with syntax of their own: delegate
+construction, tuple construction, stackalloc spans, ranges and indices, anonymous types, and
+in some type system modes the native integer an `IntPtr` constructor creates. The engine
+falls back for all of them, recognizing them conservatively by the declaring type (an
+anonymous type by its name alone, which also catches the `VB$AnonymousType` classes of VB;
+the first gate run missed those and lost VB's `new { ... }` syntax). An
+ordinary constructor call shares the argument list with method calls, which became a helper
+of its own, and is checked with `Disambiguator.ForConstructorCall`: drop the names of bool
+literals, then cast the arguments, while overload resolution does not pick the constructor
+called. The candidates are the declaring type's constructors that the decompiled method can
+access, which needs `MemberLookup.IsAccessible`; following the decision for calls (the engine
+resolves, the host looks up), the host lists them in a new resolver question, in the method
+group's encoding, and the engine runs its overload resolution over them. A constructor
+without metadata row, such as the implicit one of a struct, makes the host answer with
+nothing and the call fall back.
+
+The host builds the `ObjectCreateExpression` with `ConvertType` of the declaring type and a
+`CSharpInvocationResolveResult` without target. The share rose from 43.0 % to 47.8 %; `if`
+instructions in expressions (91), generic method calls (61) and string concatenation (47)
+lead now.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

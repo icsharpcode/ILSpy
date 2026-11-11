@@ -61,6 +61,10 @@ pub enum AstNode {
     },
     /// `UnaryOperatorExpression` with `UnaryOperatorType.Not`.
     LogicNot { expression: AstId },
+    /// `ThrowStatement`, a rethrow without an expression.
+    Throw { expression: Option<AstId> },
+    /// `ObjectCreateExpression` of `ExpressionBuilder.ConvertType(ty)`, which the host builds.
+    ObjectCreate { ty: TypeId, arguments: Vec<AstId> },
     /// `BinaryOperatorExpression`.
     BinaryOperator {
         op: BinaryOp,
@@ -118,6 +122,12 @@ pub enum Rr {
     /// arguments.
     Invocation {
         target: Box<Rr>,
+        method: Box<crate::il::ast::MethodOperand>,
+        ty: TypeId,
+    },
+    /// `CSharpInvocationResolveResult` without target of the constructor `method` of the type
+    /// `ty`, whose arguments are the resolve results of the object creation's arguments.
+    ObjectCreation {
         method: Box<crate::il::ast::MethodOperand>,
         ty: TypeId,
     },

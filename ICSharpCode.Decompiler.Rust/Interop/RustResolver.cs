@@ -55,6 +55,8 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		public const byte MethodGroupKind = 5;
 		/// <summary><c>Disambiguator.IsUnambiguousAccess</c> for the property of the accessor <see cref="Method"/>.</summary>
 		public const byte AccessorKind = 6;
+		/// <summary>The accessible constructors of the declaring type of <see cref="Method"/>.</summary>
+		public const byte ConstructorsKind = 7;
 
 		/// <summary><see cref="TargetKind"/>: <c>this</c> or <c>base</c>.</summary>
 		public const byte ThisTarget = 0;
@@ -146,10 +148,10 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					return ClassifyField(q.Field, q.TargetIsThis);
 				if (q.Kind == RustResolverQuery.AccessorKind)
 					return AccessorReference(q);
-				if (q.Kind == RustResolverQuery.MethodGroupKind)
+				if (q.Kind is RustResolverQuery.MethodGroupKind or RustResolverQuery.ConstructorsKind)
 				{
 					// The full answer's length; the engine asks again when it does not fit.
-					var data = MethodGroup(q);
+					var data = q.Kind == RustResolverQuery.ConstructorsKind ? Constructors(q) : MethodGroup(q);
 					data.AsSpan(0, Math.Min(data.Length, checked((int)capacity))).CopyTo(new Span<byte>(answer, checked((int)capacity)));
 					return data.Length;
 				}
@@ -293,10 +295,38 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				var lookup = new MemberLookup(resolver.CurrentTypeDefinition, resolver.CurrentTypeDefinition.ParentModule);
 				result = lookup.Lookup(TargetResolveResult(query), query.Name, EmptyList<IType>.Instance, isInvocation: true);
 			}
-			var output = new List<byte>();
 			if (result is not MethodGroupResolveResult group)
 				return [0];
-			var lists = group.MethodsGroupedByDeclaringType.ToList();
+			return EncodeMethodLists(group.MethodsGroupedByDeclaringType
+				.Select(l => (l.DeclaringType, (IReadOnlyList<IParameterizedMember>)l)).ToList());
+		}
+
+		/// <summary>
+		/// <c>Disambiguator.IsUnambiguousCall</c>'s candidates for <c>newobj</c>: the constructors
+		/// of the declaring type the decompiled method can access, encoded as for
+		/// <see cref="MethodGroup"/>.
+		/// </summary>
+		byte[] Constructors(RustResolverQuery query)
+		{
+			var context = body ?? throw new InvalidOperationException("The engine asked about a C# body without the body's context");
+			var resolver = context.Resolver;
+			var method = query.Method;
+			var lookup = new MemberLookup(resolver.CurrentTypeDefinition, resolver.CurrentTypeDefinition.ParentModule);
+			bool allowProtectedAccess = resolver.CurrentTypeDefinition == method.DeclaringTypeDefinition;
+			var constructors = method.DeclaringType.GetConstructors()
+				.Where(c => lookup.IsAccessible(c, allowProtectedAccess))
+				.ToList<IParameterizedMember>();
+			return EncodeMethodLists([(method.DeclaringType, constructors)]);
+		}
+
+		/// <summary>
+		/// Method lists as unsigned LEB128: 1, the number of lists and per list the declaring type
+		/// definition and the method definitions, as module index and metadata row; 0 when one of
+		/// them has no metadata row.
+		/// </summary>
+		byte[] EncodeMethodLists(List<(IType DeclaringType, IReadOnlyList<IParameterizedMember> Methods)> lists)
+		{
+			var output = new List<byte>();
 			UVar(1);
 			UVar(lists.Count);
 			foreach (var list in lists)
@@ -307,8 +337,8 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					return [0];
 				UVar(declaringModule);
 				UVar(MetadataTokens.GetRowNumber(declaring!.MetadataToken));
-				UVar(list.Count);
-				foreach (var member in list)
+				UVar(list.Methods.Count);
+				foreach (var member in list.Methods)
 				{
 					var definition = (IMethod)member.MemberDefinition;
 					int module = ModuleIndex(definition.ParentModule);

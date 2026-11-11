@@ -1727,6 +1727,19 @@ pub fn accessor_reference_query(
     })
 }
 
+/// A `constructors` question in the `resolver_query` format: kind 7 and the constructor as
+/// `call_method` writes it. The answer is encoded as for `method_group_query`.
+pub fn constructors_query(
+    ts: &TypeSystem<'_, '_>,
+    constructor: &crate::il::ast::MethodOperand,
+) -> Result<Vec<u8>, String> {
+    query_message(ts, |w| {
+        w.out.u8(7);
+        w.call_method(constructor)?;
+        Ok(())
+    })
+}
+
 /// Decodes a `method_group_query` answer.
 pub fn method_group_answer(bytes: &[u8]) -> Option<Vec<crate::il::transforms::MethodGroupList>> {
     use crate::il::transforms::MethodGroupList;

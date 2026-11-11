@@ -30,7 +30,8 @@ impl Builder<'_, '_, '_, '_> {
             | Rr::Type(ty)
             | Rr::Operator { ty }
             | Rr::Invocation { ty, .. }
-            | Rr::Property { ty, .. } => *ty,
+            | Rr::Property { ty, .. }
+            | Rr::ObjectCreation { ty, .. } => *ty,
             Rr::Field { field, .. } => field.field.ty,
             Rr::Event { ty, .. } => *ty,
             Rr::ByReference(element) => {

@@ -540,6 +540,16 @@ impl Resolver for HostResolver {
             _ => AccessorBinding::None,
         }
     }
+
+    fn constructors(
+        &self,
+        ts: &TypeSystem<'_, '_>,
+        constructor: &ilspy_decompiler::il::ast::MethodOperand,
+    ) -> Option<Vec<ilspy_decompiler::il::transforms::MethodGroupList>> {
+        let bytes = ilspy_decompiler::wire::ilast::constructors_query(ts, constructor).ok()?;
+        let answer = self.ask_data(&bytes)?;
+        ilspy_decompiler::wire::ilast::method_group_answer(&answer)
+    }
 }
 
 /// The names AssignVariableNames' root scope collects, as `RustEngine.RootNames` writes them:

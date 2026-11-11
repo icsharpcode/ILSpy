@@ -2,6 +2,7 @@
 
 use crate::il::ast::{BlockKind, ContainerKind, FunctionKind, Inst, NodeId};
 use crate::il::reader::ReadFunction;
+use crate::typesystem::known::KnownTypeCode;
 use crate::typesystem::types::TypeSystem;
 
 use super::ast::{Ast, AstId, AstNode};
@@ -84,10 +85,22 @@ impl Builder<'_, '_, '_, '_> {
                 instructions,
                 final_inst,
             } => self.visit_block(inst, &instructions, final_inst),
+            // `VisitThrow`: the exception translated with `Exception` as type hint.
+            Inst::Throw { arg } => {
+                let exception = self.ts.known_type(KnownTypeCode::Exception);
+                let e = self.translate(arg, Some(exception))?;
+                let s = self.ast.add(AstNode::Throw {
+                    expression: Some(e.expression),
+                });
+                Ok(self.ast.with_il(s, inst))
+            }
+            // `VisitRethrow`
+            Inst::Rethrow => {
+                let s = self.ast.add(AstNode::Throw { expression: None });
+                Ok(self.ast.with_il(s, inst))
+            }
             Inst::Switch { .. }
             | Inst::Branch { .. }
-            | Inst::Throw { .. }
-            | Inst::Rethrow
             | Inst::YieldReturn { .. }
             | Inst::TryCatch { .. }
             | Inst::TryFinally { .. }

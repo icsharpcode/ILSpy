@@ -40,6 +40,8 @@ mod kind {
     pub const IF_ELSE: u8 = 16;
     pub const LOGIC_NOT: u8 = 17;
     pub const BINARY_OPERATOR: u8 = 18;
+    pub const THROW: u8 = 19;
+    pub const OBJECT_CREATE: u8 = 20;
 }
 
 pub(super) fn write_body(
@@ -90,7 +92,9 @@ fn var_index(
 /// token); 9 the `CSharpInvocationResolveResult` of a call (the target's resolve result and
 /// the method as a call operand; the arguments are the invocation's); 10 the
 /// `MemberResolveResult` of a property (the target's resolve result and an accessor of the
-/// property as a call operand). A field's target is
+/// property as a call operand); 11 the `CSharpInvocationResolveResult` of a constructor
+/// call (the constructor as a call operand; no target, the arguments are the object
+/// creation's). A field's target is
 /// absent (0) for the `field` keyword.
 fn rr(w: &mut FunctionWriter<'_, '_, '_, '_>, rr: Option<&Rr>) -> Result<(), String> {
     match rr {
@@ -153,6 +157,10 @@ fn rr(w: &mut FunctionWriter<'_, '_, '_, '_>, rr: Option<&Rr>) -> Result<(), Str
             self::rr(w, Some(target))?;
             w.call_method(accessor)?;
         }
+        Some(Rr::ObjectCreation { method, .. }) => {
+            w.out.u8(11);
+            w.call_method(method)?;
+        }
     }
     Ok(())
 }
@@ -180,6 +188,8 @@ fn node(w: &mut FunctionWriter<'_, '_, '_, '_>, ast: &Ast, id: AstId) -> Result<
         AstNode::IfElse { .. } => kind::IF_ELSE,
         AstNode::LogicNot { .. } => kind::LOGIC_NOT,
         AstNode::BinaryOperator { .. } => kind::BINARY_OPERATOR,
+        AstNode::Throw { .. } => kind::THROW,
+        AstNode::ObjectCreate { .. } => kind::OBJECT_CREATE,
     });
     w.out.len(a.il.len());
     for &inst in &a.il {
@@ -243,6 +253,19 @@ fn node(w: &mut FunctionWriter<'_, '_, '_, '_>, ast: &Ast, id: AstId) -> Result<
         AstNode::NamedArgument { name, expression } => {
             w.string(&name);
             node(w, ast, expression)?;
+        }
+        AstNode::Throw { expression } => {
+            w.out.bool(expression.is_some());
+            if let Some(e) = expression {
+                node(w, ast, e)?;
+            }
+        }
+        AstNode::ObjectCreate { ty, arguments } => {
+            w.ty(ty);
+            w.out.len(arguments.len());
+            for a in arguments {
+                node(w, ast, a)?;
+            }
         }
         AstNode::BinaryOperator { op, left, right } => {
             w.out.u8(op as u8);

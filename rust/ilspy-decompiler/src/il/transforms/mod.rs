@@ -322,6 +322,15 @@ pub trait Resolver {
         target: Option<LookupTarget>,
         callvirt: bool,
     ) -> AccessorBinding;
+
+    /// The constructors `IsUnambiguousCall` adds as candidates for `newobj` of `constructor`:
+    /// those of its declaring type that the decompiled method can access, as one list;
+    /// `None` when the host cannot name them all by metadata row.
+    fn constructors(
+        &self,
+        ts: &TypeSystem<'_, '_>,
+        constructor: &super::ast::MethodOperand,
+    ) -> Option<Vec<MethodGroupList>>;
 }
 
 /// What a property name binds to (`Resolver::accessor_reference`).

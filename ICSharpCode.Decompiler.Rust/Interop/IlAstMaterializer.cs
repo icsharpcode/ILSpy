@@ -649,6 +649,18 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				case RustBodyNode.LogicNot:
 					node.Children = [BodyNode()];
 					break;
+				case RustBodyNode.Throw:
+					node.Children = Bool() ? [BodyNode()] : [];
+					break;
+				case RustBodyNode.ObjectCreate:
+				{
+					node.Type = Type();
+					var arguments = new RustBodyNode[Len()];
+					for (int i = 0; i < arguments.Length; i++)
+						arguments[i] = BodyNode();
+					node.Children = arguments;
+					break;
+				}
 				case RustBodyNode.BinaryOperator:
 					node.Value = (CSharp.Syntax.BinaryOperatorType)U8();
 					node.Children = [BodyNode(), BodyNode()];
@@ -712,6 +724,10 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					return new MemberResolveResult(target, accessor.AccessorOwner
 						?? throw new InvalidOperationException("Property resolve result of a method that is no accessor"));
 				}
+				case 11:
+					// A constructor call has no target; RustSeam2 completes the resolve result.
+					pendingInvocation = (null, CallMethod());
+					return null;
 				case 8:
 				{
 					var target = BodyResolveResult(out _);

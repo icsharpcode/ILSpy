@@ -457,7 +457,10 @@ the reasons. This file holds only the ordered steps, their gates and their rules
     operands: the same primitive type of at least `int`, `bool`, `object`, a reference with
     `null`, and the string and delegate comparison with `null` (lecture 3.92). Subject:
     `Translate equality comparisons to C# in the engine`.
-  - [ ] 68i-68y. Further construct groups, in the order of the fallback reasons the ratchet test
+  - [x] 68i. `throw` statements and object creation with ordinary constructors, checked by the
+    engine's overload resolution over the constructors the host lists as accessible
+    (lecture 3.93). Subject: `Translate throw statements and object creation to C# in the engine`.
+  - [ ] 68j-68y. Further construct groups, in the order of the fallback reasons the ratchet test
     prints, until no body of the corpus falls back. Subject pattern:
     `Translate <construct group> to C# in the engine`.
   - [ ] 68z. Request-level seam 2. Subject: `Add the Rust C# AST builders and the AST materializer`.

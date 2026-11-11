@@ -148,41 +148,7 @@ impl Builder<'_, '_, '_, '_> {
             self.translate_target(this_arg, op == CallOp::Call, method.is_static, declaring)?;
 
         // the arguments
-        if call.args.len() != first_param + method.parameters.len() {
-            return Err("a call with mismatched arguments".to_owned());
-        }
-        let mut list = ArgumentList {
-            arguments: Vec::with_capacity(method.parameters.len()),
-            parameter_names: method.parameters.iter().map(|p| p.name.clone()).collect(),
-            is_primitive_value: Vec::with_capacity(method.parameters.len()),
-            add_names_to_primitive_values: self.settings.named_arguments
-                && self.settings.non_trailing_named_arguments,
-        };
-        let declaring_is_nullable = self.ts.is_known(declaring, KnownTypeCode::NullableOfT);
-        for (i, parameter) in method.parameters.iter().enumerate() {
-            if parameter.ref_kind != RefKind::None {
-                return Err("a by-reference argument".to_owned());
-            }
-            if parameter.is_params {
-                return Err("a params argument".to_owned());
-            }
-            if parameter.is_optional {
-                return Err("an argument of an optional parameter".to_owned());
-            }
-            if self.ts.kind(parameter.ty) == TypeKind::Dynamic {
-                return Err("an argument of a dynamic parameter".to_owned());
-            }
-            let arg = self.translate(call.args[first_param + i], Some(parameter.ty))?;
-            if self.ts.kind(arg.ty) == TypeKind::Dynamic {
-                return Err("a dynamic argument".to_owned());
-            }
-            let primitive = matches!(self.rr_of(arg.expression), Rr::Constant { .. })
-                && !declaring_is_nullable
-                && self.ts.is_known(parameter.ty, KnownTypeCode::Boolean);
-            list.is_primitive_value.push(primitive);
-            let arg = self.convert_to(arg, parameter.ty, true)?;
-            list.arguments.push(arg);
-        }
+        let mut list = self.argument_list(call, &method, first_param, declaring)?;
 
         if let Some(name) = property {
             return self.accessor_call(inst, operand, &method, op, target, list, name, declaring);
@@ -243,6 +209,178 @@ impl Builder<'_, '_, '_, '_> {
             expression: e,
             ty: method.return_type,
         })
+    }
+
+    /// `BuildArgumentList` for by-value arguments without `params`, optional or dynamic
+    /// parameters, each translated and converted to its parameter type.
+    fn argument_list(
+        &mut self,
+        call: &CallData,
+        method: &Method,
+        first_param: usize,
+        declaring: TypeId,
+    ) -> Result<ArgumentList, Unsupported> {
+        if call.args.len() != first_param + method.parameters.len() {
+            return Err("a call with mismatched arguments".to_owned());
+        }
+        let mut list = ArgumentList {
+            arguments: Vec::with_capacity(method.parameters.len()),
+            parameter_names: method.parameters.iter().map(|p| p.name.clone()).collect(),
+            is_primitive_value: Vec::with_capacity(method.parameters.len()),
+            add_names_to_primitive_values: self.settings.named_arguments
+                && self.settings.non_trailing_named_arguments,
+        };
+        let declaring_is_nullable = self.ts.is_known(declaring, KnownTypeCode::NullableOfT);
+        for (i, parameter) in method.parameters.iter().enumerate() {
+            if parameter.ref_kind != RefKind::None {
+                return Err("a by-reference argument".to_owned());
+            }
+            if parameter.is_params {
+                return Err("a params argument".to_owned());
+            }
+            if parameter.is_optional {
+                return Err("an argument of an optional parameter".to_owned());
+            }
+            if self.ts.kind(parameter.ty) == TypeKind::Dynamic {
+                return Err("an argument of a dynamic parameter".to_owned());
+            }
+            let arg = self.translate(call.args[first_param + i], Some(parameter.ty))?;
+            if self.ts.kind(arg.ty) == TypeKind::Dynamic {
+                return Err("a dynamic argument".to_owned());
+            }
+            let primitive = matches!(self.rr_of(arg.expression), Rr::Constant { .. })
+                && !declaring_is_nullable
+                && self.ts.is_known(parameter.ty, KnownTypeCode::Boolean);
+            list.is_primitive_value.push(primitive);
+            let arg = self.convert_to(arg, parameter.ty, true)?;
+            list.arguments.push(arg);
+        }
+        Ok(list)
+    }
+
+    /// `CallBuilder.Build` for `newobj` of an ordinary constructor: `new T(arguments)`.
+    pub(crate) fn new_obj(
+        &mut self,
+        inst: NodeId,
+        call: &CallData,
+    ) -> Result<TranslatedExpression, Unsupported> {
+        let operand = &call.method;
+        if operand.local_function.is_some()
+            || operand.specialized_by.is_some()
+            || operand.range_accessor.is_some()
+            || operand.lifted
+        {
+            return Err(
+                "a newobj of a local function, proxy, range accessor or lifted operator".to_owned(),
+            );
+        }
+        let resolved = &operand.method;
+        if !matches!(resolved.origin, MethodOrigin::Def(_)) {
+            return Err("a call of an unresolved method".to_owned());
+        }
+        if resolved.varargs.is_some() {
+            return Err("a vararg call".to_owned());
+        }
+        let method =
+            Method::from_resolved(self.ts, resolved).ok_or("a call of an unresolved method")?;
+        let declaring = method.declaring.ok_or("a method without declaring type")?;
+        // The forms `VisitNewObj` and `CallBuilder.Build` write with syntax of their own:
+        // stackalloc spans, delegates, tuples, ranges and anonymous types; and the native
+        // integer the constructor of IntPtr or UIntPtr may create.
+        let ts = &*self.ts;
+        let name = ts
+            .definition(declaring)
+            .and_then(|d| ts.comp.type_def(d).ok())
+            .map(|i| (i.full_name.top.ns.clone(), i.full_name.name().to_owned()));
+        let special = ts.kind(declaring) == TypeKind::Delegate
+            || ts.is_known(declaring, KnownTypeCode::SpanOfT)
+            || ts.is_known(declaring, KnownTypeCode::ReadOnlySpanOfT)
+            || ts.is_known(declaring, KnownTypeCode::Range)
+            || ts.is_known(declaring, KnownTypeCode::Index)
+            || ts.is_known(declaring, KnownTypeCode::IntPtr)
+            || ts.is_known(declaring, KnownTypeCode::UIntPtr)
+            || name.as_ref().is_none_or(|(ns, name)| {
+                // `IsAnonymousType`, without its checks for generated names and attributes.
+                (ns == "System" && name.starts_with("ValueTuple"))
+                    || (ns.is_empty()
+                        && (name.contains("AnonType") || name.contains("AnonymousType")))
+            });
+        if special {
+            return Err("an object creation with syntax of its own".to_owned());
+        }
+        let mut list = self.argument_list(call, &method, 0, declaring)?;
+        self.disambiguate_constructor(operand, &method, &mut list)?;
+        let names = list.argument_names();
+        let mut arguments = Vec::with_capacity(list.arguments.len());
+        for (i, a) in list.arguments.iter().enumerate() {
+            match names.as_ref().and_then(|n| n[i].clone()) {
+                Some(name) => arguments.push(self.ast.add(AstNode::NamedArgument {
+                    name,
+                    expression: a.expression,
+                })),
+                None => arguments.push(a.expression),
+            }
+        }
+        let e = self.ast.add(AstNode::ObjectCreate {
+            ty: declaring,
+            arguments,
+        });
+        self.ast.with_rr(
+            e,
+            Rr::ObjectCreation {
+                method: Box::new(operand.clone()),
+                ty: declaring,
+            },
+        );
+        self.ast.with_il(e, inst);
+        Ok(TranslatedExpression {
+            expression: e,
+            ty: declaring,
+        })
+    }
+
+    /// `Disambiguator.ForConstructorCall`: drop the names of bool literals, then cast the
+    /// arguments, while overload resolution over the accessible constructors does not pick
+    /// the one called.
+    fn disambiguate_constructor(
+        &mut self,
+        operand: &MethodOperand,
+        method: &Method,
+        list: &mut ArgumentList,
+    ) -> Result<(), Unsupported> {
+        let resolver = self
+            .resolver
+            .ok_or("a member reference without the host's resolver")?;
+        let group = resolver
+            .constructors(self.ts, operand)
+            .ok_or("constructors the host cannot list")?;
+        let mut spent_names = false;
+        let mut spent_cast_arguments = false;
+        loop {
+            let errors = self.probe_group(&group, method.declaring, method, CallOp::Call, list);
+            if errors == OverloadResolutionErrors::NONE {
+                return Ok(());
+            }
+            if !spent_names && list.add_names_to_primitive_values {
+                spent_names = true;
+                list.add_names_to_primitive_values = false;
+                continue;
+            }
+            if !spent_cast_arguments {
+                spent_cast_arguments = true;
+                // `CastArguments`: a cast to the parameter type, translated only where it
+                // is none.
+                let n = Normalization::IGNORE_NULLABILITY_AND_TUPLES;
+                for (a, p) in list.arguments.clone().iter().zip(&method.parameters) {
+                    if self.ts.normalize_with(a.ty, n) != self.ts.normalize_with(p.ty, n) {
+                        return Err("a constructor call that needs argument casts".to_owned());
+                    }
+                }
+                continue;
+            }
+            // No spelling resolves; the most explicit one is written anyway.
+            return Ok(());
+        }
     }
 
     /// `HandleAccessorCall` for a property without parameters: `target.Name` or `Name`, and
@@ -526,7 +664,20 @@ impl Builder<'_, '_, '_, '_> {
             return OverloadResolutionErrors::AMBIGUOUS_MATCH;
         };
         let lookup_type = lookup_target.map(|_| target.ty);
-        let lists = self.method_lists(&group, lookup_type);
+        self.probe_group(&group, lookup_type, method, op, list)
+    }
+
+    /// The overload resolution of `IsUnambiguousCall` over a method group, with
+    /// `CheckBestCandidate`.
+    fn probe_group(
+        &mut self,
+        group: &[MethodGroupList],
+        lookup_type: Option<TypeId>,
+        method: &Method,
+        op: CallOp,
+        list: &ArgumentList,
+    ) -> OverloadResolutionErrors {
+        let lists = self.method_lists(group, lookup_type);
         let arguments = list
             .arguments
             .iter()

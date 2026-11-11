@@ -59,6 +59,8 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		public const byte IfElse = 16;
 		public const byte LogicNot = 17;
 		public const byte BinaryOperator = 18;
+		public const byte Throw = 19;
+		public const byte ObjectCreate = 20;
 
 		public byte Kind;
 		/// <summary>The instructions the node is annotated with, in order.</summary>
@@ -223,6 +225,22 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 						.ToList();
 					node.ResolveResult = new CSharpInvocationResolveResult(targetResult!, method, argumentResults);
 					return Annotate(new InvocationExpression(target, arguments), node);
+				}
+				case RustBodyNode.ObjectCreate:
+				{
+					var arguments = node.Children.Select(c => (Expression)Build(c, exprBuilder)).ToList();
+					var argumentResults = arguments
+						.Select(a => (a is NamedArgumentExpression named ? named.Expression : a).GetResolveResult())
+						.ToArray();
+					node.ResolveResult = new CSharpInvocationResolveResult(null!, node.Call!.Value.Method, argumentResults);
+					return Annotate(new ObjectCreateExpression(exprBuilder.ConvertType(node.Type!), arguments), node);
+				}
+				case RustBodyNode.Throw:
+				{
+					var statement = node.Children.Length == 1
+						? new ThrowStatement((Expression)Build(node.Children[0], exprBuilder))
+						: new ThrowStatement();
+					return Annotate(statement, node);
 				}
 				case RustBodyNode.NamedArgument:
 					return Annotate(new NamedArgumentExpression((string)node.Value!, (Expression)Build(node.Children[0], exprBuilder)), node);
