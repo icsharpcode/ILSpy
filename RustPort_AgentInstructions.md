@@ -443,7 +443,11 @@ the reasons. This file holds only the ordered steps, their gates and their rules
     implicit conversion allows it and folds constants (`ResolveCast`, the integral part of
     `CSharpPrimitiveCast`); casts still fall back (lecture 3.88). Subject:
     `Translate implicit conversions and constant folding to C# in the engine`.
-  - [ ] 68e-68y. Further construct groups, in the order of the fallback reasons the ratchet test
+  - [x] 68e. Method calls: plain invocations of non-generic methods with by-value arguments,
+    with the `Disambiguator` steps (qualifier, cast target, named arguments) checked by the
+    engine's overload resolution over the method group the host looks up (lecture 3.89).
+    Subject: `Translate method calls to C# in the engine`.
+  - [ ] 68f-68y. Further construct groups, in the order of the fallback reasons the ratchet test
     prints, until no body of the corpus falls back. Subject pattern:
     `Translate <construct group> to C# in the engine`.
   - [ ] 68z. Request-level seam 2. Subject: `Add the Rust C# AST builders and the AST materializer`.

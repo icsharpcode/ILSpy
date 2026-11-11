@@ -35,6 +35,8 @@ mod kind {
     pub const REF_DIRECTION: u8 = 11;
     pub const ASSIGNMENT: u8 = 12;
     pub const EXPRESSION_STATEMENT: u8 = 13;
+    pub const INVOCATION: u8 = 14;
+    pub const NAMED_ARGUMENT: u8 = 15;
 }
 
 pub(super) fn write_body(
@@ -82,7 +84,9 @@ fn var_index(
 /// token); 6 `ByReferenceResolveResult` (the element's resolve result); 7 the
 /// `OperatorResolveResult` of an assignment (type; the operands are the children's); 8 the
 /// `MemberResolveResult` of an event (the target's resolve result, the event as a member
-/// token). A field's target is absent (0) for the `field` keyword.
+/// token); 9 the `CSharpInvocationResolveResult` of a call (the target's resolve result and
+/// the method as a call operand; the arguments are the invocation's). A field's target is
+/// absent (0) for the `field` keyword.
 fn rr(w: &mut FunctionWriter<'_, '_, '_, '_>, rr: Option<&Rr>) -> Result<(), String> {
     match rr {
         None => w.out.u8(0),
@@ -132,6 +136,11 @@ fn rr(w: &mut FunctionWriter<'_, '_, '_, '_>, rr: Option<&Rr>) -> Result<(), Str
             w.out.u8(7);
             w.ty(*ty);
         }
+        Some(Rr::Invocation { target, method, .. }) => {
+            w.out.u8(9);
+            self::rr(w, Some(target))?;
+            w.call_method(method)?;
+        }
     }
     Ok(())
 }
@@ -154,6 +163,8 @@ fn node(w: &mut FunctionWriter<'_, '_, '_, '_>, ast: &Ast, id: AstId) -> Result<
         AstNode::RefDirection { .. } => kind::REF_DIRECTION,
         AstNode::Assignment { .. } => kind::ASSIGNMENT,
         AstNode::ExpressionStatement { .. } => kind::EXPRESSION_STATEMENT,
+        AstNode::Invocation { .. } => kind::INVOCATION,
+        AstNode::NamedArgument { .. } => kind::NAMED_ARGUMENT,
     });
     w.out.len(a.il.len());
     for &inst in &a.il {
@@ -204,6 +215,17 @@ fn node(w: &mut FunctionWriter<'_, '_, '_, '_>, ast: &Ast, id: AstId) -> Result<
         AstNode::Assignment { left, right } => {
             node(w, ast, left)?;
             node(w, ast, right)?;
+        }
+        AstNode::Invocation { target, arguments } => {
+            node(w, ast, target)?;
+            w.out.len(arguments.len());
+            for a in arguments {
+                node(w, ast, a)?;
+            }
+        }
+        AstNode::NamedArgument { name, expression } => {
+            w.string(&name);
+            node(w, ast, expression)?;
         }
         AstNode::Empty | AstNode::Null | AstNode::This | AstNode::Base => {}
     }

@@ -116,6 +116,7 @@ pub const SETTING_NAMES: &[&str] = &[
     "ScopedRef",
     "FieldKeyword",
     "AlwaysQualifyMemberReferences",
+    "NonTrailingNamedArguments",
 ];
 
 /// The values of `SETTING_NAMES`.
@@ -175,6 +176,7 @@ pub struct Settings {
     pub scoped_ref: bool,
     pub field_keyword: bool,
     pub always_qualify_member_references: bool,
+    pub non_trailing_named_arguments: bool,
 }
 
 impl Settings {
@@ -236,6 +238,7 @@ impl Settings {
             scoped_ref: bit(51),
             field_keyword: bit(52),
             always_qualify_member_references: bit(53),
+            non_trailing_named_arguments: bit(54),
         }
     }
 }
@@ -297,6 +300,25 @@ pub trait Resolver {
         field: &super::ast::FieldOperand,
         target_is_this: bool,
     ) -> FieldKind;
+
+    /// `Disambiguator.LookUpName` for an invocation without type arguments: the method group
+    /// `name` resolves to from `target` (`MemberLookup.Lookup`) or unqualified
+    /// (`ResolveSimpleName`), its method definitions grouped by declaring type, base types
+    /// first; `None` when the name is no method group.
+    fn method_group(
+        &self,
+        ts: &TypeSystem<'_, '_>,
+        name: &str,
+        target: Option<LookupTarget>,
+    ) -> Option<Vec<MethodGroupList>>;
+}
+
+/// The methods of a method group one type declares (`MethodListWithDeclaringType`), as
+/// definitions.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct MethodGroupList {
+    pub declaring: crate::typesystem::compilation::TypeDefId,
+    pub methods: Vec<crate::typesystem::members::MethodDefId>,
 }
 
 /// How `ConvertField` treats a field, which depends on the declarations around the body.

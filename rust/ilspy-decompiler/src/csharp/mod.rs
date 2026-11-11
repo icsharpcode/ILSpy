@@ -5,6 +5,7 @@
 //! not translated: `convert_body` answers why, and the host translates the body itself.
 
 pub mod ast;
+mod call_builder;
 mod expression_builder;
 mod member_access;
 mod statement_builder;

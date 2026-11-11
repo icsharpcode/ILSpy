@@ -40,7 +40,7 @@ enum CastResult {
 
 impl Builder<'_, '_, '_, '_> {
     /// The resolve result of an expression the builders made, as the C# semantics see it.
-    fn semantic_rr(&self, e: AstId, ty: TypeId) -> ResolveResult {
+    pub(crate) fn semantic_rr(&self, e: AstId, ty: TypeId) -> ResolveResult {
         match &self.ast.annotations(e).rr {
             Some(Rr::Constant { ty, value }) => ResolveResult::Constant {
                 ty: *ty,

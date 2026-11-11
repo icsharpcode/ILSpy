@@ -80,6 +80,8 @@ impl Builder<'_, '_, '_, '_> {
                 ..
             } => self.st_obj(inst, target, value, ty.ty, unaligned),
             Inst::StLoc { var, value, .. } => self.st_loc(inst, var, value),
+            Inst::Call(c) => self.call(inst, &c, super::call_builder::CallOp::Call),
+            Inst::CallVirt(c) => self.call(inst, &c, super::call_builder::CallOp::CallVirt),
             other => Err(format!("the instruction {}", super::inst_name(&other))),
         }
     }

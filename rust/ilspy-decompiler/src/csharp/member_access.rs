@@ -28,7 +28,8 @@ impl Builder<'_, '_, '_, '_> {
             | Rr::Variable { ty, .. }
             | Rr::This { ty, .. }
             | Rr::Type(ty)
-            | Rr::Assign { ty } => *ty,
+            | Rr::Assign { ty }
+            | Rr::Invocation { ty, .. } => *ty,
             Rr::Field { field, .. } => field.field.ty,
             Rr::Event { ty, .. } => *ty,
             Rr::ByReference(element) => {
@@ -52,7 +53,7 @@ impl Builder<'_, '_, '_, '_> {
         }
     }
 
-    fn rr_of(&self, e: AstId) -> Rr {
+    pub(crate) fn rr_of(&self, e: AstId) -> Rr {
         self.ast
             .annotations(e)
             .rr
@@ -334,7 +335,7 @@ impl Builder<'_, '_, '_, '_> {
 
     /// `TranslateTarget(target, nonVirtualInvocation, memberStatic, memberDeclaringType)` for
     /// a reference-type target, `base`, or a static member's type.
-    fn translate_target(
+    pub(crate) fn translate_target(
         &mut self,
         target: Option<NodeId>,
         non_virtual_invocation: bool,
@@ -439,6 +440,20 @@ impl Builder<'_, '_, '_, '_> {
         declaring: Option<TypeDefId>,
         target: AstId,
     ) -> bool {
+        // A field, property or event reference does not dispatch, so `base` is never needed.
+        self.requires_qualifier_dispatching(name, is_static, declaring, target, false)
+    }
+
+    /// `RequiresQualifier(member, target, nonVirtualDispatch)`; `base_needed` is
+    /// `nonVirtualDispatch && member.IsOverridable`.
+    pub(crate) fn requires_qualifier_dispatching(
+        &self,
+        name: &str,
+        is_static: bool,
+        declaring: Option<TypeDefId>,
+        target: AstId,
+        base_needed: bool,
+    ) -> bool {
         if self.settings.always_qualify_member_references
             || self.variable_names.iter().any(|n| n == name)
         {
@@ -448,15 +463,14 @@ impl Builder<'_, '_, '_, '_> {
             return !self.is_current_or_containing_type(declaring);
         }
         match self.ast.node(target) {
-            // A field is not overridable.
-            AstNode::Base => false,
+            AstNode::Base => base_needed,
             AstNode::This => false,
             _ => true,
         }
     }
 
     /// `IsCurrentOrContainingType`.
-    fn is_current_or_containing_type(&self, def: Option<TypeDefId>) -> bool {
+    pub(crate) fn is_current_or_containing_type(&self, def: Option<TypeDefId>) -> bool {
         let mut current = self.current_type;
         while let Some(c) = current {
             if Some(c) == def {

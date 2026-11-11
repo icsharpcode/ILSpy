@@ -21,6 +21,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
 
@@ -53,6 +54,8 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		public const byte RefDirection = 11;
 		public const byte Assignment = 12;
 		public const byte ExpressionStatement = 13;
+		public const byte Invocation = 14;
+		public const byte NamedArgument = 15;
 
 		public byte Kind;
 		/// <summary>The instructions the node is annotated with, in order.</summary>
@@ -62,6 +65,8 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		public ResolveResult? ResolveResult;
 		/// <summary>For an assignment: the type of its <see cref="OperatorResolveResult"/>, whose operands are the children's.</summary>
 		public IType? AssignmentType;
+		/// <summary>For an invocation: the target and method of its <see cref="CSharpInvocationResolveResult"/>, whose arguments are the invocation's.</summary>
+		public (ResolveResult? Target, IMethod Method)? Call;
 		public Leave? ImplicitReturn;
 		public RustBodyNode[] Children = [];
 		public IType? Type;
@@ -200,6 +205,20 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 						left.GetResolveResult(), right.GetResolveResult());
 					return Annotate(new AssignmentExpression(left, right), node);
 				}
+				case RustBodyNode.Invocation:
+				{
+					var target = (Expression)Build(node.Children[0], exprBuilder);
+					var arguments = node.Children.Skip(1).Select(c => (Expression)Build(c, exprBuilder)).ToList();
+					var (targetResult, method) = node.Call!.Value;
+					// The argument resolve results, of the named arguments' expressions.
+					var argumentResults = arguments
+						.Select(a => (a is NamedArgumentExpression named ? named.Expression : a).GetResolveResult())
+						.ToList();
+					node.ResolveResult = new CSharpInvocationResolveResult(targetResult!, method, argumentResults);
+					return Annotate(new InvocationExpression(target, arguments), node);
+				}
+				case RustBodyNode.NamedArgument:
+					return Annotate(new NamedArgumentExpression((string)node.Value!, (Expression)Build(node.Children[0], exprBuilder)), node);
 				default:
 					throw new RustEngineException($"unknown C# node kind {node.Kind}");
 			}

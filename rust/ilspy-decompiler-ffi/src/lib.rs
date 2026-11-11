@@ -124,15 +124,63 @@ pub unsafe extern "C" fn ilspy_buf_free(buf: Buf) {
     })
 }
 
-/// The host's C# resolver: answers the `resolver_query` message at `query` (`len` bytes) with 1
-/// for yes and 0 for no; any other value is a failure, which the engine takes as no and the host
-/// reports after the call. It must not retain `query`.
-pub type ResolverCallback =
-    unsafe extern "C" fn(ctx: *mut c_void, query: *const u8, len: usize) -> i32;
+/// The host's C# resolver: answers the `resolver_query` message at `query` (`len` bytes). A
+/// yes/no question is answered with 1 for yes and 0 for no; a question with data in its answer
+/// (`wire::ilast::method_group_query`) writes up to `answer_capacity` bytes to `answer` and
+/// returns the full answer's length, so a longer answer is asked for again with room for it. A
+/// negative value is a failure, which the engine takes as no (or no data) and the host reports
+/// after the call. It must not retain `query` or `answer`.
+pub type ResolverCallback = unsafe extern "C" fn(
+    ctx: *mut c_void,
+    query: *const u8,
+    len: usize,
+    answer: *mut u8,
+    answer_capacity: usize,
+) -> i32;
 
 struct HostResolver {
     ctx: *mut c_void,
     callback: ResolverCallback,
+}
+
+impl HostResolver {
+    /// A yes/no or integer question.
+    fn ask(&self, query: &[u8]) -> i32 {
+        // SAFETY: the host contract above; `query` outlives the call and no answer is read.
+        unsafe {
+            (self.callback)(
+                self.ctx,
+                query.as_ptr(),
+                query.len(),
+                std::ptr::null_mut(),
+                0,
+            )
+        }
+    }
+
+    /// A question answered with data; `None` when the host failed.
+    fn ask_data(&self, query: &[u8]) -> Option<Vec<u8>> {
+        let mut answer = vec![0u8; 256];
+        loop {
+            // SAFETY: the host contract above; `query` and `answer` outlive the call and the
+            // host writes at most `answer.len()` bytes.
+            let n = unsafe {
+                (self.callback)(
+                    self.ctx,
+                    query.as_ptr(),
+                    query.len(),
+                    answer.as_mut_ptr(),
+                    answer.len(),
+                )
+            };
+            let n = usize::try_from(n).ok()?;
+            if n <= answer.len() {
+                answer.truncate(n);
+                return Some(answer);
+            }
+            answer = vec![0u8; n];
+        }
+    }
 }
 
 /// Debug export for the shim's `MetadataListingEquality` test: the canonical metadata listing
@@ -418,8 +466,7 @@ impl Resolver for HostResolver {
         let Ok(bytes) = ilspy_decompiler::wire::ilast::resolver_query(ts, query) else {
             return false;
         };
-        // SAFETY: the host contract above; `bytes` outlives the call.
-        unsafe { (self.callback)(self.ctx, bytes.as_ptr(), bytes.len()) == 1 }
+        self.ask(&bytes) == 1
     }
 
     fn field_reference_binds(
@@ -432,8 +479,7 @@ impl Resolver for HostResolver {
         else {
             return false;
         };
-        // SAFETY: the host contract above; `bytes` outlives the call.
-        unsafe { (self.callback)(self.ctx, bytes.as_ptr(), bytes.len()) == 1 }
+        self.ask(&bytes) == 1
     }
 
     /// The answer is 0 for an ordinary field, 1 for the `field` keyword, 3 for a field named
@@ -450,8 +496,7 @@ impl Resolver for HostResolver {
         else {
             return FieldKind::Ordinary;
         };
-        // SAFETY: the host contract above; `bytes` outlives the call.
-        let answer = unsafe { (self.callback)(self.ctx, bytes.as_ptr(), bytes.len()) };
+        let answer = self.ask(&bytes);
         match answer {
             1 => FieldKind::FieldKeyword,
             3 => FieldKind::NamedFieldInAccessor,
@@ -463,6 +508,17 @@ impl Resolver for HostResolver {
             },
             _ => FieldKind::Ordinary,
         }
+    }
+
+    fn method_group(
+        &self,
+        ts: &TypeSystem<'_, '_>,
+        name: &str,
+        target: Option<ilspy_decompiler::il::transforms::LookupTarget>,
+    ) -> Option<Vec<ilspy_decompiler::il::transforms::MethodGroupList>> {
+        let bytes = ilspy_decompiler::wire::ilast::method_group_query(ts, name, target).ok()?;
+        let answer = self.ask_data(&bytes)?;
+        ilspy_decompiler::wire::ilast::method_group_answer(&answer)
     }
 }
 

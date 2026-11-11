@@ -46,6 +46,13 @@ pub enum AstNode {
     Assignment { left: AstId, right: AstId },
     /// `ExpressionStatement`.
     ExpressionStatement { expression: AstId },
+    /// `InvocationExpression`: `target(arguments)`.
+    Invocation {
+        target: AstId,
+        arguments: Vec<AstId>,
+    },
+    /// `NamedArgumentExpression`: `name: expression`.
+    NamedArgument { name: String, expression: AstId },
 }
 
 /// `ResolveResult` annotations.
@@ -84,6 +91,14 @@ pub enum Rr {
     /// `OperatorResolveResult` of an assignment, of the given type, whose operands are the
     /// resolve results of the node's children.
     Assign { ty: TypeId },
+    /// `CSharpInvocationResolveResult` of a call of `method` (of the given return type) on the
+    /// target's resolve result, whose arguments are the resolve results of the invocation's
+    /// arguments.
+    Invocation {
+        target: Box<Rr>,
+        method: Box<crate::il::ast::MethodOperand>,
+        ty: TypeId,
+    },
 }
 
 /// The annotations of a node.

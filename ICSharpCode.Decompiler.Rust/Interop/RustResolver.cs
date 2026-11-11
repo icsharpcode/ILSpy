@@ -51,6 +51,8 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		public const byte FieldMemberAccessKind = 3;
 		/// <summary>The branch <c>ExpressionBuilder.ConvertField</c> takes for the field.</summary>
 		public const byte FieldKindKind = 4;
+		/// <summary><c>Disambiguator.LookUpName</c> for an invocation: the method group of <see cref="Name"/>.</summary>
+		public const byte MethodGroupKind = 5;
 
 		/// <summary><see cref="TargetKind"/>: <c>this</c> or <c>base</c>.</summary>
 		public const byte ThisTarget = 0;
@@ -65,6 +67,9 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		public bool CausesNonVirtualInvocation;
 		/// <summary>For <see cref="FieldKindKind"/>: whether the field's target is the <c>this</c> instance or absent.</summary>
 		public bool TargetIsThis;
+		/// <summary>For <see cref="MethodGroupKind"/>: the name, and whether <see cref="Target"/> is set.</summary>
+		public string Name = "";
+		public bool HasTarget;
 		public IType? Target;
 		/// <summary>The target variable's type and its single store's value type.</summary>
 		public (IType Variable, IType Value)? TargetStore;
@@ -101,7 +106,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 	internal sealed class RustResolver
 	{
 		[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-		internal unsafe delegate int Callback(IntPtr context, byte* query, UIntPtr length);
+		internal unsafe delegate int Callback(IntPtr context, byte* query, UIntPtr length, byte* answer, UIntPtr capacity);
 
 		readonly CSharpResolver resolver;
 		/// <summary>What the C# body translation's questions are answered from.</summary>
@@ -127,7 +132,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 			Delegate = Answer;
 		}
 
-		unsafe int Answer(IntPtr context, byte* query, UIntPtr length)
+		unsafe int Answer(IntPtr context, byte* query, UIntPtr length, byte* answer, UIntPtr capacity)
 		{
 			try
 			{
@@ -135,6 +140,13 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				var q = IlAstMaterializer.ReadResolverQuery(wire, row, compilation, modules, settings);
 				if (q.Kind == RustResolverQuery.FieldKindKind)
 					return ClassifyField(q.Field, q.TargetIsThis);
+				if (q.Kind == RustResolverQuery.MethodGroupKind)
+				{
+					// The full answer's length; the engine asks again when it does not fit.
+					var data = MethodGroup(q);
+					data.AsSpan(0, Math.Min(data.Length, checked((int)capacity))).CopyTo(new Span<byte>(answer, checked((int)capacity)));
+					return data.Length;
+				}
 				return Answer(q) ? 1 : 0;
 			}
 			catch (Exception ex)
@@ -254,6 +266,86 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				}
 				return true;
 			}
+		}
+
+		/// <summary>
+		/// <c>Disambiguator.LookUpName(target, name, [], invocation: true)</c>: 0 when the name is no
+		/// method group, else 1 and its method lists (each the declaring type definition and the
+		/// method definitions, as module index and metadata row), as unsigned LEB128.
+		/// </summary>
+		byte[] MethodGroup(RustResolverQuery query)
+		{
+			var context = body ?? throw new InvalidOperationException("The engine asked about a C# body without the body's context");
+			var resolver = context.Resolver;
+			ResolveResult? result;
+			if (!query.HasTarget)
+			{
+				result = resolver.ResolveSimpleName(query.Name, EmptyList<IType>.Instance, isInvocationTarget: true);
+			}
+			else
+			{
+				var lookup = new MemberLookup(resolver.CurrentTypeDefinition, resolver.CurrentTypeDefinition.ParentModule);
+				result = lookup.Lookup(TargetResolveResult(query), query.Name, EmptyList<IType>.Instance, isInvocation: true);
+			}
+			var output = new List<byte>();
+			if (result is not MethodGroupResolveResult group)
+				return [0];
+			var lists = group.MethodsGroupedByDeclaringType.ToList();
+			UVar(1);
+			UVar(lists.Count);
+			foreach (var list in lists)
+			{
+				var declaring = list.DeclaringType.GetDefinition();
+				int declaringModule = declaring == null ? -1 : ModuleIndex(declaring.ParentModule);
+				if (declaringModule < 0)
+					return [0];
+				UVar(declaringModule);
+				UVar(MetadataTokens.GetRowNumber(declaring!.MetadataToken));
+				UVar(list.Count);
+				foreach (var member in list)
+				{
+					var definition = (IMethod)member.MemberDefinition;
+					int module = ModuleIndex(definition.ParentModule);
+					if (module < 0 || definition.MetadataToken.Kind != HandleKind.MethodDefinition)
+						return [0];
+					UVar(module);
+					UVar(MetadataTokens.GetRowNumber(definition.MetadataToken));
+				}
+			}
+			return output.ToArray();
+
+			void UVar(int value)
+			{
+				uint v = checked((uint)value);
+				while (v >= 0x80)
+				{
+					output.Add((byte)((v & 0x7F) | 0x80));
+					v >>= 7;
+				}
+				output.Add((byte)v);
+			}
+
+			int ModuleIndex(IModule? module)
+			{
+				for (int i = 0; i < modules.Count; i++)
+				{
+					if (modules[i] == module)
+						return i;
+				}
+				return -1;
+			}
+		}
+
+		/// <summary>The resolve result a member lookup sees for the query's target.</summary>
+		static ResolveResult TargetResolveResult(RustResolverQuery query)
+		{
+			var type = query.Target!;
+			return query.TargetKind switch {
+				// The lookup only asks whether the target is a ThisResolveResult.
+				RustResolverQuery.ThisTarget => new ThisResolveResult(new ILVariable(VariableKind.Parameter, type, -1), type, query.CausesNonVirtualInvocation),
+				RustResolverQuery.TypeTarget => new TypeResolveResult(type),
+				_ => new ResolveResult(type),
+			};
 		}
 
 		/// <summary>Rethrows the first exception the resolver threw during the engine call.</summary>

@@ -316,6 +316,21 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 			reader.context = new GenericContext(reader.mainModule.GetDefinition(MetadataTokens.MethodDefinitionHandle(row)));
 			reader.ReadContexts();
 			var query = new RustResolverQuery { Kind = reader.U8() };
+			if (query.Kind == RustResolverQuery.MethodGroupKind)
+			{
+				query.Name = reader.Str();
+				query.HasTarget = reader.Bool();
+				if (query.HasTarget)
+				{
+					query.TargetKind = reader.U8();
+					if (query.TargetKind == RustResolverQuery.ThisTarget)
+						query.CausesNonVirtualInvocation = reader.Bool();
+					query.Target = reader.Type();
+				}
+				if (!reader.AtEnd)
+					throw new InvalidOperationException("Trailing bytes after the resolver query");
+				return query;
+			}
 			if (query.Kind is RustResolverQuery.FieldSimpleNameKind or RustResolverQuery.FieldMemberAccessKind or RustResolverQuery.FieldKindKind)
 			{
 				query.Field = reader.Field();
@@ -563,6 +578,8 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				node.IL[i] = materialized[Len()];
 			node.ILBeforeResolveResult = Bool();
 			node.ResolveResult = BodyResolveResult(out node.AssignmentType);
+			node.Call = pendingInvocation;
+			pendingInvocation = null;
 			int implicitReturn = Len();
 			if (implicitReturn != 0)
 				node.ImplicitReturn = (Leave)materialized[implicitReturn - 1];
@@ -601,9 +618,25 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				case RustBodyNode.Assignment:
 					node.Children = [BodyNode(), BodyNode()];
 					break;
+				case RustBodyNode.Invocation:
+				{
+					var target = BodyNode();
+					var arguments = new RustBodyNode[Len()];
+					for (int i = 0; i < arguments.Length; i++)
+						arguments[i] = BodyNode();
+					node.Children = [target, .. arguments];
+					break;
+				}
+				case RustBodyNode.NamedArgument:
+					node.Value = Str();
+					node.Children = [BodyNode()];
+					break;
 			}
 			return node;
 		}
+
+		/// <summary>The target and method of the invocation resolve result the last <see cref="BodyResolveResult"/> read.</summary>
+		(ResolveResult? Target, IMethod Method)? pendingInvocation;
 
 		/// <summary>
 		/// A resolve result of the body translation; an assignment's, whose operands are its
@@ -643,6 +676,13 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				case 7:
 					assignmentType = Type();
 					return null;
+				case 9:
+				{
+					// The arguments are the invocation's; RustSeam2 completes the resolve result.
+					var target = BodyResolveResult(out _);
+					pendingInvocation = (target, CallMethod());
+					return null;
+				}
 				case 8:
 				{
 					var target = BodyResolveResult(out _);

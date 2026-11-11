@@ -266,7 +266,10 @@ impl FunctionWriter<'_, '_, '_, '_> {
 
     /// The method of a call (or another instruction calling a method): the member, the
     /// lookup data of a method without token, and the lifted and range accessor flags.
-    fn call_method(&mut self, method: &crate::il::ast::MethodOperand) -> Result<(), String> {
+    pub(super) fn call_method(
+        &mut self,
+        method: &crate::il::ast::MethodOperand,
+    ) -> Result<(), String> {
         // A method `ProxyCallReplacer` specialized: first the proxy call, in whose generic
         // context the host resolves the token.
         self.out.bool(method.specialized_by.is_some());
@@ -1645,6 +1648,86 @@ pub fn field_kind_query(
         w.out.bool(target_is_this);
         Ok(())
     })
+}
+
+/// A `method_group` question in the `resolver_query` format: kind 5, the name, and the
+/// target as `field_reference_query` writes it after a byte saying whether there is one.
+/// The answer is 0 for no method group, or 1, the number of lists and per list the declaring
+/// type's module index and TypeDef row and its methods' module indices and MethodDef rows, as
+/// unsigned LEB128.
+pub fn method_group_query(
+    ts: &TypeSystem<'_, '_>,
+    name: &str,
+    target: Option<crate::il::transforms::LookupTarget>,
+) -> Result<Vec<u8>, String> {
+    use crate::il::transforms::LookupTarget;
+    query_message(ts, |w| {
+        w.out.u8(5);
+        w.string(name);
+        w.out.bool(target.is_some());
+        match target {
+            None => {}
+            Some(LookupTarget::This {
+                ty,
+                causes_non_virtual_invocation,
+            }) => {
+                w.out.u8(0);
+                w.out.bool(causes_non_virtual_invocation);
+                w.ty(ty);
+            }
+            Some(LookupTarget::Type(ty)) => {
+                w.out.u8(1);
+                w.ty(ty);
+            }
+            Some(LookupTarget::Expression(ty)) => {
+                w.out.u8(2);
+                w.ty(ty);
+            }
+        }
+        Ok(())
+    })
+}
+
+/// Decodes a `method_group_query` answer.
+pub fn method_group_answer(bytes: &[u8]) -> Option<Vec<crate::il::transforms::MethodGroupList>> {
+    use crate::il::transforms::MethodGroupList;
+    use crate::typesystem::compilation::{ModuleId, TypeDefId};
+    use crate::typesystem::members::MethodDefId;
+    let mut pos = 0;
+    let mut uvar = || -> Option<u32> {
+        let mut value = 0u32;
+        let mut shift = 0;
+        loop {
+            let b = *bytes.get(pos)?;
+            pos += 1;
+            value |= u32::from(b & 0x7F).checked_shl(shift)?;
+            if b & 0x80 == 0 {
+                return Some(value);
+            }
+            shift += 7;
+        }
+    };
+    if uvar()? == 0 {
+        return None;
+    }
+    let lists = uvar()?;
+    let mut result = Vec::with_capacity(lists as usize);
+    for _ in 0..lists {
+        let declaring = TypeDefId {
+            module: ModuleId(uvar()?),
+            row: uvar()?,
+        };
+        let count = uvar()?;
+        let mut methods = Vec::with_capacity(count as usize);
+        for _ in 0..count {
+            methods.push(MethodDefId {
+                module: ModuleId(uvar()?),
+                row: uvar()?,
+            });
+        }
+        result.push(MethodGroupList { declaring, methods });
+    }
+    Some(result)
 }
 
 /// A resolver question: the tables, the explicit generic contexts and what `write` adds.

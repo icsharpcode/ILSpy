@@ -2603,6 +2603,32 @@ before the cast (bool to and from integers, `IntPtr`, pointers, references) fall
 does every conversion that needs a cast. The share rose from 28.3 % to 29.9 %; calls remain
 the largest group (338 `call`, 100 `callvirt`).
 
+### 3.89 Method calls (item 68e)
+
+`call` and `callvirt` now translate in the engine for the plain case of `CallBuilder.Build`:
+a non-generic method with by-value arguments and no `params` or optional parameters,
+written as `target.Name(arguments)` or `Name(arguments)`. Every special form that
+`CallBuilder` writes with syntax of its own (delegates, tuples, string concatenation and
+interpolation, accessors, operators, extension methods, span helpers), generic methods,
+tail and constrained calls fall back and are counted under their own reason.
+
+The managed builder decides how much of a call to spell out with `Disambiguator.ForCall`:
+it resolves the current spelling back and escalates (drop the names of bool literals, cast
+the arguments, require the target, cast the target, ...) until the name resolves to the
+method called. The engine runs the same steps. As decided for calls ("engine resolves, host
+looks up"), the host only answers the name lookup: a new resolver query returns the method
+group `ResolveSimpleName` or `MemberLookup` finds, as metadata handles grouped by declaring
+type. The engine specializes the lists by the lookup type's base types and runs its ported
+overload resolution (item 67) over them; a virtual call also accepts an override of the
+method found. A step that would insert a cast falls back, since casts are not translated
+yet. Answers of variable size made the resolver callback take an answer buffer and its
+capacity; the engine asks again with a larger buffer when the answer does not fit.
+
+On the host, the invocation's `CSharpInvocationResolveResult` is rebuilt from the target's
+resolve result and the method the engine names, with the arguments' resolve results (a
+named argument contributes its expression's). The share rose from 29.9 % to 38.5 %. The
+largest groups now are `if` statements (183), accessor calls (92) and `newobj` (60).
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |
