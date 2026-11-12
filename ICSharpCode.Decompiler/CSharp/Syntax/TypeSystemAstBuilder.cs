@@ -439,6 +439,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 					case UnknownType _:
 						if (type.IsUnbound())
 						{
+							if (type.TypeParameterCount > ReflectionHelper.MaxTypeParameterCount)
+								return MakeSimpleType(type.Name);
 							if (ShowTypeParametersForUnboundTypes)
 							{
 								astType = ConvertTypeHelper(type, type.TypeArguments);
