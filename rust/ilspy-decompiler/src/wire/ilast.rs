@@ -1672,9 +1672,28 @@ pub fn method_group_query(
     target: Option<crate::il::transforms::LookupTarget>,
     type_arguments: &[crate::typesystem::types::TypeId],
 ) -> Result<Vec<u8>, String> {
+    lookup_query(ts, 5, name, target, type_arguments)
+}
+
+/// Encodes the host's indexer lookup on `target` (kind 10), as `method_group_query` with an
+/// empty name; the answer is decoded with `method_group_answer`.
+pub fn indexers_query(
+    ts: &TypeSystem<'_, '_>,
+    target: crate::il::transforms::LookupTarget,
+) -> Result<Vec<u8>, String> {
+    lookup_query(ts, 10, "", Some(target), &[])
+}
+
+fn lookup_query(
+    ts: &TypeSystem<'_, '_>,
+    kind: u8,
+    name: &str,
+    target: Option<crate::il::transforms::LookupTarget>,
+    type_arguments: &[crate::typesystem::types::TypeId],
+) -> Result<Vec<u8>, String> {
     use crate::il::transforms::LookupTarget;
     query_message(ts, |w| {
-        w.out.u8(5);
+        w.out.u8(kind);
         w.string(name);
         w.out.bool(target.is_some());
         match target {

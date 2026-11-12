@@ -323,7 +323,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					throw new InvalidOperationException("Trailing bytes after the resolver query");
 				return query;
 			}
-			if (query.Kind is RustResolverQuery.MethodGroupKind or RustResolverQuery.AccessorKind)
+			if (query.Kind is RustResolverQuery.MethodGroupKind or RustResolverQuery.AccessorKind or RustResolverQuery.IndexersKind)
 			{
 				if (query.Kind == RustResolverQuery.AccessorKind)
 				{
@@ -342,7 +342,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 						query.CausesNonVirtualInvocation = reader.Bool();
 					query.Target = reader.Type();
 				}
-				if (query.Kind == RustResolverQuery.MethodGroupKind)
+				if (query.Kind is RustResolverQuery.MethodGroupKind or RustResolverQuery.IndexersKind)
 				{
 					query.TypeArguments = new IType[reader.Len()];
 					for (int i = 0; i < query.TypeArguments.Length; i++)

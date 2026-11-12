@@ -368,6 +368,17 @@ pub trait Resolver {
         constructor: &super::ast::MethodOperand,
     ) -> Option<Vec<MethodGroupList>>;
 
+    /// `MemberLookup.LookupIndexers(target)`: the indexers of the target's type, grouped by
+    /// declaring type, base types first, each as its getter (or its setter where it has none);
+    /// `None` when the host cannot name them all by metadata row.
+    fn indexers(
+        &self,
+        _ts: &TypeSystem<'_, '_>,
+        _target: LookupTarget,
+    ) -> Option<Vec<MethodGroupList>> {
+        None
+    }
+
     /// `Vocabularies.Default.Singularize(word, inputIsKnownToBePlural: false)` of the host's
     /// vendored Humanizer; `None` when the host cannot answer.
     fn singularize(&self, _ts: &TypeSystem<'_, '_>, _word: &str) -> Option<String> {

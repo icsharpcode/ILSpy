@@ -61,6 +61,8 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		public const byte ExtensionSyntaxKind = 8;
 		/// <summary><c>Vocabularies.Default.Singularize(<see cref="Name"/>)</c>, for foreach variable names.</summary>
 		public const byte SingularizeKind = 9;
+		/// <summary><c>MemberLookup.LookupIndexers</c> on the target, each indexer as its getter (or setter).</summary>
+		public const byte IndexersKind = 10;
 
 		/// <summary><see cref="TargetKind"/>: <c>this</c> or <c>base</c>.</summary>
 		public const byte ThisTarget = 0;
@@ -160,11 +162,12 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					return CanUseExtensionMethodSyntax(q);
 				if (q.Kind == RustResolverQuery.AccessorKind)
 					return AccessorReference(q);
-				if (q.Kind is RustResolverQuery.MethodGroupKind or RustResolverQuery.ConstructorsKind or RustResolverQuery.SingularizeKind)
+				if (q.Kind is RustResolverQuery.MethodGroupKind or RustResolverQuery.ConstructorsKind or RustResolverQuery.SingularizeKind or RustResolverQuery.IndexersKind)
 				{
 					// The full answer's length; the engine asks again when it does not fit.
 					var data = q.Kind switch {
 						RustResolverQuery.ConstructorsKind => Constructors(q),
+						RustResolverQuery.IndexersKind => Indexers(q),
 						RustResolverQuery.SingularizeKind => System.Text.Encoding.UTF8.GetBytes(Humanizer.Inflections.Vocabularies.Default.Singularize(q.Name, inputIsKnownToBePlural: false) ?? ""),
 						_ => MethodGroup(q),
 					};
@@ -315,6 +318,30 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				return [0];
 			return EncodeMethodLists(group.MethodsGroupedByDeclaringType
 				.Select(l => (l.DeclaringType, (IReadOnlyList<IParameterizedMember>)l)).ToList());
+		}
+
+		/// <summary>
+		/// <c>Disambiguator.IsUnambiguousAccess</c>'s candidates for an indexer: the indexers of the
+		/// target, each as its getter (or its setter), encoded as for <see cref="MethodGroup"/>.
+		/// </summary>
+		byte[] Indexers(RustResolverQuery query)
+		{
+			var context = body ?? throw new InvalidOperationException("The engine asked about a C# body without the body's context");
+			var resolver = context.Resolver;
+			var lookup = new MemberLookup(resolver.CurrentTypeDefinition, resolver.CurrentTypeDefinition.ParentModule);
+			var lists = new List<(IType, IReadOnlyList<IParameterizedMember>)>();
+			foreach (var list in lookup.LookupIndexers(TargetResolveResult(query)))
+			{
+				var accessors = new List<IParameterizedMember>();
+				foreach (var member in list)
+				{
+					if (member is not IProperty { } property || (property.Getter ?? property.Setter) is not { } accessor)
+						return [0];
+					accessors.Add(accessor);
+				}
+				lists.Add((list.DeclaringType, accessors));
+			}
+			return EncodeMethodLists(lists);
 		}
 
 		/// <summary>

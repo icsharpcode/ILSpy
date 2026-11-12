@@ -121,7 +121,9 @@ impl Builder<'_, '_, '_, '_> {
             return Err("a call of an explicit interface implementation".to_owned());
         }
         let declaring = method.declaring.ok_or("a method without declaring type")?;
-        // `IsWrittenAsMemberAccess`: the name of the property the accessor belongs to.
+        // `IsWrittenAsMemberAccess`: the name of the property the accessor belongs to; for an
+        // indexer whether the accessor is its setter.
+        let mut indexer: Option<bool> = None;
         let property = match self.ts.accessor_owner(id) {
             None => None,
             Some((token, semantics)) => {
@@ -129,10 +131,26 @@ impl Builder<'_, '_, '_, '_> {
                     return Err("an event accessor call".to_owned());
                 }
                 let parameters = usize::from(semantics == ACCESSOR_SETTER);
-                if !matches!(semantics, ACCESSOR_GETTER | ACCESSOR_SETTER)
-                    || method.parameters.len() != parameters
-                {
+                if !matches!(semantics, ACCESSOR_GETTER | ACCESSOR_SETTER) {
                     return Err("an indexer or parameterized property access".to_owned());
+                }
+                if method.parameters.len() != parameters {
+                    // `SymbolKind.Indexer`: a property with parameters named as the type's
+                    // `[DefaultMember]`; other parameterized properties keep the call syntax.
+                    let name = self.property_info(id.module, token & 0x00FF_FFFF)?.0;
+                    let default_member = match self.ts.definition(declaring) {
+                        Some(def) => self
+                            .ts
+                            .default_member_name(def)
+                            .map_err(|e| e.to_string())?,
+                        None => None,
+                    };
+                    if method.parameters.len() < parameters
+                        || default_member.as_deref() != Some(&name)
+                    {
+                        return Err("a parameterized property access".to_owned());
+                    }
+                    indexer = Some(semantics == ACCESSOR_SETTER);
                 }
                 // `HandleRangeConstruction` comes first and writes `..` for `Range.All`.
                 if self.ts.is_known(declaring, KnownTypeCode::Range)
@@ -160,7 +178,8 @@ impl Builder<'_, '_, '_, '_> {
             self.translate_target(this_arg, op == CallOp::Call, method.is_static, declaring)?;
 
         // the arguments
-        let is_setter = property.is_some() && method.parameters.len() == 1;
+        let is_setter =
+            (property.is_some() && method.parameters.len() == 1) || indexer == Some(true);
         let mut list = self.argument_list(call, &method, id, first_param, declaring, is_setter)?;
 
         // `HandleImplicitConversion`: an implicit conversion operator is written as the conversion.
@@ -168,6 +187,11 @@ impl Builder<'_, '_, '_, '_> {
             return self.implicit_conversion_call(inst, &method, &list);
         }
 
+        if let Some(is_setter) = indexer {
+            return self.indexer_access(
+                inst, operand, id, &method, target, list, is_setter, declaring,
+            );
+        }
         if let Some(name) = property {
             return self.accessor_call(inst, operand, &method, op, target, list, name, declaring);
         }
@@ -779,6 +803,189 @@ impl Builder<'_, '_, '_, '_> {
         self.ast.with_rr(e, Rr::Type(ty));
         self.ast.with_il(e, inst);
         Ok(TranslatedExpression { expression: e, ty })
+    }
+
+    /// `HandleAccessorCall` for an indexer: `target[indices]`, or `target[indices] = value` for
+    /// its setter, written once the indexer the indices resolve to from the target is the
+    /// accessor's (`Disambiguator.ForAccessor`). Arguments or a target that would need casts are
+    /// not translated.
+    #[allow(clippy::too_many_arguments)]
+    fn indexer_access(
+        &mut self,
+        inst: NodeId,
+        operand: &MethodOperand,
+        id: crate::typesystem::members::MethodDefId,
+        method: &Method,
+        target: TranslatedExpression,
+        mut list: ArgumentList,
+        is_setter: bool,
+        declaring: TypeId,
+    ) -> Result<TranslatedExpression, Unsupported> {
+        // Readability names and `out var` are not written for an access.
+        list.add_names_to_primitive_values = false;
+        list.use_implicitly_typed_out = false;
+        // The assigned value is not part of the member reference.
+        let value = if is_setter {
+            list.parameter_names.pop();
+            list.is_primitive_value.pop();
+            list.ref_kinds.pop();
+            Some(
+                list.arguments
+                    .pop()
+                    .ok_or("an indexer setter without value")?,
+            )
+        } else {
+            None
+        };
+        // An indexer access spells out at least one index.
+        if list.first_optional == 0 && !list.arguments.is_empty() {
+            list.first_optional = 1;
+        }
+        let resolver = self
+            .resolver
+            .ok_or("a member reference without the host's resolver")?;
+        let lookup_target = match self.rr_of(target.expression) {
+            Rr::This {
+                ty,
+                causes_non_virtual_invocation,
+                ..
+            } => LookupTarget::This {
+                ty,
+                causes_non_virtual_invocation,
+            },
+            Rr::Type(ty) => LookupTarget::Type(ty),
+            _ => LookupTarget::Expression(target.ty),
+        };
+        let group = resolver
+            .indexers(self.ts, lookup_target)
+            .ok_or("indexers the host cannot name by metadata row")?;
+        // `AccessorSteps`: the indexer is written with its target already.
+        let mut spent_optional = false;
+        let mut spent_cast_arguments = list.arguments.is_empty();
+        let mut spent_cast_target = false;
+        loop {
+            let errors = self.probe_indexers(&group, target.ty, id, &list)?;
+            if errors == OverloadResolutionErrors::NONE {
+                break;
+            }
+            // `TryRepair`, then `Escalate`
+            if !spent_optional && list.first_optional >= 0 {
+                spent_optional = true;
+                list.first_optional = -1;
+                continue;
+            }
+            if !spent_cast_arguments {
+                spent_cast_arguments = true;
+                let n = Normalization::IGNORE_NULLABILITY_AND_TUPLES;
+                for (a, p) in list.arguments.clone().iter().zip(&method.parameters) {
+                    if self.ts.normalize_with(a.ty, n) != self.ts.normalize_with(p.ty, n) {
+                        return Err("an indexer access that needs argument casts".to_owned());
+                    }
+                }
+                continue;
+            }
+            if !spent_cast_target {
+                spent_cast_target = true;
+                if self.convert_to(target, declaring, false)?.expression != target.expression {
+                    return Err("a reference that needs a cast of its target".to_owned());
+                }
+                continue;
+            }
+            // No spelling resolves; the most explicit one is written anyway.
+            break;
+        }
+        let indices = self.written_arguments(&list, 0);
+        let ty = match value {
+            Some(_) => method
+                .parameters
+                .last()
+                .map(|p| p.ty)
+                .ok_or("a setter without parameters")?,
+            None => method.return_type,
+        };
+        let e = self.ast.add(AstNode::Indexer {
+            target: target.expression,
+            indices,
+        });
+        let target_rr = self.rr_of(target.expression);
+        self.ast.with_rr(
+            e,
+            Rr::Property {
+                target: Box::new(target_rr),
+                accessor: Box::new(operand.clone()),
+                ty,
+                found_by_lookup: false,
+            },
+        );
+        let Some(value) = value else {
+            self.ast.with_il(e, inst);
+            return Ok(TranslatedExpression { expression: e, ty });
+        };
+        let a = self.ast.add(AstNode::Assignment {
+            left: e,
+            right: value.expression,
+        });
+        self.ast.with_rr(a, Rr::Type(ty));
+        self.ast.with_il(a, inst);
+        Ok(TranslatedExpression { expression: a, ty })
+    }
+
+    /// `IsUnambiguousAccess` for an indexer: overload resolution of the indices over the
+    /// target's indexers (stand-ins of their getters, or of their setters without the value),
+    /// with `CheckBestCandidate`, the best one compared with the accessor by its property.
+    fn probe_indexers(
+        &mut self,
+        group: &[MethodGroupList],
+        lookup_type: TypeId,
+        accessor: crate::typesystem::members::MethodDefId,
+        list: &ArgumentList,
+    ) -> Result<OverloadResolutionErrors, Unsupported> {
+        let mut lists = self.method_lists(group, Some(lookup_type));
+        for l in &mut lists {
+            for m in &mut l.methods {
+                if let crate::semantics::MethodKey::Def(d) = m.key
+                    && self
+                        .ts
+                        .accessor_owner(d)
+                        .is_some_and(|(_, s)| s == ACCESSOR_SETTER)
+                {
+                    m.parameters.pop();
+                    m.definition_parameters.pop();
+                }
+            }
+        }
+        let arguments = self.argument_resolve_results(list);
+        let names = list.argument_names();
+        let mut conversions = Conversions::new(self.ts);
+        let mut or = OverloadResolution::new(arguments, names, Vec::new());
+        or.add_method_lists(&mut conversions, &lists);
+        let errors = or.best_candidate_errors(&mut conversions);
+        if errors != OverloadResolutionErrors::NONE {
+            return Ok(errors);
+        }
+        if or.is_ambiguous() {
+            return Ok(OverloadResolutionErrors::AMBIGUOUS_MATCH);
+        }
+        let Some(found) = or.best_candidate_with_substituted_type_arguments(self.ts) else {
+            return Ok(OverloadResolutionErrors::AMBIGUOUS_MATCH);
+        };
+        // `IsAppropriateCallTarget` of the properties; an override of it is not translated.
+        let crate::semantics::MethodKey::Def(found) = found.key else {
+            return Ok(OverloadResolutionErrors::AMBIGUOUS_MATCH);
+        };
+        let found_property = self
+            .ts
+            .accessor_owner(found)
+            .map(|(token, _)| (found.module, token));
+        let property = self
+            .ts
+            .accessor_owner(accessor)
+            .map(|(token, _)| (accessor.module, token));
+        Ok(if found_property == property {
+            OverloadResolutionErrors::NONE
+        } else {
+            OverloadResolutionErrors::AMBIGUOUS_MATCH
+        })
     }
 
     /// `Disambiguator.ForAccessor` without arguments to cast: whether the property is written

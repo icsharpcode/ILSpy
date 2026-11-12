@@ -3407,6 +3407,23 @@ the type system alone, like the naming helpers before). A struct whose setter is
 `Current` (`IntroduceNewVariableAndLocalCopy`), a deconstruction, and a new variable inside a
 lambda fall back. The share rose from 71.6 % to 71.8 %.
 
+### 3.133 Indexer access (item 68y25)
+
+An accessor call of a property with parameters whose name is the declaring type's
+`[DefaultMember]` is an indexer (`SymbolKind.Indexer`): `HandleAccessorCall` writes
+`target[indices]`, or `target[indices] = value` for the setter, always with the target, and
+asks `Disambiguator.ForAccessor` whether the indices resolve back to it. For an indexer that
+check is overload resolution over `MemberLookup.LookupIndexers(target)`. Following the split
+the user chose for calls (the engine resolves, the host looks up), the host returns the
+target's indexers as a method group, each as its getter or, without one, its setter; the
+engine removes a setter's value parameter so that every candidate's parameters are the
+indexer's, runs its own overload resolution with `CheckBestCandidate`, and compares the best
+candidate with the accessor by the property both belong to. The access steps are those of
+`AccessorSteps`: no optional arguments, then casts of the arguments and of the target, which
+fall back. The node is the indexer expression of array access (3.113) with the property's
+resolve result. Parameterized properties that are no indexers keep the call syntax and fall
+back. The share rose from 71.8 % to 73.1 %.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

@@ -587,6 +587,16 @@ impl Resolver for HostResolver {
         ilspy_decompiler::wire::ilast::method_group_answer(&answer)
     }
 
+    fn indexers(
+        &self,
+        ts: &TypeSystem<'_, '_>,
+        target: ilspy_decompiler::il::transforms::LookupTarget,
+    ) -> Option<Vec<ilspy_decompiler::il::transforms::MethodGroupList>> {
+        let bytes = ilspy_decompiler::wire::ilast::indexers_query(ts, target).ok()?;
+        let answer = self.ask_data(&bytes)?;
+        ilspy_decompiler::wire::ilast::method_group_answer(&answer)
+    }
+
     fn singularize(&self, ts: &TypeSystem<'_, '_>, word: &str) -> Option<String> {
         let bytes = ilspy_decompiler::wire::ilast::singularize_query(ts, word).ok()?;
         String::from_utf8(self.ask_data(&bytes)?).ok()
