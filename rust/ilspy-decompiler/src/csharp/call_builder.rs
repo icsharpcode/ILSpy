@@ -145,8 +145,9 @@ impl Builder<'_, '_, '_, '_> {
         };
         let is_extension = self.ts.method_flags(id, None).extension;
         if property.is_none() {
-            if method.is_operator {
-                return Err("an operator call".to_owned());
+            // `HandleImplicitConversion` writes an implicit conversion operator as a conversion.
+            if method.is_operator && method.name == "op_Implicit" {
+                return Err("an implicit conversion operator call".to_owned());
             }
             self.check_special_calls(&method, declaring)?;
         }
@@ -1031,6 +1032,9 @@ impl Builder<'_, '_, '_, '_> {
         list: &ArgumentList,
         type_arguments: &[TypeId],
     ) -> Result<OverloadResolutionErrors, Unsupported> {
+        if method.is_operator {
+            return self.probe_group(&[], None, method, op, list, type_arguments);
+        }
         let Some(group) =
             resolver.method_group(self.ts, &method.name, lookup_target, type_arguments)
         else {
@@ -1051,7 +1055,17 @@ impl Builder<'_, '_, '_, '_> {
         list: &ArgumentList,
         type_arguments: &[TypeId],
     ) -> Result<OverloadResolutionErrors, Unsupported> {
-        let lists = self.method_lists(group, lookup_type);
+        // An operator's candidates are the operators of its operands' types.
+        let operators = if method.is_operator {
+            Some(self.operator_candidates(method, list)?)
+        } else {
+            None
+        };
+        let lists = if operators.is_some() {
+            Vec::new()
+        } else {
+            self.method_lists(group, lookup_type)
+        };
         let arguments = self.argument_resolve_results(list);
         let out_vars: Vec<Option<TypeId>> = arguments
             .iter()
@@ -1063,7 +1077,14 @@ impl Builder<'_, '_, '_, '_> {
         let names = list.argument_names();
         let mut conversions = Conversions::new(self.ts);
         let mut or = OverloadResolution::new(arguments, names, type_arguments.to_vec());
-        or.add_method_lists(&mut conversions, &lists);
+        match operators {
+            Some(candidates) => {
+                for m in candidates {
+                    or.add_candidate(&mut conversions, m);
+                }
+            }
+            None => or.add_method_lists(&mut conversions, &lists),
+        }
         // `CheckBestCandidate`
         let errors = or.best_candidate_errors(&mut conversions);
         if errors != OverloadResolutionErrors::NONE {
@@ -1108,6 +1129,68 @@ impl Builder<'_, '_, '_, '_> {
             return Err("a generic call whose inferred type arguments differ".to_owned());
         }
         Ok(OverloadResolutionErrors::NONE)
+    }
+
+    /// `GetUserDefinedOperatorCandidates` for the operands `IsUnambiguousCall` resolves an
+    /// operator call with (and the target type of an explicit conversion): the operators of
+    /// that name the types and their base types declare, the primitive types excepted. Lifted
+    /// operators are only applicable to nullable operands, which are not translated.
+    fn operator_candidates(
+        &mut self,
+        method: &Method,
+        list: &ArgumentList,
+    ) -> Result<Vec<Method>, Unsupported> {
+        let written = &list.arguments[..list.actual_count()];
+        if !matches!(written.len(), 1 | 2) {
+            return Ok(Vec::new());
+        }
+        let mut types: Vec<TypeId> = written.iter().map(|a| a.ty).collect();
+        if written.len() == 1 && method.name == "op_Explicit" {
+            types.push(method.return_type);
+        }
+        if types
+            .iter()
+            .any(|&t| self.ts.is_known(t, KnownTypeCode::NullableOfT))
+        {
+            return Err("a lifted operator call".to_owned());
+        }
+        let mut candidates: Vec<Method> = Vec::new();
+        for t in types {
+            if (3..=15).contains(&self.ts.type_code(t)) {
+                continue;
+            }
+            let mut groups = Vec::new();
+            for d in self.ts.all_base_type_definitions(t) {
+                let md = &self.ts.comp.module(d.module).md;
+                let rows = md.type_methods(d.row).map_err(|e| e.to_string())?;
+                let mut methods = Vec::new();
+                for row in rows {
+                    let m = md
+                        .get::<crate::metadata::tables::rows::MethodDef>(row)
+                        .map_err(|e| e.to_string())?;
+                    if md.string(m.name).is_ok_and(|n| n == method.name) {
+                        methods.push(crate::typesystem::members::MethodDefId {
+                            module: d.module,
+                            row,
+                        });
+                    }
+                }
+                if !methods.is_empty() {
+                    groups.push(MethodGroupList {
+                        declaring: d,
+                        methods,
+                    });
+                }
+            }
+            for l in self.method_lists(&groups, Some(t)) {
+                for m in l.methods {
+                    if m.is_operator && !candidates.contains(&m) {
+                        candidates.push(m);
+                    }
+                }
+            }
+        }
+        Ok(candidates)
     }
 
     /// The host's method group as the overload resolution's method lists: each definition

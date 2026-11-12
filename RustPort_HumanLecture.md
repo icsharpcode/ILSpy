@@ -3086,6 +3086,20 @@ anything else is cast to the arithmetic type of its stack type, preferring `int`
 fits. `System.Index` indices and native integer indices fall back. The share rose from
 59.8 % to 60.6 %.
 
+### 3.114 Operator calls (item 68y6)
+
+A call of a user-defined operator is written as the call (`T.op_Addition(a, b)`), which the
+AST transform `ReplaceMethodCallsWithOperators` later turns into operator syntax; the
+disambiguator checks it against the candidates operator overload resolution would see, not
+a method group: `GetUserDefinedOperatorCandidates` of each operand's type (and of the
+target type of an explicit conversion), which are the operators of that name the type and
+its base types declare, plus their lifted forms, and none for the primitive types. The
+engine enumerates these from its own type system, as the host has no different view of
+them, and adds them as single candidates. Lifted operators are only applicable to nullable
+operands, so the engine leaves them out and falls back for nullable operands. Implicit
+conversion operators, which `HandleImplicitConversion` writes as conversions, fall back too.
+The share rose from 60.6 % to 60.8 %.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |
