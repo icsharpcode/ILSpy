@@ -69,6 +69,7 @@ mod kind {
     pub const IS_PATTERN: u8 = 45;
     pub const DECLARATION_PATTERN: u8 = 46;
     pub const RECURSIVE_PATTERN: u8 = 47;
+    pub const IS_TYPE: u8 = 48;
 }
 
 pub(super) fn write_body(
@@ -215,6 +216,7 @@ fn rr(w: &mut FunctionWriter<'_, '_, '_, '_>, rr: Option<&Rr>) -> Result<(), Str
         Some(Rr::LambdaConversion { .. }) => w.out.u8(18),
         // The host builds the resolve result from the node.
         Some(Rr::ArrayCreate { .. }) => w.out.u8(0),
+        Some(Rr::TypeIs { .. }) => w.out.u8(0),
         Some(Rr::InitializedObject(ty)) => {
             w.out.u8(19);
             w.ty(*ty);
@@ -290,6 +292,7 @@ fn node(w: &mut FunctionWriter<'_, '_, '_, '_>, ast: &Ast, id: AstId) -> Result<
         AstNode::IsPattern { .. } => kind::IS_PATTERN,
         AstNode::DeclarationPattern { .. } => kind::DECLARATION_PATTERN,
         AstNode::RecursivePattern { .. } => kind::RECURSIVE_PATTERN,
+        AstNode::IsType { .. } => kind::IS_TYPE,
     });
     w.out.len(a.il.len());
     for &inst in &a.il {
@@ -560,6 +563,10 @@ fn node(w: &mut FunctionWriter<'_, '_, '_, '_>, ast: &Ast, id: AstId) -> Result<
             node(w, ast, initializer)?;
         }
         AstNode::YieldReturn { expression } => node(w, ast, expression)?,
+        AstNode::IsType { expression, ty } => {
+            w.ty(ty);
+            node(w, ast, expression)?;
+        }
         AstNode::IsPattern { left, pattern } => {
             node(w, ast, left)?;
             node(w, ast, pattern)?;

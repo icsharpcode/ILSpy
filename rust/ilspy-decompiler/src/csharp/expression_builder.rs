@@ -556,10 +556,22 @@ impl Builder<'_, '_, '_, '_> {
         }
         let is_inst = |b: &Self, n: NodeId| matches!(b.f.inst(n), Inst::IsInst { .. });
         let is_null = |b: &Self, n: NodeId| matches!(b.f.inst(n), Inst::LdNull);
-        if (is_inst(self, left) && is_null(self, right))
-            || (is_inst(self, right) && is_null(self, left))
-        {
-            return Err("a type test".to_owned());
+        // `(e as T) == null` is `!(e is T)`.
+        let tested = if is_inst(self, left) && is_null(self, right) {
+            Some(left)
+        } else if is_inst(self, right) && is_null(self, left) {
+            Some(right)
+        } else {
+            None
+        };
+        if let Some(is_inst) = tested {
+            let result = self.is_type(is_inst)?;
+            if kind != ComparisonKind::Equality {
+                return Ok(result);
+            }
+            let e = self.logic_not(result);
+            self.ast.with_il(e.expression, inst);
+            return Ok(e);
         }
         let l = self.translate(left, None)?;
         let r = self.translate(right, None)?;
@@ -1693,6 +1705,53 @@ impl Builder<'_, '_, '_, '_> {
             expression: e,
             ty: boolean,
         })
+    }
+
+    /// `IsType`: `arg is T`, without the boxing cast of a value.
+    fn is_type(&mut self, inst: NodeId) -> Result<TranslatedExpression, Unsupported> {
+        let Inst::IsInst { arg, ty } = self.f.inst(inst).clone() else {
+            unreachable!("an isinst");
+        };
+        let a = self.translate(arg, None)?;
+        let a = self.unwrap_boxing_conversion(a);
+        let boolean = self.ts.known_type(KnownTypeCode::Boolean);
+        let e = self.ast.add(AstNode::IsType {
+            expression: a.expression,
+            ty: ty.ty,
+        });
+        self.ast.with_il(e, inst);
+        self.ast.with_rr(e, Rr::TypeIs { ty: ty.ty });
+        Ok(TranslatedExpression {
+            expression: e,
+            ty: boolean,
+        })
+    }
+
+    /// `UnwrapBoxingConversion`: the value an `object` cast boxes, which `is` and `as` box
+    /// implicitly.
+    fn unwrap_boxing_conversion(&mut self, e: TranslatedExpression) -> TranslatedExpression {
+        let AstNode::Cast {
+            expression: inner, ..
+        } = *self.ast.node(e.expression)
+        else {
+            return e;
+        };
+        if !self.ts.is_known(e.ty, KnownTypeCode::Object)
+            || !matches!(self.rr_of(e.expression), Rr::Conversion { .. })
+        {
+            return e;
+        }
+        let input = self.rr_of(inner);
+        let input_ty = self.rr_type(&input);
+        let input_rr = self.semantic_rr(inner, input_ty);
+        if Conversions::new(self.ts)
+            .explicit(&input_rr, e.ty)
+            .is_boxing()
+        {
+            self.unwrap_child(e.expression, inner)
+        } else {
+            e
+        }
     }
 
     /// `VisitConv` without lifting, overflow checks and native integers: the argument as is

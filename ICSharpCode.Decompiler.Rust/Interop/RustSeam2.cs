@@ -90,6 +90,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		public const byte IsPattern = 45;
 		public const byte DeclarationPattern = 46;
 		public const byte RecursivePattern = 47;
+		public const byte IsType = 48;
 
 		public byte Kind;
 		/// <summary>The instructions the node is annotated with, in order.</summary>
@@ -385,6 +386,12 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					return Annotate(new BreakStatement(), node);
 				case RustBodyNode.Continue:
 					return Annotate(new ContinueStatement(), node);
+				case RustBodyNode.IsType:
+				{
+					var tested = (Expression)Build(node.Children[0], exprBuilder);
+					node.ResolveResult = new TypeIsResolveResult(tested.GetResolveResult(), node.Type!, exprBuilder.compilation.FindType(TypeCode.Boolean));
+					return Annotate(new IsExpression(tested, exprBuilder.ConvertType(node.Type!.TupleUnderlyingTypeOrSelf())), node);
+				}
 				case RustBodyNode.IsPattern:
 					return Annotate(new BinaryOperatorExpression((Expression)Build(node.Children[0], exprBuilder), BinaryOperatorType.IsPattern,
 						(Expression)Build(node.Children[1], exprBuilder)), node);

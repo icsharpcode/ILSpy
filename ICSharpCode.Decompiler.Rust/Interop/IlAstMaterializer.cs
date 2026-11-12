@@ -765,6 +765,10 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					node.Children = children;
 					break;
 				}
+				case RustBodyNode.IsType:
+					node.Type = Type();
+					node.Children = [BodyNode()];
+					break;
 				case RustBodyNode.IsPattern:
 					node.Children = [BodyNode(), BodyNode()];
 					break;

@@ -176,6 +176,8 @@ pub enum AstNode {
     RecursivePattern {
         designator: Option<crate::il::ast::VarId>,
     },
+    /// `IsExpression`: `expression is T`, the tuple type written as its underlying type.
+    IsType { expression: AstId, ty: TypeId },
     /// `LockStatement`.
     Lock { expression: AstId, body: AstId },
     /// `ThrowStatement`, a rethrow without an expression.
@@ -307,6 +309,9 @@ pub enum Rr {
     /// `ArrayCreateResolveResult` of the array type `ty`, over the resolve results of the
     /// dimensions and the elements, which the host collects from the node.
     ArrayCreate { ty: TypeId },
+    /// `TypeIsResolveResult` of a test for the type `ty`, over the tested expression's
+    /// resolve result.
+    TypeIs { ty: TypeId },
     /// `CSharpInvocationResolveResult` without target of the constructor `method` of the type
     /// `ty`, whose arguments are the resolve results of the object creation's arguments.
     ObjectCreation {

@@ -3299,6 +3299,15 @@ has no member of value zero or the other operand is a bitwise and (`(e & E.F) ==
 check of the enum's fields that is not ported, so such comparisons fall back, as do
 comparisons of an enum with another type. The share rose from 67.0 % to 67.6 %.
 
+### 3.127 Type tests (item 68y19)
+
+`TranslateCeq` turns `isinst T(e) != null` into `e is T` and `isinst T(e) == null` into
+`!(e is T)` before it translates the operands, which is also correct where `T` is a value
+type and `e as T` would not compile. `IsType` writes the `IsExpression` with the tuple type's
+underlying type and a `TypeIsResolveResult` the host builds over the tested expression's
+resolve result; `UnwrapBoxingConversion` first drops a boxing cast to `object`, which `is`
+does implicitly. The share rose from 67.6 % to 68.1 %.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |
