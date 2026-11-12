@@ -598,9 +598,11 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					var trueExpression = (Expression)Build(node.Children[1], exprBuilder);
 					var falseExpression = (Expression)Build(node.Children[2], exprBuilder);
 					// Branches of different types: the resolver converts one to the other's type.
-					node.ResolveResult = node.Flag
-						? exprBuilder.resolver.ResolveConditional(condition.GetResolveResult(), trueExpression.GetResolveResult(), falseExpression.GetResolveResult())
-						: new OperatorResolveResult(node.OperatorType!, System.Linq.Expressions.ExpressionType.Conditional,
+					// Branches converted to a target type come with a plain resolve result instead.
+					if (node.Flag)
+						node.ResolveResult = exprBuilder.resolver.ResolveConditional(condition.GetResolveResult(), trueExpression.GetResolveResult(), falseExpression.GetResolveResult());
+					else if (node.OperatorType != null)
+						node.ResolveResult = new OperatorResolveResult(node.OperatorType, System.Linq.Expressions.ExpressionType.Conditional,
 							condition.GetResolveResult(), trueExpression.GetResolveResult(), falseExpression.GetResolveResult());
 					return Annotate(new ConditionalExpression(condition, trueExpression, falseExpression), node);
 				}

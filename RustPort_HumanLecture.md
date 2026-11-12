@@ -3497,6 +3497,21 @@ and, where an operand is converted, lets the host compute the resolve result (3.
 neither converts the managed builder casts the operands to a target type; that, and a value of
 a nullable value type, still fall back. The share rose from 75.4 % to 76.6 %.
 
+### 3.138 Conditional expressions with a target type (item 68y30)
+
+Where `ResolveConditional` reports an error, `VisitIfInstruction` picks a target type and
+converts both branches to it, with a plain resolve result of that type: the best common type
+of the branches where it has the instruction's stack type, else the type hint of that stack
+type, and the other branch's type where one branch is `null`. The engine ports these rules;
+inferring the type from the instruction (`InferType`, `PreferNativeIntegerType`) falls back.
+Most bodies of the group were branches of `string` and `string!`: two types that convert
+both ways but are not equal, so `ResolveConditional` declares the expression invalid and the
+best common type, `string`, makes the conversions disappear again.
+
+The first run threw in the host: its conditional node built an `OperatorResolveResult` from
+the operator type of every non-resolved node, which a plain resolve result does not carry;
+the node now keeps the plain resolve result. The share rose from 76.6 % to 77.8 %.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

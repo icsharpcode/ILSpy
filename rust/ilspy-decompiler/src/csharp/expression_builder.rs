@@ -949,8 +949,27 @@ impl Builder<'_, '_, '_, '_> {
         let condition = self.unwrap_implicit_bool_conversion(condition, false);
         let true_branch = self.adjust_constant_expression_to_type(true_branch, false_branch.ty)?;
         let false_branch = self.adjust_constant_expression_to_type(false_branch, true_branch.ty)?;
-        let ty = self.conditional_type(&true_branch, &false_branch)?;
-        let resolve = ty != true_branch.ty || ty != false_branch.ty;
+        let (ty, true_branch, false_branch, rr) =
+            match self.conditional_type(&true_branch, &false_branch)? {
+                Some(ty) => {
+                    let resolve = ty != true_branch.ty || ty != false_branch.ty;
+                    (
+                        ty,
+                        true_branch,
+                        false_branch,
+                        (resolve, Rr::Operator { ty }),
+                    )
+                }
+                // `rr.IsError`: both branches are converted to a target type.
+                None => {
+                    let ty =
+                        self.conditional_target_type(inst, &true_branch, &false_branch, type_hint)?;
+                    let t = self.convert_to(true_branch, ty, false)?;
+                    let f = self.convert_to(false_branch, ty, false)?;
+                    (ty, t, f, (false, Rr::Plain(ty)))
+                }
+            };
+        let (resolve, rr) = rr;
         if matches!(self.ts.kind(ty), TypeKind::ByReference) {
             return Err("a ref conditional expression".to_owned());
         }
@@ -968,8 +987,41 @@ impl Builder<'_, '_, '_, '_> {
             resolve,
         });
         self.ast.with_il(e, inst);
-        self.ast.with_rr(e, Rr::Operator { ty });
+        self.ast.with_rr(e, rr);
         Ok(TranslatedExpression { expression: e, ty })
+    }
+
+    /// The target type `VisitIfInstruction` converts both branches to where
+    /// `ResolveConditional` reports an error: their best common type where the instruction's
+    /// result has its stack type, else the type hint of that stack type; for a typeless branch
+    /// the other branch's type. Inferring the type from the instruction is not translated.
+    fn conditional_target_type(
+        &mut self,
+        inst: NodeId,
+        t: &TranslatedExpression,
+        f: &TranslatedExpression,
+        type_hint: Option<TypeId>,
+    ) -> Result<TypeId, Unsupported> {
+        let null = |b: &Self, ty: TypeId| b.ts.kind(ty) == TypeKind::Null;
+        if null(self, t.ty) || null(self, f.ty) || t.ty == f.ty {
+            return Ok(if null(self, t.ty) { f.ty } else { t.ty });
+        }
+        let result = self.f.result_type(self.ts, inst);
+        let t_rr = self.semantic_rr(t.expression, t.ty);
+        let f_rr = self.semantic_rr(f.expression, f.ty);
+        let mut conversions = Conversions::new(self.ts);
+        let (common, success) =
+            crate::semantics::TypeInference::new(&mut conversions).best_common_type(&[t_rr, f_rr]);
+        if success && self.ts.stack_type(common) == result {
+            return Ok(common);
+        }
+        if let Some(hint) = type_hint
+            && self.ts.kind(hint) != TypeKind::Unknown
+            && self.ts.stack_type(hint) == result
+        {
+            return Ok(hint);
+        }
+        Err("a conditional expression of a type inferred from its instruction".to_owned())
     }
 
     /// The type `ResolveConditional` gives branches of these types where it resolves without
@@ -981,10 +1033,9 @@ impl Builder<'_, '_, '_, '_> {
         &mut self,
         t: &TranslatedExpression,
         f: &TranslatedExpression,
-    ) -> Result<TypeId, Unsupported> {
-        let unsupported = || Err("a conditional expression that needs conversions".to_owned());
+    ) -> Result<Option<TypeId>, Unsupported> {
         if self.ts.kind(t.ty) == TypeKind::Dynamic || self.ts.kind(f.ty) == TypeKind::Dynamic {
-            return unsupported();
+            return Err("a dynamic conditional expression".to_owned());
         }
         let has_type =
             |b: &Self, ty: TypeId| !matches!(b.ts.kind(ty), TypeKind::None | TypeKind::Null);
@@ -1003,16 +1054,16 @@ impl Builder<'_, '_, '_, '_> {
                     c1.is_valid() && ((*c1 != constant && *c2 == constant) || !c2.is_valid())
                 };
                 if better(&t2f, &f2t) {
-                    Ok(f.ty)
+                    Ok(Some(f.ty))
                 } else if better(&f2t, &t2f) || t.ty == f.ty {
-                    Ok(t.ty)
+                    Ok(Some(t.ty))
                 } else {
-                    unsupported()
+                    Ok(None)
                 }
             }
-            (true, false) if conversions.implicit(&f_rr, t.ty).is_valid() => Ok(t.ty),
-            (false, true) if conversions.implicit(&t_rr, f.ty).is_valid() => Ok(f.ty),
-            _ => unsupported(),
+            (true, false) if conversions.implicit(&f_rr, t.ty).is_valid() => Ok(Some(t.ty)),
+            (false, true) if conversions.implicit(&t_rr, f.ty).is_valid() => Ok(Some(f.ty)),
+            _ => Ok(None),
         }
     }
 
