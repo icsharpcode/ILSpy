@@ -1061,6 +1061,8 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		/// </summary>
 		static string CleanUpName(string text, bool separateAtDots, bool treatAsFileName, bool treatAsPath)
 		{
+			// Normalize compatibility characters before checking names that filesystems may treat as equivalent.
+			text = text.Normalize(NormalizationForm.FormKC);
 			string? extension = null;
 			int currentSegmentLength = 0;
 			// Extract extension from the end of the name, if valid
