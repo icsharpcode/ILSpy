@@ -3275,6 +3275,19 @@ The engine now reads such a cast as the user-defined conversion it is: where it 
 dropped (which keeps an `ImplicitConversionAnnotation`) the body falls back, else the cast
 stays. The share rose from 65.7 % to 66.3 %.
 
+### 3.125 `is` patterns (item 68y17)
+
+`VisitMatchInstruction` writes a `match` instruction as `left is pattern`, where
+`TranslatePattern` makes the pattern: `{ } v` for a non-null check without a type test, a
+declaration (`T v`, or `var v`) where the matched variable is used or no type is tested,
+else the type itself (`x is T`). The designation carries the variable's resolve result.
+A boxing cast of the tested value is dropped unless the value is of a value type and the
+pattern's variable is not, as `PatternMatching.GenericValueTypePatternStringRequiresCastToObject`
+pins. The engine computes whether the cast is boxing with its ported conversions. Recursive
+and positional patterns (sub-patterns, `Deconstruct`, tuples) fall back, and so do the
+negated, relational and constant patterns of sub-patterns. The share rose from 66.3 % to
+67.0 %.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

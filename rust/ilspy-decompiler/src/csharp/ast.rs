@@ -165,6 +165,17 @@ pub enum AstNode {
     /// `UnaryOperatorExpression` of `NullConditional` (`expression?`), or of
     /// `NullConditionalRewrap` (the end of a `?.` chain) when `rewrap`.
     NullConditional { expression: AstId, rewrap: bool },
+    /// `BinaryOperatorExpression` of `IsPattern`: `left is pattern`.
+    IsPattern { left: AstId, pattern: AstId },
+    /// `DeclarationExpression` of a pattern: the variable's type (or `var`) and its name.
+    DeclarationPattern {
+        variable: crate::il::ast::VarId,
+        var_keyword: bool,
+    },
+    /// `RecursivePatternExpression` without type and sub-patterns: `{ }`, with a designation.
+    RecursivePattern {
+        designator: Option<crate::il::ast::VarId>,
+    },
     /// `LockStatement`.
     Lock { expression: AstId, body: AstId },
     /// `ThrowStatement`, a rethrow without an expression.

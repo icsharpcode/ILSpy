@@ -765,6 +765,16 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					node.Children = children;
 					break;
 				}
+				case RustBodyNode.IsPattern:
+					node.Children = [BodyNode(), BodyNode()];
+					break;
+				case RustBodyNode.DeclarationPattern:
+					node.Value = Variable();
+					node.Flag = Bool();
+					break;
+				case RustBodyNode.RecursivePattern:
+					node.Value = Bool() ? Variable() : null;
+					break;
 				case RustBodyNode.NullConditional:
 					node.Flag = Bool();
 					node.Children = [BodyNode()];

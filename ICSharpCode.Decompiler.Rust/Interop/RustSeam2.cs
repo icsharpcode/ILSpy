@@ -87,6 +87,9 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		public const byte YieldReturn = 42;
 		public const byte YieldBreak = 43;
 		public const byte NullConditional = 44;
+		public const byte IsPattern = 45;
+		public const byte DeclarationPattern = 46;
+		public const byte RecursivePattern = 47;
 
 		public byte Kind;
 		/// <summary>The instructions the node is annotated with, in order.</summary>
@@ -382,6 +385,24 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					return Annotate(new BreakStatement(), node);
 				case RustBodyNode.Continue:
 					return Annotate(new ContinueStatement(), node);
+				case RustBodyNode.IsPattern:
+					return Annotate(new BinaryOperatorExpression((Expression)Build(node.Children[0], exprBuilder), BinaryOperatorType.IsPattern,
+						(Expression)Build(node.Children[1], exprBuilder)), node);
+				case RustBodyNode.DeclarationPattern:
+				{
+					var variable = (ILVariable)node.Value!;
+					return Annotate(new DeclarationExpression {
+						Type = node.Flag ? new SimpleType("var") : exprBuilder.ConvertType(variable.Type),
+						Designation = Designation(variable)
+					}, node);
+				}
+				case RustBodyNode.RecursivePattern:
+				{
+					var pattern = new RecursivePatternExpression();
+					if (node.Value is ILVariable variable)
+						pattern.Designation = Designation(variable);
+					return Annotate(pattern, node);
+				}
 				case RustBodyNode.NullConditional:
 					return Annotate(new UnaryOperatorExpression(node.Flag ? UnaryOperatorType.NullConditionalRewrap : UnaryOperatorType.NullConditional,
 						(Expression)Build(node.Children[0], exprBuilder)), node);
@@ -553,6 +574,14 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		}
 
 		/// <summary>The node's instructions and resolve result, in the order the managed builder adds them.</summary>
+		/// <summary>The designation of a pattern variable, annotated with its resolve result.</summary>
+		static SingleVariableDesignation Designation(ILVariable variable)
+		{
+			var designation = new SingleVariableDesignation { Identifier = variable.Name! };
+			designation.AddAnnotation(new ILVariableResolveResult(variable));
+			return designation;
+		}
+
 		/// <summary>`ExpressionBuilder.MakeParameters` for parameters without anonymous types.</summary>
 		static List<ParameterDeclaration> MakeParameters(ILFunction function, ExpressionBuilder exprBuilder)
 		{

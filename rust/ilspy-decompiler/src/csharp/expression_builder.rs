@@ -343,6 +343,7 @@ impl Builder<'_, '_, '_, '_> {
                 right,
             } => self.comp(inst, kind, lifting, sign, input, left, right),
             Inst::Function { .. } => self.translate_function(inst),
+            Inst::Match { .. } => self.match_instruction(inst),
             // `VisitNullableRewrap`: the value of a `?.` chain, nullable where it is a value type.
             Inst::NullableRewrap { arg, .. } => {
                 let a = self.translate(arg, None)?;
@@ -1604,6 +1605,78 @@ impl Builder<'_, '_, '_, '_> {
         Ok(TranslatedExpression {
             expression: e,
             ty: array_type,
+        })
+    }
+
+    /// `VisitMatchInstruction`: `left is pattern` for a type pattern, a declaration pattern or
+    /// `{ }`, without sub-patterns; a boxing cast of the tested value is dropped where the
+    /// managed builder drops it.
+    fn match_instruction(&mut self, inst: NodeId) -> Result<TranslatedExpression, Unsupported> {
+        let Inst::Match {
+            variable,
+            tested_operand,
+            sub_patterns,
+            is_deconstruct_call,
+            is_deconstruct_tuple,
+            check_type,
+            check_not_null,
+            ..
+        } = self.f.inst(inst).clone()
+        else {
+            unreachable!("a match");
+        };
+        if is_deconstruct_call || is_deconstruct_tuple || !sub_patterns.is_empty() {
+            return Err("a recursive or positional pattern".to_owned());
+        }
+        let mut left = self.translate(tested_operand, None)?;
+        if let AstNode::Cast {
+            expression: inner, ..
+        } = *self.ast.node(left.expression)
+            && matches!(self.rr_of(left.expression), Rr::Conversion { .. })
+        {
+            let input = self.rr_of(inner);
+            let input_ty = self.rr_type(&input);
+            let input_rr = self.semantic_rr(inner, input_ty);
+            let boxing = Conversions::new(self.ts)
+                .explicit(&input_rr, left.ty)
+                .is_boxing();
+            let variable_type = self.f.var(variable).ty;
+            if boxing
+                && (self.ts.is_reference_type(input_ty) != Some(false)
+                    || self.ts.is_reference_type(variable_type) == Some(false))
+            {
+                left = self.unwrap_child(left.expression, inner);
+            }
+        }
+        let v = self.f.var(variable);
+        let has_designator = v.load_count() + v.address_count() > 0;
+        let variable_type = v.ty;
+        let is_var = !check_type && !check_not_null;
+        let pattern = if check_not_null && !check_type {
+            // `{ } designation`
+            self.ast.add(AstNode::RecursivePattern {
+                designator: has_designator.then_some(variable),
+            })
+        } else if has_designator || !check_type {
+            debug_assert!(check_type || is_var);
+            self.ast.add(AstNode::DeclarationPattern {
+                variable,
+                var_keyword: !check_type,
+            })
+        } else {
+            self.ast.add(AstNode::TypeReference { ty: variable_type })
+        };
+        self.ast.with_il(pattern, inst);
+        let boolean = self.ts.known_type(KnownTypeCode::Boolean);
+        let e = self.ast.add(AstNode::IsPattern {
+            left: left.expression,
+            pattern,
+        });
+        self.ast.with_rr(e, Rr::Plain(boolean));
+        self.ast.with_il(e, inst);
+        Ok(TranslatedExpression {
+            expression: e,
+            ty: boolean,
         })
     }
 

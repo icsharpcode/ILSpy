@@ -66,6 +66,9 @@ mod kind {
     pub const YIELD_RETURN: u8 = 42;
     pub const YIELD_BREAK: u8 = 43;
     pub const NULL_CONDITIONAL: u8 = 44;
+    pub const IS_PATTERN: u8 = 45;
+    pub const DECLARATION_PATTERN: u8 = 46;
+    pub const RECURSIVE_PATTERN: u8 = 47;
 }
 
 pub(super) fn write_body(
@@ -284,6 +287,9 @@ fn node(w: &mut FunctionWriter<'_, '_, '_, '_>, ast: &Ast, id: AstId) -> Result<
         AstNode::YieldReturn { .. } => kind::YIELD_RETURN,
         AstNode::YieldBreak => kind::YIELD_BREAK,
         AstNode::NullConditional { .. } => kind::NULL_CONDITIONAL,
+        AstNode::IsPattern { .. } => kind::IS_PATTERN,
+        AstNode::DeclarationPattern { .. } => kind::DECLARATION_PATTERN,
+        AstNode::RecursivePattern { .. } => kind::RECURSIVE_PATTERN,
     });
     w.out.len(a.il.len());
     for &inst in &a.il {
@@ -554,6 +560,25 @@ fn node(w: &mut FunctionWriter<'_, '_, '_, '_>, ast: &Ast, id: AstId) -> Result<
             node(w, ast, initializer)?;
         }
         AstNode::YieldReturn { expression } => node(w, ast, expression)?,
+        AstNode::IsPattern { left, pattern } => {
+            node(w, ast, left)?;
+            node(w, ast, pattern)?;
+        }
+        AstNode::DeclarationPattern {
+            variable,
+            var_keyword,
+        } => {
+            let i = var_index(w, variable)?;
+            w.out.len(i);
+            w.out.bool(var_keyword);
+        }
+        AstNode::RecursivePattern { designator } => {
+            w.out.bool(designator.is_some());
+            if let Some(v) = designator {
+                let i = var_index(w, v)?;
+                w.out.len(i);
+            }
+        }
         AstNode::NullConditional { expression, rewrap } => {
             w.out.bool(rewrap);
             node(w, ast, expression)?;
