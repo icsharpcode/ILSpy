@@ -32,12 +32,15 @@
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.ThemeDictionaries>
-                <!-- Light / Dark variant brushes for the surfaces ILSpy paints directly
-                     (the editor canvas and the toolbar chrome). The Simple theme itself
-                     ships no Dark resource dictionary, so chrome painted by Simple (menu,
-                     scrollbars, tree, status bar) stays Light regardless of the user's
-                     theme choice. Intentional, partial dark mode targeting only the
-                     surfaces a reader spends most time looking at. -->
+                <!-- Light / Dark values for the surfaces ILSpy paints itself: the editor
+                     canvas, the toolbar, the dock chrome, menus, and the dialog inputs. The
+                     Simple theme does ship a Dark variant: Base.xaml keeps ThemeBackgroundColor,
+                     ThemeForegroundColor and the ThemeControl*Color family inside
+                     ThemeDictionaries. A few keys it also relies on are declared outside those
+                     dictionaries and never switch (ThemeForegroundLowColor #FF808080, the
+                     ThemeAccentColor family #CC/99/66/33119EDA, HighlightForegroundColor), so
+                     any surface painted from those keys needs an ILSpy.* override to stay
+                     readable in both variants. -->
                 <ResourceDictionary x:Key="Light">
                     <SolidColorBrush x:Key="ILSpy.EditorBackground" Color="#FFFFE1" />
                     <!-- Translucent selection so selected text keeps its syntax colours (the
