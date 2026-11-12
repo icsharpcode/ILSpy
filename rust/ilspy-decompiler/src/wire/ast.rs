@@ -73,6 +73,7 @@ mod kind {
     pub const DEFAULT_VALUE: u8 = 49;
     pub const FOREACH: u8 = 50;
     pub const DELEGATE_CREATE: u8 = 51;
+    pub const AWAIT: u8 = 52;
 }
 
 pub(super) fn write_body(
@@ -323,6 +324,7 @@ fn node(w: &mut FunctionWriter<'_, '_, '_, '_>, ast: &Ast, id: AstId) -> Result<
         AstNode::DefaultValue { .. } => kind::DEFAULT_VALUE,
         AstNode::Foreach { .. } => kind::FOREACH,
         AstNode::DelegateCreate { .. } => kind::DELEGATE_CREATE,
+        AstNode::Await { .. } => kind::AWAIT,
     });
     w.out.len(a.il.len());
     for &inst in &a.il {
@@ -378,7 +380,8 @@ fn node(w: &mut FunctionWriter<'_, '_, '_, '_>, ast: &Ast, id: AstId) -> Result<
         AstNode::TypeReference { ty } | AstNode::TypeOf { ty } => w.ty(ty),
         AstNode::RefDirection { expression }
         | AstNode::ExpressionStatement { expression }
-        | AstNode::LogicNot { expression } => {
+        | AstNode::LogicNot { expression }
+        | AstNode::Await { expression } => {
             node(w, ast, expression)?;
         }
         AstNode::Assignment { left, right } => {

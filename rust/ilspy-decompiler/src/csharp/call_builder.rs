@@ -1309,7 +1309,10 @@ impl Builder<'_, '_, '_, '_> {
                     // A `this` or `base` target, which the managed probe resolves without the
                     // cast (a constructor initializer), is not translated either.
                     if self.ts.is_reference_type(target.ty) != Some(true)
-                        || matches!(self.ast.node(target.expression), AstNode::This | AstNode::Base)
+                        || matches!(
+                            self.ast.node(target.expression),
+                            AstNode::This | AstNode::Base
+                        )
                     {
                         return Err("a reference that needs a cast of its target".to_owned());
                     }
@@ -1421,6 +1424,95 @@ impl Builder<'_, '_, '_, '_> {
             TypeData::TypeParam { .. } => false,
             _ => true,
         }
+    }
+
+    /// `VisitAwait`: `await value`, of the type `GetResult` returns. The operand is cast to the
+    /// type declaring `GetAwaiter` where `Disambiguator.CheckSimpleCall` does not find it from
+    /// the operand. A dynamic await, an extension `GetAwaiter`, a constrained operand and an
+    /// operand that already is a cast (a box the managed builder looks through) are not
+    /// translated.
+    pub(crate) fn translate_await(
+        &mut self,
+        inst: NodeId,
+        value: NodeId,
+        get_awaiter: Option<crate::il::ast::AwaiterMethod>,
+        get_result: Option<crate::il::ast::AwaiterMethod>,
+        get_awaiter_callvirt: bool,
+    ) -> Result<TranslatedExpression, Unsupported> {
+        use crate::il::ast::AwaiterMethod as Am;
+        let (Some(Am::Method(awaiter)), Some(Am::Method(result))) = (&get_awaiter, &get_result)
+        else {
+            return Err("a dynamic await".to_owned());
+        };
+        if matches!(self.f.inst(value), Inst::LdObjIfRef { .. }) {
+            return Err("an await of a constrained operand".to_owned());
+        }
+        let awaiter = Method::from_resolved(self.ts, &awaiter.method)
+            .ok_or("an await of an unresolved method")?;
+        let result = Method::from_resolved(self.ts, &result.method)
+            .ok_or("an await of an unresolved method")?;
+        if awaiter.is_static {
+            return Err("an await of an extension GetAwaiter".to_owned());
+        }
+        let expected = awaiter.declaring.ok_or("a method without declaring type")?;
+        let mut operand = self.translate(value, Some(expected))?;
+        if let AstNode::RefDirection { expression } = *self.ast.node(operand.expression) {
+            operand = self.unwrap_child(operand.expression, expression);
+        }
+        if matches!(self.ast.node(operand.expression), AstNode::Cast { .. }) {
+            return Err("an await of a cast operand".to_owned());
+        }
+        let resolver = self
+            .resolver
+            .ok_or("a member reference without the host's resolver")?;
+        let lookup_target = match self.rr_of(operand.expression) {
+            Rr::This {
+                ty,
+                causes_non_virtual_invocation,
+                ..
+            } => LookupTarget::This {
+                ty,
+                causes_non_virtual_invocation,
+            },
+            Rr::Type(ty) => LookupTarget::Type(ty),
+            _ => LookupTarget::Expression(operand.ty),
+        };
+        let list = ArgumentList {
+            arguments: Vec::new(),
+            parameter_names: Vec::new(),
+            is_primitive_value: Vec::new(),
+            add_names_to_primitive_values: false,
+            first_optional: -2,
+            ref_kinds: Vec::new(),
+            use_implicitly_typed_out: false,
+        };
+        let op = if get_awaiter_callvirt {
+            CallOp::CallVirt
+        } else {
+            CallOp::Call
+        };
+        let errors = self.probe_call(
+            resolver,
+            &awaiter,
+            op,
+            Some(lookup_target),
+            &operand,
+            &list,
+            &[],
+        )?;
+        self.found_override = None;
+        if errors != OverloadResolutionErrors::NONE {
+            operand = self.convert_to(operand, expected, false)?;
+        }
+        let e = self.ast.add(AstNode::Await {
+            expression: operand.expression,
+        });
+        self.ast.with_il(e, inst);
+        self.ast.with_rr(e, Rr::Plain(result.return_type));
+        Ok(TranslatedExpression {
+            expression: e,
+            ty: result.return_type,
+        })
     }
 
     /// `Disambiguator.ProbeCall`: the overload resolution of the current spelling, over the

@@ -734,6 +734,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					break;
 				}
 				case RustBodyNode.LogicNot:
+				case RustBodyNode.Await:
 					node.Children = [BodyNode()];
 					break;
 				case RustBodyNode.Throw:

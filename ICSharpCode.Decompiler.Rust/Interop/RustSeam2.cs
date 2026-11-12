@@ -94,6 +94,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		public const byte DefaultValue = 49;
 		public const byte Foreach = 50;
 		public const byte DelegateCreate = 51;
+		public const byte Await = 52;
 
 		public byte Kind;
 		/// <summary>The instructions the node is annotated with, in order.</summary>
@@ -358,6 +359,8 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					var falseStatement = node.Children.Length == 3 ? (Statement)Build(node.Children[2], exprBuilder) : null;
 					return Annotate(new IfElseStatement(condition, trueStatement, falseStatement), node);
 				}
+				case RustBodyNode.Await:
+					return Annotate(new UnaryOperatorExpression(UnaryOperatorType.Await, (Expression)Build(node.Children[0], exprBuilder)), node);
 				case RustBodyNode.LogicNot:
 				{
 					var operand = (Expression)Build(node.Children[0], exprBuilder);

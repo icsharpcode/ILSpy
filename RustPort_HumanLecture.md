@@ -3590,6 +3590,19 @@ that also caught tuples and types it could not resolve. It now uses the exact
 parameter type explicitly as the managed builder does. The share rose from 80.4 % to
 80.9 %.
 
+### 3.144 Async functions (item 68y36)
+
+The async state machine is decompiled by the IL transforms the engine already ran; what was
+missing is the C# of the result. An async function's return statements return the result
+of its task (`currentResultType` is `AsyncReturnType`), and `VisitAwait` writes `await x`
+with the resolve result of the type `GetResult` returns. The operand is translated with the
+type declaring `GetAwaiter` as hint and cast to it where `Disambiguator.CheckSimpleCall`
+does not find that `GetAwaiter` from the operand; the engine runs that check as its call
+probe with an empty argument list. A dynamic await, an extension `GetAwaiter` (which the
+host's member lookup does not see), a constrained operand and an operand that already is a
+cast (a box the managed builder looks through) fall back. Async lambdas still fall back as
+well. The share rose from 80.9 % to 81.3 %.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

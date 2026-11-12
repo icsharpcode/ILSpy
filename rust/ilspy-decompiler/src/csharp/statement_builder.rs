@@ -25,9 +25,6 @@ pub fn convert_body(
     if read.kind != FunctionKind::TopLevelFunction {
         return Err("a nested function".to_owned());
     }
-    if read.async_return_type.is_some() {
-        return Err("an async function".to_owned());
-    }
     if !f.local_functions.is_empty() {
         return Err("a function with local functions".to_owned());
     }
@@ -47,7 +44,8 @@ pub fn convert_body(
         ts,
         ast: Ast::default(),
         return_container: body,
-        result_type: method.ret,
+        // `currentResultType`: an async function returns the result of its task.
+        result_type: read.async_return_type.unwrap_or(method.ret),
         settings,
         resolver,
         current_type,

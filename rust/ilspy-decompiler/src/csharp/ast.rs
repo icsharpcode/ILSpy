@@ -61,6 +61,8 @@ pub enum AstNode {
     },
     /// `UnaryOperatorExpression` with `UnaryOperatorType.Not`.
     LogicNot { expression: AstId },
+    /// `UnaryOperatorExpression` with `UnaryOperatorType.Await`.
+    Await { expression: AstId },
     /// `ConditionalExpression`: `condition ? true_expression : false_expression`.
     Conditional {
         condition: AstId,

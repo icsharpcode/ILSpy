@@ -417,6 +417,12 @@ impl Builder<'_, '_, '_, '_> {
                 is_lifted,
                 hint,
             ),
+            Inst::Await {
+                value,
+                get_awaiter,
+                get_result,
+                get_awaiter_callvirt,
+            } => self.translate_await(inst, value, get_awaiter, get_result, get_awaiter_callvirt),
             other => Err(format!("the instruction {}", super::inst_name(&other))),
         }
     }
