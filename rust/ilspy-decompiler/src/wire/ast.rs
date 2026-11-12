@@ -508,7 +508,9 @@ fn node(w: &mut FunctionWriter<'_, '_, '_, '_>, ast: &Ast, id: AstId) -> Result<
             condition,
             true_expression,
             false_expression,
+            resolve,
         } => {
+            w.out.bool(resolve);
             node(w, ast, condition)?;
             node(w, ast, true_expression)?;
             node(w, ast, false_expression)?;

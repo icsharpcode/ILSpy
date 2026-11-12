@@ -3253,6 +3253,28 @@ by-reference input whose result is a value), `VisitNullableRewrap` as
 the iterators of the previous step no longer rejected, this was the largest group (47).
 The share rose from 64.9 % to 65.7 %.
 
+### 3.124 Converting conditional expressions (item 68y16)
+
+`VisitIfInstruction` leaves the branches of `c ? a : b` as they are when
+`ResolveConditional` succeeds; only the resolve result knows that one branch is converted to
+the other's type. The engine ports the type rule of that resolution (C# 4.0 spec 7.14): with
+both branches typed, the result is the type the other branch converts to implicitly where
+the conversion back does not exist (an implicit constant expression conversion counting
+less than any other), or their common type; with one branch typeless (`null`), the typed
+branch's type where the other converts to it. Where the rule finds no type, the managed
+builder computes a target type and converts both branches; that path, and `dynamic`
+branches, fall back. The host computes the resolve result itself with `ResolveConditional`,
+so the converted branch's `ConversionResolveResult` is exactly the resolver's.
+
+The gates found a difference in a body the new rule reached: `Attribute((XName?)name)` where
+the managed builder wrote `Attribute(name)`. `ConvertTo` takes the conversion of a cast from
+its resolve result, which for an implicit conversion operator (3.115) is the user-defined
+conversion; `CastCanBeMadeImplicit` drops it where the target type is identical. The engine
+recomputed the conversion instead, and for the nullable-annotated `XName?` it found none.
+The engine now reads such a cast as the user-defined conversion it is: where it would be
+dropped (which keeps an `ImplicitConversionAnnotation`) the body falls back, else the cast
+stays. The share rose from 65.7 % to 66.3 %.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

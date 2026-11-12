@@ -93,11 +93,23 @@ impl Builder<'_, '_, '_, '_> {
             } else {
                 Conversions::new(self.ts).explicit(&input_rr, ty)
             };
-            if conversion.is_user_defined() {
+            // The cast of an implicit conversion operator carries that user-defined conversion,
+            // which `CastCanBeMadeImplicit` drops where the target type is identical.
+            let operator = matches!(self.rr_of(e.expression), Rr::ImplicitConversion { .. });
+            let implicit = if operator {
+                Conversions::new(self.ts).identity(ty, target)
+            } else if conversion.is_user_defined() {
+                true
+            } else {
+                self.cast_can_be_made_implicit(&conversion, input_ty, ty, target)?
+            };
+            if (operator || conversion.is_user_defined())
+                && implicit
+                && (!same || allow_implicit_conversion)
+            {
                 // An unwrapped user-defined conversion keeps an `ImplicitConversionAnnotation`.
                 return Err("a conversion of a user-defined cast".to_owned());
             }
-            let implicit = self.cast_can_be_made_implicit(&conversion, input_ty, ty, target)?;
             if same {
                 return Ok(if allow_implicit_conversion && implicit {
                     self.unwrap_child(e.expression, inner)

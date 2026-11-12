@@ -66,6 +66,9 @@ pub enum AstNode {
         condition: AstId,
         true_expression: AstId,
         false_expression: AstId,
+        /// Whether the host resolves it with `ResolveConditional` (branches of different
+        /// types, one converted to the other's), rather than as an operator over the branches.
+        resolve: bool,
     },
     /// `IdentifierExpression` with type arguments, which the host builds with `ConvertType`.
     GenericIdentifier {

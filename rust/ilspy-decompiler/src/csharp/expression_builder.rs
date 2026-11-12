@@ -906,16 +906,10 @@ impl Builder<'_, '_, '_, '_> {
         let condition = self.unwrap_implicit_bool_conversion(condition, false);
         let true_branch = self.adjust_constant_expression_to_type(true_branch, false_branch.ty)?;
         let false_branch = self.adjust_constant_expression_to_type(false_branch, true_branch.ty)?;
-        // `ResolveConditional` with branches of the same type: no conversion, the type is
-        // theirs.
-        let ty = true_branch.ty;
-        let has_type =
-            |b: &Self, t: TypeId| !matches!(b.ts.kind(t), TypeKind::None | TypeKind::Null);
-        if ty != false_branch.ty
-            || !has_type(self, ty)
-            || matches!(self.ts.kind(ty), TypeKind::Dynamic | TypeKind::ByReference)
-        {
-            return Err("a conditional expression that needs conversions".to_owned());
+        let ty = self.conditional_type(&true_branch, &false_branch)?;
+        let resolve = ty != true_branch.ty || ty != false_branch.ty;
+        if matches!(self.ts.kind(ty), TypeKind::ByReference) {
+            return Err("a ref conditional expression".to_owned());
         }
         let constant = |b: &Self, e: AstId| matches!(b.rr_of(e), Rr::Constant { .. });
         if constant(self, condition.expression)
@@ -928,10 +922,55 @@ impl Builder<'_, '_, '_, '_> {
             condition: condition.expression,
             true_expression: true_branch.expression,
             false_expression: false_branch.expression,
+            resolve,
         });
         self.ast.with_il(e, inst);
         self.ast.with_rr(e, Rr::Operator { ty });
         Ok(TranslatedExpression { expression: e, ty })
+    }
+
+    /// The type `ResolveConditional` gives branches of these types where it resolves without
+    /// error (C# 4.0 spec 7.14): the other branch's type where one converts implicitly to it and
+    /// not back (a constant expression conversion counting less), their type where they agree,
+    /// or the typed branch's where the other is typeless and converts to it. Other cases and
+    /// `dynamic` are not translated.
+    fn conditional_type(
+        &mut self,
+        t: &TranslatedExpression,
+        f: &TranslatedExpression,
+    ) -> Result<TypeId, Unsupported> {
+        let unsupported = || Err("a conditional expression that needs conversions".to_owned());
+        if self.ts.kind(t.ty) == TypeKind::Dynamic || self.ts.kind(f.ty) == TypeKind::Dynamic {
+            return unsupported();
+        }
+        let has_type =
+            |b: &Self, ty: TypeId| !matches!(b.ts.kind(ty), TypeKind::None | TypeKind::Null);
+        let t_rr = self.semantic_rr(t.expression, t.ty);
+        let f_rr = self.semantic_rr(f.expression, f.ty);
+        let typed = (has_type(self, t.ty), has_type(self, f.ty));
+        let mut conversions = Conversions::new(self.ts);
+        match typed {
+            (true, true) => {
+                let t2f = conversions.implicit(&t_rr, f.ty);
+                let f2t = conversions.implicit(&f_rr, t.ty);
+                // `IsBetterConditionalConversion`
+                let better = |c1: &crate::semantics::Conversion,
+                              c2: &crate::semantics::Conversion| {
+                    let constant = crate::semantics::Conversion::IMPLICIT_CONSTANT_EXPRESSION;
+                    c1.is_valid() && ((*c1 != constant && *c2 == constant) || !c2.is_valid())
+                };
+                if better(&t2f, &f2t) {
+                    Ok(f.ty)
+                } else if better(&f2t, &t2f) || t.ty == f.ty {
+                    Ok(t.ty)
+                } else {
+                    unsupported()
+                }
+            }
+            (true, false) if conversions.implicit(&f_rr, t.ty).is_valid() => Ok(t.ty),
+            (false, true) if conversions.implicit(&t_rr, f.ty).is_valid() => Ok(f.ty),
+            _ => unsupported(),
+        }
     }
 
     /// `IfInstruction.IsInConditionSlot`: whether the value is only used as a condition.
