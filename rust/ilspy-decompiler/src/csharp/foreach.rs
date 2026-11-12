@@ -16,6 +16,8 @@ use super::{Builder, TranslatedExpression, Unsupported};
 
 /// `MethodSemanticsAttributes.Getter`.
 const ACCESSOR_GETTER: u16 = 0x02;
+/// `MethodSemanticsAttributes.Setter`.
+const ACCESSOR_SETTER: u16 = 0x01;
 
 impl Builder<'_, '_, '_, '_> {
     /// `TransformToForeach(UsingInstruction, Expression)`: the `foreach` statement for the
@@ -350,24 +352,180 @@ impl Builder<'_, '_, '_, '_> {
         {
             return Err("a foreach that introduces a variable".to_owned());
         }
-        // `VariableIsOnlyUsedInBlock`
-        let variable = self.f.var(var);
-        if !variable.address_instructions.is_empty() {
-            return Err("a foreach variable whose address is taken".to_owned());
-        }
-        let loads_inside = variable
-            .load_instructions
-            .clone()
-            .into_iter()
-            .all(|l| self.is_descendant_of(l, using_container));
-        let variable = self.f.var(var);
-        let single_store = variable.store_instructions.iter().all(|&s| s == first);
-        let capture_ok =
-            variable.capture_scope.is_none() || variable.capture_scope == Some(loop_container);
-        if !(loads_inside && single_store && capture_ok) {
+        if !self.variable_is_only_used_in_block(var, first, using_container, loop_container) {
             return Err("a foreach that introduces a variable".to_owned());
         }
         Ok(Some((getter, var, ty)))
+    }
+
+    /// `VariableIsOnlyUsedInBlock`: `var` is loaded only inside `using_container`, its
+    /// address is only taken there for a call on it or a field load, `store` is its only
+    /// store, and it is captured by the loop at most.
+    fn variable_is_only_used_in_block(
+        &mut self,
+        var: VarId,
+        store: NodeId,
+        using_container: NodeId,
+        loop_container: NodeId,
+    ) -> bool {
+        let variable = self.f.var(var).clone();
+        if variable
+            .load_instructions
+            .iter()
+            .any(|&l| !self.is_descendant_of(l, using_container))
+        {
+            return false;
+        }
+        for &la in &variable.address_instructions {
+            if !self.address_use_allowed(la, using_container) {
+                return false;
+            }
+        }
+        if variable.store_instructions.iter().any(|&s| s != store) {
+            return false;
+        }
+        variable.capture_scope.is_none() || variable.capture_scope == Some(loop_container)
+    }
+
+    /// `AddressUseAllowed`
+    fn address_use_allowed(&mut self, la: NodeId, using_container: NodeId) -> bool {
+        if !self.is_descendant_of(la, using_container) {
+            return false;
+        }
+        let Inst::LdLoca { var } = *self.f.inst(la) else {
+            return false;
+        };
+        let ty = self.f.var(var).ty;
+        if crate::il::transforms::il_inlining::is_used_as_this_pointer_in_call_of(
+            self.f, self.ts, la,
+        ) && !self.is_target_of_setter_call(la, ty)
+        {
+            return true;
+        }
+        let mut current = self.f.node(la).parent;
+        while let Some(c) = current
+            && matches!(self.f.inst(c), Inst::LdFlda { .. })
+        {
+            current = self.f.node(c).parent;
+        }
+        current.is_some_and(|c| matches!(self.f.inst(c), Inst::LdObj { .. }))
+    }
+
+    /// `IsTargetOfSetterCall`: `inst` is the `this` argument of a value type's setter (or of
+    /// another accessor of something that is no property).
+    fn is_target_of_setter_call(&mut self, inst: NodeId, target_type: TypeId) -> bool {
+        if self.f.node(inst).child_index != 0
+            || self.ts.is_reference_type(target_type) == Some(true)
+        {
+            return false;
+        }
+        let Some(parent) = self.f.node(inst).parent else {
+            return false;
+        };
+        let (Inst::Call(c) | Inst::CallVirt(c)) = self.f.inst(parent) else {
+            return false;
+        };
+        let m = &c.method.method;
+        if m.accessor_kind == 0 || m.is_static {
+            return false;
+        }
+        let crate::typesystem::resolve::MethodOrigin::Def(d) = m.origin else {
+            return false;
+        };
+        match self.ts.accessor_owner(d) {
+            Some((token, _)) if token >> 24 == 0x17 => m.accessor_kind == ACCESSOR_SETTER,
+            _ => true,
+        }
+    }
+
+    /// `TransformToForeachWithoutDispose(Block, ref int)`: the bare
+    /// `enumerator = collection.GetEnumerator(); while (enumerator.MoveNext()) { ... }` the
+    /// compiler emits for an enumerator that never needs disposal, as a foreach statement over
+    /// instructions `i` and `i + 1`.
+    pub(super) fn transform_to_foreach_without_dispose(
+        &mut self,
+        instructions: &[NodeId],
+        i: usize,
+    ) -> Result<Option<AstId>, Unsupported> {
+        let Inst::StLoc { var, value, .. } = *self.f.inst(instructions[i]) else {
+            return Ok(None);
+        };
+        let Some(&loop_container) = instructions.get(i + 1) else {
+            return Ok(None);
+        };
+        if !matches!(
+            self.f.inst(loop_container),
+            Inst::BlockContainer {
+                kind: ContainerKind::While,
+                ..
+            }
+        ) {
+            return Ok(None);
+        }
+        if !self.settings.foreach_statement
+            || !matches!(
+                self.f.var(var).kind,
+                VariableKind::Local | VariableKind::StackSlot
+            )
+            || !self.enumerator_type_can_never_be_disposable(self.f.var(var).ty)
+            || !self.variable_is_only_used_in_block(
+                var,
+                instructions[i],
+                loop_container,
+                loop_container,
+            )
+        {
+            return Ok(None);
+        }
+        let resource = self.translate(value, None)?;
+        let Some((collection, is_async)) = self.match_get_enumerator_pattern(&resource)? else {
+            return Ok(None);
+        };
+        // Async enumerators always implement IAsyncDisposable.
+        if is_async {
+            return Ok(None);
+        }
+        let transformed = self.transform_to_foreach_loop(
+            loop_container,
+            loop_container,
+            None,
+            var,
+            collection,
+            value,
+        )?;
+        Ok(transformed.map(|s| self.ast.with_il(s, loop_container)))
+    }
+
+    /// `EnumeratorTypeCanNeverBeDisposable`: a struct that is no ref struct, or a sealed
+    /// class, without `IDisposable` among its base types.
+    fn enumerator_type_can_never_be_disposable(&mut self, ty: TypeId) -> bool {
+        let Some(def) = self.ts.definition(ty) else {
+            return false;
+        };
+        let Ok(info) = self.ts.comp.type_def(def) else {
+            return false;
+        };
+        match info.kind {
+            crate::typesystem::compilation::TypeKind::Struct => {
+                if self.ts.is_by_ref_like(ty) {
+                    return false;
+                }
+            }
+            crate::typesystem::compilation::TypeKind::Class => {
+                // `TypeAttributes.Sealed`
+                if info.flags & 0x0100 == 0 {
+                    return false;
+                }
+            }
+            _ => return false,
+        }
+        let Ok(bases) = self.ts.all_base_types(ty) else {
+            return false;
+        };
+        !bases.iter().any(|&b| {
+            self.ts
+                .is_known(b, crate::typesystem::known::KnownTypeCode::IDisposable)
+        })
     }
 
     fn is_descendant_of(&self, inst: NodeId, ancestor: NodeId) -> bool {

@@ -10,7 +10,7 @@ use crate::il::semantic_helper::{is_pure, may_reorder};
 use crate::il::types::StackType;
 use crate::typesystem::known::KnownTypeCode;
 use crate::typesystem::resolve::{MethodOrigin, ResolvedMethod};
-use crate::typesystem::types::{TypeData, TypeId};
+use crate::typesystem::types::{TypeData, TypeId, TypeSystem};
 
 use super::Context;
 use super::split_variables::remove_dead_variables;
@@ -714,19 +714,28 @@ pub(crate) fn is_used_as_this_pointer_in_call(
     ctx: &mut Context<'_, '_, '_>,
     ldloca: NodeId,
 ) -> bool {
-    used_as_this_pointer_in_call(f, ctx, ldloca).is_some()
+    used_as_this_pointer_in_call(f, ctx.ts, ldloca).is_some()
+}
+
+/// `ILInlining.IsUsedAsThisPointerInCall`, for callers outside the transforms.
+pub(crate) fn is_used_as_this_pointer_in_call_of(
+    f: &Function,
+    ts: &mut TypeSystem<'_, '_>,
+    ldloca: NodeId,
+) -> bool {
+    used_as_this_pointer_in_call(f, ts, ldloca).is_some()
 }
 
 /// `IsUsedAsThisPointerInCall(ldloca, out method, out constrainedType)`.
 fn used_as_this_pointer_in_call(
     f: &Function,
-    ctx: &mut Context<'_, '_, '_>,
+    ts: &mut TypeSystem<'_, '_>,
     ldloca: NodeId,
 ) -> Option<ThisCallMethod> {
     let Inst::LdLoca { var } = *f.inst(ldloca) else {
         return None;
     };
-    if ctx.ts.is_reference_type(f.var(var).ty) == Some(true) {
+    if ts.is_reference_type(f.var(var).ty) == Some(true) {
         return None;
     }
     let parent_of = |inst: NodeId| f.node(inst).parent;
@@ -942,7 +951,7 @@ fn is_generated_temporary_for_address_of(
         return false;
     }
     let aggressive = options & options::AGGRESSIVE != 0;
-    if let Some(method) = used_as_this_pointer_in_call(f, ctx, load) {
+    if let Some(method) = used_as_this_pointer_in_call(f, ctx.ts, load) {
         if aggressive {
             return true;
         }

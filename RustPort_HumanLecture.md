@@ -3379,6 +3379,20 @@ anonymous element types, variables whose address is taken, `await foreach`, the 
 spelling of an extension `GetEnumerator`, and the foreach loops without `Dispose` (no
 using) fall back. The share rose from 69.3 % to 70.2 %.
 
+### 3.131 foreach loops without Dispose (item 68y23)
+
+For an enumerator that can never need disposal (a struct that is no ref struct, or a sealed
+class, neither implementing `IDisposable`) the compiler emits no using: a block holds the
+store `e = collection.GetEnumerator()` and then the `while (e.MoveNext())` loop.
+`TransformToForeachWithoutDispose` recognizes the pair where `e` is a local or stack slot used
+only in the loop, and translates the loop as the previous step does, with the loop container
+added to the foreach statement's instructions; both block loops of the statement builder then
+skip the loop. `VariableIsOnlyUsedInBlock` now has its whole condition: the address of the
+variable may be taken in the loop for a call on it (other than a setter of a value type) or
+a field load, which a struct enumerator needs for `MoveNext` and `Current`. The first run
+wrote a `return;` the managed builder leaves out: the rewritten block loop passed the
+final-leave check the index after the instruction. The share rose from 70.2 % to 71.6 %.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

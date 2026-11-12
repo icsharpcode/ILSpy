@@ -442,9 +442,15 @@ impl Builder<'_, '_, '_, '_> {
         final_inst: NodeId,
     ) -> Result<AstId, Unsupported> {
         let mut statements = Vec::with_capacity(instructions.len() + 1);
-        for (i, &s) in instructions.iter().enumerate() {
-            self.check_foreach_without_dispose(instructions, i)?;
-            statements.push(self.convert(s)?);
+        let mut i = 0;
+        while i < instructions.len() {
+            if let Some(foreach) = self.transform_to_foreach_without_dispose(instructions, i)? {
+                statements.push(foreach);
+                i += 2;
+                continue;
+            }
+            statements.push(self.convert(instructions[i])?);
+            i += 1;
         }
         if !matches!(self.f.inst(final_inst), Inst::Nop { .. }) {
             statements.push(self.convert(final_inst)?);
@@ -511,13 +517,15 @@ impl Builder<'_, '_, '_, '_> {
             else {
                 return Err("a container without blocks".to_owned());
             };
-            for (i, &inst) in instructions.iter().enumerate() {
-                self.check_foreach_without_dispose(&instructions, i)?;
+            let mut i = 0;
+            while i < instructions.len() {
+                let inst = instructions[i];
+                i += 1;
                 if !is_loop
                     && let Inst::Leave { .. } = self.f.inst(inst)
                     && self.is_final_leave(
                         inst,
-                        i,
+                        i - 1,
                         &instructions,
                         final_inst,
                         index,
@@ -529,7 +537,13 @@ impl Builder<'_, '_, '_, '_> {
                     self.ast.annotations_mut(block_statement).implicit_return = Some(inst);
                     continue;
                 }
-                let stmt = self.convert(inst)?;
+                let stmt = match self.transform_to_foreach_without_dispose(&instructions, i - 1)? {
+                    Some(foreach) => {
+                        i += 1;
+                        foreach
+                    }
+                    None => self.convert(inst)?,
+                };
                 let nested = match self.ast.node(stmt) {
                     AstNode::Block { statements } => Some(statements.clone()),
                     _ => None,
@@ -551,29 +565,6 @@ impl Builder<'_, '_, '_, '_> {
             }
         }
         Ok(block_statement)
-    }
-
-    /// `TransformToForeachWithoutDispose` looks for a store followed by a while loop; such
-    /// pairs are not translated.
-    fn check_foreach_without_dispose(
-        &self,
-        instructions: &[NodeId],
-        i: usize,
-    ) -> Result<(), Unsupported> {
-        if matches!(self.f.inst(instructions[i]), Inst::StLoc { .. })
-            && instructions.get(i + 1).is_some_and(|&n| {
-                matches!(
-                    self.f.inst(n),
-                    Inst::BlockContainer {
-                        kind: ContainerKind::While,
-                        ..
-                    }
-                )
-            })
-        {
-            return Err("a foreach without Dispose".to_owned());
-        }
-        Ok(())
     }
 
     /// `ConvertLoop` for `while (true)` and `while (condition)` loops whose jumps are all
