@@ -39,6 +39,7 @@ impl Builder<'_, '_, '_, '_> {
             | Rr::LambdaConversion { ty }
             | Rr::InitializedObject(ty)
             | Rr::ArrayCreate { ty }
+            | Rr::ResolvedOperator { ty }
             | Rr::TypeOf { ty, .. }
             | Rr::ArrayLength { ty, .. } => *ty,
             Rr::Field { field, .. } => field.field.ty,

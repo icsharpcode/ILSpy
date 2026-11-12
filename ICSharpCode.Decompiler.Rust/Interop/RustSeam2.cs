@@ -117,6 +117,8 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		public bool ImplicitConversion;
 		/// <summary>For a cast: whether its resolve result is the lambda conversion of the lambda it casts.</summary>
 		public bool LambdaConversion;
+		/// <summary>For a binary operator: whether its resolve result is <c>ResolveBinaryOperator</c> over the operands'.</summary>
+		public bool ResolveOperator;
 		/// <summary>For a lambda: <see cref="DecompiledLambdaResolveResult.AttemptedConversionWithTypeMismatch"/>.</summary>
 		public bool AttemptedConversionWithTypeMismatch;
 		/// <summary>For an object creation: the elements of its initializer, if it has one.</summary>
@@ -348,6 +350,8 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 						node.ResolveResult = new OperatorResolveResult(node.OperatorType, BinaryOperatorExpression.GetLinqNodeType(op, node.Overflow == 1),
 							left.GetResolveResult(), right.GetResolveResult());
 					}
+					if (node.ResolveOperator)
+						node.ResolveResult = exprBuilder.resolver.ResolveBinaryOperator(op, left.GetResolveResult(), right.GetResolveResult());
 					var binary = Annotate(new BinaryOperatorExpression(left, op, right), node);
 					if (node.Overflow != 0)
 					{

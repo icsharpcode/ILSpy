@@ -557,7 +557,9 @@ the reasons. This file holds only the ordered steps, their gates and their rules
     (lecture 3.133). Subject: `Translate indexer access to C# in the engine`.
   - [x] 68y26. Dropped user-defined casts with their `ImplicitConversionAnnotation` (lecture 3.134).
     Subject: `Drop user-defined casts with their annotation in the engine`.
-  - [ ] 68y27-. Further construct groups (numbered on from 68y1), in the order of the fallback reasons the ratchet test
+  - [x] 68y27. Reference equality of two values of one class or interface type (lecture 3.135).
+    Subject: `Translate reference equality comparisons to C# in the engine`.
+  - [ ] 68y28-. Further construct groups (numbered on from 68y1), in the order of the fallback reasons the ratchet test
     prints, until no body of the corpus falls back. Subject pattern:
     `Translate <construct group> to C# in the engine`.
   - [ ] 68z. Request-level seam 2. Subject: `Add the Rust C# AST builders and the AST materializer`.

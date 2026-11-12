@@ -3446,6 +3446,18 @@ step reached: whether the operand converts to the operator's result directly was
 against the annotated return type, found nothing, and wrote `(Pattern)new NamedNode(...)`;
 that lookup ignores the annotations now as well. The share rose from 73.1 % to 73.5 %.
 
+### 3.135 Reference equality (item 68y27)
+
+Listing the types of the comparisons that fell back with "needs casts" showed one shape only:
+two values of the same class type compared with `==` or `!=`, such as two `SharpTreeNode`s.
+Without an `operator ==` of its own (checked before), C# resolves this to the built-in
+reference equality `bool operator ==(object x, object y)`; the operands' stack type is the
+comparison's, so `TranslateCeq` keeps the operator as it is, with the resolve result of
+`ResolveBinaryOperator`, whose operands carry the implicit reference conversions to
+`object`. The engine translates that case and lets the host compute the resolve result
+with its resolver (a new resolve result tag, as for conditional expressions in 3.124). Other
+comparisons that need casts still fall back. The share rose from 73.5 % to 74.5 %.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

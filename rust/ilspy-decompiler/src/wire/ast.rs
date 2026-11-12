@@ -219,6 +219,7 @@ fn rr(w: &mut FunctionWriter<'_, '_, '_, '_>, rr: Option<&Rr>) -> Result<(), Str
         // The host builds the resolve result from the node.
         Some(Rr::ArrayCreate { .. }) => w.out.u8(0),
         Some(Rr::TypeIs { .. }) => w.out.u8(0),
+        Some(Rr::ResolvedOperator { .. }) => w.out.u8(22),
         Some(Rr::DefaultLiteral { shortened_from }) => {
             w.out.u8(21);
             w.ty(*shortened_from);

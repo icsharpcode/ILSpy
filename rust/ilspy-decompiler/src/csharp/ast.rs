@@ -326,6 +326,9 @@ pub enum Rr {
     TypeIs { ty: TypeId },
     /// `DefaultLiteralResolveResult` of a `default` literal shortened from `default(T)`.
     DefaultLiteral { shortened_from: TypeId },
+    /// `resolver.ResolveBinaryOperator` of a binary operator over its operands' resolve
+    /// results, of the type `ty`, which the host computes (with the operands' conversions).
+    ResolvedOperator { ty: TypeId },
     /// `CSharpInvocationResolveResult` without target of the constructor `method` of the type
     /// `ty`, whose arguments are the resolve results of the object creation's arguments.
     ObjectCreation {

@@ -668,7 +668,7 @@ impl Builder<'_, '_, '_, '_> {
                 ty: boolean,
             });
         }
-        self.resolve_builtin_equality(op, &l, &r)?;
+        let converts_operands = self.resolve_builtin_equality(op, &l, &r)?;
         // The check `TranslateCeq` makes before it takes the resolve result.
         let operand = self.ts.nullable_underlying(l.ty);
         if self.ts.stack_type(operand) != input {
@@ -681,7 +681,13 @@ impl Builder<'_, '_, '_, '_> {
             right: r.expression,
         });
         self.ast.with_il(e, inst);
-        self.ast.with_rr(e, Rr::Operator { ty: boolean });
+        // With converted operands the host resolves the operator, for their conversions.
+        let rr = if converts_operands {
+            Rr::ResolvedOperator { ty: boolean }
+        } else {
+            Rr::Operator { ty: boolean }
+        };
+        self.ast.with_rr(e, rr);
         Ok(TranslatedExpression {
             expression: e,
             ty: boolean,
@@ -738,7 +744,7 @@ impl Builder<'_, '_, '_, '_> {
         op: BinaryOp,
         l: &TranslatedExpression,
         r: &TranslatedExpression,
-    ) -> Result<(), Unsupported> {
+    ) -> Result<bool, Unsupported> {
         let (lt, rt) = (l.ty, r.ty);
         for t in [lt, rt] {
             match self.ts.kind(t) {
@@ -783,7 +789,7 @@ impl Builder<'_, '_, '_, '_> {
         // Int32, UInt32, Int64, UInt64, Single or Double.
         // bool operator ==(E x, E y) of an enum type
         if lt == rt && self.ts.kind(lt) == TypeKind::Enum {
-            return Ok(());
+            return Ok(false);
         }
         if self.ts.kind(lt) == TypeKind::Enum || self.ts.kind(rt) == TypeKind::Enum {
             return Err("an enum comparison that needs conversions".to_owned());
@@ -791,27 +797,35 @@ impl Builder<'_, '_, '_, '_> {
         let (lc, rc) = (self.ts.type_code(lt), self.ts.type_code(rt));
         if (4..=15).contains(&lc) && (4..=15).contains(&rc) {
             return if lc == rc && (9..=14).contains(&lc) {
-                Ok(())
+                Ok(false)
             } else {
                 Err("a comparison that promotes its operands".to_owned())
             };
         }
         // bool operator ==(bool x, bool y)
         if lc == 3 && rc == 3 {
-            return Ok(());
+            return Ok(false);
         }
         // A reference comparison converts both operands to object.
         if self.ts.is_known(lt, KnownTypeCode::Object)
             && self.ts.is_known(rt, KnownTypeCode::Object)
         {
-            return Ok(());
+            return Ok(false);
         }
         // A type that can be null compared with the null literal.
         if l_null != r_null {
             let other = if l_null { rt } else { lt };
             if self.ts.is_reference_type(other) != Some(false) {
-                return Ok(());
+                return Ok(false);
             }
+        }
+        // Two values of one class or interface type: the reference equality of
+        // `bool operator ==(object x, object y)`, both operands converted to object.
+        if lt == rt
+            && self.ts.is_reference_type(lt) == Some(true)
+            && matches!(self.ts.kind(lt), TypeKind::Class | TypeKind::Interface)
+        {
+            return Ok(true);
         }
         Err("a comparison that needs casts".to_owned())
     }

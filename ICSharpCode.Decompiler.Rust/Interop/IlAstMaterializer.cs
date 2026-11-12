@@ -663,6 +663,8 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 			pendingImplicitConversion = false;
 			node.LambdaConversion = pendingLambdaConversion;
 			pendingLambdaConversion = false;
+			node.ResolveOperator = pendingResolveOperator;
+			pendingResolveOperator = false;
 			node.LookUpMember = pendingLookUpMember;
 			pendingLookUpMember = false;
 			int implicitReturn = Len();
@@ -934,6 +936,9 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		/// <summary>Whether the last <see cref="BodyResolveResult"/> read was the lambda conversion of a cast.</summary>
 		bool pendingLambdaConversion;
 
+		/// <summary>Whether the last <see cref="BodyResolveResult"/> read was a binary operator the host resolves.</summary>
+		bool pendingResolveOperator;
+
 		/// <summary>Whether the last <see cref="BodyResolveResult"/> read names a member found by looking its name up again.</summary>
 		bool pendingLookUpMember;
 
@@ -1007,6 +1012,10 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					return null;
 				case 19:
 					return new InitializedObjectResolveResult(Type());
+				case 22:
+					// RustSeam2 resolves the binary operator over its operands.
+					pendingResolveOperator = true;
+					return null;
 				case 21:
 					return new DefaultLiteralResolveResult(Type());
 				case 18:
