@@ -323,7 +323,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					throw new InvalidOperationException("Trailing bytes after the resolver query");
 				return query;
 			}
-			if (query.Kind is RustResolverQuery.MethodGroupKind or RustResolverQuery.AccessorKind or RustResolverQuery.IndexersKind)
+			if (query.Kind is RustResolverQuery.MethodGroupKind or RustResolverQuery.AccessorKind or RustResolverQuery.IndexersKind or RustResolverQuery.MethodReferenceKind)
 			{
 				if (query.Kind == RustResolverQuery.AccessorKind)
 				{
@@ -342,7 +342,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 						query.CausesNonVirtualInvocation = reader.Bool();
 					query.Target = reader.Type();
 				}
-				if (query.Kind is RustResolverQuery.MethodGroupKind or RustResolverQuery.IndexersKind)
+				if (query.Kind is RustResolverQuery.MethodGroupKind or RustResolverQuery.IndexersKind or RustResolverQuery.MethodReferenceKind)
 				{
 					query.TypeArguments = new IType[reader.Len()];
 					for (int i = 0; i < query.TypeArguments.Length; i++)
@@ -665,6 +665,8 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 			pendingLambdaConversion = false;
 			node.ResolveOperator = pendingResolveOperator;
 			pendingResolveOperator = false;
+			node.MethodGroup = pendingMethodGroup;
+			pendingMethodGroup = null;
 			node.LookUpMember = pendingLookUpMember;
 			pendingLookUpMember = false;
 			int implicitReturn = Len();
@@ -779,6 +781,12 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					node.Children = children;
 					break;
 				}
+				case RustBodyNode.DelegateCreate:
+					node.Type = Type();
+					node.Value = CallMethod();
+					node.Flag = Bool();
+					node.Children = [BodyNode()];
+					break;
 				case RustBodyNode.Foreach:
 					// The variable, the three instructions of the annotation, the collection and the body.
 					node.Value = Variable();
@@ -939,6 +947,9 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		/// <summary>Whether the last <see cref="BodyResolveResult"/> read was a binary operator the host resolves.</summary>
 		bool pendingResolveOperator;
 
+		/// <summary>The method group the last <see cref="BodyResolveResult"/> read describes.</summary>
+		(bool HasTarget, IType[] TypeArguments, IMethod Method)? pendingMethodGroup;
+
 		/// <summary>Whether the last <see cref="BodyResolveResult"/> read names a member found by looking its name up again.</summary>
 		bool pendingLookUpMember;
 
@@ -1012,6 +1023,16 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					return null;
 				case 19:
 					return new InitializedObjectResolveResult(Type());
+				case 23:
+				{
+					// RustSeam2 looks the method group up again and narrows it to the method.
+					bool hasTarget = Bool();
+					var typeArguments = new IType[Len()];
+					for (int i = 0; i < typeArguments.Length; i++)
+						typeArguments[i] = Type();
+					pendingMethodGroup = (hasTarget, typeArguments, CallMethod());
+					return null;
+				}
 				case 22:
 					// RustSeam2 resolves the binary operator over its operands.
 					pendingResolveOperator = true;

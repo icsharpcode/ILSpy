@@ -3520,6 +3520,33 @@ A call of a delegate type's `Invoke` is written as the invocation of the delegat
 flag, and the host passes it on. A null-conditional target (`d?.Invoke(x)`) keeps the method
 call syntax in the managed builder and falls back. The share rose from 77.8 % to 78.4 %.
 
+### 3.140 Delegate construction (item 68y32)
+
+`newobj D(target, ldftn M)` is `HandleDelegateConstruction`: `new D(target.M)`, whose resolve
+result is the `ConversionResolveResult` of a method group conversion, and which `ConvertTo`
+shortens to the method group `target.M` where the context supplies the delegate type and
+`UseImplicitMethodGroupConversion` is set (now bit 62 of the engine's settings). The method
+reference comes from `BuildDelegateReference` and `Disambiguator.ForMethodReference`: the
+name is looked up as a method reference (not an invocation target), overload resolution
+runs with the parameter types standing in for arguments, and the type arguments, then the
+target, are written until the best candidate is the method.
+
+From here on the user leaves design decisions to the agent's recommendation. The one this
+step needed was where the method group lives. The engine keeps its own: the lookup answer of
+the host (a new query kind, the method group lookup without invocation) turned into the
+engine's `MethodGroup`, which overload resolution and the method group conversion need when
+the reference becomes an argument. The host does not receive that list: it looks the name up
+again from the target (or as a simple name) with the written type arguments and narrows the
+result to the method (`WithChosenMethod`), as the managed code does, so the resolve result is
+the resolver's own. Extension methods, local functions, accessors, value-type targets, a
+bound first argument and a target that needs a cast fall back.
+
+The gates found a method reference on an object creation in FSharp.Core: the target's
+resolve result is one the host completes only when it builds that node (an invocation's),
+so as a nested resolve result it read as none, and the host looked the name up as a simple
+name. The host now looks the method group up after building the reference, from the target
+expression it built. The share rose from 78.4 % to 79.0 %.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

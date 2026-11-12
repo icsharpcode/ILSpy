@@ -672,21 +672,41 @@ impl Builder<'_, '_, '_, '_> {
             .definition(declaring)
             .and_then(|d| ts.comp.type_def(d).ok())
             .map(|i| (i.full_name.top.ns.clone(), i.full_name.name().to_owned()));
-        let special = ts.kind(declaring) == TypeKind::Delegate
-            || ts.is_known(declaring, KnownTypeCode::SpanOfT)
+        if ts.kind(declaring) == TypeKind::Delegate {
+            return self.delegate_construction(inst, call, declaring);
+        }
+        let special = if ts.is_known(declaring, KnownTypeCode::SpanOfT)
             || ts.is_known(declaring, KnownTypeCode::ReadOnlySpanOfT)
-            || ts.is_known(declaring, KnownTypeCode::Range)
+        {
+            Some("a span")
+        } else if ts.is_known(declaring, KnownTypeCode::Range)
             || ts.is_known(declaring, KnownTypeCode::Index)
-            || ts.is_known(declaring, KnownTypeCode::IntPtr)
+        {
+            Some("a range or index")
+        } else if ts.is_known(declaring, KnownTypeCode::IntPtr)
             || ts.is_known(declaring, KnownTypeCode::UIntPtr)
-            || name.as_ref().is_none_or(|(ns, name)| {
+        {
+            Some("a native integer")
+        } else {
+            match name.as_ref() {
+                None => Some("an unnamed type"),
+                Some((ns, name)) if ns == "System" && name.starts_with("ValueTuple") => {
+                    Some("a tuple")
+                }
                 // `IsAnonymousType`, without its checks for generated names and attributes.
-                (ns == "System" && name.starts_with("ValueTuple"))
-                    || (ns.is_empty()
-                        && (name.contains("AnonType") || name.contains("AnonymousType")))
-            });
-        if special {
-            return Err("an object creation with syntax of its own".to_owned());
+                Some((ns, name))
+                    if ns.is_empty()
+                        && (name.contains("AnonType") || name.contains("AnonymousType")) =>
+                {
+                    Some("an anonymous type")
+                }
+                _ => None,
+            }
+        };
+        if let Some(form) = special {
+            return Err(format!(
+                "an object creation of {form} with syntax of its own"
+            ));
         }
         let MethodOrigin::Def(id) = resolved.origin else {
             return Err("a call of an unresolved method".to_owned());
@@ -1541,7 +1561,7 @@ impl Builder<'_, '_, '_, '_> {
     /// The host's method group as the overload resolution's method lists: each definition
     /// specialized by the base type of the lookup type (or of the current type and the types
     /// containing it, for a simple name) that declares it.
-    fn method_lists(
+    pub(super) fn method_lists(
         &mut self,
         group: &[MethodGroupList],
         lookup_type: Option<TypeId>,
@@ -1639,7 +1659,7 @@ impl Builder<'_, '_, '_, '_> {
 
     /// `Disambiguator.IsAppropriateCallTarget`: the method found is the one called, or for a
     /// virtual call an override of it.
-    fn is_appropriate_call_target(
+    pub(super) fn is_appropriate_call_target(
         &mut self,
         op: CallOp,
         expected: &Method,

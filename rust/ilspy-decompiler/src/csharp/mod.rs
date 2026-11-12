@@ -6,6 +6,7 @@
 
 pub mod ast;
 mod call_builder;
+mod delegate;
 mod expression_builder;
 mod foreach;
 mod lambda;

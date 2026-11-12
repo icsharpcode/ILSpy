@@ -190,6 +190,14 @@ pub enum AstNode {
         move_next: NodeId,
         get_current: NodeId,
     },
+    /// `ObjectCreateExpression` of a delegate from a method reference, with the
+    /// `ConversionResolveResult` of the method group conversion the host computes.
+    DelegateCreate {
+        ty: TypeId,
+        reference: AstId,
+        method: crate::il::ast::MethodOperand,
+        is_virtual: bool,
+    },
     /// `LockStatement`.
     Lock { expression: AstId, body: AstId },
     /// `ThrowStatement`, a rethrow without an expression.
@@ -331,6 +339,15 @@ pub enum Rr {
     /// `resolver.ResolveBinaryOperator` of a binary operator over its operands' resolve
     /// results, of the type `ty`, which the host computes (with the operands' conversions).
     ResolvedOperator { ty: TypeId },
+    /// `MethodGroupResolveResult` of a method reference (`Ast::method_groups[index]` for the
+    /// engine), which the host looks up again from the target (or the simple name) with the
+    /// type arguments and narrows to `method` (`WithChosenMethod`).
+    MethodGroup {
+        index: usize,
+        target: Option<Box<Rr>>,
+        method: Box<crate::il::ast::MethodOperand>,
+        type_arguments: Vec<TypeId>,
+    },
     /// `CSharpInvocationResolveResult` without target of the constructor `method` of the type
     /// `ty`, whose arguments are the resolve results of the object creation's arguments.
     ObjectCreation {
@@ -381,6 +398,8 @@ pub struct Ast {
     pub nodes: Vec<(AstNode, Annotations)>,
     /// The resolve results of the lambdas, which overload resolution can update.
     pub lambdas: Vec<std::rc::Rc<crate::semantics::decompiled_lambda::DecompiledLambda>>,
+    /// The method groups of method references, as overload resolution sees them.
+    pub method_groups: Vec<std::rc::Rc<crate::semantics::MethodGroup>>,
 }
 
 impl Ast {

@@ -60,6 +60,9 @@ impl Builder<'_, '_, '_, '_> {
                 _ => ResolveResult::Expression(ty),
             },
             Some(Rr::Lambda(index)) => self.lambda_rr(*index),
+            Some(Rr::MethodGroup { index, .. }) => {
+                ResolveResult::MethodGroup(self.ast.method_groups[*index].clone())
+            }
             Some(Rr::DefaultLiteral { shortened_from }) => {
                 ResolveResult::DefaultLiteral(*shortened_from)
             }
@@ -140,6 +143,14 @@ impl Builder<'_, '_, '_, '_> {
                 expression: e.expression,
                 ty: no_type,
             });
+        }
+        // `UseImplicitMethodGroupConversion`: `new D(target.M)` is written as `target.M`.
+        if same
+            && allow_implicit_conversion
+            && self.settings.use_implicit_method_group_conversion
+            && let AstNode::DelegateCreate { reference, .. } = *self.ast.node(e.expression)
+        {
+            return Ok(self.unwrap_child(e.expression, reference));
         }
         // A cast the engine made: `CastCanBeMadeImplicit` may unwrap it again.
         if let AstNode::Cast {

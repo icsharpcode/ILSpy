@@ -1675,6 +1675,17 @@ pub fn method_group_query(
     lookup_query(ts, 5, name, target, type_arguments)
 }
 
+/// Encodes the host's lookup of a method reference's name (kind 11), as `method_group_query`
+/// but not as an invocation target.
+pub fn method_group_reference_query(
+    ts: &TypeSystem<'_, '_>,
+    name: &str,
+    target: Option<crate::il::transforms::LookupTarget>,
+    type_arguments: &[crate::typesystem::types::TypeId],
+) -> Result<Vec<u8>, String> {
+    lookup_query(ts, 11, name, target, type_arguments)
+}
+
 /// Encodes the host's indexer lookup on `target` (kind 10), as `method_group_query` with an
 /// empty name; the answer is decoded with `method_group_answer`.
 pub fn indexers_query(

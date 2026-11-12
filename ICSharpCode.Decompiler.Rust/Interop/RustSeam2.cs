@@ -93,6 +93,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		public const byte IsType = 48;
 		public const byte DefaultValue = 49;
 		public const byte Foreach = 50;
+		public const byte DelegateCreate = 51;
 
 		public byte Kind;
 		/// <summary>The instructions the node is annotated with, in order.</summary>
@@ -119,6 +120,8 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		public bool LambdaConversion;
 		/// <summary>For a binary operator: whether its resolve result is <c>ResolveBinaryOperator</c> over the operands'.</summary>
 		public bool ResolveOperator;
+		/// <summary>For a method reference: whether it has a target, and the type arguments and method of its <see cref="MethodGroupResolveResult"/>.</summary>
+		public (bool HasTarget, IType[] TypeArguments, IMethod Method)? MethodGroup;
 		/// <summary>For a lambda: <see cref="DecompiledLambdaResolveResult.AttemptedConversionWithTypeMismatch"/>.</summary>
 		public bool AttemptedConversionWithTypeMismatch;
 		/// <summary>For an object creation: the elements of its initializer, if it has one.</summary>
@@ -213,6 +216,17 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		static AstNode Build(RustBodyNode node, ExpressionBuilder exprBuilder)
 		{
 			var syntax = BuildNode(node, exprBuilder);
+			if (node.MethodGroup is var (hasTarget, typeArguments, groupMethod))
+			{
+				// `Disambiguator.LookUpName` without invocation, from the built target expression,
+				// then `WithChosenMethod`.
+				var resolver = exprBuilder.resolver;
+				var found = !hasTarget
+					? resolver.ResolveSimpleName(groupMethod.Name, typeArguments, isInvocationTarget: false)
+					: new MemberLookup(resolver.CurrentTypeDefinition, resolver.CurrentTypeDefinition.ParentModule)
+						.Lookup(((MemberReferenceExpression)syntax).Target.GetResolveResult(), groupMethod.Name, typeArguments, isInvocation: false);
+				syntax.AddAnnotation(((MethodGroupResolveResult)found).WithChosenMethod(groupMethod));
+			}
 			if (node.DroppedCastType is { } castType)
 			{
 				// The conversion `ConvertTo` keeps in an `ImplicitConversionAnnotation`: the cast's
@@ -414,6 +428,15 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					return Annotate(new BreakStatement(), node);
 				case RustBodyNode.Continue:
 					return Annotate(new ContinueStatement(), node);
+				case RustBodyNode.DelegateCreate:
+				{
+					// `HandleDelegateConstruction`
+					var reference = (Expression)Build(node.Children[0], exprBuilder);
+					var method = (IMethod)node.Value!;
+					node.ResolveResult = new ConversionResolveResult(node.Type!, reference.GetResolveResult(),
+						Conversion.MethodGroupConversion(method, node.Flag, false));
+					return Annotate(new ObjectCreateExpression(exprBuilder.ConvertType(node.Type!), reference), node);
+				}
 				case RustBodyNode.Foreach:
 				{
 					// `TransformToForeach`: the variable as the ILAst names and types it now.

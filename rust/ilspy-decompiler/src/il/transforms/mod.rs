@@ -124,6 +124,7 @@ pub const SETTING_NAMES: &[&str] = &[
     "ForEachStatement",
     "ExtensionMethods",
     "ForEachWithGetEnumeratorExtension",
+    "UseImplicitMethodGroupConversion",
 ];
 
 /// The values of `SETTING_NAMES`.
@@ -191,6 +192,7 @@ pub struct Settings {
     pub foreach_statement: bool,
     pub extension_methods: bool,
     pub foreach_with_get_enumerator_extension: bool,
+    pub use_implicit_method_group_conversion: bool,
 }
 
 impl Settings {
@@ -260,6 +262,7 @@ impl Settings {
             foreach_statement: bit(59),
             extension_methods: bit(60),
             foreach_with_get_enumerator_extension: bit(61),
+            use_implicit_method_group_conversion: bit(62),
         }
     }
 }
@@ -367,6 +370,17 @@ pub trait Resolver {
         ts: &TypeSystem<'_, '_>,
         constructor: &super::ast::MethodOperand,
     ) -> Option<Vec<MethodGroupList>>;
+
+    /// `Disambiguator.LookUpName` for a method reference (no invocation), as `method_group`.
+    fn method_group_reference(
+        &self,
+        _ts: &TypeSystem<'_, '_>,
+        _name: &str,
+        _target: Option<LookupTarget>,
+        _type_arguments: &[TypeId],
+    ) -> Option<Vec<MethodGroupList>> {
+        None
+    }
 
     /// `MemberLookup.LookupIndexers(target)`: the indexers of the target's type, grouped by
     /// declaring type, base types first, each as its getter (or its setter where it has none);

@@ -63,6 +63,8 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		public const byte SingularizeKind = 9;
 		/// <summary><c>MemberLookup.LookupIndexers</c> on the target, each indexer as its getter (or setter).</summary>
 		public const byte IndexersKind = 10;
+		/// <summary><c>Disambiguator.LookUpName</c> for a method reference: the method group of <see cref="Name"/>, not as an invocation target.</summary>
+		public const byte MethodReferenceKind = 11;
 
 		/// <summary><see cref="TargetKind"/>: <c>this</c> or <c>base</c>.</summary>
 		public const byte ThisTarget = 0;
@@ -162,13 +164,14 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					return CanUseExtensionMethodSyntax(q);
 				if (q.Kind == RustResolverQuery.AccessorKind)
 					return AccessorReference(q);
-				if (q.Kind is RustResolverQuery.MethodGroupKind or RustResolverQuery.ConstructorsKind or RustResolverQuery.SingularizeKind or RustResolverQuery.IndexersKind)
+				if (q.Kind is RustResolverQuery.MethodGroupKind or RustResolverQuery.ConstructorsKind or RustResolverQuery.SingularizeKind or RustResolverQuery.IndexersKind or RustResolverQuery.MethodReferenceKind)
 				{
 					// The full answer's length; the engine asks again when it does not fit.
 					var data = q.Kind switch {
 						RustResolverQuery.ConstructorsKind => Constructors(q),
 						RustResolverQuery.IndexersKind => Indexers(q),
 						RustResolverQuery.SingularizeKind => System.Text.Encoding.UTF8.GetBytes(Humanizer.Inflections.Vocabularies.Default.Singularize(q.Name, inputIsKnownToBePlural: false) ?? ""),
+						RustResolverQuery.MethodReferenceKind => MethodGroup(q, invocation: false),
 						_ => MethodGroup(q),
 					};
 					data.AsSpan(0, Math.Min(data.Length, checked((int)capacity))).CopyTo(new Span<byte>(answer, checked((int)capacity)));
@@ -300,19 +303,19 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		/// method group, else 1 and its method lists (each the declaring type definition and the
 		/// method definitions, as module index and metadata row), as unsigned LEB128.
 		/// </summary>
-		byte[] MethodGroup(RustResolverQuery query)
+		byte[] MethodGroup(RustResolverQuery query, bool invocation = true)
 		{
 			var context = body ?? throw new InvalidOperationException("The engine asked about a C# body without the body's context");
 			var resolver = context.Resolver;
 			ResolveResult? result;
 			if (!query.HasTarget)
 			{
-				result = resolver.ResolveSimpleName(query.Name, query.TypeArguments, isInvocationTarget: true);
+				result = resolver.ResolveSimpleName(query.Name, query.TypeArguments, isInvocationTarget: invocation);
 			}
 			else
 			{
 				var lookup = new MemberLookup(resolver.CurrentTypeDefinition, resolver.CurrentTypeDefinition.ParentModule);
-				result = lookup.Lookup(TargetResolveResult(query), query.Name, query.TypeArguments, isInvocation: true);
+				result = lookup.Lookup(TargetResolveResult(query), query.Name, query.TypeArguments, isInvocation: invocation);
 			}
 			if (result is not MethodGroupResolveResult group)
 				return [0];
