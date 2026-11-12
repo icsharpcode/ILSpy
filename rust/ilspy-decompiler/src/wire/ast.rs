@@ -71,6 +71,7 @@ mod kind {
     pub const RECURSIVE_PATTERN: u8 = 47;
     pub const IS_TYPE: u8 = 48;
     pub const DEFAULT_VALUE: u8 = 49;
+    pub const FOREACH: u8 = 50;
 }
 
 pub(super) fn write_body(
@@ -299,6 +300,7 @@ fn node(w: &mut FunctionWriter<'_, '_, '_, '_>, ast: &Ast, id: AstId) -> Result<
         AstNode::RecursivePattern { .. } => kind::RECURSIVE_PATTERN,
         AstNode::IsType { .. } => kind::IS_TYPE,
         AstNode::DefaultValue { .. } => kind::DEFAULT_VALUE,
+        AstNode::Foreach { .. } => kind::FOREACH,
     });
     w.out.len(a.il.len());
     for &inst in &a.il {
@@ -569,6 +571,23 @@ fn node(w: &mut FunctionWriter<'_, '_, '_, '_>, ast: &Ast, id: AstId) -> Result<
             node(w, ast, initializer)?;
         }
         AstNode::YieldReturn { expression } => node(w, ast, expression)?,
+        AstNode::Foreach {
+            variable,
+            collection,
+            body,
+            get_enumerator,
+            move_next,
+            get_current,
+        } => {
+            let v = var_index(w, variable)?;
+            w.out.len(v);
+            for inst in [get_enumerator, move_next, get_current] {
+                let i = il_index(w, inst)?;
+                w.out.len(i);
+            }
+            node(w, ast, collection)?;
+            node(w, ast, body)?;
+        }
         AstNode::DefaultValue { ty } => {
             w.out.bool(ty.is_some());
             if let Some(t) = ty {

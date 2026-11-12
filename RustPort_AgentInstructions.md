@@ -545,7 +545,11 @@ the reasons. This file holds only the ordered steps, their gates and their rules
   - [x] 68y21. Type arguments written where inference cannot reach them, and the nullability
     `TupleUnderlyingTypeOrSelf` drops (a type-system fix the user approved; lecture 3.129).
     Subject: `Write type arguments inference cannot reach in the engine`.
-  - [ ] 68y22-. Further construct groups (numbered on from 68y1), in the order of the fallback reasons the ratchet test
+  - [x] 68y22. foreach over a using of `GetEnumerator` with the existing loop variable; the
+    C# builder works on a copy of the function that is shipped with the body (the user's
+    decision), settings bits 59-61, and a host callback for singularization (the user's
+    decision; lecture 3.130). Subject: `Translate foreach loops to C# in the engine`.
+  - [ ] 68y23-. Further construct groups (numbered on from 68y1), in the order of the fallback reasons the ratchet test
     prints, until no body of the corpus falls back. Subject pattern:
     `Translate <construct group> to C# in the engine`.
   - [ ] 68z. Request-level seam 2. Subject: `Add the Rust C# AST builders and the AST materializer`.

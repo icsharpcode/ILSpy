@@ -1,6 +1,8 @@
 //! `StatementBuilder`: the C# statements of an ILAst function body.
 
-use crate::il::ast::{BlockKind, BranchTarget, ContainerKind, FunctionKind, Inst, NodeId};
+use crate::il::ast::{
+    BlockKind, BranchTarget, ContainerKind, Function, FunctionKind, Inst, NodeId,
+};
 use crate::il::reader::ReadFunction;
 use crate::typesystem::known::KnownTypeCode;
 use crate::typesystem::types::{TypeData, TypeId, TypeSystem};
@@ -9,14 +11,16 @@ use super::ast::{Ast, AstId, AstNode, Rr};
 use super::{Builder, Unsupported};
 
 /// `new StatementBuilder(...).ConvertAsBlock(function.Body)` for a top-level function: the
-/// body as a `BlockStatement`, or why it is not translated.
+/// body as a `BlockStatement` and the function as the translation left it (a copy of
+/// `read.function`), or why it is not translated.
 pub fn convert_body(
     ts: &mut TypeSystem<'_, '_>,
     read: &ReadFunction,
     settings: crate::il::transforms::Settings,
     resolver: Option<&dyn crate::il::transforms::Resolver>,
-) -> Result<(Ast, AstId), Unsupported> {
-    let f = &read.function;
+) -> Result<(Ast, AstId, Function), Unsupported> {
+    let mut function = read.function.clone();
+    let f = &mut function;
     let body = f.body.ok_or("a function without body")?;
     if read.kind != FunctionKind::TopLevelFunction {
         return Err("a nested function".to_owned());
@@ -33,6 +37,11 @@ pub fn convert_body(
     let current_type = ts
         .method_declaring(read.method)
         .map_err(|e| e.to_string())?;
+    let variable_names = read
+        .variables
+        .iter()
+        .map(|&v| f.var(v).name.clone())
+        .collect();
     let mut b = Builder {
         f,
         ts,
@@ -42,17 +51,14 @@ pub fn convert_body(
         settings,
         resolver,
         current_type,
-        variable_names: read
-            .variables
-            .iter()
-            .map(|&v| f.var(v).name.clone())
-            .collect(),
+        variable_names,
         continue_target: None,
         continue_count: 0,
         break_target: None,
         return_statements: Vec::new(),
         is_iterator: read.is_iterator,
         in_lambda: false,
+        root_variables: read.variables.clone(),
     };
     let stmt = b.convert(body)?;
     b.ast.with_il(stmt, body);
@@ -80,12 +86,13 @@ pub fn convert_body(
         return Err("a cast as the target of a member or reference".to_owned());
     }
     // `stmt as BlockStatement ?? new BlockStatement { stmt }`: a container is a block.
-    Ok((b.ast, stmt))
+    let ast = b.ast;
+    Ok((ast, stmt, function))
 }
 
 impl Builder<'_, '_, '_, '_> {
     /// `Convert(inst)`.
-    fn convert(&mut self, inst: NodeId) -> Result<AstId, Unsupported> {
+    pub(super) fn convert(&mut self, inst: NodeId) -> Result<AstId, Unsupported> {
         match self.f.inst(inst).clone() {
             Inst::BlockContainer { kind, blocks, .. } => {
                 self.visit_block_container(inst, kind, &blocks)
@@ -360,16 +367,12 @@ impl Builder<'_, '_, '_, '_> {
         if is_async {
             return Err("an await using".to_owned());
         }
-        // `TransformToForeach` starts from a `GetEnumerator` call.
-        if let Inst::Call(c) | Inst::CallVirt(c) = self.f.inst(resource_expression)
-            && matches!(
-                c.method.method.name.as_str(),
-                "GetEnumerator" | "GetAsyncEnumerator"
-            )
-        {
-            return Err("a foreach".to_owned());
-        }
         let resource = self.translate(resource_expression, None)?;
+        if let Some(foreach) =
+            self.transform_to_foreach(variable, resource_expression, &resource, body)?
+        {
+            return Ok(self.ast.with_il(foreach, inst));
+        }
         // `IsValidInCSharp`; else the managed builder writes the try/finally out.
         let v = self.f.var(variable);
         let (ty, used) = (v.ty, v.load_count() > 0 || v.address_count() > 0);
@@ -722,7 +725,11 @@ impl Builder<'_, '_, '_, '_> {
 
     /// `BlockContainer.MatchConditionBlock`: a block of one `if (condition) br body; else
     /// leave container`, as the condition and the body's block.
-    fn match_condition_block(&self, container: NodeId, block: NodeId) -> Option<(NodeId, NodeId)> {
+    pub(super) fn match_condition_block(
+        &self,
+        container: NodeId,
+        block: NodeId,
+    ) -> Option<(NodeId, NodeId)> {
         let Inst::Block { instructions, .. } = self.f.inst(block) else {
             return None;
         };

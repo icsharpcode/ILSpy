@@ -92,6 +92,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		public const byte RecursivePattern = 47;
 		public const byte IsType = 48;
 		public const byte DefaultValue = 49;
+		public const byte Foreach = 50;
 
 		public byte Kind;
 		/// <summary>The instructions the node is annotated with, in order.</summary>
@@ -120,6 +121,8 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		public bool AttemptedConversionWithTypeMismatch;
 		/// <summary>For an object creation: the elements of its initializer, if it has one.</summary>
 		public RustBodyNode[]? Initializer;
+		/// <summary>For a foreach statement: the GetEnumerator, MoveNext and get_Current calls of its <see cref="ForeachAnnotation"/>.</summary>
+		public ILInstruction[] ForeachInstructions = [];
 		/// <summary>For a generic name: the type arguments written with it.</summary>
 		public IType[] TypeArguments = [];
 		public object? Value;
@@ -387,6 +390,22 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					return Annotate(new BreakStatement(), node);
 				case RustBodyNode.Continue:
 					return Annotate(new ContinueStatement(), node);
+				case RustBodyNode.Foreach:
+				{
+					// `TransformToForeach`: the variable as the ILAst names and types it now.
+					var variable = (ILVariable)node.Value!;
+					var designation = new SingleVariableDesignation { Identifier = variable.Name! };
+					designation.AddAnnotation(new ILVariableResolveResult(variable, variable.Type));
+					var statement = new ForeachStatement {
+						VariableType = exprBuilder.ConvertType(variable.Type),
+						VariableDesignation = designation,
+						InExpression = (Expression)Build(node.Children[0], exprBuilder),
+						EmbeddedStatement = (Statement)Build(node.Children[1], exprBuilder)
+					};
+					var i = node.ForeachInstructions;
+					statement.AddAnnotation(new ForeachAnnotation(i[0], i[1], i[2]));
+					return Annotate(statement, node);
+				}
 				case RustBodyNode.DefaultValue:
 					return Annotate(node.Type == null ? new DefaultValueExpression() : new DefaultValueExpression(exprBuilder.ConvertType(node.Type)), node);
 				case RustBodyNode.IsType:

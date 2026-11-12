@@ -3350,6 +3350,35 @@ engine infers what the managed builder infers, and the type arguments are writte
 where it writes them. The user approved the change to the engine's type system. The share
 rose from 68.3 % to 69.3 %.
 
+### 3.130 foreach loops (item 68y22)
+
+`TransformToForeach` is the one part of the statement builder that changes the ILAst while
+it translates: the loop variable becomes a `ForeachLocal`, gets the type of `Current` (or of
+the cast applied to it) and a new name, and in other shapes a new variable is registered and
+the getter call is moved into a store. The engine's C# builder had read the function only.
+The user chose to let the translation work on a copy of the function and to ship that copy,
+with the body, in place of the original; a body that falls back drops the copy, so the
+managed builder sees the ILAst it would have seen anyway. The builder now holds the
+function mutably.
+
+The ported case is the common one (`UseExistingVariable`): the resource is
+`collection.GetEnumerator()`, the using's body (possibly a container around the loop and a
+pure leave, which then follows the loop) is `while (e.MoveNext())`, and the first statement
+of the loop body stores the only other use of `e`, the getter of `Current`, possibly cast, in
+a local used only in the loop. The foreach statement takes the while loop's body without
+that store and its instructions, and carries a `ForeachAnnotation` of the three calls. The
+variable's new name comes from `GenerateForeachVariableName`: the singular of the
+collection's name, made unique among the variables of all functions. Singularization is
+Humanizer's, vendored in the managed decompiler; the user chose a host callback over a port,
+so the engine asks the host. Three settings the managed code reads were added to the
+engine's settings (`ForEachStatement`, `ExtensionMethods`,
+`ForEachWithGetEnumeratorExtension`, bits 59 to 61).
+
+New variables (no store in the loop body, or a struct copy), deconstruction, tuple and
+anonymous element types, variables whose address is taken, `await foreach`, the static
+spelling of an extension `GetEnumerator`, and the foreach loops without `Dispose` (no
+using) fall back. The share rose from 69.3 % to 70.2 %.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

@@ -316,6 +316,13 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 			reader.context = new GenericContext(reader.mainModule.GetDefinition(MetadataTokens.MethodDefinitionHandle(row)));
 			reader.ReadContexts();
 			var query = new RustResolverQuery { Kind = reader.U8() };
+			if (query.Kind == RustResolverQuery.SingularizeKind)
+			{
+				query.Name = reader.Str();
+				if (!reader.AtEnd)
+					throw new InvalidOperationException("Trailing bytes after the resolver query");
+				return query;
+			}
 			if (query.Kind is RustResolverQuery.MethodGroupKind or RustResolverQuery.AccessorKind)
 			{
 				if (query.Kind == RustResolverQuery.AccessorKind)
@@ -765,6 +772,12 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					node.Children = children;
 					break;
 				}
+				case RustBodyNode.Foreach:
+					// The variable, the three instructions of the annotation, the collection and the body.
+					node.Value = Variable();
+					node.ForeachInstructions = [materialized[Len()], materialized[Len()], materialized[Len()]];
+					node.Children = [BodyNode(), BodyNode()];
+					break;
 				case RustBodyNode.DefaultValue:
 					node.Type = Bool() ? Type() : null;
 					break;

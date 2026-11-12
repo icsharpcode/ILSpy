@@ -180,6 +180,16 @@ pub enum AstNode {
     IsType { expression: AstId, ty: TypeId },
     /// `DefaultValueExpression`: `default(T)`, or the `default` literal without a type.
     DefaultValue { ty: Option<TypeId> },
+    /// `ForeachStatement`: `foreach (T variable in collection) body`, with the variable's type,
+    /// and the `ForeachAnnotation` of the instructions it was made of.
+    Foreach {
+        variable: crate::il::ast::VarId,
+        collection: AstId,
+        body: AstId,
+        get_enumerator: NodeId,
+        move_next: NodeId,
+        get_current: NodeId,
+    },
     /// `LockStatement`.
     Lock { expression: AstId, body: AstId },
     /// `ThrowStatement`, a rethrow without an expression.

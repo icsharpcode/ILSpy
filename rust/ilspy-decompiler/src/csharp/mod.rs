@@ -7,6 +7,7 @@
 pub mod ast;
 mod call_builder;
 mod expression_builder;
+mod foreach;
 mod lambda;
 mod member_access;
 mod statement_builder;
@@ -24,7 +25,9 @@ pub type Unsupported = String;
 /// The state `StatementBuilder` and its `ExpressionBuilder` share while translating one
 /// function.
 pub(crate) struct Builder<'f, 't, 'c, 'a> {
-    pub(crate) f: &'f Function,
+    /// The function being translated: a copy the translation may change (as
+    /// `TransformToForeach` changes the ILAst), which is what the host receives with the body.
+    pub(crate) f: &'f mut Function,
     pub(crate) ts: &'t mut TypeSystem<'c, 'a>,
     pub(crate) ast: ast::Ast,
     /// `currentReturnContainer`.
@@ -51,6 +54,8 @@ pub(crate) struct Builder<'f, 't, 'c, 'a> {
     pub(crate) is_iterator: bool,
     /// Whether the current function is a lambda, whose returns can keep their type with a cast.
     pub(crate) in_lambda: bool,
+    /// The variables of the top-level function (`ReadFunction::variables`).
+    pub(crate) root_variables: Vec<crate::il::ast::VarId>,
 }
 
 /// The variant name of an instruction, for the reasons of untranslated bodies.

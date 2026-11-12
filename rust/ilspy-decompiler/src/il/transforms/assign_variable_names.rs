@@ -680,11 +680,13 @@ impl Namer {
             let mut names: Vec<Option<String>> = Vec::new();
             for &store in &var.store_instructions {
                 let name = match f.inst(store) {
-                    Inst::StLoc { value, .. } => Some(name_from_instruction(f, ctx, *value)),
+                    Inst::StLoc { value, .. } => Some(name_from_instruction(f, ctx.ts, *value)),
                     Inst::Match { tested_operand, .. } if is_sub_pattern(f, store) => {
-                        Some(name_from_instruction(f, ctx, *tested_operand))
+                        Some(name_from_instruction(f, ctx.ts, *tested_operand))
                     }
-                    Inst::PinnedRegion { init, .. } => Some(name_from_instruction(f, ctx, *init)),
+                    Inst::PinnedRegion { init, .. } => {
+                        Some(name_from_instruction(f, ctx.ts, *init))
+                    }
                     _ => None,
                 };
                 if let Some(name) = name
@@ -981,13 +983,16 @@ fn call_parameter_name(
 }
 
 /// `ExcludeMethodFromCandidates`.
-fn exclude_method_from_candidates(ctx: &mut Context<'_, '_, '_>, m: &ResolvedMethod) -> bool {
-    if ctx.ts.method_is_operator(m) || m.name == "ToString" || m.name == "GetPinnableReference" {
+fn exclude_method_from_candidates(ts: &mut TypeSystem<'_, '_>, m: &ResolvedMethod) -> bool {
+    if ts.method_is_operator(m) || m.name == "ToString" || m.name == "GetPinnableReference" {
         return true;
     }
     m.name == "Concat"
-        && m.declaring
-            .is_some_and(|d| known(ctx, d) == Some(KnownTypeCode::String))
+        && m.declaring.is_some_and(|d| {
+            ts.definition(d)
+                .and_then(|def| ts.comp.type_def(def).ok())
+                .is_some_and(|i| i.known == KnownTypeCode::String)
+        })
 }
 
 /// `IsCompilerGeneratedOrIsInCompilerGeneratedClass` of a field.
@@ -1012,24 +1017,24 @@ fn field_is_compiler_generated(ts: &TypeSystem<'_, '_>, field: &ResolvedField) -
 }
 
 /// `GetNameFromInstruction`.
-fn name_from_instruction(
+pub(crate) fn name_from_instruction(
     f: &Function,
-    ctx: &mut Context<'_, '_, '_>,
+    ts: &mut TypeSystem<'_, '_>,
     inst: NodeId,
 ) -> Option<String> {
     match f.inst(inst) {
-        Inst::GetPinnableReference { arg, .. } => name_from_instruction(f, ctx, *arg),
-        Inst::LdObj { target, .. } => name_from_instruction(f, ctx, *target),
+        Inst::GetPinnableReference { arg, .. } => name_from_instruction(f, ts, *arg),
+        Inst::LdObj { target, .. } => name_from_instruction(f, ts, *target),
         Inst::LdFlda { target, field, .. } => {
-            if field_is_compiler_generated(ctx.ts, &field.field) {
-                return name_from_instruction(f, ctx, *target);
+            if field_is_compiler_generated(ts, &field.field) {
+                return name_from_instruction(f, ts, *target);
             }
             clean_up_variable_name(&field.field.name)
         }
         Inst::LdsFlda { field } => clean_up_variable_name(&field.field.name),
         Inst::Call(c) | Inst::CallVirt(c) => {
             let m = c.method.method.clone();
-            if exclude_method_from_candidates(ctx, &m) {
+            if exclude_method_from_candidates(ts, &m) {
                 return None;
             }
             let param_count = m.params().map_or(0, |p| p.len());
@@ -1078,7 +1083,7 @@ fn name_for_argument(
         },
         Inst::Call(c) | Inst::CallVirt(c) | Inst::NewObj(c) => {
             let m = c.method.method.clone();
-            if exclude_method_from_candidates(ctx, &m) {
+            if exclude_method_from_candidates(ctx.ts, &m) {
                 return None;
             }
             let param_count = m.params().map_or(0, |p| p.len());
@@ -1415,7 +1420,7 @@ fn clean_up_variable_name(name: &str) -> Option<String> {
 }
 
 /// `AddExistingName`.
-fn add_existing_name(reserved: &mut HashMap<String, i32>, name: &str) {
+pub(crate) fn add_existing_name(reserved: &mut HashMap<String, i32>, name: &str) {
     if name.is_empty() {
         return;
     }
@@ -1425,7 +1430,7 @@ fn add_existing_name(reserved: &mut HashMap<String, i32>, name: &str) {
 }
 
 /// `SplitName`: the name without a numeric suffix, and the suffix (1 without one).
-fn split_name(name: &str) -> (String, i32) {
+pub(crate) fn split_name(name: &str) -> (String, i32) {
     let digits = name.bytes().rev().take_while(u8::is_ascii_digit).count();
     let pos = name.len() - digits;
     if digits > 0

@@ -121,6 +121,9 @@ pub const SETTING_NAMES: &[&str] = &[
     "OptionalArguments",
     "UseLambdaSyntax",
     "DefaultLiterals",
+    "ForEachStatement",
+    "ExtensionMethods",
+    "ForEachWithGetEnumeratorExtension",
 ];
 
 /// The values of `SETTING_NAMES`.
@@ -185,6 +188,9 @@ pub struct Settings {
     pub optional_arguments: bool,
     pub use_lambda_syntax: bool,
     pub default_literals: bool,
+    pub foreach_statement: bool,
+    pub extension_methods: bool,
+    pub foreach_with_get_enumerator_extension: bool,
 }
 
 impl Settings {
@@ -251,6 +257,9 @@ impl Settings {
             optional_arguments: bit(56),
             use_lambda_syntax: bit(57),
             default_literals: bit(58),
+            foreach_statement: bit(59),
+            extension_methods: bit(60),
+            foreach_with_get_enumerator_extension: bit(61),
         }
     }
 }
@@ -358,6 +367,12 @@ pub trait Resolver {
         ts: &TypeSystem<'_, '_>,
         constructor: &super::ast::MethodOperand,
     ) -> Option<Vec<MethodGroupList>>;
+
+    /// `Vocabularies.Default.Singularize(word, inputIsKnownToBePlural: false)` of the host's
+    /// vendored Humanizer; `None` when the host cannot answer.
+    fn singularize(&self, _ts: &TypeSystem<'_, '_>, _word: &str) -> Option<String> {
+        None
+    }
 }
 
 /// What a property name binds to (`Resolver::accessor_reference`).

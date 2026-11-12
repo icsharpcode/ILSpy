@@ -1535,8 +1535,16 @@ pub fn read_function(
     if analysis {
         crate::il::transforms::combine_exits_transform::run(&mut f, &mut ctx);
     }
+    // A translated body comes with the function as the translation changed it.
     let translated =
-        translate_body.then(|| crate::csharp::convert_body(ts, &f, settings, resolver));
+        match translate_body.then(|| crate::csharp::convert_body(ts, &f, settings, resolver)) {
+            Some(Ok((ast, stmt, function))) => {
+                f.function = function;
+                Some(Ok((ast, stmt)))
+            }
+            Some(Err(reason)) => Some(Err(reason)),
+            None => None,
+        };
     let mut w = ModuleWriter::new(ts);
     w.function(method.row, &f, translated.as_ref())?;
     Ok(w.finish())
@@ -1825,6 +1833,15 @@ pub fn constructors_query(
     query_message(ts, |w| {
         w.out.u8(7);
         w.call_method(constructor)?;
+        Ok(())
+    })
+}
+
+/// Encodes the host's singularization of `word` (kind 9); the answer is the result in UTF-8.
+pub fn singularize_query(ts: &TypeSystem<'_, '_>, word: &str) -> Result<Vec<u8>, String> {
+    query_message(ts, |w| {
+        w.out.u8(9);
+        w.string(word);
         Ok(())
     })
 }

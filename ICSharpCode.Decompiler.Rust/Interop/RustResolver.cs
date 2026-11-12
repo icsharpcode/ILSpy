@@ -59,6 +59,8 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		public const byte ConstructorsKind = 7;
 		/// <summary><c>CanTransformToExtensionMethodCall</c> with the body's resolver, for <c>TryUseExtensionMethodSyntax</c>.</summary>
 		public const byte ExtensionSyntaxKind = 8;
+		/// <summary><c>Vocabularies.Default.Singularize(<see cref="Name"/>)</c>, for foreach variable names.</summary>
+		public const byte SingularizeKind = 9;
 
 		/// <summary><see cref="TargetKind"/>: <c>this</c> or <c>base</c>.</summary>
 		public const byte ThisTarget = 0;
@@ -158,10 +160,14 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					return CanUseExtensionMethodSyntax(q);
 				if (q.Kind == RustResolverQuery.AccessorKind)
 					return AccessorReference(q);
-				if (q.Kind is RustResolverQuery.MethodGroupKind or RustResolverQuery.ConstructorsKind)
+				if (q.Kind is RustResolverQuery.MethodGroupKind or RustResolverQuery.ConstructorsKind or RustResolverQuery.SingularizeKind)
 				{
 					// The full answer's length; the engine asks again when it does not fit.
-					var data = q.Kind == RustResolverQuery.ConstructorsKind ? Constructors(q) : MethodGroup(q);
+					var data = q.Kind switch {
+						RustResolverQuery.ConstructorsKind => Constructors(q),
+						RustResolverQuery.SingularizeKind => System.Text.Encoding.UTF8.GetBytes(Humanizer.Inflections.Vocabularies.Default.Singularize(q.Name, inputIsKnownToBePlural: false) ?? ""),
+						_ => MethodGroup(q),
+					};
 					data.AsSpan(0, Math.Min(data.Length, checked((int)capacity))).CopyTo(new Span<byte>(answer, checked((int)capacity)));
 					return data.Length;
 				}
