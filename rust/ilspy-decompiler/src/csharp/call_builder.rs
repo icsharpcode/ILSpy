@@ -145,10 +145,6 @@ impl Builder<'_, '_, '_, '_> {
         };
         let is_extension = self.ts.method_flags(id, None).extension;
         if property.is_none() {
-            // `HandleImplicitConversion` writes an implicit conversion operator as a conversion.
-            if method.is_operator && method.name == "op_Implicit" {
-                return Err("an implicit conversion operator call".to_owned());
-            }
             self.check_special_calls(&method, declaring)?;
         }
 
@@ -166,6 +162,11 @@ impl Builder<'_, '_, '_, '_> {
         // the arguments
         let is_setter = property.is_some() && method.parameters.len() == 1;
         let mut list = self.argument_list(call, &method, id, first_param, declaring, is_setter)?;
+
+        // `HandleImplicitConversion`: an implicit conversion operator is written as the conversion.
+        if method.is_operator && method.name == "op_Implicit" && list.arguments.len() == 1 {
+            return self.implicit_conversion_call(inst, &method, &list);
+        }
 
         if let Some(name) = property {
             return self.accessor_call(inst, operand, &method, op, target, list, name, declaring);
@@ -241,6 +242,41 @@ impl Builder<'_, '_, '_, '_> {
         Ok(TranslatedExpression {
             expression: e,
             ty: method.return_type,
+        })
+    }
+
+    /// `HandleImplicitConversion`: `(T)argument`, with the argument first cast to the
+    /// parameter type where the implicit conversion from its own type is not the operator.
+    fn implicit_conversion_call(
+        &mut self,
+        inst: NodeId,
+        method: &Method,
+        list: &ArgumentList,
+    ) -> Result<TranslatedExpression, Unsupported> {
+        let mut argument = list.arguments[0];
+        let target = method.return_type;
+        let conversion = Conversions::new(self.ts).implicit_type(argument.ty, target);
+        let direct = conversion.is_valid()
+            && match &conversion {
+                crate::semantics::Conversion::UserDefined { method: found, .. } => {
+                    self.same_method_after_type_erasure(method, found)
+                }
+                _ => false,
+            };
+        if !direct {
+            let parameter = method.parameters[0].ty;
+            argument = self.convert_to(argument, parameter, false)?;
+        }
+        let c = self.ast.add(AstNode::Cast {
+            ty: target,
+            expression: argument.expression,
+            unchecked: false,
+        });
+        self.ast.with_rr(c, Rr::ImplicitConversion { ty: target });
+        self.ast.with_il(c, inst);
+        Ok(TranslatedExpression {
+            expression: c,
+            ty: target,
         })
     }
 

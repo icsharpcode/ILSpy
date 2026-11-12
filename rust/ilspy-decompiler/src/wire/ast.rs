@@ -114,7 +114,9 @@ fn var_index(
 /// computes from the cast's type and operand; 14 `TypeOfResolveResult` (type, referenced type); 15
 /// `ByReferenceResolveResult` with `ReferenceKind.Out` (the element's resolve result); 16 the
 /// `MemberResolveResult` of `Array.Length` or `LongLength` (the target's resolve result, whether
-/// it is `LongLength`). A field's target is
+/// it is `LongLength`); 17 the
+/// `ConversionResolveResult` of an implicit conversion operator, which the host computes from the
+/// cast's type and operand. A field's target is
 /// absent (0) for the `field` keyword.
 fn rr(w: &mut FunctionWriter<'_, '_, '_, '_>, rr: Option<&Rr>) -> Result<(), String> {
     match rr {
@@ -197,6 +199,7 @@ fn rr(w: &mut FunctionWriter<'_, '_, '_, '_>, rr: Option<&Rr>) -> Result<(), Str
             w.out.bool(*found_by_lookup);
         }
         Some(Rr::Conversion { .. }) => w.out.u8(13),
+        Some(Rr::ImplicitConversion { .. }) => w.out.u8(17),
         Some(Rr::TypeOf { ty, referenced }) => {
             w.out.u8(14);
             w.ty(*ty);

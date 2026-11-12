@@ -70,7 +70,10 @@ pub fn convert_body(
             | Rr::ArrayLength { target: inner, .. }
             | Rr::Invocation { target: inner, .. }
             | Rr::Property { target: inner, .. },
-        ) => matches!(**inner, Rr::Conversion { .. }),
+        ) => matches!(
+            **inner,
+            Rr::Conversion { .. } | Rr::ImplicitConversion { .. }
+        ),
         _ => false,
     });
     if nested_cast {

@@ -3100,6 +3100,24 @@ operands, so the engine leaves them out and falls back for nullable operands. Im
 conversion operators, which `HandleImplicitConversion` writes as conversions, fall back too.
 The share rose from 60.6 % to 60.8 %.
 
+### 3.115 Implicit conversion operators (item 68y7)
+
+A call of `op_Implicit` with one argument is written as the conversion
+(`HandleImplicitConversion`): `(T)argument`, where the argument is first cast to the
+operator's parameter type unless the implicit conversion from its own type already is this
+operator. The cast's resolve result is a `ConversionResolveResult` with the implicit
+conversion from the operand's type, not the explicit conversion `ResolveCast` would give for
+the operand's resolve result; so a new resolve result tag asks the host for exactly that
+conversion when it builds the node. The engine decides whether the conversion is direct with
+its ported implicit conversion between the types. The share rose from 60.8 % to 61.0 %.
+
+The first gate run found the consumer of such casts: `LogicNot` (and the condition of a
+conditional expression) calls `UnwrapImplicitBoolConversion`, which drops a user-defined
+implicit conversion to `bool` again, since the context converts implicitly; for `!` only
+where the operand's type declares no `operator !`. Without it the engine wrote
+`!(bool)_material` for the managed `!_material`. The engine now unwraps such casts the same
+way, recognizing them by their resolve result.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

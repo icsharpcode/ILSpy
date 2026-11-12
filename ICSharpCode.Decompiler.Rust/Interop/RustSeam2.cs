@@ -98,6 +98,8 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		public bool LookUpMember;
 		/// <summary>For a cast: whether its resolve result is <c>ResolveCast</c> over the operand's.</summary>
 		public bool ResolveCast;
+		/// <summary>For a cast: whether its resolve result is the implicit conversion from the operand's type.</summary>
+		public bool ImplicitConversion;
 		/// <summary>For a generic name: the type arguments written with it.</summary>
 		public IType[] TypeArguments = [];
 		public object? Value;
@@ -386,6 +388,13 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 						cast.AddAnnotation(CSharp.Transforms.AddCheckedBlocks.UncheckedAnnotation);
 					if (node.ResolveCast)
 						node.ResolveResult = exprBuilder.resolver.WithCheckForOverflow(false).ResolveCast(node.Type!, operand.GetResolveResult());
+					// `HandleImplicitConversion`: the implicit conversion from the operand's type.
+					if (node.ImplicitConversion)
+					{
+						var operandResult = operand.GetResolveResult();
+						var conversion = CSharp.Resolver.CSharpConversions.Get(exprBuilder.compilation).ImplicitConversion(operandResult.Type, node.Type!);
+						node.ResolveResult = new ConversionResolveResult(node.Type!, operandResult, conversion);
+					}
 					return Annotate(cast, node);
 				}
 				case RustBodyNode.GenericIdentifier:

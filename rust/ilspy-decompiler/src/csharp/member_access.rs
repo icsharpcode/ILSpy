@@ -35,6 +35,7 @@ impl Builder<'_, '_, '_, '_> {
             | Rr::ObjectCreation { ty, .. }
             | Rr::Plain(ty)
             | Rr::Conversion { ty }
+            | Rr::ImplicitConversion { ty }
             | Rr::TypeOf { ty, .. }
             | Rr::ArrayLength { ty, .. } => *ty,
             Rr::Field { field, .. } => field.field.ty,

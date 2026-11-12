@@ -630,6 +630,8 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 			pendingInvocation = null;
 			node.ResolveCast = pendingResolveCast;
 			pendingResolveCast = false;
+			node.ImplicitConversion = pendingImplicitConversion;
+			pendingImplicitConversion = false;
 			node.LookUpMember = pendingLookUpMember;
 			pendingLookUpMember = false;
 			int implicitReturn = Len();
@@ -799,6 +801,9 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		/// <summary>Whether the last <see cref="BodyResolveResult"/> read was the <c>ResolveCast</c> of a cast.</summary>
 		bool pendingResolveCast;
 
+		/// <summary>Whether the last <see cref="BodyResolveResult"/> read was the implicit conversion of an operator call.</summary>
+		bool pendingImplicitConversion;
+
 		/// <summary>Whether the last <see cref="BodyResolveResult"/> read names a member found by looking its name up again.</summary>
 		bool pendingLookUpMember;
 
@@ -865,6 +870,10 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				case 13:
 					// RustSeam2 resolves the cast over its operand.
 					pendingResolveCast = true;
+					return null;
+				case 17:
+					// RustSeam2 computes the implicit conversion of the operand.
+					pendingImplicitConversion = true;
 					return null;
 				case 14:
 				{

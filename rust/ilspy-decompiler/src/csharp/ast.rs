@@ -237,6 +237,9 @@ pub enum Rr {
     },
     /// `TypeOfResolveResult` of the type `ty` for the referenced type.
     TypeOf { ty: TypeId, referenced: TypeId },
+    /// `ConversionResolveResult` of a cast for an implicit conversion operator: the implicit
+    /// conversion from the operand's type to `ty`, which the host computes.
+    ImplicitConversion { ty: TypeId },
     /// `resolver.ResolveCast(ty, operand)` of a cast, over the resolve result of the cast's
     /// operand, which the host computes.
     Conversion { ty: TypeId },

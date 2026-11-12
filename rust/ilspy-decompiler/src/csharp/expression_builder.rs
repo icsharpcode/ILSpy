@@ -5,6 +5,7 @@ use crate::il::ast::{
 };
 use crate::il::types::{Sign, StackType};
 use crate::metadata::tables::rows;
+use crate::semantics::Conversions;
 use crate::semantics::types::TypeKind;
 use crate::typesystem::known::KnownTypeCode;
 use crate::typesystem::members::ConstValue;
@@ -732,6 +733,8 @@ impl Builder<'_, '_, '_, '_> {
 
     /// `LogicNot(expr)`: `!expr`.
     pub(crate) fn logic_not(&mut self, expr: TranslatedExpression) -> TranslatedExpression {
+        // `!expr` converts to bool implicitly, unless that would call a user-defined `operator !`.
+        let expr = self.unwrap_implicit_bool_conversion(expr, true);
         let boolean = self.ts.known_type(KnownTypeCode::Boolean);
         let e = self.ast.add(AstNode::LogicNot {
             expression: expr.expression,
@@ -742,6 +745,42 @@ impl Builder<'_, '_, '_, '_> {
             ty: boolean,
         }
     }
+    /// `UnwrapImplicitBoolConversion`: the operand of a cast to `bool` that is a user-defined
+    /// implicit conversion, which the context applies itself; with `check_logical_not`, not where
+    /// the operand's type declares `operator !`.
+    fn unwrap_implicit_bool_conversion(
+        &mut self,
+        e: TranslatedExpression,
+        check_logical_not: bool,
+    ) -> TranslatedExpression {
+        if !self.ts.is_known(e.ty, KnownTypeCode::Boolean) {
+            return e;
+        }
+        let AstNode::Cast {
+            expression: inner, ..
+        } = *self.ast.node(e.expression)
+        else {
+            return e;
+        };
+        let input = self.rr_of(inner);
+        let input_ty = self.rr_type(&input);
+        let user_defined_implicit = match self.rr_of(e.expression) {
+            Rr::ImplicitConversion { .. } => true,
+            Rr::Conversion { .. } => {
+                let input_rr = self.semantic_rr(inner, input_ty);
+                let c = Conversions::new(self.ts).explicit(&input_rr, e.ty);
+                c.is_user_defined() && c.is_implicit()
+            }
+            _ => false,
+        };
+        if !user_defined_implicit
+            || (check_logical_not && self.declares_method(input_ty, "op_LogicalNot"))
+        {
+            return e;
+        }
+        self.unwrap_child(e.expression, inner)
+    }
+
     /// `VisitIfInstruction` in an expression: `&&` and `||` with a `bool` on the right, and
     /// the conditional operator where both branches have the same type.
     fn if_expression(
@@ -789,6 +828,7 @@ impl Builder<'_, '_, '_, '_> {
                 });
             }
         }
+        let condition = self.unwrap_implicit_bool_conversion(condition, false);
         let true_branch = self.adjust_constant_expression_to_type(true_branch, false_branch.ty)?;
         let false_branch = self.adjust_constant_expression_to_type(false_branch, true_branch.ty)?;
         // `ResolveConditional` with branches of the same type: no conversion, the type is
