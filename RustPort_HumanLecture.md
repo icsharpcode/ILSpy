@@ -3393,6 +3393,20 @@ a field load, which a struct enumerator needs for `MoveNext` and `Current`. The 
 wrote a `return;` the managed builder leaves out: the rewritten block loop passed the
 final-leave check the index after the instruction. The share rose from 70.2 % to 71.6 %.
 
+### 3.132 foreach loops with a new variable (item 68y24)
+
+Where no store of `Current` starts the loop body, `DetectGetCurrentTransformation` answers
+`IntroduceNewVariable`: the statement builder registers a `ForeachLocal` named as before,
+replaces the getter (or its cast) with a load of it, and inserts the store as the body's first
+statement, which the foreach translation then drops again. This is the first ILAst change
+that adds instructions and a variable, so the variable the copy registers is flushed into
+the top-level function's variable list before the copy is written, as `RegisterVariable`
+adds it to `Variables`; the new instructions travel with the rest of the copy. The detection
+now follows the managed order exactly, including `ILInlining.CanUninline` (made callable with
+the type system alone, like the naming helpers before). A struct whose setter is called on
+`Current` (`IntroduceNewVariableAndLocalCopy`), a deconstruction, and a new variable inside a
+lambda fall back. The share rose from 71.6 % to 71.8 %.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

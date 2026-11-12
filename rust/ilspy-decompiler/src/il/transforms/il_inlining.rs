@@ -467,7 +467,7 @@ pub(crate) fn find_load_in_next(
         return Find::Deconstruction(expr);
     }
     for (index, child) in f.inst(expr).children().into_iter().enumerate() {
-        if !can_inline_into_slot(f, ctx, expr, index, moved) {
+        if !can_inline_into_slot(f, ctx.ts, expr, index, moved) {
             return Find::Stop;
         }
         let r = find_load_in_next(f, ctx, Some(child), v, moved, options);
@@ -497,7 +497,7 @@ pub(crate) fn find_load_in_next(
 /// `parent`, may move into the child slot `index`.
 fn can_inline_into_slot(
     f: &Function,
-    ctx: &mut Context<'_, '_, '_>,
+    ts: &mut TypeSystem<'_, '_>,
     parent: NodeId,
     index: usize,
     moved: NodeId,
@@ -577,7 +577,7 @@ fn can_inline_into_slot(
         Inst::IsInst { ty, arg } => {
             let ty = ty.ty;
             let arg = *arg;
-            if ctx.ts.is_reference_type(ty) == Some(true) || is_pure(f.flags(moved)) {
+            if ts.is_reference_type(ty) == Some(true) || is_pure(f.flags(moved)) {
                 return true;
             }
             // `expr is T ? (T)expr : null` duplicates a pure box harmlessly, but only for a
@@ -594,8 +594,8 @@ fn can_inline_into_slot(
                 // `expr as T?` (`ExpressionBuilder.IsUnboxAnyWithIsInst`).
                 Inst::UnboxAny { ty: unbox, .. } => {
                     unbox.ty == ty
-                        && (known(ctx, unbox.ty) == Some(KnownTypeCode::NullableOfT)
-                            || ctx.ts.is_reference_type(ty) == Some(true))
+                        && (known_in(ts, unbox.ty) == Some(KnownTypeCode::NullableOfT)
+                            || ts.is_reference_type(ty) == Some(true))
                 }
                 // `expr is T`, and the statement form `StatementBuilder.VisitIsInst` supports.
                 Inst::Block {
@@ -1148,6 +1148,23 @@ pub(crate) fn can_inline_into(
     )
 }
 
+/// `ILInlining.CanUninline`: whether `arg` may move out of `stmt`, to before it (as moving in).
+pub(crate) fn can_uninline(
+    f: &Function,
+    ts: &mut TypeSystem<'_, '_>,
+    arg: NodeId,
+    stmt: NodeId,
+) -> bool {
+    can_move_into_skipping(f, ts, arg, stmt, arg, None)
+}
+
+/// The known type code of `ty`'s definition.
+fn known_in(ts: &TypeSystem<'_, '_>, ty: TypeId) -> Option<KnownTypeCode> {
+    ts.definition(ty)
+        .and_then(|d| ts.comp.type_def(d).ok())
+        .map(|i| i.known)
+}
+
 /// `ILInlining.CanMoveInto`: whether `moved`, from before `stmt`, may become the replacement
 /// of `target_load`, a descendant of `stmt`.
 pub(crate) fn can_move_into(
@@ -1157,7 +1174,7 @@ pub(crate) fn can_move_into(
     stmt: NodeId,
     target_load: NodeId,
 ) -> bool {
-    can_move_into_skipping(f, ctx, moved, stmt, target_load, None)
+    can_move_into_skipping(f, ctx.ts, moved, stmt, target_load, None)
 }
 
 /// `ILInlining.CanMoveIntoCallVirt`: as `can_move_into`, but `moved` may be reordered with the
@@ -1171,12 +1188,12 @@ pub(crate) fn can_move_into_call_virt(
     target_load: NodeId,
 ) -> bool {
     let this_arg = f.inst(nested_call_virt).children()[0];
-    can_move_into_skipping(f, ctx, moved, stmt, target_load, Some(this_arg))
+    can_move_into_skipping(f, ctx.ts, moved, stmt, target_load, Some(this_arg))
 }
 
 fn can_move_into_skipping(
     f: &Function,
-    ctx: &mut Context<'_, '_, '_>,
+    ts: &mut TypeSystem<'_, '_>,
     moved: NodeId,
     stmt: NodeId,
     target_load: NodeId,
@@ -1186,7 +1203,7 @@ fn can_move_into_skipping(
     while inst != stmt {
         let parent = f.node(inst).parent.expect("a descendant of the statement");
         let index = f.node(inst).child_index as usize;
-        if !can_inline_into_slot(f, ctx, parent, index, moved) {
+        if !can_inline_into_slot(f, ts, parent, index, moved) {
             return false;
         }
         // The reordering with the predecessors.

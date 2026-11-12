@@ -1540,6 +1540,8 @@ pub fn read_function(
         match translate_body.then(|| crate::csharp::convert_body(ts, &f, settings, resolver)) {
             Some(Ok((ast, stmt, function))) => {
                 f.function = function;
+                // Variables the translation registered, as `RegisterVariable` adds them.
+                f.flush_pending_variables();
                 Some(Ok((ast, stmt)))
             }
             Some(Err(reason)) => Some(Err(reason)),

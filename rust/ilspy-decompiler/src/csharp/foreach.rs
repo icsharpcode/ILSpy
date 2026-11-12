@@ -19,6 +19,16 @@ const ACCESSOR_GETTER: u16 = 0x02;
 /// `MethodSemanticsAttributes.Setter`.
 const ACCESSOR_SETTER: u16 = 0x01;
 
+/// The result of `DetectGetCurrentTransformation`: the getter call of `Current`, the variable
+/// its value is stored in (`UseExistingVariable`) or none (`IntroduceNewVariable`), the type
+/// of the value, and the instruction a new variable's load replaces (the getter or its cast).
+struct GetCurrent {
+    getter: NodeId,
+    existing: Option<VarId>,
+    ty: TypeId,
+    replaced: NodeId,
+}
+
 impl Builder<'_, '_, '_, '_> {
     /// `TransformToForeach(UsingInstruction, Expression)`: the `foreach` statement for the
     /// `using` of `variable`, `None` where the using is no foreach loop.
@@ -188,7 +198,7 @@ impl Builder<'_, '_, '_, '_> {
             return Ok(None);
         }
         // `DetectGetCurrentTransformation`
-        let (single_getter, foreach_variable, getter_type) = match self.detect_get_current(
+        let get_current = match self.detect_get_current(
             container,
             body_block,
             loop_container,
@@ -198,6 +208,7 @@ impl Builder<'_, '_, '_, '_> {
             Some(found) => found,
             None => return Ok(None),
         };
+        let (single_getter, getter_type) = (get_current.getter, get_current.ty);
         // `foreach (var item in this)` is decompiled with `base`, which is not valid here.
         let collection = if matches!(self.ast.node(collection), AstNode::Base) {
             let this = self.ast.add(AstNode::This);
@@ -224,23 +235,54 @@ impl Builder<'_, '_, '_, '_> {
             return Err("a foreach variable of a tuple type".to_owned());
         }
 
-        // `UseExistingVariable`: the variable becomes the foreach variable.
         let value_context = self.ast.annotations(collection).il.first().copied();
-        let name = self.generate_foreach_variable_name(value_context, foreach_variable)?;
-        let old_name = self.f.var(foreach_variable).name.clone();
-        {
-            let v = self.f.var_mut(foreach_variable);
-            v.kind = VariableKind::ForeachLocal;
-            v.name = name.clone();
-        }
-        if self.ts.kind(self.f.var(foreach_variable).ty)
-            != crate::semantics::types::TypeKind::Dynamic
-        {
-            self.f.var_mut(foreach_variable).ty = getter_type;
-        }
-        if let Some(n) = self.variable_names.iter_mut().find(|n| **n == old_name) {
-            *n = name;
-        }
+        let name = self.generate_foreach_variable_name(value_context, get_current.existing)?;
+        let foreach_variable = match get_current.existing {
+            // `UseExistingVariable`: the variable becomes the foreach variable.
+            Some(existing) => {
+                let old_name = self.f.var(existing).name.clone();
+                {
+                    let v = self.f.var_mut(existing);
+                    v.kind = VariableKind::ForeachLocal;
+                    v.name = name.clone();
+                }
+                if self.ts.kind(self.f.var(existing).ty)
+                    != crate::semantics::types::TypeKind::Dynamic
+                {
+                    self.f.var_mut(existing).ty = getter_type;
+                }
+                if let Some(n) = self.variable_names.iter_mut().find(|n| **n == old_name) {
+                    *n = name;
+                }
+                existing
+            }
+            // `IntroduceNewVariable`: a new variable stores the value as the body's first
+            // statement, and its load replaces the value.
+            None => {
+                if self.in_lambda {
+                    return Err("a foreach in a lambda that introduces a variable".to_owned());
+                }
+                let v = self.f.register_variable_named(
+                    self.ts,
+                    VariableKind::ForeachLocal,
+                    getter_type,
+                    Some(&name),
+                );
+                self.root_variables.push(v);
+                self.variable_names.push(name);
+                let replaced = get_current.replaced;
+                let load = self.f.add(Inst::LdLoc { var: v });
+                self.f.replace(replaced, load);
+                let store = self.f.add(Inst::StLoc {
+                    var: v,
+                    value: replaced,
+                    il_stack_was_empty: false,
+                    is_stack_adjustment: false,
+                });
+                self.f.insert(body_block, 0, store);
+                v
+            }
+        };
 
         // The modified body as C#: the while loop, without the store to the foreach variable.
         let while_block = self.convert_as_block(container)?;
@@ -297,7 +339,7 @@ impl Builder<'_, '_, '_, '_> {
         loop_container: NodeId,
         enumerator: VarId,
         move_next: NodeId,
-    ) -> Result<Option<(NodeId, VarId, TypeId)>, Unsupported> {
+    ) -> Result<Option<GetCurrent>, Unsupported> {
         let v = self.f.var(enumerator);
         let loads: Vec<NodeId> = v
             .load_instructions
@@ -326,8 +368,13 @@ impl Builder<'_, '_, '_, '_> {
         let Some(&first) = instructions.first() else {
             return Ok(None);
         };
-        if !self.is_descendant_of(getter, first) {
+        if !self.is_descendant_of(getter, first)
+            || !crate::il::transforms::il_inlining::can_uninline(self.f, self.ts, getter, first)
+        {
             return Ok(None);
+        }
+        if matches!(self.f.inst(first), Inst::Deconstruct { .. }) {
+            return Err("a foreach with a deconstruction".to_owned());
         }
         // The value of the first statement: the getter, cast where the variable is of another type.
         let mut inst = getter;
@@ -341,21 +388,37 @@ impl Builder<'_, '_, '_, '_> {
                 _ => break,
             }
         }
-        let Inst::StLoc { var, .. } = *self.f.inst(first) else {
-            return Err("a foreach that introduces a variable".to_owned());
-        };
-        if self.f.node(inst).parent != Some(first)
-            || !matches!(
+        let parent = self.f.node(inst).parent;
+        // One variable was found: a plain store in the loop body, of a variable used there only.
+        if let Some(store) = parent
+            && let Inst::StLoc { var, .. } = *self.f.inst(store)
+            && matches!(
                 self.f.var(var).kind,
                 VariableKind::Local | VariableKind::StackSlot
             )
+            && self.f.node(store).parent == Some(loop_body)
+            && self.variable_is_only_used_in_block(var, store, using_container, loop_container)
         {
-            return Err("a foreach that introduces a variable".to_owned());
+            return Ok(Some(GetCurrent {
+                getter,
+                existing: Some(var),
+                ty,
+                replaced: inst,
+            }));
         }
-        if !self.variable_is_only_used_in_block(var, first, using_container, loop_container) {
-            return Err("a foreach that introduces a variable".to_owned());
+        // `CurrentIsStructSetterTarget`: a struct's setter called on `Current` needs a local copy.
+        if let Some(address) = parent
+            && matches!(self.f.inst(address), Inst::AddressOf { .. })
+            && self.is_target_of_setter_call(address, getter_type)
+        {
+            return Err("a foreach that copies its variable".to_owned());
         }
-        Ok(Some((getter, var, ty)))
+        Ok(Some(GetCurrent {
+            getter,
+            existing: None,
+            ty,
+            replaced: inst,
+        }))
     }
 
     /// `VariableIsOnlyUsedInBlock`: `var` is loaded only inside `using_container`, its
@@ -538,11 +601,12 @@ impl Builder<'_, '_, '_, '_> {
     fn generate_foreach_variable_name(
         &mut self,
         value_context: Option<NodeId>,
-        existing: VarId,
+        existing: Option<VarId>,
     ) -> Result<String, Unsupported> {
-        let v = self.f.var(existing);
-        if !v.has_generated_name {
-            return Ok(v.name.clone());
+        if let Some(existing) = existing
+            && !self.f.var(existing).has_generated_name
+        {
+            return Ok(self.f.var(existing).name.clone());
         }
         // `CollectReservedVariableNames`: the parameters of the top-level function and the
         // other variables of every function.
@@ -564,7 +628,7 @@ impl Builder<'_, '_, '_, '_> {
         for variables in &functions {
             for &v in variables {
                 let var = self.f.var(v);
-                if var.kind != VariableKind::Parameter && v != existing {
+                if var.kind != VariableKind::Parameter && Some(v) != existing {
                     add_existing_name(&mut reserved, &var.name);
                 }
             }
