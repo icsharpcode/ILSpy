@@ -3182,6 +3182,18 @@ Async lambdas, anonymous methods (`delegate { }`, also for lambdas whose paramet
 used), lambdas with attributes and parameters with modifiers, defaults or anonymous types
 fall back. The share rose from 62.2 % to 63.5 %.
 
+### 3.119 Interpolated strings (item 68y11)
+
+The fallback reason for blocks used as expressions now names the block kind, which split
+the 44 bodies into interpolated strings (16), object initializers (13), array initializers
+(11) and collection initializers (2). `TranslateInterpolatedString` reads an interpolated
+string handler block after the handler's creation: an `AppendLiteral` call is text, with
+its braces doubled, and an `AppendFormatted` call an interpolation of its value, converted
+(implicitly where possible) to the method's parameter type, with an alignment and a format
+suffix from its constant arguments. Only the block is annotated with IL; the calls are
+not. The engine sends the contents inline in the node, the interpolations' expressions as
+child nodes. The share rose from 63.5 % to 64.1 %.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

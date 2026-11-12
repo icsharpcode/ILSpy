@@ -59,6 +59,7 @@ mod kind {
     pub const INDEXER: u8 = 35;
     pub const USING: u8 = 36;
     pub const LAMBDA: u8 = 37;
+    pub const INTERPOLATED_STRING: u8 = 38;
 }
 
 pub(super) fn write_body(
@@ -264,6 +265,7 @@ fn node(w: &mut FunctionWriter<'_, '_, '_, '_>, ast: &Ast, id: AstId) -> Result<
         AstNode::Indexer { .. } => kind::INDEXER,
         AstNode::Using { .. } => kind::USING,
         AstNode::Lambda { .. } => kind::LAMBDA,
+        AstNode::InterpolatedString { .. } => kind::INTERPOLATED_STRING,
     });
     w.out.len(a.il.len());
     for &inst in &a.il {
@@ -396,6 +398,30 @@ fn node(w: &mut FunctionWriter<'_, '_, '_, '_>, ast: &Ast, id: AstId) -> Result<
         AstNode::Lock { expression, body } => {
             node(w, ast, expression)?;
             node(w, ast, body)?;
+        }
+        AstNode::InterpolatedString { contents } => {
+            w.out.len(contents.len());
+            for c in contents {
+                match c {
+                    crate::csharp::ast::InterpolatedContent::Text(text) => {
+                        w.out.u8(0);
+                        utf16(w, &text);
+                    }
+                    crate::csharp::ast::InterpolatedContent::Interpolation {
+                        expression,
+                        alignment,
+                        suffix,
+                    } => {
+                        w.out.u8(1);
+                        w.out.ivar(i64::from(alignment));
+                        w.out.bool(suffix.is_some());
+                        if let Some(s) = suffix {
+                            utf16(w, &s);
+                        }
+                        node(w, ast, expression)?;
+                    }
+                }
+            }
         }
         AstNode::Lambda {
             body,

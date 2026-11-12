@@ -80,6 +80,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		public const byte Indexer = 35;
 		public const byte Using = 36;
 		public const byte Lambda = 37;
+		public const byte InterpolatedString = 38;
 
 		public byte Kind;
 		/// <summary>The instructions the node is annotated with, in order.</summary>
@@ -370,6 +371,19 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					return Annotate(new BreakStatement(), node);
 				case RustBodyNode.Continue:
 					return Annotate(new ContinueStatement(), node);
+				case RustBodyNode.InterpolatedString:
+				{
+					var content = new List<InterpolatedStringContent>();
+					int child = 0;
+					foreach (var (text, alignment, suffix) in ((string? Text, int Alignment, string? Suffix)[])node.Value!)
+					{
+						if (text != null)
+							content.Add(new InterpolatedStringText(text));
+						else
+							content.Add(new Interpolation((Expression)Build(node.Children[child++], exprBuilder), alignment, suffix));
+					}
+					return Annotate(new InterpolatedStringExpression(content), node);
+				}
 				case RustBodyNode.Lambda:
 				{
 					// `TranslateFunction` for a lambda with an explicitly typed parameter list.

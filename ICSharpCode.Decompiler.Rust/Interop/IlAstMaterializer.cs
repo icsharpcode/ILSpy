@@ -753,6 +753,27 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					node.Children = condition != null ? [body, condition] : [body];
 					break;
 				}
+				case RustBodyNode.InterpolatedString:
+				{
+					// Texts, and interpolations with alignment and suffix, whose expressions are the children.
+					var contents = new (string? Text, int Alignment, string? Suffix)[Len()];
+					var children = new List<RustBodyNode>();
+					for (int i = 0; i < contents.Length; i++)
+					{
+						if (U8() == 0)
+						{
+							contents[i] = (String(), 0, null);
+							continue;
+						}
+						int alignment = Int();
+						string? suffix = Bool() ? String() : null;
+						contents[i] = (null, alignment, suffix);
+						children.Add(BodyNode());
+					}
+					node.Value = contents;
+					node.Children = children.ToArray();
+					break;
+				}
 				case RustBodyNode.Lambda:
 					// The delegate type, the inferred return type, the type mismatch flag, then the body.
 					node.Type = Type();

@@ -141,6 +141,8 @@ pub enum AstNode {
         expression_body: bool,
         lambda: usize,
     },
+    /// `InterpolatedStringExpression`.
+    InterpolatedString { contents: Vec<InterpolatedContent> },
     /// `LockStatement`.
     Lock { expression: AstId, body: AstId },
     /// `ThrowStatement`, a rethrow without an expression.
@@ -278,6 +280,17 @@ pub enum Rr {
         accessor: Box<crate::il::ast::MethodOperand>,
         ty: TypeId,
         found_by_lookup: bool,
+    },
+}
+
+/// `InterpolatedStringContent`: text (with its braces doubled) or an interpolation.
+#[derive(Clone, Debug)]
+pub enum InterpolatedContent {
+    Text(Vec<u16>),
+    Interpolation {
+        expression: AstId,
+        alignment: i32,
+        suffix: Option<Vec<u16>>,
     },
 }
 

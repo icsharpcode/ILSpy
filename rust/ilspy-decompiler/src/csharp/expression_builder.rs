@@ -1,8 +1,8 @@
 //! `ExpressionBuilder`: the C# expression of an ILAst instruction.
 
 use crate::il::ast::{
-    BinaryNumericOperator, ComparisonKind, ComparisonLiftingKind, ConversionKind, Inst, NodeId,
-    VariableKind,
+    BinaryNumericOperator, BlockKind, ComparisonKind, ComparisonLiftingKind, ConversionKind, Inst,
+    NodeId, VariableKind,
 };
 use crate::il::types::{PrimitiveType, Sign, StackType};
 use crate::metadata::tables::rows;
@@ -12,7 +12,7 @@ use crate::typesystem::known::KnownTypeCode;
 use crate::typesystem::members::ConstValue;
 use crate::typesystem::types::{TypeData, TypeId};
 
-use super::ast::{AstId, AstNode, BinaryOp, Overflow, Rr};
+use super::ast::{AstId, AstNode, BinaryOp, InterpolatedContent, Overflow, Rr};
 use super::{Builder, TranslatedExpression, Unsupported};
 
 impl Builder<'_, '_, '_, '_> {
@@ -342,6 +342,12 @@ impl Builder<'_, '_, '_, '_> {
                 right,
             } => self.comp(inst, kind, lifting, sign, input, left, right),
             Inst::Function { .. } => self.translate_function(inst),
+            Inst::Block {
+                kind: BlockKind::InterpolatedString,
+                instructions,
+                ..
+            } => self.interpolated_string(inst, &instructions),
+            Inst::Block { kind, .. } => Err(format!("a block of kind {kind:?}")),
             Inst::Conv {
                 arg,
                 input,
@@ -1210,6 +1216,76 @@ impl Builder<'_, '_, '_, '_> {
         };
         let target = self.find_integer_type(stack, sign)?;
         self.convert_to(input, target, false)
+    }
+
+    /// `TranslateInterpolatedString`: the handler's `AppendLiteral` and `AppendFormatted` calls
+    /// after its creation, as text and interpolations.
+    fn interpolated_string(
+        &mut self,
+        inst: NodeId,
+        instructions: &[NodeId],
+    ) -> Result<TranslatedExpression, Unsupported> {
+        let mut contents = Vec::new();
+        for &i in instructions.iter().skip(1) {
+            let Inst::Call(call) = self.f.inst(i).clone() else {
+                return Err("an interpolated string part that is no call".to_owned());
+            };
+            let args = &call.args;
+            let literal = |b: &Self, n: NodeId| match b.f.inst(n) {
+                Inst::LdStr { value } => Some(value.clone()),
+                _ => None,
+            };
+            let number = |b: &Self, n: NodeId| match *b.f.inst(n) {
+                Inst::LdcI4 { value } => Some(value),
+                _ => None,
+            };
+            let name = call.method.method.name.as_str();
+            let (alignment, suffix) = match (name, args.len()) {
+                ("AppendLiteral", 2) => {
+                    let text = literal(self, args[1]).ok_or("an AppendLiteral of no string")?;
+                    let mut escaped = Vec::with_capacity(text.len());
+                    for u in text {
+                        escaped.push(u);
+                        if u == u16::from(b'{') || u == u16::from(b'}') {
+                            escaped.push(u);
+                        }
+                    }
+                    contents.push(InterpolatedContent::Text(escaped));
+                    continue;
+                }
+                ("AppendFormatted", 2) => (0, None),
+                ("AppendFormatted", 3) => match (number(self, args[2]), literal(self, args[2])) {
+                    (_, Some(s)) => (0, Some(s)),
+                    (Some(a), _) => (a, None),
+                    _ => return Err("an AppendFormatted of another shape".to_owned()),
+                },
+                ("AppendFormatted", 4) => match (number(self, args[2]), literal(self, args[3])) {
+                    (Some(a), Some(s)) => (a, Some(s)),
+                    _ => return Err("an AppendFormatted of another shape".to_owned()),
+                },
+                _ => return Err("an interpolated string part of another kind".to_owned()),
+            };
+            // `call.GetParameter(1)`: the method's first parameter after the handler.
+            let params = call.method.method.params().map_err(|e| e.to_string())?;
+            let ty = *params
+                .first()
+                .ok_or("an AppendFormatted without parameters")?;
+            let value = self.translate(args[1], None)?;
+            let value = self.convert_to(value, ty, true)?;
+            contents.push(InterpolatedContent::Interpolation {
+                expression: value.expression,
+                alignment,
+                suffix,
+            });
+        }
+        let string = self.ts.known_type(KnownTypeCode::String);
+        let e = self.ast.add(AstNode::InterpolatedString { contents });
+        self.ast.with_il(e, inst);
+        self.ast.with_rr(e, Rr::Plain(string));
+        Ok(TranslatedExpression {
+            expression: e,
+            ty: string,
+        })
     }
 
     /// `VisitConv` without lifting, overflow checks and native integers: the argument as is
