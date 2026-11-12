@@ -3288,6 +3288,17 @@ and positional patterns (sub-patterns, `Deconstruct`, tuples) fall back, and so 
 negated, relational and constant patterns of sub-patterns. The share rose from 66.3 % to
 67.0 %.
 
+### 3.126 Enum comparisons (item 68y18)
+
+`TranslateCeq` first unites the operand types (`TryUniteEqualityOperandType`): a constant
+compared with an enum value becomes a constant of the enum type (written as the member, or
+a cast), so `e == E.A` compares two values of one enum type with the built-in
+`bool operator ==(E x, E y)`, which needs no conversion. The engine translates exactly that
+case. An int zero is the exception the managed builder makes: it stays `0` where the enum
+has no member of value zero or the other operand is a bitwise and (`(e & E.F) == 0`), a
+check of the enum's fields that is not ported, so such comparisons fall back, as do
+comparisons of an enum with another type. The share rose from 67.0 % to 67.6 %.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

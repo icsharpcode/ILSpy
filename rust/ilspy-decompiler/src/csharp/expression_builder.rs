@@ -617,11 +617,19 @@ impl Builder<'_, '_, '_, '_> {
         {
             return Err("a comparison of a pointer with null".to_owned());
         }
-        // `TryUniteEqualityOperandType` treats a zero compared with an enum apart.
-        for t in [l.ty, r.ty] {
-            let u = self.ts.nullable_underlying(t);
-            if self.ts.kind(u) == TypeKind::Enum {
-                return Err("an enum comparison".to_owned());
+        // `TryUniteEqualityOperandType` treats an int zero compared with an enum apart (by the
+        // enum's fields), which is not translated; other constants become the enum's.
+        for (a, b) in [(&l, &r), (&r, &l)] {
+            let zero = matches!(
+                self.rr_of(a.expression),
+                Rr::Constant {
+                    value: ConstValue::Int32(0),
+                    ..
+                }
+            );
+            let u = self.ts.nullable_underlying(b.ty);
+            if zero && self.ts.kind(u) == TypeKind::Enum {
+                return Err("an enum comparison with zero".to_owned());
             }
         }
         let l = self.adjust_constant_expression_to_type(l, r.ty)?;
@@ -760,6 +768,13 @@ impl Builder<'_, '_, '_, '_> {
         }
         // `BinaryNumericPromotion` converts unless both are the same type of at least `int`:
         // Int32, UInt32, Int64, UInt64, Single or Double.
+        // bool operator ==(E x, E y) of an enum type
+        if lt == rt && self.ts.kind(lt) == TypeKind::Enum {
+            return Ok(());
+        }
+        if self.ts.kind(lt) == TypeKind::Enum || self.ts.kind(rt) == TypeKind::Enum {
+            return Err("an enum comparison that needs conversions".to_owned());
+        }
         let (lc, rc) = (self.ts.type_code(lt), self.ts.type_code(rt));
         if (4..=15).contains(&lc) && (4..=15).contains(&rc) {
             return if lc == rc && (9..=14).contains(&lc) {
