@@ -71,6 +71,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				{
 					removedBlocks.Clear();
 					var node = cfg.GetNode(result.RealCatchBlockEntryPoint);
+					if (AwaitInFinallyTransform.WouldMoveBlock(result.RealCatchBlockEntryPoint, null, cfg, (Block)tryCatch.Parent))
+						continue;
 
 					context.StepStartGroup($"Inline catch block with await (at {result.Handler.Variable.Name})", result.Handler);
 
