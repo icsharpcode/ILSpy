@@ -3512,6 +3512,14 @@ The first run threw in the host: its conditional node built an `OperatorResolveR
 the operator type of every non-resolved node, which a plain resolve result does not carry;
 the node now keeps the plain resolve result. The share rose from 76.6 % to 77.8 %.
 
+### 3.139 Delegate invocations (item 68y31)
+
+A call of a delegate type's `Invoke` is written as the invocation of the delegate itself,
+`target(arguments)`, without disambiguation, and its `CSharpInvocationResolveResult` says so
+(`isDelegateInvocation`). The invocation resolve result the engine sends now carries that
+flag, and the host passes it on. A null-conditional target (`d?.Invoke(x)`) keeps the method
+call syntax in the managed builder and falls back. The share rose from 77.8 % to 78.4 %.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

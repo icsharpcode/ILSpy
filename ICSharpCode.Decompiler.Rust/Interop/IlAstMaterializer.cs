@@ -925,7 +925,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		}
 
 		/// <summary>The target and method of the invocation resolve result the last <see cref="BodyResolveResult"/> read.</summary>
-		(ResolveResult? Target, IMethod Method, bool IsExtension)? pendingInvocation;
+		(ResolveResult? Target, IMethod Method, bool IsExtension, bool IsDelegate)? pendingInvocation;
 
 		/// <summary>Whether the last <see cref="BodyResolveResult"/> read was the <c>ResolveCast</c> of a cast.</summary>
 		bool pendingResolveCast;
@@ -984,7 +984,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				{
 					// The arguments are the invocation's; RustSeam2 completes the resolve result.
 					var target = BodyResolveResult(out _);
-					pendingInvocation = (target, CallMethod(), Bool());
+					pendingInvocation = (target, CallMethod(), Bool(), Bool());
 					return null;
 				}
 				case 10:
@@ -998,7 +998,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				}
 				case 11:
 					// A constructor call has no target; RustSeam2 completes the resolve result.
-					pendingInvocation = (null, CallMethod(), false);
+					pendingInvocation = (null, CallMethod(), false, false);
 					return null;
 				case 12:
 					return new ResolveResult(Type());

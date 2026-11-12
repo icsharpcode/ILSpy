@@ -187,6 +187,36 @@ impl Builder<'_, '_, '_, '_> {
             return self.implicit_conversion_call(inst, &method, &list);
         }
 
+        // A delegate's `Invoke` is the invocation of the delegate itself.
+        if method.name == "Invoke" && self.ts.kind(declaring) == TypeKind::Delegate {
+            if matches!(
+                self.ast.node(target.expression),
+                AstNode::NullConditional { rewrap: false, .. }
+            ) {
+                return Err("a null-conditional delegate invocation".to_owned());
+            }
+            let arguments = self.written_arguments(&list, 0);
+            let e = self.ast.add(AstNode::Invocation {
+                target: target.expression,
+                arguments,
+            });
+            let target_rr = self.rr_of(target.expression);
+            self.ast.with_rr(
+                e,
+                Rr::Invocation {
+                    target: Box::new(target_rr),
+                    method: Box::new(operand.clone()),
+                    ty: method.return_type,
+                    extension: false,
+                    delegate: true,
+                },
+            );
+            self.ast.with_il(e, inst);
+            return Ok(TranslatedExpression {
+                expression: e,
+                ty: method.return_type,
+            });
+        }
         if let Some(is_setter) = indexer {
             return self.indexer_access(
                 inst, operand, id, &method, target, list, is_setter, declaring,
@@ -260,6 +290,7 @@ impl Builder<'_, '_, '_, '_> {
                 method: Box::new(operand.clone()),
                 ty: method.return_type,
                 extension: false,
+                delegate: false,
             },
         );
         self.ast.with_il(e, inst);
@@ -390,6 +421,7 @@ impl Builder<'_, '_, '_, '_> {
                 method: Box::new(operand.clone()),
                 ty: method.return_type,
                 extension: true,
+                delegate: false,
             },
         );
         self.ast.with_il(e, inst);
@@ -1043,7 +1075,6 @@ impl Builder<'_, '_, '_, '_> {
         declaring: TypeId,
     ) -> Result<(), Unsupported> {
         let ts = &*self.ts;
-        let kind = ts.kind(declaring);
         let in_namespace = |ns: &str, name: &str| {
             ts.definition(declaring)
                 .and_then(|d| ts.comp.type_def(d).ok())
@@ -1059,9 +1090,8 @@ impl Builder<'_, '_, '_, '_> {
                         .first_type_argument(p.ty)
                         .is_some_and(|a| ts.is_known(a, KnownTypeCode::Char))
             });
-        let special = (kind == TypeKind::Delegate && method.name == "Invoke")
-            || (ts.is_known(declaring, KnownTypeCode::String)
-                && (method.name == "Format" || span_concat))
+        let special = (ts.is_known(declaring, KnownTypeCode::String)
+            && (method.name == "Format" || span_concat))
             || in_namespace(
                 "System.Runtime.CompilerServices",
                 "FormattableStringFactory",

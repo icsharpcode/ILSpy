@@ -291,6 +291,8 @@ pub enum Rr {
         method: Box<crate::il::ast::MethodOperand>,
         ty: TypeId,
         extension: bool,
+        /// `isDelegateInvocation`: `Invoke` of a delegate, written as `target(arguments)`.
+        delegate: bool,
     },
     /// A plain `ResolveResult` of the given type.
     Plain(TypeId),

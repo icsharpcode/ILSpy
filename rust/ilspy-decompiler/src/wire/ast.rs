@@ -195,12 +195,14 @@ fn rr(w: &mut FunctionWriter<'_, '_, '_, '_>, rr: Option<&Rr>) -> Result<(), Str
             target,
             method,
             extension,
+            delegate,
             ..
         }) => {
             w.out.u8(9);
             self::rr(w, Some(target))?;
             w.call_method(method)?;
             w.out.bool(*extension);
+            w.out.bool(*delegate);
         }
         Some(Rr::Property {
             target,
