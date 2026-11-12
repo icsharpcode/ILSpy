@@ -116,17 +116,9 @@ namespace ICSharpCode.BamlDecompiler.Rewrite
 			var type = ctxElement.Annotation<XamlType>();
 			if (type != null && type.ResolvedType != null)
 			{
-				var typeDef = type.ResolvedType.GetDefinition()?.DirectBaseTypes.FirstOrDefault();
-				bool isExt = false;
-				while (typeDef != null)
-				{
-					if (typeDef.FullName == "System.Windows.Markup.MarkupExtension")
-					{
-						isExt = true;
-						break;
-					}
-					typeDef = typeDef.DirectBaseTypes.FirstOrDefault();
-				}
+				var typeDef = type.ResolvedType.GetDefinition();
+				bool isExt = typeDef != null && typeDef.GetNonInterfaceBaseTypes()
+					.Any(t => t != typeDef && t.FullName == "System.Windows.Markup.MarkupExtension");
 				if (!isExt)
 					return false;
 			}

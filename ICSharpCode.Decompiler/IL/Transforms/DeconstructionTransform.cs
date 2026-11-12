@@ -630,9 +630,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			static bool BindsOnElementType(IMethod method, IType elementType)
 			{
 				int outParamCount = method.Parameters.Count - (method.IsStatic ? 1 : 0);
-				IType type = elementType;
-				while (type != null)
+				// The element type followed by its base classes, most derived first. The base class is
+				// metadata and may be cyclic, which GetNonInterfaceBaseTypes() tolerates.
+				foreach (IType type in elementType.GetNonInterfaceBaseTypes().Reverse())
 				{
+					if (type != elementType && type.Kind != TypeKind.Class)
+						continue;
 					if (!method.IsStatic && NormalizeTypeVisitor.TypeErasure.EquivalentTypes(type, method.DeclaringType))
 						return true;
 					if (type.GetMethods(m => m.Name == "Deconstruct", GetMemberOptions.IgnoreInheritedMembers)
@@ -643,7 +646,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						// method (and wins over a called extension method).
 						return false;
 					}
-					type = type.DirectBaseTypes.FirstOrDefault(t => t.Kind == TypeKind.Class)!;
 				}
 				// The chain ended without seeing the declaring type, so an instance method's
 				// binding cannot be verified. An extension method is reached by its receiver

@@ -213,9 +213,12 @@
     <None Include="TestCases\ILPretty\InstanceOperatorCall.il" />
     <Compile Remove="TestCases\ILPretty\EnumArithmeticOutOfRange.cs" />
     <None Include="TestCases\ILPretty\EnumArithmeticOutOfRange.cs" />
-    <Compile Remove="TestCases\ILPretty\EmptyBodies.cs" />
-    <None Include="TestCases\ILPretty\EmptyBodies.cs" />
-    <Compile Remove="TestCases\ILPretty\TruncatedAccessorBody.cs" />
+	    <Compile Remove="TestCases\ILPretty\EmptyBodies.cs" />
+	    <None Include="TestCases\ILPretty\EmptyBodies.cs" />
+	    <Compile Remove="TestCases\ILPretty\CyclicBaseClass.cs" />
+	    <None Include="TestCases\ILPretty\CyclicBaseClass.cs" />
+	    <None Include="TestCases\ILPretty\CyclicBaseClass.il" />
+	    <Compile Remove="TestCases\ILPretty\TruncatedAccessorBody.cs" />
     <None Include="TestCases\ILPretty\TruncatedAccessorBody.cs" />
     <Compile Remove="TestCases\ILPretty\SealedRecordProtectedCopyCtor.cs" />
     <None Include="TestCases\ILPretty\SealedRecordProtectedCopyCtor.cs" />
