@@ -16,6 +16,7 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System;
 using System.IO;
 using System.Linq;
 
@@ -98,5 +99,23 @@ public class ShellHelperTests
 	{
 		ShellHelper.GroupByFolder(System.Array.Empty<string>()).Should().BeEmpty();
 		ShellHelper.GroupByFolder(null!).Should().BeEmpty();
+	}
+
+	[Test]
+	public void LocateProgram_Does_Not_Search_Current_Directory()
+	{
+		string directory = Path.Combine(Path.GetTempPath(), "ilspy-shell-helper-tests", Guid.NewGuid().ToString());
+		Directory.CreateDirectory(directory);
+		try
+		{
+			string planted = Path.Combine(directory, "xdg-open");
+			File.WriteAllText(planted, string.Empty);
+
+			ShellHelper.LocateProgram("xdg-open", string.Empty).Should().BeNull();
+		}
+		finally
+		{
+			Directory.Delete(directory, recursive: true);
+		}
 	}
 }

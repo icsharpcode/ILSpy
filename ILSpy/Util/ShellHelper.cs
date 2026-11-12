@@ -47,11 +47,11 @@ namespace ICSharpCode.ILSpy.Util
 			try
 			{
 				if (OperatingSystem.IsWindows())
-					Process.Start(new ProcessStartInfo("explorer.exe", Quote(path)) { UseShellExecute = false });
+					StartProgram("explorer.exe", Quote(path));
 				else if (OperatingSystem.IsMacOS())
-					Process.Start(new ProcessStartInfo("open", Quote(path)) { UseShellExecute = false });
+					StartProgram("open", Quote(path));
 				else
-					Process.Start(new ProcessStartInfo("xdg-open", path) { UseShellExecute = false });
+					StartProgram("xdg-open", path);
 			}
 			catch
 			{
@@ -89,7 +89,7 @@ namespace ICSharpCode.ILSpy.Util
 				var allFiles = groups.SelectMany(g => g.Files).Select(Quote);
 				try
 				{
-					Process.Start(new ProcessStartInfo("open", "-R " + string.Join(' ', allFiles)) { UseShellExecute = false });
+					StartProgram("open", "-R " + string.Join(' ', allFiles));
 				}
 				catch
 				{
@@ -114,7 +114,7 @@ namespace ICSharpCode.ILSpy.Util
 				if (OperatingSystem.IsWindows() || OperatingSystem.IsMacOS())
 					Process.Start(new ProcessStartInfo(path) { UseShellExecute = true });
 				else
-					Process.Start(new ProcessStartInfo("xdg-open", path) { UseShellExecute = false });
+					StartProgram("xdg-open", path);
 			}
 			catch
 			{
@@ -154,6 +154,43 @@ namespace ICSharpCode.ILSpy.Util
 			}
 
 			return groups.Select(g => (g.Folder, (IReadOnlyList<string>)g.Files)).ToList();
+		}
+
+		internal static string? LocateProgram(string program, string? searchPath = null)
+		{
+			if (string.IsNullOrWhiteSpace(program))
+				return null;
+
+			if (Path.IsPathRooted(program))
+				return File.Exists(program) ? program : null;
+
+			foreach (string directory in (searchPath ?? Environment.GetEnvironmentVariable("PATH") ?? string.Empty).Split(Path.PathSeparator))
+			{
+				if (string.IsNullOrEmpty(directory) || !Path.IsPathRooted(directory))
+					continue;
+
+				string candidate = Path.Combine(directory, program);
+				if (File.Exists(candidate))
+					return Path.GetFullPath(candidate);
+
+				if (OperatingSystem.IsWindows() && string.IsNullOrEmpty(Path.GetExtension(program)))
+				{
+					foreach (string extension in (Environment.GetEnvironmentVariable("PATHEXT") ?? ".COM;.EXE;.BAT;.CMD").Split(';'))
+					{
+						candidate = Path.Combine(directory, program + extension);
+						if (File.Exists(candidate))
+							return Path.GetFullPath(candidate);
+					}
+				}
+			}
+
+			return null;
+		}
+
+		static void StartProgram(string program, string arguments)
+		{
+			if (LocateProgram(program) is string path)
+				Process.Start(new ProcessStartInfo(path, arguments) { UseShellExecute = false });
 		}
 
 		static string Quote(string value) => "\"" + value + "\"";
