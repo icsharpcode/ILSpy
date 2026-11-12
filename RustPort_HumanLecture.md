@@ -3137,6 +3137,22 @@ integers and references fall back to the managed decompiler: they need `checked`
 nullable targets and the `nint`/`IntPtr` choice of the `NativeIntegers` setting. The share
 rose from 61.0 % to 61.7 %.
 
+### 3.117 Using statements (item 68y9)
+
+`VisitUsingInstruction` writes `using (resource) body`, and where the body loads the
+variable or takes its address, `using (T name = resource) body`: a declaration of the
+variable's type, whose initializer carries the variable's resolve result, with the
+resource converted to that type where the conversion is not implicit. The engine sends the
+variable on the wire and the host builds the declaration, so the type is written by the
+host's `ConvertType` like every other type.
+
+A resource that is a `GetEnumerator` call is a candidate for `TransformToForeach`, which
+is not translated; 22 of the 50 bodies the `using` fallback counted are such `foreach`
+loops and are counted under that reason now. Also left to the managed builder: `await
+using`, a resource whose type does not implement `IDisposable` (written out as
+try/finally with a new variable) and a declaration of an anonymous type (`var`). The share
+rose from 61.7 % to 62.2 %.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

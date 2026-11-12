@@ -1037,7 +1037,7 @@ impl Builder<'_, '_, '_, '_> {
     /// Whether `t` may contain an anonymous type, which `WriteTypeArgumentsInferenceCannotReach`
     /// treats apart: a type definition named like one (as `IsAnonymousType` checks the name),
     /// or any type the check does not look into.
-    fn may_contain_anonymous_type(&self, t: TypeId) -> bool {
+    pub(crate) fn may_contain_anonymous_type(&self, t: TypeId) -> bool {
         match self.ts.data(t) {
             TypeData::Def(def) => self.ts.comp.type_def(*def).map_or(true, |i| {
                 i.full_name.top.ns.is_empty()

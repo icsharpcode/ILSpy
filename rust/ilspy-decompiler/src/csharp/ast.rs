@@ -127,6 +127,13 @@ pub enum AstNode {
     Continue,
     /// `IndexerExpression` over an array: `target[indices]`.
     Indexer { target: AstId, indices: Vec<AstId> },
+    /// `UsingStatement`: `using (resource) body`, with a declaration of `declaration` (of its
+    /// type, annotated with its `ILVariableResolveResult`) initialized with the resource.
+    Using {
+        declaration: Option<crate::il::ast::VarId>,
+        resource: AstId,
+        body: AstId,
+    },
     /// `LockStatement`.
     Lock { expression: AstId, body: AstId },
     /// `ThrowStatement`, a rethrow without an expression.

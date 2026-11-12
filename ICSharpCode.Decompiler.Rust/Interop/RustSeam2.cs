@@ -78,6 +78,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		public const byte DoWhile = 33;
 		public const byte For = 34;
 		public const byte Indexer = 35;
+		public const byte Using = 36;
 
 		public byte Kind;
 		/// <summary>The instructions the node is annotated with, in order.</summary>
@@ -364,6 +365,20 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					return Annotate(new BreakStatement(), node);
 				case RustBodyNode.Continue:
 					return Annotate(new ContinueStatement(), node);
+				case RustBodyNode.Using:
+				{
+					AstNode resourceAcquisition = Build(node.Children[0], exprBuilder);
+					if (node.Value is ILVariable variable)
+					{
+						var declaration = new VariableDeclarationStatement(exprBuilder.ConvertType(variable.Type), variable.Name!, (Expression)resourceAcquisition);
+						declaration.Variables.Single().AddAnnotation(new ILVariableResolveResult(variable, variable.Type));
+						resourceAcquisition = declaration;
+					}
+					return Annotate(new UsingStatement {
+						ResourceAcquisition = resourceAcquisition,
+						EmbeddedStatement = (Statement)Build(node.Children[1], exprBuilder)
+					}, node);
+				}
 				case RustBodyNode.Lock:
 					return Annotate(new LockStatement {
 						Expression = (Expression)Build(node.Children[0], exprBuilder),

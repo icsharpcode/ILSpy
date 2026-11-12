@@ -729,6 +729,11 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					node.Children = condition != null ? [body, condition] : [body];
 					break;
 				}
+				case RustBodyNode.Using:
+					// The declared variable, the resource and the body.
+					node.Value = Bool() ? Variable() : null;
+					node.Children = [BodyNode(), BodyNode()];
+					break;
 				case RustBodyNode.Lock:
 					node.Children = [BodyNode(), BodyNode()];
 					break;

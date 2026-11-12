@@ -57,6 +57,7 @@ mod kind {
     pub const DO_WHILE: u8 = 33;
     pub const FOR: u8 = 34;
     pub const INDEXER: u8 = 35;
+    pub const USING: u8 = 36;
 }
 
 pub(super) fn write_body(
@@ -257,6 +258,7 @@ fn node(w: &mut FunctionWriter<'_, '_, '_, '_>, ast: &Ast, id: AstId) -> Result<
         AstNode::DoWhile { .. } => kind::DO_WHILE,
         AstNode::For { .. } => kind::FOR,
         AstNode::Indexer { .. } => kind::INDEXER,
+        AstNode::Using { .. } => kind::USING,
     });
     w.out.len(a.il.len());
     for &inst in &a.il {
@@ -388,6 +390,19 @@ fn node(w: &mut FunctionWriter<'_, '_, '_, '_>, ast: &Ast, id: AstId) -> Result<
         }
         AstNode::Lock { expression, body } => {
             node(w, ast, expression)?;
+            node(w, ast, body)?;
+        }
+        AstNode::Using {
+            declaration,
+            resource,
+            body,
+        } => {
+            w.out.bool(declaration.is_some());
+            if let Some(v) = declaration {
+                let i = var_index(w, v)?;
+                w.out.len(i);
+            }
+            node(w, ast, resource)?;
             node(w, ast, body)?;
         }
         AstNode::OutDirection {

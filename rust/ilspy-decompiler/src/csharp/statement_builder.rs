@@ -143,6 +143,20 @@ impl Builder<'_, '_, '_, '_> {
                 let s = self.ast.add(AstNode::Lock { expression, body });
                 Ok(self.ast.with_il(s, inst))
             }
+            Inst::Using {
+                variable,
+                resource_expression,
+                body,
+                is_async,
+                is_ref_struct,
+            } => self.visit_using(
+                inst,
+                variable,
+                resource_expression,
+                body,
+                is_async,
+                is_ref_struct,
+            ),
             // `VisitBranch`: `continue` for the loop's continue target; a goto is not translated.
             Inst::Branch {
                 target: BranchTarget::Block(target),
@@ -155,7 +169,6 @@ impl Builder<'_, '_, '_, '_> {
             | Inst::Branch { .. }
             | Inst::YieldReturn { .. }
             | Inst::TryFault { .. }
-            | Inst::Using { .. }
             | Inst::PinnedRegion { .. }
             | Inst::Initblk { .. }
             | Inst::Cpblk { .. }
@@ -281,6 +294,67 @@ impl Builder<'_, '_, '_, '_> {
         if let AstNode::TryCatch { finally_block, .. } = self.ast.node_mut(s) {
             *finally_block = Some(finally);
         }
+        Ok(self.ast.with_il(s, inst))
+    }
+
+    /// `VisitUsingInstruction` for a synchronous `using` of a resource whose type implements
+    /// `IDisposable`, declared where the body uses the variable.
+    fn visit_using(
+        &mut self,
+        inst: NodeId,
+        variable: crate::il::ast::VarId,
+        resource_expression: NodeId,
+        body: NodeId,
+        is_async: bool,
+        is_ref_struct: bool,
+    ) -> Result<AstId, Unsupported> {
+        if is_async {
+            return Err("an await using".to_owned());
+        }
+        // `TransformToForeach` starts from a `GetEnumerator` call.
+        if let Inst::Call(c) | Inst::CallVirt(c) = self.f.inst(resource_expression)
+            && matches!(
+                c.method.method.name.as_str(),
+                "GetEnumerator" | "GetAsyncEnumerator"
+            )
+        {
+            return Err("a foreach".to_owned());
+        }
+        let resource = self.translate(resource_expression, None)?;
+        // `IsValidInCSharp`; else the managed builder writes the try/finally out.
+        let v = self.f.var(variable);
+        let (ty, used) = (v.ty, v.load_count() > 0 || v.address_count() > 0);
+        if !matches!(self.f.inst(resource_expression), Inst::LdNull) && !is_ref_struct {
+            let underlying = self.ts.nullable_underlying(ty);
+            let disposable = self
+                .ts
+                .all_base_type_definitions(underlying)
+                .into_iter()
+                .any(|d| {
+                    self.ts
+                        .comp
+                        .type_def(d)
+                        .is_ok_and(|i| i.known == KnownTypeCode::IDisposable)
+                });
+            if !disposable {
+                return Err("a using of a type that does not implement IDisposable".to_owned());
+            }
+        }
+        let (declaration, resource) = if used {
+            // `var` for anonymous types is not translated.
+            if self.may_contain_anonymous_type(ty) {
+                return Err("a using declaration of an anonymous type".to_owned());
+            }
+            (Some(variable), self.convert_to(resource, ty, true)?)
+        } else {
+            (None, resource)
+        };
+        let body = self.convert_as_block(body)?;
+        let s = self.ast.add(AstNode::Using {
+            declaration,
+            resource: resource.expression,
+            body,
+        });
         Ok(self.ast.with_il(s, inst))
     }
 
