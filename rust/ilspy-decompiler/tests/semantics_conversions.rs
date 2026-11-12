@@ -2443,6 +2443,7 @@ fn decompiled_lambda_conversions() {
             return_type: int,
             parameters: vec![param_x(param)],
             attempted_conversion_with_type_mismatch: std::cell::Cell::new(false),
+            implicitly_typed: false,
         };
 
         // (int x) => int converts to Func<int, int> and Func<int, double>.
@@ -2468,6 +2469,15 @@ fn decompiled_lambda_conversions() {
         // A return type the inferred type does not convert to.
         let string = known(c, KnownTypeCode::String);
         assert_eq!(lambda(int).is_valid(c, &[int], string), C::None);
+
+        // An implicitly typed lambda (of anonymous-type parameters) can convert with other
+        // parameter types, and the attempt is recorded.
+        let l = DecompiledLambda {
+            implicitly_typed: true,
+            ..lambda(int)
+        };
+        assert!(l.is_valid(c, &[double], int).is_anonymous_function());
+        assert!(l.attempted_conversion_with_type_mismatch.get());
     });
 }
 
@@ -2497,6 +2507,7 @@ fn lambda_converts_to_annotated_delegate_type() {
             return_type: void,
             parameters: Vec::new(),
             attempted_conversion_with_type_mismatch: std::cell::Cell::new(false),
+            implicitly_typed: false,
         })
         .rr();
         assert!(c.implicit(&lambda, action).is_valid());

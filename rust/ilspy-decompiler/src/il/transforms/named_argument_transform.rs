@@ -188,7 +188,7 @@ pub(crate) fn can_introduce_named_argument(
         let is_anonymous = declaring
             .and_then(|t| ctx.ts.definition(t))
             .is_some_and(|d| {
-                super::transform_collection_and_object_initializers::is_anonymous_type(ctx, d)
+                super::transform_collection_and_object_initializers::is_anonymous_type(ctx.ts, d)
             });
         if is_delegate || is_anonymous {
             return Find::Stop;

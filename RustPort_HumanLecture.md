@@ -3576,6 +3576,20 @@ target that already is a cast (a boxing to `object` the managed builder unwraps 
 `NeedsBoxingConversion`, which the engine does not track) or is `this` or `base`, which the
 managed probe resolves without the cast. The share rose from 79.8 % to 80.4 %.
 
+### 3.143 Implicitly typed lambdas (item 68y35)
+
+A lambda with a parameter of an anonymous type, as LINQ queries make them, cannot name the
+parameter's type, so `MakeParameters` drops every parameter type and the lambda is written
+`x => ...`. Its resolve result is implicitly typed, which changes two things: type inference
+takes its parameter types from the delegate (the engine already ported that path), and a
+conversion to a delegate with other parameter types is valid rather than none. The engine
+had fallen back on any parameter whose type might be anonymous, with a conservative check
+that also caught tuples and types it could not resolve. It now uses the exact
+`ContainsAnonymousType` the object initializer transform had ported, under the
+`AnonymousTypes` setting (the last bit of the settings word), and writes every other
+parameter type explicitly as the managed builder does. The share rose from 80.4 % to
+80.9 %.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

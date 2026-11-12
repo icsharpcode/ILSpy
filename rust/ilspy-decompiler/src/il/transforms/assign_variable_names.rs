@@ -1156,7 +1156,7 @@ fn name_by_type(ctx: &mut Context<'_, '_, '_>, ty: TypeId) -> String {
     if ctx
         .ts
         .definition(t)
-        .is_some_and(|d| is_anonymous_type(ctx, d))
+        .is_some_and(|d| is_anonymous_type(ctx.ts, d))
     {
         return "anon".to_owned();
     }

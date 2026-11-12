@@ -14,7 +14,7 @@ use crate::typesystem::inheritance::MemberDef;
 use crate::typesystem::known::KnownTypeCode;
 use crate::typesystem::members::{MethodDefId, SymbolKind};
 use crate::typesystem::resolve::{FieldOrigin, MethodOrigin, ResolvedField, ResolvedMethod};
-use crate::typesystem::types::{Nullability, TypeData, TypeId};
+use crate::typesystem::types::{Nullability, TypeData, TypeId, TypeSystem};
 
 use super::Context;
 use super::block_transform::BlockTransformContext;
@@ -201,8 +201,8 @@ fn is_generated_name(name: &str) -> bool {
 }
 
 /// `IsAnonymousType` of a type definition.
-pub(crate) fn is_anonymous_type(ctx: &mut Context<'_, '_, '_>, def: TypeDefId) -> bool {
-    let Ok(info) = ctx.ts.comp.type_def(def) else {
+pub(crate) fn is_anonymous_type(ts: &mut TypeSystem<'_, '_>, def: TypeDefId) -> bool {
+    let Ok(info) = ts.comp.type_def(def) else {
         return false;
     };
     let name = info.full_name.name().to_owned();
@@ -212,37 +212,37 @@ pub(crate) fn is_anonymous_type(ctx: &mut Context<'_, '_, '_>, def: TypeDefId) -
     {
         return false;
     }
-    if !ctx.ts.type_is_compiler_generated(def) {
+    if !ts.type_is_compiler_generated(def) {
         return false;
     }
     // Only an anonymous type without settable properties (C#, not VB) counts.
-    let md = &ctx.ts.comp.module(def.module).md;
+    let md = &ts.comp.module(def.module).md;
     md.type_properties(def.row)
         .is_ok_and(|ps| ps.iter().all(|&p| md.property_accessors(p).1 == 0))
 }
 
 /// `ContainsAnonymousType`.
-pub(crate) fn contains_anonymous_type(ctx: &mut Context<'_, '_, '_>, t: TypeId) -> bool {
-    match ctx.ts.data(t).clone() {
-        TypeData::Def(d) => is_anonymous_type(ctx, d),
+pub(crate) fn contains_anonymous_type(ts: &mut TypeSystem<'_, '_>, t: TypeId) -> bool {
+    match ts.data(t).clone() {
+        TypeData::Def(d) => is_anonymous_type(ts, d),
         TypeData::Inst { generic, args } => {
-            contains_anonymous_type(ctx, generic)
-                || args.iter().any(|&a| contains_anonymous_type(ctx, a))
+            contains_anonymous_type(ts, generic)
+                || args.iter().any(|&a| contains_anonymous_type(ts, a))
         }
         TypeData::Array { elem, .. }
         | TypeData::Pointer(elem)
         | TypeData::ByRef(elem)
-        | TypeData::Pinned(elem) => contains_anonymous_type(ctx, elem),
+        | TypeData::Pinned(elem) => contains_anonymous_type(ts, elem),
         TypeData::Modified {
             modifier, inner, ..
-        } => contains_anonymous_type(ctx, modifier) || contains_anonymous_type(ctx, inner),
-        TypeData::Annotated { inner, .. } => contains_anonymous_type(ctx, inner),
+        } => contains_anonymous_type(ts, modifier) || contains_anonymous_type(ts, inner),
+        TypeData::Annotated { inner, .. } => contains_anonymous_type(ts, inner),
         TypeData::Tuple { elements, .. } => {
-            elements.iter().any(|&e| contains_anonymous_type(ctx, e))
+            elements.iter().any(|&e| contains_anonymous_type(ts, e))
         }
         TypeData::FnPtr(fp) => {
-            contains_anonymous_type(ctx, fp.ret)
-                || fp.params.iter().any(|&p| contains_anonymous_type(ctx, p))
+            contains_anonymous_type(ts, fp.ret)
+                || fp.params.iter().any(|&p| contains_anonymous_type(ts, p))
         }
         _ => false,
     }
@@ -1158,7 +1158,7 @@ pub fn run(
                 return;
             };
             // `new { A = 5 } { 3, 4, 5 }` is invalid syntax.
-            if contains_anonymous_type(ctx, declaring) {
+            if contains_anonymous_type(ctx.ts, declaring) {
                 return;
             }
             // Tuples cannot have initializers.

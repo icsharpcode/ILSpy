@@ -423,7 +423,7 @@ fn is_anonymous_method(
     let types: Vec<TypeId> = std::iter::once(method.ret)
         .chain(method.params().unwrap_or_default())
         .collect();
-    types.into_iter().any(|t| contains_anonymous_type(ctx, t))
+    types.into_iter().any(|t| contains_anonymous_type(ctx.ts, t))
 }
 
 /// `ValidateDelegateTarget`.

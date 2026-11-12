@@ -1830,6 +1830,7 @@ pub fn extension_method_syntax_query(
                         w.string(&p.name);
                     }
                     w.out.bool(d.attempted_conversion_with_type_mismatch.get());
+                    w.out.bool(d.implicitly_typed);
                 }
                 _ => return Err("an operand of another kind".to_owned()),
             }

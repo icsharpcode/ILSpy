@@ -11,6 +11,8 @@ use crate::semantics::{Conversions, Parameter, ResolveResult, TypeInference};
 use crate::typesystem::members::RefKind;
 use crate::typesystem::types::TypeData;
 
+use crate::il::transforms::transform_collection_and_object_initializers::contains_anonymous_type;
+
 use super::ast::{AstNode, Rr};
 use super::{Builder, TranslatedExpression, Unsupported};
 
@@ -19,8 +21,8 @@ const COMPILER_GENERATED: &str = "System.Runtime.CompilerServices.CompilerGenera
 impl Builder<'_, '_, '_, '_> {
     /// `VisitILFunction`: `(D)(parameters) => body`, a lambda with explicitly typed
     /// parameters that the body uses, cast to its delegate type. Anonymous methods, async
-    /// lambdas, attributes and parameters with modifiers, defaults or anonymous types are not
-    /// translated.
+    /// lambdas, attributes and parameters with modifiers or defaults are not translated; a
+    /// parameter of an anonymous type makes the parameter list implicitly typed.
     pub(crate) fn translate_function(
         &mut self,
         function: NodeId,
@@ -78,6 +80,9 @@ impl Builder<'_, '_, '_, '_> {
             .ts
             .method_declaring(method)
             .map_err(|e| e.to_string())?;
+        // `MakeParameters`: a parameter of an anonymous type, which cannot be named, makes the
+        // whole parameter list implicitly typed.
+        let mut implicitly_typed = false;
         for (i, (p, &(ty, _))) in params.iter().zip(&parameters).enumerate() {
             if p.ref_kind != RefKind::None
                 || matches!(self.ts.data(ty), TypeData::ByRef(_))
@@ -86,9 +91,11 @@ impl Builder<'_, '_, '_, '_> {
                 || p.has_constant_in_signature
                 || p.declared_scope != crate::typesystem::flags::ScopedKind::None
                 || p.effective_scope != crate::typesystem::flags::ScopedKind::None
-                || self.may_contain_anonymous_type(ty)
             {
-                return Err("a lambda parameter with modifiers or an anonymous type".to_owned());
+                return Err("a lambda parameter with modifiers".to_owned());
+            }
+            if self.settings.anonymous_types && contains_anonymous_type(self.ts, ty) {
+                implicitly_typed = true;
             }
             let attributes = self
                 .ts
@@ -193,6 +200,7 @@ impl Builder<'_, '_, '_, '_> {
                 })
                 .collect(),
             attempted_conversion_with_type_mismatch: Cell::new(false),
+            implicitly_typed,
         }));
         let l = self.ast.add(AstNode::Lambda {
             body,

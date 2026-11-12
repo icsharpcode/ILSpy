@@ -125,6 +125,7 @@ pub const SETTING_NAMES: &[&str] = &[
     "ExtensionMethods",
     "ForEachWithGetEnumeratorExtension",
     "UseImplicitMethodGroupConversion",
+    "AnonymousTypes",
 ];
 
 /// The values of `SETTING_NAMES`.
@@ -193,6 +194,7 @@ pub struct Settings {
     pub extension_methods: bool,
     pub foreach_with_get_enumerator_extension: bool,
     pub use_implicit_method_group_conversion: bool,
+    pub anonymous_types: bool,
 }
 
 impl Settings {
@@ -263,6 +265,7 @@ impl Settings {
             extension_methods: bit(60),
             foreach_with_get_enumerator_extension: bit(61),
             use_implicit_method_group_conversion: bit(62),
+            anonymous_types: bit(63),
         }
     }
 }

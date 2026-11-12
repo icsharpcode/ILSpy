@@ -433,9 +433,10 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				parameters[i] = new DefaultParameter(type, Str());
 			}
 			var function = new ILFunction(returnType, parameters, default, new Nop(), ILFunctionKind.Delegate) { DelegateType = delegateType };
+			bool attemptedConversionWithTypeMismatch = Bool();
 			return new DecompiledLambdaResolveResult(function, delegateType, inferredReturnType,
-				hasParameterList: true, isAnonymousMethod: false, isImplicitlyTyped: false) {
-				AttemptedConversionWithTypeMismatch = Bool()
+				hasParameterList: true, isAnonymousMethod: false, isImplicitlyTyped: Bool()) {
+				AttemptedConversionWithTypeMismatch = attemptedConversionWithTypeMismatch
 			};
 		}
 
@@ -848,10 +849,12 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					break;
 				}
 				case RustBodyNode.Lambda:
-					// The delegate type, the inferred return type, the type mismatch flag, then the body.
+					// The delegate type, the inferred return type, the type mismatch and implicit typing
+					// flags, then the body.
 					node.Type = Type();
 					node.Value = Type();
 					node.AttemptedConversionWithTypeMismatch = Bool();
+					node.ImplicitlyTyped = Bool();
 					node.Flag = Bool();
 					node.Children = [BodyNode()];
 					break;

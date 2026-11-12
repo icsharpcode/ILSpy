@@ -498,6 +498,7 @@ fn node(w: &mut FunctionWriter<'_, '_, '_, '_>, ast: &Ast, id: AstId) -> Result<
             w.ty(l.delegate_type);
             w.ty(l.inferred_return_type);
             w.out.bool(l.attempted_conversion_with_type_mismatch.get());
+            w.out.bool(l.implicitly_typed);
             w.out.bool(expression_body);
             node(w, ast, body)?;
         }

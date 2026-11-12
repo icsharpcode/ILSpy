@@ -8,7 +8,7 @@ use crate::typesystem::types::TypeId;
 
 use super::{Conversion, Conversions, Lambda, Parameter};
 
-/// `DecompiledLambdaResolveResult` of a lambda with an explicitly typed parameter list.
+/// `DecompiledLambdaResolveResult` of a lambda with a parameter list.
 #[derive(Debug)]
 pub struct DecompiledLambda {
     pub delegate_type: TypeId,
@@ -21,6 +21,9 @@ pub struct DecompiledLambda {
     /// `AttemptedConversionWithTypeMismatch`: a conversion to a delegate whose parameter
     /// types differ from the lambda's (beyond nullability) was tried.
     pub attempted_conversion_with_type_mismatch: Cell<bool>,
+    /// `IsImplicitlyTyped`: the parameter list is written without types (a parameter of an
+    /// anonymous type).
+    pub implicitly_typed: bool,
 }
 
 impl Lambda for DecompiledLambda {
@@ -33,7 +36,7 @@ impl Lambda for DecompiledLambda {
     }
 
     fn is_implicitly_typed(&self) -> bool {
-        false
+        self.implicitly_typed
     }
 
     fn is_async(&self) -> bool {
@@ -73,7 +76,12 @@ impl Lambda for DecompiledLambda {
             }
             self.attempted_conversion_with_type_mismatch.set(true);
             if !conversions.identity(t, p.ty) {
-                return Conversion::None;
+                // Other parameter types may make an implicitly typed lambda valid too.
+                return if self.implicitly_typed {
+                    Conversion::ANONYMOUS_FUNCTION
+                } else {
+                    Conversion::None
+                };
             }
         }
         if conversions.identity(self.return_type, return_type)

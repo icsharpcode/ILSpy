@@ -122,6 +122,8 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		public bool ResolveOperator;
 		/// <summary>For a method reference: whether it has a target, and the type arguments and method of its <see cref="MethodGroupResolveResult"/>.</summary>
 		public (bool HasTarget, IType[] TypeArguments, IMethod Method)? MethodGroup;
+		/// <summary>For a lambda: <see cref="DecompiledLambdaResolveResult.IsImplicitlyTyped"/>.</summary>
+		public bool ImplicitlyTyped;
 		/// <summary>For a lambda: <see cref="DecompiledLambdaResolveResult.AttemptedConversionWithTypeMismatch"/>.</summary>
 		public bool AttemptedConversionWithTypeMismatch;
 		/// <summary>For an object creation: the elements of its initializer, if it has one.</summary>
@@ -558,13 +560,19 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				}
 				case RustBodyNode.Lambda:
 				{
-					// `TranslateFunction` for a lambda with an explicitly typed parameter list.
+					// `TranslateFunction` for a lambda with a parameter list, explicitly typed unless a
+					// parameter has an anonymous type.
 					var function = (ILFunction)node.IL[0];
 					var lambda = new LambdaExpression();
 					lambda.Parameters.AddRange(MakeParameters(function, exprBuilder));
+					if (node.ImplicitlyTyped)
+					{
+						foreach (var pd in lambda.Parameters)
+							pd.Type = null!;
+					}
 					lambda.Body = Build(node.Children[0], exprBuilder);
 					node.ResolveResult = new DecompiledLambdaResolveResult(function, node.Type!, (IType)node.Value!,
-						hasParameterList: true, isAnonymousMethod: false, isImplicitlyTyped: false) {
+						hasParameterList: true, isAnonymousMethod: false, isImplicitlyTyped: node.ImplicitlyTyped) {
 						AttemptedConversionWithTypeMismatch = node.AttemptedConversionWithTypeMismatch
 					};
 					return Annotate(lambda, node);
@@ -693,7 +701,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 			return designation;
 		}
 
-		/// <summary>`ExpressionBuilder.MakeParameters` for parameters without anonymous types.</summary>
+		/// <summary>`ExpressionBuilder.MakeParameters`, with the parameter types written.</summary>
 		static List<ParameterDeclaration> MakeParameters(ILFunction function, ExpressionBuilder exprBuilder)
 		{
 			var variables = function.Variables.Where(v => v.Kind == VariableKind.Parameter).ToDictionary(v => v.Index!.Value);
