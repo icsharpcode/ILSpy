@@ -53,6 +53,7 @@ pub fn convert_body(
         continue_target: None,
         continue_count: 0,
         break_target: None,
+        return_statements: Vec::new(),
     };
     let stmt = b.convert(body)?;
     b.ast.with_il(stmt, body);
@@ -192,7 +193,7 @@ impl Builder<'_, '_, '_, '_> {
     }
 
     /// `ConvertAsBlock(inst)`: the statement with the instruction (again), in a block.
-    fn convert_as_block(&mut self, inst: NodeId) -> Result<AstId, Unsupported> {
+    pub(super) fn convert_as_block(&mut self, inst: NodeId) -> Result<AstId, Unsupported> {
         let s = self.convert(inst)?;
         self.ast.with_il(s, inst);
         Ok(self.as_block(s))
@@ -749,6 +750,7 @@ impl Builder<'_, '_, '_, '_> {
             Some(self.convert_to(e, result_type, true)?.expression)
         };
         let s = self.ast.add(AstNode::Return { expression });
+        self.return_statements.push(s);
         Ok(self.ast.with_il(s, inst))
     }
 }

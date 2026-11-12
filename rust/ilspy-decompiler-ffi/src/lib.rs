@@ -562,11 +562,19 @@ impl Resolver for HostResolver {
             names,
         )
         .ok()?;
-        match self.ask(&bytes) {
-            0 => Some(false),
-            1 => Some(true),
-            _ => None,
+        // Bit 0 is the answer; bit 1 + i whether the host's resolution tried to convert the
+        // i-th lambda argument to a delegate of other parameter types.
+        let answer = self.ask(&bytes);
+        if answer < 0 {
+            return None;
         }
+        let lambdas = arguments.iter().filter_map(|a| a.as_lambda()?.decompiled());
+        for (i, l) in lambdas.enumerate() {
+            if answer & (2 << i) != 0 {
+                l.attempted_conversion_with_type_mismatch.set(true);
+            }
+        }
+        Some(answer & 1 != 0)
     }
 
     fn constructors(

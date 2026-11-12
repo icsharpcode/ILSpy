@@ -7,6 +7,7 @@
 pub mod ast;
 mod call_builder;
 mod expression_builder;
+mod lambda;
 mod member_access;
 mod statement_builder;
 mod translated_expression;
@@ -44,6 +45,8 @@ pub(crate) struct Builder<'f, 't, 'c, 'a> {
     pub(crate) continue_count: u32,
     /// `breakTarget`: the container a leave of is written as `break`.
     pub(crate) break_target: Option<NodeId>,
+    /// The return statements of the current function, for the return type a lambda infers.
+    pub(crate) return_statements: Vec<ast::AstId>,
 }
 
 /// The variant name of an instruction, for the reasons of untranslated bodies.

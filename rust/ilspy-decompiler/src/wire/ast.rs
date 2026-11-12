@@ -58,6 +58,7 @@ mod kind {
     pub const FOR: u8 = 34;
     pub const INDEXER: u8 = 35;
     pub const USING: u8 = 36;
+    pub const LAMBDA: u8 = 37;
 }
 
 pub(super) fn write_body(
@@ -201,6 +202,9 @@ fn rr(w: &mut FunctionWriter<'_, '_, '_, '_>, rr: Option<&Rr>) -> Result<(), Str
         }
         Some(Rr::Conversion { .. }) => w.out.u8(13),
         Some(Rr::ImplicitConversion { .. }) => w.out.u8(17),
+        Some(Rr::LambdaConversion { .. }) => w.out.u8(18),
+        // The host builds the lambda's resolve result from the node.
+        Some(Rr::Lambda(_)) => w.out.u8(0),
         Some(Rr::TypeOf { ty, referenced }) => {
             w.out.u8(14);
             w.ty(*ty);
@@ -259,6 +263,7 @@ fn node(w: &mut FunctionWriter<'_, '_, '_, '_>, ast: &Ast, id: AstId) -> Result<
         AstNode::For { .. } => kind::FOR,
         AstNode::Indexer { .. } => kind::INDEXER,
         AstNode::Using { .. } => kind::USING,
+        AstNode::Lambda { .. } => kind::LAMBDA,
     });
     w.out.len(a.il.len());
     for &inst in &a.il {
@@ -390,6 +395,18 @@ fn node(w: &mut FunctionWriter<'_, '_, '_, '_>, ast: &Ast, id: AstId) -> Result<
         }
         AstNode::Lock { expression, body } => {
             node(w, ast, expression)?;
+            node(w, ast, body)?;
+        }
+        AstNode::Lambda {
+            body,
+            expression_body,
+            lambda,
+        } => {
+            let l = &ast.lambdas[lambda];
+            w.ty(l.delegate_type);
+            w.ty(l.inferred_return_type);
+            w.out.bool(l.attempted_conversion_with_type_mismatch.get());
+            w.out.bool(expression_body);
             node(w, ast, body)?;
         }
         AstNode::Using {

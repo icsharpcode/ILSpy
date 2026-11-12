@@ -134,6 +134,13 @@ pub enum AstNode {
         resource: AstId,
         body: AstId,
     },
+    /// `LambdaExpression` with the parameters of the function its IL instruction is, with
+    /// an expression body or a block; `lambda` indexes `Ast::lambdas`.
+    Lambda {
+        body: AstId,
+        expression_body: bool,
+        lambda: usize,
+    },
     /// `LockStatement`.
     Lock { expression: AstId, body: AstId },
     /// `ThrowStatement`, a rethrow without an expression.
@@ -250,6 +257,12 @@ pub enum Rr {
     /// `resolver.ResolveCast(ty, operand)` of a cast, over the resolve result of the cast's
     /// operand, which the host computes.
     Conversion { ty: TypeId },
+    /// `ConversionResolveResult` of a cast of a lambda to the delegate type `ty`, with the
+    /// lambda's resolve result and `LambdaConversion`.
+    LambdaConversion { ty: TypeId },
+    /// `DecompiledLambdaResolveResult`, at this index of `Ast::lambdas`, which the host builds
+    /// for the lambda's node.
+    Lambda(usize),
     /// `CSharpInvocationResolveResult` without target of the constructor `method` of the type
     /// `ty`, whose arguments are the resolve results of the object creation's arguments.
     ObjectCreation {
@@ -284,6 +297,8 @@ pub struct Annotations {
 #[derive(Clone, Debug, Default)]
 pub struct Ast {
     pub nodes: Vec<(AstNode, Annotations)>,
+    /// The resolve results of the lambdas, which overload resolution can update.
+    pub lambdas: Vec<std::rc::Rc<crate::semantics::decompiled_lambda::DecompiledLambda>>,
 }
 
 impl Ast {

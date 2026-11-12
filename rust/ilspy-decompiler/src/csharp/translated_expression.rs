@@ -59,6 +59,7 @@ impl Builder<'_, '_, '_, '_> {
                 },
                 _ => ResolveResult::Expression(ty),
             },
+            Some(Rr::Lambda(index)) => self.lambda_rr(*index),
             _ => ResolveResult::Expression(ty),
         }
     }
@@ -86,7 +87,12 @@ impl Builder<'_, '_, '_, '_> {
             let input = self.rr_of(inner);
             let input_ty = self.rr_type(&input);
             let input_rr = self.semantic_rr(inner, input_ty);
-            let conversion = Conversions::new(self.ts).explicit(&input_rr, ty);
+            // A lambda's cast carries `LambdaConversion` in its resolve result.
+            let conversion = if matches!(self.rr_of(e.expression), Rr::LambdaConversion { .. }) {
+                crate::semantics::Conversion::ANONYMOUS_FUNCTION
+            } else {
+                Conversions::new(self.ts).explicit(&input_rr, ty)
+            };
             if conversion.is_user_defined() {
                 // An unwrapped user-defined conversion keeps an `ImplicitConversionAnnotation`.
                 return Err("a conversion of a user-defined cast".to_owned());

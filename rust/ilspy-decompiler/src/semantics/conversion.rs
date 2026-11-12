@@ -23,6 +23,8 @@ pub enum Builtin {
     ImplicitSpan,
     ExplicitSpan,
     DefaultLiteral,
+    /// `LambdaConversion` of a decompiled lambda.
+    AnonymousFunction,
 }
 
 /// A conversion. Equality follows the managed `Conversion.Equals`: built-in conversions
@@ -107,6 +109,7 @@ impl Conversion {
     pub const IMPLICIT_SPAN: Conversion = builtin(true, Builtin::ImplicitSpan);
     pub const EXPLICIT_SPAN: Conversion = builtin(false, Builtin::ExplicitSpan);
     pub const DEFAULT_LITERAL: Conversion = builtin(true, Builtin::DefaultLiteral);
+    pub const ANONYMOUS_FUNCTION: Conversion = builtin(true, Builtin::AnonymousFunction);
 
     /// `Conversion.EnumerationConversion`.
     pub const fn enumeration(implicit: bool, lifted: bool) -> Conversion {
@@ -254,6 +257,10 @@ impl Conversion {
 
     pub fn is_default_literal(&self) -> bool {
         self.is_builtin(Builtin::DefaultLiteral)
+    }
+
+    pub fn is_anonymous_function(&self) -> bool {
+        self.is_builtin(Builtin::AnonymousFunction)
     }
 
     pub fn is_numeric(&self) -> bool {
@@ -425,6 +432,9 @@ impl fmt::Display for Conversion {
                     Builtin::ExplicitSpan => return f.write_str("explicit span conversion"),
                     Builtin::DefaultLiteral => {
                         return f.write_str("default-literal conversion");
+                    }
+                    Builtin::AnonymousFunction => {
+                        return f.write_str("anonymous function conversion");
                     }
                     Builtin::ConstantExpression => "constant-expression",
                     Builtin::Reference => "reference",

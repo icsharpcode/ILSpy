@@ -79,6 +79,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		public const byte For = 34;
 		public const byte Indexer = 35;
 		public const byte Using = 36;
+		public const byte Lambda = 37;
 
 		public byte Kind;
 		/// <summary>The instructions the node is annotated with, in order.</summary>
@@ -101,6 +102,10 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		public bool ResolveCast;
 		/// <summary>For a cast: whether its resolve result is the implicit conversion from the operand's type.</summary>
 		public bool ImplicitConversion;
+		/// <summary>For a cast: whether its resolve result is the lambda conversion of the lambda it casts.</summary>
+		public bool LambdaConversion;
+		/// <summary>For a lambda: <see cref="DecompiledLambdaResolveResult.AttemptedConversionWithTypeMismatch"/>.</summary>
+		public bool AttemptedConversionWithTypeMismatch;
 		/// <summary>For a generic name: the type arguments written with it.</summary>
 		public IType[] TypeArguments = [];
 		public object? Value;
@@ -365,6 +370,19 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					return Annotate(new BreakStatement(), node);
 				case RustBodyNode.Continue:
 					return Annotate(new ContinueStatement(), node);
+				case RustBodyNode.Lambda:
+				{
+					// `TranslateFunction` for a lambda with an explicitly typed parameter list.
+					var function = (ILFunction)node.IL[0];
+					var lambda = new LambdaExpression();
+					lambda.Parameters.AddRange(MakeParameters(function, exprBuilder));
+					lambda.Body = Build(node.Children[0], exprBuilder);
+					node.ResolveResult = new DecompiledLambdaResolveResult(function, node.Type!, (IType)node.Value!,
+						hasParameterList: true, isAnonymousMethod: false, isImplicitlyTyped: false) {
+						AttemptedConversionWithTypeMismatch = node.AttemptedConversionWithTypeMismatch
+					};
+					return Annotate(lambda, node);
+				}
 				case RustBodyNode.Using:
 				{
 					AstNode resourceAcquisition = Build(node.Children[0], exprBuilder);
@@ -401,6 +419,8 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					// `TranslatedExpression.ConvertTo` marks a cast to an integer type unchecked.
 					if (node.Flag)
 						cast.AddAnnotation(CSharp.Transforms.AddCheckedBlocks.UncheckedAnnotation);
+					if (node.LambdaConversion)
+						node.ResolveResult = new ConversionResolveResult(node.Type!, operand.GetResolveResult(), Semantics.LambdaConversion.Instance);
 					if (node.ResolveCast)
 						node.ResolveResult = exprBuilder.resolver.WithCheckForOverflow(false).ResolveCast(node.Type!, operand.GetResolveResult());
 					// `HandleImplicitConversion`: the implicit conversion from the operand's type.
@@ -450,6 +470,27 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		}
 
 		/// <summary>The node's instructions and resolve result, in the order the managed builder adds them.</summary>
+		/// <summary>`ExpressionBuilder.MakeParameters` for parameters without anonymous types.</summary>
+		static List<ParameterDeclaration> MakeParameters(ILFunction function, ExpressionBuilder exprBuilder)
+		{
+			var variables = function.Variables.Where(v => v.Kind == VariableKind.Parameter).ToDictionary(v => v.Index!.Value);
+			var result = new List<ParameterDeclaration>(function.Parameters.Count);
+			for (int i = 0; i < function.Parameters.Count; i++)
+			{
+				var parameter = function.Parameters[i];
+				var pd = exprBuilder.astBuilder.ConvertParameter(parameter);
+				if (variables.TryGetValue(i, out var v))
+				{
+					pd.AddAnnotation(new ILVariableResolveResult(v, parameter.Type));
+					pd.Name = v.Name!;
+				}
+				if (string.IsNullOrEmpty(pd.Name) && !pd.Type.IsArgList())
+					pd.Name = "P_" + i;
+				result.Add(pd);
+			}
+			return result;
+		}
+
 		static T Annotate<T>(T syntax, RustBodyNode node) where T : AstNode
 		{
 			if (!node.ILBeforeResolveResult && node.ResolveResult != null)

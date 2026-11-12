@@ -76,6 +76,19 @@ impl Normalization {
         remove_modreq: false,
         remove_nullability: true,
     };
+
+    /// `NormalizeTypeVisitor.IgnoreNullability`.
+    pub const IGNORE_NULLABILITY: Normalization = Normalization {
+        class_dummy: false,
+        method_dummy: false,
+        dynamic_and_object: false,
+        intptr_to_nint: false,
+        tuple_to_underlying: false,
+        remove_tuple_names: false,
+        remove_modopt: true,
+        remove_modreq: true,
+        remove_nullability: true,
+    };
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]

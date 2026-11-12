@@ -3153,6 +3153,35 @@ using`, a resource whose type does not implement `IDisposable` (written out as
 try/finally with a new variable) and a declaration of an anonymous type (`var`). The share
 rose from 61.7 % to 62.2 %.
 
+### 3.118 Lambdas (item 68y10)
+
+`TranslateFunction` writes a delegate's function as `(D)((T x) => body)`: a lambda with the
+parameters of its method, explicitly typed, its body translated by a statement builder of
+its own (the engine saves and restores the per-function state around it: the return
+container and type, the variable names, loop targets and the return statements), and an
+expression body where the block is a single `return expr;`. The lambda's resolve result is a
+`DecompiledLambdaResolveResult`; the cast's a `ConversionResolveResult` with
+`LambdaConversion`. Where the lambda is an argument, `ConvertTo` drops the cast again as
+`CastCanBeMadeImplicit` allows.
+
+How the resolver treats such an argument was a decision for the user, who chose to port the
+resolve result into the engine rather than fall back: overload resolution and type
+inference query it through the `Lambda` trait, as they already did for test lambdas. The
+lambda keeps its explicit types, so the return type it infers does not depend on the
+delegate's parameter types; a conversion is valid when the parameter types are identical
+and the inferred return type converts to the delegate's. A conversion attempted with
+parameter types that differ beyond nullability sets `AttemptedConversionWithTypeMismatch`,
+which `IntroduceQueryExpressions` reads later; the flag lives in a cell shared by every
+reference to the lambda and goes over the wire with the node. The host's own question
+whether a call can use extension method syntax runs overload resolution too: the engine
+sends the lambda as an operand, the host answers with a stand-in
+`DecompiledLambdaResolveResult` over a function without body, and returns the flags it set
+in the answer's higher bits.
+
+Async lambdas, anonymous methods (`delegate { }`, also for lambdas whose parameters are not
+used), lambdas with attributes and parameters with modifiers, defaults or anonymous types
+fall back. The share rose from 62.2 % to 63.5 %.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

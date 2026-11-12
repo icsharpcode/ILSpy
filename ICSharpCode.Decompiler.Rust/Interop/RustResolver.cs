@@ -155,7 +155,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				if (q.Kind == RustResolverQuery.FieldKindKind)
 					return ClassifyField(q.Field, q.TargetIsThis);
 				if (q.Kind == RustResolverQuery.ExtensionSyntaxKind)
-					return CanUseExtensionMethodSyntax(q) ? 1 : 0;
+					return CanUseExtensionMethodSyntax(q);
 				if (q.Kind == RustResolverQuery.AccessorKind)
 					return AccessorReference(q);
 				if (q.Kind is RustResolverQuery.MethodGroupKind or RustResolverQuery.ConstructorsKind)
@@ -410,12 +410,21 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 			return resolved.Member.Equals(owner) ? 1 : 2;
 		}
 
-		/// <summary><c>CallBuilder.TryUseExtensionMethodSyntax</c>'s question to the expression builder's resolver.</summary>
-		bool CanUseExtensionMethodSyntax(RustResolverQuery query)
+		/// <summary><c>CallBuilder.TryUseExtensionMethodSyntax</c>'s question to the expression builder's resolver.
+		/// Bit 0 is the answer, bit 1 + i the type mismatch flag of the i-th lambda argument after it.</summary>
+		int CanUseExtensionMethodSyntax(RustResolverQuery query)
 		{
 			var context = body ?? throw new InvalidOperationException("The engine asked about a C# body without the body's context");
-			return context.Resolver.CanTransformToExtensionMethodCall(query.Method, query.TypeArguments,
-				query.TargetResult!, query.ArgumentResults, query.ArgumentNames!);
+			int answer = context.Resolver.CanTransformToExtensionMethodCall(query.Method, query.TypeArguments,
+				query.TargetResult!, query.ArgumentResults, query.ArgumentNames!) ? 1 : 0;
+			int bit = 2;
+			foreach (var lambda in query.ArgumentResults.OfType<DecompiledLambdaResolveResult>())
+			{
+				if (lambda.AttemptedConversionWithTypeMismatch)
+					answer |= bit;
+				bit <<= 1;
+			}
+			return answer;
 		}
 
 		/// <summary>The resolve result a member lookup sees for the query's target.</summary>

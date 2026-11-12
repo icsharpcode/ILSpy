@@ -36,10 +36,12 @@ impl Builder<'_, '_, '_, '_> {
             | Rr::Plain(ty)
             | Rr::Conversion { ty }
             | Rr::ImplicitConversion { ty }
+            | Rr::LambdaConversion { ty }
             | Rr::TypeOf { ty, .. }
             | Rr::ArrayLength { ty, .. } => *ty,
             Rr::Field { field, .. } => field.field.ty,
             Rr::Event { ty, .. } => *ty,
+            Rr::Lambda(_) => self.ts.intern(TypeData::NoType),
             Rr::ByReference(element) | Rr::ByReferenceOut(element) => {
                 let e = self.rr_type(element);
                 self.ts.intern(TypeData::ByRef(e))

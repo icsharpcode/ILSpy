@@ -341,6 +341,7 @@ impl Builder<'_, '_, '_, '_> {
                 left,
                 right,
             } => self.comp(inst, kind, lifting, sign, input, left, right),
+            Inst::Function { .. } => self.translate_function(inst),
             Inst::Conv {
                 arg,
                 input,

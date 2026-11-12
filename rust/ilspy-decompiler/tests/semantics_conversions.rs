@@ -2425,3 +2425,58 @@ fn method_group_conversion_identity_receiver_on_span_extension_still_converts() 
         assert!(conv.is_valid());
     });
 }
+
+/// `DecompiledLambdaResolveResult.IsValid`: the explicit parameter types have to match up to
+/// identity, a match beyond nullability is recorded, and the return type converts from the
+/// inferred one.
+#[test]
+fn decompiled_lambda_conversions() {
+    use ilspy_decompiler::semantics::decompiled_lambda::DecompiledLambda;
+    Fixture::new().run(|c| {
+        let int = known(c, KnownTypeCode::Int32);
+        let double = known(c, KnownTypeCode::Double);
+        let object = known(c, KnownTypeCode::Object);
+        let dynamic = c.ts.intern(TypeData::Dynamic);
+        let lambda = |param: TypeId| DecompiledLambda {
+            delegate_type: object,
+            inferred_return_type: int,
+            return_type: int,
+            parameters: vec![param_x(param)],
+            attempted_conversion_with_type_mismatch: std::cell::Cell::new(false),
+        };
+
+        // (int x) => int converts to Func<int, int> and Func<int, double>.
+        let l = lambda(int);
+        assert!(l.is_valid(c, &[int], int).is_anonymous_function());
+        assert!(l.is_valid(c, &[int], double).is_anonymous_function());
+        assert!(!l.attempted_conversion_with_type_mismatch.get());
+        let func_int_double = t(c, "Func<int, double>");
+        assert!(
+            c.implicit(&Rc::new(lambda(int)).rr(), func_int_double)
+                .is_valid()
+        );
+
+        // Another parameter type: no conversion, and the attempt is recorded.
+        assert_eq!(l.is_valid(c, &[double], int), C::None);
+        assert!(l.attempted_conversion_with_type_mismatch.get());
+
+        // dynamic and object are identical but not equal: valid, and recorded.
+        let l = lambda(object);
+        assert!(l.is_valid(c, &[dynamic], int).is_anonymous_function());
+        assert!(l.attempted_conversion_with_type_mismatch.get());
+
+        // A return type the inferred type does not convert to.
+        let string = known(c, KnownTypeCode::String);
+        assert_eq!(lambda(int).is_valid(c, &[int], string), C::None);
+    });
+}
+
+trait IntoLambdaRr {
+    fn rr(self) -> ResolveResult;
+}
+
+impl IntoLambdaRr for Rc<ilspy_decompiler::semantics::decompiled_lambda::DecompiledLambda> {
+    fn rr(self) -> ResolveResult {
+        ResolveResult::Lambda(self)
+    }
+}

@@ -395,7 +395,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		/// <summary>
 		/// An operand of a resolver query: 0 and the type of an expression, 1, the type and the
 		/// constant, 2, the element type and the <see cref="ReferenceKind"/> of a by-reference
-		/// argument, 3 and the type of an <c>out var</c>.
+		/// argument, 3 and the type of an <c>out var</c>, 4 and the delegate type of a lambda.
 		/// </summary>
 		ResolveResult QueryOperand()
 		{
@@ -406,7 +406,29 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				1 => new ConstantResolveResult(type, Constant()),
 				2 => new ByReferenceResolveResult(type, (ReferenceKind)U8()),
 				3 => new OutVarResolveResult(type),
+				4 => QueryLambda(type),
 				_ => throw new InvalidOperationException("Unknown resolver query operand"),
+			};
+		}
+
+		/// <summary>
+		/// The lambda of a resolver query: its return type, inferred return type, parameters and
+		/// type mismatch flag, over a function without body, as overload resolution sees it.
+		/// </summary>
+		DecompiledLambdaResolveResult QueryLambda(IType delegateType)
+		{
+			var returnType = Type();
+			var inferredReturnType = Type();
+			var parameters = new IParameter[Len()];
+			for (int i = 0; i < parameters.Length; i++)
+			{
+				var type = Type();
+				parameters[i] = new DefaultParameter(type, Str());
+			}
+			var function = new ILFunction(returnType, parameters, default, new Nop(), ILFunctionKind.Delegate) { DelegateType = delegateType };
+			return new DecompiledLambdaResolveResult(function, delegateType, inferredReturnType,
+				hasParameterList: true, isAnonymousMethod: false, isImplicitlyTyped: false) {
+				AttemptedConversionWithTypeMismatch = Bool()
 			};
 		}
 
@@ -632,6 +654,8 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 			pendingResolveCast = false;
 			node.ImplicitConversion = pendingImplicitConversion;
 			pendingImplicitConversion = false;
+			node.LambdaConversion = pendingLambdaConversion;
+			pendingLambdaConversion = false;
 			node.LookUpMember = pendingLookUpMember;
 			pendingLookUpMember = false;
 			int implicitReturn = Len();
@@ -729,6 +753,14 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					node.Children = condition != null ? [body, condition] : [body];
 					break;
 				}
+				case RustBodyNode.Lambda:
+					// The delegate type, the inferred return type, the type mismatch flag, then the body.
+					node.Type = Type();
+					node.Value = Type();
+					node.AttemptedConversionWithTypeMismatch = Bool();
+					node.Flag = Bool();
+					node.Children = [BodyNode()];
+					break;
 				case RustBodyNode.Using:
 					// The declared variable, the resource and the body.
 					node.Value = Bool() ? Variable() : null;
@@ -809,6 +841,9 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		/// <summary>Whether the last <see cref="BodyResolveResult"/> read was the implicit conversion of an operator call.</summary>
 		bool pendingImplicitConversion;
 
+		/// <summary>Whether the last <see cref="BodyResolveResult"/> read was the lambda conversion of a cast.</summary>
+		bool pendingLambdaConversion;
+
 		/// <summary>Whether the last <see cref="BodyResolveResult"/> read names a member found by looking its name up again.</summary>
 		bool pendingLookUpMember;
 
@@ -879,6 +914,10 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				case 17:
 					// RustSeam2 computes the implicit conversion of the operand.
 					pendingImplicitConversion = true;
+					return null;
+				case 18:
+					// RustSeam2 converts the lambda's resolve result.
+					pendingLambdaConversion = true;
 					return null;
 				case 14:
 				{

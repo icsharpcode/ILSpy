@@ -1778,6 +1778,19 @@ pub fn extension_method_syntax_query(
                     w.out.u8(3);
                     w.ty(*ty);
                 }
+                ResolveResult::Lambda(l) => {
+                    let d = l.decompiled().ok_or("a lambda of another kind")?;
+                    w.out.u8(4);
+                    w.ty(d.delegate_type);
+                    w.ty(d.return_type);
+                    w.ty(d.inferred_return_type);
+                    w.out.len(d.parameters.len());
+                    for p in &d.parameters {
+                        w.ty(p.ty);
+                        w.string(&p.name);
+                    }
+                    w.out.bool(d.attempted_conversion_with_type_mismatch.get());
+                }
                 _ => return Err("an operand of another kind".to_owned()),
             }
             Ok(())

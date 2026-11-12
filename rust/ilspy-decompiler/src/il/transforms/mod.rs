@@ -119,6 +119,7 @@ pub const SETTING_NAMES: &[&str] = &[
     "NonTrailingNamedArguments",
     "UsingDeclarations",
     "OptionalArguments",
+    "UseLambdaSyntax",
 ];
 
 /// The values of `SETTING_NAMES`.
@@ -181,6 +182,7 @@ pub struct Settings {
     pub non_trailing_named_arguments: bool,
     pub using_declarations: bool,
     pub optional_arguments: bool,
+    pub use_lambda_syntax: bool,
 }
 
 impl Settings {
@@ -245,6 +247,7 @@ impl Settings {
             non_trailing_named_arguments: bit(54),
             using_declarations: bit(55),
             optional_arguments: bit(56),
+            use_lambda_syntax: bit(57),
         }
     }
 }

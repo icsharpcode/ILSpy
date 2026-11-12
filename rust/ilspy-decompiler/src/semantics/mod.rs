@@ -4,6 +4,7 @@
 
 pub mod conversion;
 pub mod conversions;
+pub mod decompiled_lambda;
 pub mod overload_resolution;
 pub mod type_inference;
 pub mod types;
@@ -223,6 +224,10 @@ pub trait Lambda {
     fn is_implicitly_typed(&self) -> bool;
     fn is_async(&self) -> bool;
     fn parameters(&self) -> &[Parameter];
+    /// The lambda the C# body translation made, which the host can rebuild.
+    fn decompiled(&self) -> Option<&decompiled_lambda::DecompiledLambda> {
+        None
+    }
     /// The return type the body infers to under `parameter_types` (`None` for an explicitly
     /// typed lambda).
     fn inferred_return_type(
