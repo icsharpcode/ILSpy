@@ -301,6 +301,9 @@ pub enum Rr {
         extension: bool,
         /// `isDelegateInvocation`: `Invoke` of a delegate, written as `target(arguments)`.
         delegate: bool,
+        /// Whether the name resolves to an override of `method`, whose invocation the host
+        /// finds again with the overload resolution of the written call.
+        found_by_lookup: bool,
     },
     /// A plain `ResolveResult` of the given type.
     Plain(TypeId),

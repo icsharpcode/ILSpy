@@ -209,6 +209,7 @@ impl Builder<'_, '_, '_, '_> {
                     ty: method.return_type,
                     extension: false,
                     delegate: true,
+                    found_by_lookup: false,
                 },
             );
             self.ast.with_il(e, inst);
@@ -238,8 +239,22 @@ impl Builder<'_, '_, '_, '_> {
                 target.expression,
                 base_needed,
             );
+        self.found_override = None;
         let (require, require_type_arguments) =
             self.disambiguate_call(&method, id, op, &target, &mut list, require, declaring)?;
+        // The overload the call resolves to may be an override of the method, whose parameter
+        // names the written argument names take.
+        let found_override = self.found_override.take();
+        if let Some(found) = &found_override {
+            if is_extension {
+                return Err("an extension call that resolves to another method".to_owned());
+            }
+            if list.parameter_names.len() >= found.parameters.len() {
+                for (n, p) in list.parameter_names.iter_mut().zip(&found.parameters) {
+                    n.clone_from(&p.name);
+                }
+            }
+        }
 
         // the invocation
         let type_arguments = match &method.method_args {
@@ -291,6 +306,7 @@ impl Builder<'_, '_, '_, '_> {
                 ty: method.return_type,
                 extension: false,
                 delegate: false,
+                found_by_lookup: found_override.is_some(),
             },
         );
         self.ast.with_il(e, inst);
@@ -422,6 +438,7 @@ impl Builder<'_, '_, '_, '_> {
                 ty: method.return_type,
                 extension: true,
                 delegate: false,
+                found_by_lookup: false,
             },
         );
         self.ast.with_il(e, inst);
@@ -1464,6 +1481,9 @@ impl Builder<'_, '_, '_, '_> {
         if !self.is_appropriate_call_target(op, method, &found)? {
             return Ok(OverloadResolutionErrors::AMBIGUOUS_MATCH);
         }
+        if !self.same_method_after_type_erasure(method, &found) {
+            self.found_override = Some(found.clone());
+        }
         // An `out var` must declare the type of the parameter found.
         for (i, out_var) in out_vars.iter().enumerate() {
             if let Some(element) = *out_var
@@ -1679,10 +1699,39 @@ impl Builder<'_, '_, '_, '_> {
         {
             return Ok(false);
         }
-        // shortcut: an override found in place of the method called is written as a call of the
-        // override, with its resolve result, when it overrides that method; such calls are not
-        // translated. Upgrade with the base member chain (`InheritanceHelper.GetBaseMembers`)
-        // when they are.
-        Err("a call whose name binds to an override".to_owned())
+        // `NeedsBoxingConversion` is not tracked: an override in a value type is not translated.
+        if let Some(d) = actual.declaring
+            && self.ts.is_reference_type(d) != Some(true)
+        {
+            return Err("a call whose name binds to a value type's override".to_owned());
+        }
+        // `InheritanceHelper.GetBaseMembers`: the method the override overrides, directly or
+        // through further overrides.
+        let MethodKey::Def(expected_id) = expected.key else {
+            return Ok(false);
+        };
+        let bases = self
+            .ts
+            .base_members(
+                crate::typesystem::inheritance::MemberDef::Method(actual_id),
+                false,
+            )
+            .map_err(|e| e.to_string())?;
+        for base in bases {
+            let crate::typesystem::inheritance::MemberDef::Method(base_id) = base.def else {
+                break;
+            };
+            if base_id == expected_id {
+                return Ok(true);
+            }
+            if !self
+                .ts
+                .method_modifiers_of(base_id)
+                .is_ok_and(|m| m.is_override)
+            {
+                break;
+            }
+        }
+        Ok(false)
     }
 }

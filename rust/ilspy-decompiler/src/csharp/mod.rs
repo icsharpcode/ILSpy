@@ -57,6 +57,8 @@ pub(crate) struct Builder<'f, 't, 'c, 'a> {
     pub(crate) in_lambda: bool,
     /// The variables of the top-level function (`ReadFunction::variables`).
     pub(crate) root_variables: Vec<crate::il::ast::VarId>,
+    /// The override the last successful call probe resolved to, in place of the method called.
+    pub(crate) found_override: Option<crate::semantics::Method>,
 }
 
 /// The variant name of an instruction, for the reasons of untranslated bodies.

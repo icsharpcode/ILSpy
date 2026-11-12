@@ -197,6 +197,7 @@ fn rr(w: &mut FunctionWriter<'_, '_, '_, '_>, rr: Option<&Rr>) -> Result<(), Str
             method,
             extension,
             delegate,
+            found_by_lookup,
             ..
         }) => {
             w.out.u8(9);
@@ -204,6 +205,7 @@ fn rr(w: &mut FunctionWriter<'_, '_, '_, '_>, rr: Option<&Rr>) -> Result<(), Str
             w.call_method(method)?;
             w.out.bool(*extension);
             w.out.bool(*delegate);
+            w.out.bool(*found_by_lookup);
         }
         Some(Rr::Property {
             target,

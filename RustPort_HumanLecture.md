@@ -3547,6 +3547,20 @@ so as a nested resolve result it read as none, and the host looked the name up a
 name. The host now looks the method group up after building the reference, from the target
 expression it built. The share rose from 78.4 % to 79.0 %.
 
+### 3.141 Calls that resolve to an override (item 68y33)
+
+For a `callvirt`, `IsAppropriateCallTarget` also accepts an override as the method the name
+resolves to, where it overrides the method called, directly or through further overrides
+(`InheritanceHelper.GetBaseMembers`). The managed builder then writes the call with the
+override's resolve result, and its parameter names for the arguments it names. The engine
+ports the base member chain on its type system, takes the parameter names from the override,
+and marks the invocation's resolve result; since the override can be declared in another
+assembly, where the decompiled module has no token for it, the host does not receive it but
+finds it again with the overload resolution of the call as written (the agent's recommended
+choice, as the user now asks). An override in a value type, where the managed check depends
+on a boxing the engine does not track, falls back, and so does an extension method call that
+resolves to another method. The share rose from 79.0 % to 79.8 %.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

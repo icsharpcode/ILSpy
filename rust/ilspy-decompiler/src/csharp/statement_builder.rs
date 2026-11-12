@@ -59,6 +59,7 @@ pub fn convert_body(
         is_iterator: read.is_iterator,
         in_lambda: false,
         root_variables: read.variables.clone(),
+        found_override: None,
     };
     let stmt = b.convert(body)?;
     b.ast.with_il(stmt, body);

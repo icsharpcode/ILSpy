@@ -570,7 +570,9 @@ the reasons. This file holds only the ordered steps, their gates and their rules
     Subject: `Translate delegate invocations to C# in the engine`.
   - [x] 68y32. Delegate construction from a method reference, and the implicit method group
     conversion (settings bit 62; lecture 3.140). Subject: `Translate delegate construction to C# in the engine`.
-  - [ ] 68y33-. Further construct groups (numbered on from 68y1), in the order of the fallback reasons the ratchet test
+  - [x] 68y33. Calls whose name binds to an override of the method called (lecture 3.141).
+    Subject: `Translate calls that resolve to an override in the engine`.
+  - [ ] 68y34-. Further construct groups (numbered on from 68y1), in the order of the fallback reasons the ratchet test
     prints, until no body of the corpus falls back. Subject pattern:
     `Translate <construct group> to C# in the engine`.
   - [ ] 68z. Request-level seam 2. Subject: `Add the Rust C# AST builders and the AST materializer`.

@@ -104,7 +104,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		/// <summary>For an assignment or <c>!</c>: the type of its <see cref="OperatorResolveResult"/>, whose operands are the children's.</summary>
 		public IType? OperatorType;
 		/// <summary>For an invocation or object creation: the target, method and extension method flag of its <see cref="CSharpInvocationResolveResult"/>, whose arguments are the node's.</summary>
-		public (ResolveResult? Target, IMethod Method, bool IsExtension, bool IsDelegate)? Call;
+		public (ResolveResult? Target, IMethod Method, bool IsExtension, bool IsDelegate, bool FoundByLookup)? Call;
 		public Leave? ImplicitReturn;
 		public RustBodyNode[] Children = [];
 		public IType? Type;
@@ -311,11 +311,14 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				{
 					var target = (Expression)Build(node.Children[0], exprBuilder);
 					var arguments = node.Children.Skip(1).Select(c => (Expression)Build(c, exprBuilder)).ToList();
-					var (targetResult, method, isExtension, isDelegate) = node.Call!.Value;
+					var (targetResult, method, isExtension, isDelegate, foundByLookup) = node.Call!.Value;
 					// The argument resolve results, of the named arguments' expressions.
 					var argumentResults = arguments
 						.Select(a => (a is NamedArgumentExpression named ? named.Expression : a).GetResolveResult())
 						.ToList();
+					// An override the name resolves to: the overload resolution of the written call.
+					if (foundByLookup)
+						method = FindOverload(exprBuilder, target, method, arguments, argumentResults);
 					node.ResolveResult = new CSharpInvocationResolveResult(targetResult!, method, argumentResults, isExtensionMethodInvocation: isExtension, isDelegateInvocation: isDelegate);
 					return Annotate(new InvocationExpression(target, arguments), node);
 				}
@@ -652,6 +655,30 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		}
 
 		/// <summary>The node's instructions and resolve result, in the order the managed builder adds them.</summary>
+		/// <summary>
+		/// `Disambiguator.IsUnambiguousCall`'s found member: the best candidate of the overload
+		/// resolution of the call as written, over the method group of its name.
+		/// </summary>
+		static IMethod FindOverload(ExpressionBuilder exprBuilder, Expression callee, IMethod method, List<Expression> arguments, List<ResolveResult> argumentResults)
+		{
+			var resolver = exprBuilder.resolver;
+			var target = callee is MemberReferenceExpression mre ? mre.Target.GetResolveResult() : null;
+			bool typeArgumentsWritten = callee is MemberReferenceExpression { TypeArguments.Count: > 0 }
+				|| callee is IdentifierExpression { TypeArguments.Count: > 0 };
+			var typeArguments = typeArgumentsWritten ? method.TypeArguments.ToArray() : Array.Empty<IType>();
+			var group = target == null
+				? resolver.ResolveSimpleName(method.Name, typeArguments, isInvocationTarget: true)
+				: new MemberLookup(resolver.CurrentTypeDefinition, resolver.CurrentTypeDefinition.ParentModule)
+					.Lookup(target, method.Name, typeArguments, isInvocation: true);
+			var names = arguments.Any(a => a is NamedArgumentExpression)
+				? arguments.Select(a => (a as NamedArgumentExpression)?.Name).ToArray()
+				: null;
+			var or = new OverloadResolution(resolver.Compilation, argumentResults.ToArray(), names!, typeArguments, conversions: resolver.conversions);
+			or.AddMethodLists(((MethodGroupResolveResult)group).MethodsGroupedByDeclaringType.ToArray());
+			return (IMethod?)or.GetBestCandidateWithSubstitutedTypeArguments()
+				?? throw new RustEngineException($"The call of {method.Name} no longer resolves to an overload");
+		}
+
 		/// <summary>The designation of a pattern variable, annotated with its resolve result.</summary>
 		static SingleVariableDesignation Designation(ILVariable variable)
 		{
