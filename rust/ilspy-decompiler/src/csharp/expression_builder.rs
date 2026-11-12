@@ -1052,12 +1052,26 @@ impl Builder<'_, '_, '_, '_> {
         if self.ts.is_known(value.ty, KnownTypeCode::NullableOfT) {
             return Err("a ?? of a nullable value type".to_owned());
         }
-        // `TryConvert(ref rhs, lhs.Type)` leaves the fallback alone only for the same type.
-        if fallback.ty != value.ty
-            || matches!(self.ts.kind(value.ty), TypeKind::Null | TypeKind::None)
-        {
+        if matches!(self.ts.kind(value.ty), TypeKind::Null | TypeKind::None) {
             return Err("a ?? that needs conversions".to_owned());
         }
+        // `ResolveNullCoalescingOperator`: the fallback converted to the value's type, else the
+        // value to the fallback's; with a conversion the host resolves the operator.
+        let ty = if fallback.ty == value.ty {
+            value.ty
+        } else {
+            let value_rr = self.semantic_rr(value.expression, value.ty);
+            let fallback_rr = self.semantic_rr(fallback.expression, fallback.ty);
+            let mut conversions = Conversions::new(self.ts);
+            if conversions.implicit(&fallback_rr, value.ty).is_valid() {
+                value.ty
+            } else if conversions.implicit(&value_rr, fallback.ty).is_valid() {
+                fallback.ty
+            } else {
+                return Err("a ?? that needs conversions".to_owned());
+            }
+        };
+        let resolved = fallback.ty != value.ty;
         let e = self.ast.add(AstNode::BinaryOperator {
             overflow: Overflow::None,
             op: BinaryOp::NullCoalescing,
@@ -1065,11 +1079,13 @@ impl Builder<'_, '_, '_, '_> {
             right: fallback.expression,
         });
         self.ast.with_il(e, inst);
-        self.ast.with_rr(e, Rr::Operator { ty: value.ty });
-        Ok(TranslatedExpression {
-            expression: e,
-            ty: value.ty,
-        })
+        let rr = if resolved {
+            Rr::ResolvedOperator { ty }
+        } else {
+            Rr::Operator { ty }
+        };
+        self.ast.with_rr(e, rr);
+        Ok(TranslatedExpression { expression: e, ty })
     }
     /// `TranslateComp`: a relational comparison, where the operands are of the same type
     /// from `int` to `double` (which binary numeric promotion leaves alone) and resolve to a

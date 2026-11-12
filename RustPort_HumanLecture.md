@@ -3487,6 +3487,16 @@ and a conversion test pins a lambda converting to an annotated delegate type. Th
 workarounds of 3.134, which ignored annotations around implicit operator conversions, are
 gone with it. The share rose from 74.5 % to 75.4 %.
 
+### 3.137 Converting null-coalescing operators (item 68y29)
+
+`VisitNullCoalescingInstruction` keeps `value ?? fallback` as written whenever
+`ResolveBinaryOperator` resolves it, which for a value of a reference type
+(`ResolveNullCoalescingOperator`) means that the fallback converts implicitly to the value's
+type, giving that type, or else the value to the fallback's. The engine ports that type rule
+and, where an operand is converted, lets the host compute the resolve result (3.135). Where
+neither converts the managed builder casts the operands to a target type; that, and a value of
+a nullable value type, still fall back. The share rose from 75.4 % to 76.6 %.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |
