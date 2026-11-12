@@ -209,6 +209,37 @@ public sealed class WholeProjectDecompilerTests
 		}
 	}
 
+	[TestCase("Directory.Build.props")]
+	[TestCase("directory.build.TARGETS")]
+	[TestCase("Test.csproj.user")]
+	[TestCase("Other.csproj")]
+	[TestCase("Other.sln")]
+	[TestCase("NuGet.config")]
+	[TestCase("global.json")]
+	[TestCase("obj/Test.csproj.x.props")]
+	[TestCase("sub/Other.vbproj")]
+	[TestCase("Directory.Build.props.")]
+	[TestCase("obj./project.assets.json")]
+	[TestCase("Settings.json", "Settings.json")]
+	[TestCase("objects/data.json", "objects/data.json")]
+	public void ResourcesDoNotGetNamesThatBuildToolsPickUp(string name, string? expected = null)
+	{
+		string targetDirectory = Path.Combine(Environment.CurrentDirectory, Path.GetRandomFileName());
+		TestFriendlyProjectDecompiler decompiler = new(new UniversalAssemblyResolver(null, false, null));
+		decompiler.CaptureResources = true;
+
+		using var assembly = CreateAssemblyWithResources(("Test.resources", name));
+		decompiler.DecompileProject(new PEFile("Test.dll", assembly), targetDirectory, new StringWriter());
+		AssertDirectoryDoesntExist(targetDirectory);
+
+		var item = decompiler.ResourceItems.Single();
+		using (Assert.EnterMultipleScope())
+		{
+			Assert.That(item.FileName, Is.EqualTo((expected ?? name + ".bin").Replace('/', Path.DirectorySeparatorChar)));
+			Assert.That(item.AdditionalProperties?["LogicalName"], Is.EqualTo(name));
+		}
+	}
+
 	/// <summary>
 	/// A rebuilt WPF project only resolves its own pack URIs when every entry of
 	/// "&lt;AssemblyName&gt;.g.resources" comes back under the resource ID it had before. The file on

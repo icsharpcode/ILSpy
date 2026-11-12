@@ -125,4 +125,13 @@ public sealed class ReservedFileSystemNameTests
 			Assert.That(WholeProjectDecompiler.CleanUpPath("Foo.Bar"), Is.EqualTo($"Foo{Sep}Bar"));
 		}
 	}
+
+	[TestCase("Directory.Build.props")]
+	[TestCase("Directory.Build.props.")]
+	[TestCase("obj/project.assets.json")]
+	[TestCase("Project.csproj.user")]
+	public void SanitizeFileNameMakesBuildFilesInert(string name)
+	{
+		Assert.That(WholeProjectDecompiler.SanitizeFileName(name), Does.EndWith(".bin"));
+	}
 }
