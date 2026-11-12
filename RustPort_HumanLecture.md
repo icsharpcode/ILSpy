@@ -3561,6 +3561,21 @@ choice, as the user now asks). An override in a value type, where the managed ch
 on a boxing the engine does not track, falls back, and so does an extension method call that
 resolves to another method. The share rose from 79.0 % to 79.8 %.
 
+### 3.142 Cast call targets (item 68y34)
+
+The `CastTarget` step of the call disambiguation converts the target to the method's
+declaring type, `((Base)x).M()`, and looks the name up again on that type. The engine had
+fallen back at the step, and had kept any cast out of the resolve results of members and
+calls (3.68): the host computes a cast's resolve result from the cast's node, so inside
+another resolve result it decoded as none, and decoding it marked the outer node as a cast.
+For calls the host now reads a nested cast as a marker that leaves the outer node's flags
+alone and takes the target's resolve result from the target expression it built; the step
+itself converts the target and repeats the lookup on the declaring type. Casts of the
+targets of fields, properties, indexers and method references still fall back, and so does a
+target that already is a cast (a boxing to `object` the managed builder unwraps with
+`NeedsBoxingConversion`, which the engine does not track) or is `this` or `base`, which the
+managed probe resolves without the cast. The share rose from 79.8 % to 80.4 %.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

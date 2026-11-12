@@ -174,7 +174,7 @@ impl Builder<'_, '_, '_, '_> {
         {
             return Err("a call on a constrained target".to_owned());
         }
-        let target =
+        let mut target =
             self.translate_target(this_arg, op == CallOp::Call, method.is_static, declaring)?;
 
         // the arguments
@@ -189,6 +189,9 @@ impl Builder<'_, '_, '_, '_> {
 
         // A delegate's `Invoke` is the invocation of the delegate itself.
         if method.name == "Invoke" && self.ts.kind(declaring) == TypeKind::Delegate {
+            if self.is_cast_target(target.expression) {
+                return Err("a cast as the target of a member or reference".to_owned());
+            }
             if matches!(
                 self.ast.node(target.expression),
                 AstNode::NullConditional { rewrap: false, .. }
@@ -240,8 +243,13 @@ impl Builder<'_, '_, '_, '_> {
                 base_needed,
             );
         self.found_override = None;
+        // A cast the target already is (the boxing `NeedsBoxingConversion` unwraps, or a cast of
+        // another kind) is not translated; only the cast `CastTarget` writes is.
+        if self.is_cast_target(target.expression) {
+            return Err("a cast as the target of a member or reference".to_owned());
+        }
         let (require, require_type_arguments) =
-            self.disambiguate_call(&method, id, op, &target, &mut list, require, declaring)?;
+            self.disambiguate_call(&method, id, op, &mut target, &mut list, require, declaring)?;
         // The overload the call resolves to may be an override of the method, whose parameter
         // names the written argument names take.
         let found_override = self.found_override.take();
@@ -1155,7 +1163,7 @@ impl Builder<'_, '_, '_, '_> {
         method: &Method,
         id: crate::typesystem::members::MethodDefId,
         op: CallOp,
-        target: &TranslatedExpression,
+        target: &mut TranslatedExpression,
         list: &mut ArgumentList,
         require: bool,
         declaring: TypeId,
@@ -1163,7 +1171,7 @@ impl Builder<'_, '_, '_, '_> {
         let resolver = self
             .resolver
             .ok_or("a member reference without the host's resolver")?;
-        let lookup_target = match self.rr_of(target.expression) {
+        let mut lookup_target = match self.rr_of(target.expression) {
             Rr::This {
                 ty,
                 causes_non_virtual_invocation,
@@ -1295,10 +1303,18 @@ impl Builder<'_, '_, '_, '_> {
                 if skip_target_cast && require != initially_required {
                     require = false;
                 } else {
-                    // A cast of the target is not translated.
-                    if self.convert_to(*target, declaring, false)?.expression != target.expression {
+                    // `Target.ConvertTo(declaringType)`: the target cast to the declaring type. A
+                    // value-type target, which the managed probe resolves without the cast where
+                    // the engine's does not, is not translated.
+                    // A `this` or `base` target, which the managed probe resolves without the
+                    // cast (a constructor initializer), is not translated either.
+                    if self.ts.is_reference_type(target.ty) != Some(true)
+                        || matches!(self.ast.node(target.expression), AstNode::This | AstNode::Base)
+                    {
                         return Err("a reference that needs a cast of its target".to_owned());
                     }
+                    *target = self.convert_to(*target, declaring, false)?;
+                    lookup_target = LookupTarget::Expression(target.ty);
                 }
                 continue;
             }
@@ -1342,6 +1358,12 @@ impl Builder<'_, '_, '_, '_> {
             TypeData::FnPtr(_) | TypeData::Intersection(_) => true,
             _ => false,
         }
+    }
+
+    /// Whether `e` is a cast other than a lambda's, which a call's target is not written as.
+    fn is_cast_target(&self, e: AstId) -> bool {
+        matches!(self.ast.node(e), AstNode::Cast { .. })
+            && !matches!(self.rr_of(e), Rr::LambdaConversion { .. })
     }
 
     /// `Disambiguator.CastArguments`: every argument converted to its parameter type with an

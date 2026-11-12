@@ -213,6 +213,9 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 			return statement as BlockStatement ?? new BlockStatement { statement };
 		}
 
+		/// <summary>A call target's resolve result that is the one of its built target expression.</summary>
+		internal static readonly ResolveResult PendingTarget = new ResolveResult(SpecialType.UnknownType);
+
 		static AstNode Build(RustBodyNode node, ExpressionBuilder exprBuilder)
 		{
 			var syntax = BuildNode(node, exprBuilder);
@@ -312,6 +315,9 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					var target = (Expression)Build(node.Children[0], exprBuilder);
 					var arguments = node.Children.Skip(1).Select(c => (Expression)Build(c, exprBuilder)).ToList();
 					var (targetResult, method, isExtension, isDelegate, foundByLookup) = node.Call!.Value;
+					// The target of a member reference, or the invoked delegate itself.
+					if (ReferenceEquals(targetResult, PendingTarget))
+						targetResult = (target is MemberReferenceExpression mre ? mre.Target : target).GetResolveResult();
 					// The argument resolve results, of the named arguments' expressions.
 					var argumentResults = arguments
 						.Select(a => (a is NamedArgumentExpression named ? named.Expression : a).GetResolveResult())

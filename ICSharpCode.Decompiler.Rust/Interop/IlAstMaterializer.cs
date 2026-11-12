@@ -935,6 +935,22 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		/// <summary>The target and method of the invocation resolve result the last <see cref="BodyResolveResult"/> read.</summary>
 		(ResolveResult? Target, IMethod Method, bool IsExtension, bool IsDelegate, bool FoundByLookup)? pendingInvocation;
 
+		/// <summary>
+		/// The resolve result of a call's target, inside the call's: a cast's (which RustSeam2
+		/// computes from the cast's node) is <see cref="RustSeam2.PendingTarget"/>, without
+		/// marking the call's node as a cast.
+		/// </summary>
+		ResolveResult? NestedTargetResolveResult()
+		{
+			var result = BodyResolveResult(out _);
+			if (pendingResolveCast || pendingImplicitConversion || pendingLambdaConversion)
+			{
+				pendingResolveCast = pendingImplicitConversion = pendingLambdaConversion = false;
+				return RustSeam2.PendingTarget;
+			}
+			return result;
+		}
+
 		/// <summary>Whether the last <see cref="BodyResolveResult"/> read was the <c>ResolveCast</c> of a cast.</summary>
 		bool pendingResolveCast;
 
@@ -994,7 +1010,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				case 9:
 				{
 					// The arguments are the invocation's; RustSeam2 completes the resolve result.
-					var target = BodyResolveResult(out _);
+					var target = NestedTargetResolveResult();
 					pendingInvocation = (target, CallMethod(), Bool(), Bool(), Bool());
 					return null;
 				}
