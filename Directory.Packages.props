@@ -62,7 +62,7 @@
     <PackageVersion Include="System.Composition.Hosting" Version="$(NetPackageVersion)" />
     <PackageVersion Include="System.Composition.TypedParts" Version="$(NetPackageVersion)" />
     <PackageVersion Include="System.Collections.Immutable" Version="$(NetPackageVersion)" />
-    <PackageVersion Include="System.CommandLine" Version="2.0.14" />
+    <PackageVersion Include="System.CommandLine" Version="3.0.0" />
     <PackageVersion Include="System.Memory" Version="4.6.3" />
     <PackageVersion Include="System.Reflection.Metadata" Version="$(NetPackageVersion)" />
     <PackageVersion Include="System.Resources.Extensions" Version="$(NetPackageVersion)" />
