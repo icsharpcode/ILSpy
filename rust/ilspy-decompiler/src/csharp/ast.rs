@@ -155,6 +155,10 @@ pub enum AstNode {
     },
     /// `ArrayInitializerExpression`.
     ArrayInitializer { elements: Vec<AstId> },
+    /// `YieldReturnStatement`.
+    YieldReturn { expression: AstId },
+    /// `YieldBreakStatement`.
+    YieldBreak,
     /// `LockStatement`.
     Lock { expression: AstId, body: AstId },
     /// `ThrowStatement`, a rethrow without an expression.

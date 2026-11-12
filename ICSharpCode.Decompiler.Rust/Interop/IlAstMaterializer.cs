@@ -764,6 +764,9 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					node.Children = children;
 					break;
 				}
+				case RustBodyNode.YieldReturn:
+					node.Children = [BodyNode()];
+					break;
 				case RustBodyNode.ArrayInitializer:
 					node.Children = new RustBodyNode[Len()];
 					for (int i = 0; i < node.Children.Length; i++)

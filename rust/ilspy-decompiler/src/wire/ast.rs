@@ -63,6 +63,8 @@ mod kind {
     pub const NAMED: u8 = 39;
     pub const ARRAY_CREATE: u8 = 40;
     pub const ARRAY_INITIALIZER: u8 = 41;
+    pub const YIELD_RETURN: u8 = 42;
+    pub const YIELD_BREAK: u8 = 43;
 }
 
 pub(super) fn write_body(
@@ -278,6 +280,8 @@ fn node(w: &mut FunctionWriter<'_, '_, '_, '_>, ast: &Ast, id: AstId) -> Result<
         AstNode::Named { .. } => kind::NAMED,
         AstNode::ArrayCreate { .. } => kind::ARRAY_CREATE,
         AstNode::ArrayInitializer { .. } => kind::ARRAY_INITIALIZER,
+        AstNode::YieldReturn { .. } => kind::YIELD_RETURN,
+        AstNode::YieldBreak => kind::YIELD_BREAK,
     });
     w.out.len(a.il.len());
     for &inst in &a.il {
@@ -545,6 +549,7 @@ fn node(w: &mut FunctionWriter<'_, '_, '_, '_>, ast: &Ast, id: AstId) -> Result<
             }
             node(w, ast, initializer)?;
         }
+        AstNode::YieldReturn { expression } => node(w, ast, expression)?,
         AstNode::ArrayInitializer { elements } => {
             w.out.len(elements.len());
             for e in elements {
@@ -583,7 +588,8 @@ fn node(w: &mut FunctionWriter<'_, '_, '_, '_>, ast: &Ast, id: AstId) -> Result<
         | AstNode::This
         | AstNode::Base
         | AstNode::Break
-        | AstNode::Continue => {}
+        | AstNode::Continue
+        | AstNode::YieldBreak => {}
     }
     Ok(())
 }

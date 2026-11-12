@@ -3,7 +3,7 @@
 use crate::il::ast::{BlockKind, BranchTarget, ContainerKind, FunctionKind, Inst, NodeId};
 use crate::il::reader::ReadFunction;
 use crate::typesystem::known::KnownTypeCode;
-use crate::typesystem::types::TypeSystem;
+use crate::typesystem::types::{TypeData, TypeId, TypeSystem};
 
 use super::ast::{Ast, AstId, AstNode, Rr};
 use super::{Builder, Unsupported};
@@ -20,9 +20,6 @@ pub fn convert_body(
     let body = f.body.ok_or("a function without body")?;
     if read.kind != FunctionKind::TopLevelFunction {
         return Err("a nested function".to_owned());
-    }
-    if read.is_iterator {
-        return Err("an iterator".to_owned());
     }
     if read.async_return_type.is_some() {
         return Err("an async function".to_owned());
@@ -54,6 +51,8 @@ pub fn convert_body(
         continue_count: 0,
         break_target: None,
         return_statements: Vec::new(),
+        is_iterator: read.is_iterator,
+        in_lambda: false,
     };
     let stmt = b.convert(body)?;
     b.ast.with_il(stmt, body);
@@ -158,6 +157,7 @@ impl Builder<'_, '_, '_, '_> {
                 is_async,
                 is_ref_struct,
             ),
+            Inst::YieldReturn { value } => self.visit_yield_return(inst, value),
             // `VisitBranch`: `continue` for the loop's continue target; a goto is not translated.
             Inst::Branch {
                 target: BranchTarget::Block(target),
@@ -168,7 +168,6 @@ impl Builder<'_, '_, '_, '_> {
             }
             Inst::Switch { .. }
             | Inst::Branch { .. }
-            | Inst::YieldReturn { .. }
             | Inst::TryFault { .. }
             | Inst::PinnedRegion { .. }
             | Inst::Initblk { .. }
@@ -295,6 +294,55 @@ impl Builder<'_, '_, '_, '_> {
         if let AstNode::TryCatch { finally_block, .. } = self.ast.node_mut(s) {
             *finally_block = Some(finally);
         }
+        Ok(self.ast.with_il(s, inst))
+    }
+
+    /// `IsPossibleLossOfTypeInformation`, where the managed builder casts a lambda's return
+    /// value to the return type.
+    fn possible_loss_of_type_information(&mut self, given: TypeId, expected: TypeId) -> bool {
+        let n = crate::typesystem::fnptr::Normalization::IGNORE_NULLABILITY;
+        if self.ts.normalize_with(given, n) == self.ts.normalize_with(expected, n) {
+            return false;
+        }
+        matches!(
+            self.ts.data(expected),
+            TypeData::Tuple { .. } | TypeData::Dynamic
+        ) || matches!(self.ts.data(given), TypeData::Null)
+    }
+
+    /// `VisitYieldReturn`: the value converted to the element type of the iterator.
+    fn visit_yield_return(&mut self, inst: NodeId, value: NodeId) -> Result<AstId, Unsupported> {
+        // `GetElementTypeFromIEnumerable(allowIEnumerator: true)`
+        let mut element_type = None;
+        let mut non_generic = false;
+        let bases = self
+            .ts
+            .all_base_types(self.result_type)
+            .map_err(|e| e.to_string())?;
+        for b in bases {
+            if (self.ts.is_known(b, KnownTypeCode::IEnumerableOfT)
+                || self.ts.is_known(b, KnownTypeCode::IEnumeratorOfT))
+                && let TypeData::Inst { args, .. } = self.ts.data(b)
+            {
+                element_type = Some(args[0]);
+                break;
+            }
+            if self.ts.is_known(b, KnownTypeCode::IEnumerable)
+                || self.ts.is_known(b, KnownTypeCode::IEnumerator)
+            {
+                non_generic = true;
+            }
+        }
+        let element_type = match element_type {
+            Some(t) => t,
+            None if non_generic => self.ts.known_type(KnownTypeCode::Object),
+            None => return Err("an iterator of an unknown element type".to_owned()),
+        };
+        let e = self.translate(value, Some(element_type))?;
+        let e = self.convert_to(e, element_type, true)?;
+        let s = self.ast.add(AstNode::YieldReturn {
+            expression: e.expression,
+        });
         Ok(self.ast.with_il(s, inst))
     }
 
@@ -742,12 +790,20 @@ impl Builder<'_, '_, '_, '_> {
         if target != Some(self.return_container) {
             return Err("a leave out of a nested container".to_owned());
         }
+        if self.is_iterator {
+            let s = self.ast.add(AstNode::YieldBreak);
+            return Ok(self.ast.with_il(s, inst));
+        }
         let expression = if matches!(self.f.inst(value), Inst::Nop { .. }) {
             None
         } else {
             let result_type = self.result_type;
             let e = self.translate(value, Some(result_type))?;
-            Some(self.convert_to(e, result_type, true)?.expression)
+            let e = self.convert_to(e, result_type, true)?;
+            if self.in_lambda && self.possible_loss_of_type_information(e.ty, result_type) {
+                return Err("a lambda return cast to keep its type".to_owned());
+            }
+            Some(e.expression)
         };
         let s = self.ast.add(AstNode::Return { expression });
         self.return_statements.push(s);

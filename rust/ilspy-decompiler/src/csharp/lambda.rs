@@ -111,12 +111,16 @@ impl Builder<'_, '_, '_, '_> {
             std::mem::take(&mut self.continue_count),
             self.break_target.take(),
             std::mem::take(&mut self.return_statements),
+            std::mem::replace(&mut self.is_iterator, false),
+            std::mem::replace(&mut self.in_lambda, true),
         );
         self.return_container = body;
         self.result_type = return_type;
         let first_node = self.ast.nodes.len();
         let block = self.convert_as_block(body);
         let returns = std::mem::replace(&mut self.return_statements, saved.6);
+        self.is_iterator = saved.7;
+        self.in_lambda = saved.8;
         self.return_container = saved.0;
         self.result_type = saved.1;
         self.variable_names = saved.2;

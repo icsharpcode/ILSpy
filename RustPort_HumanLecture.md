@@ -3224,6 +3224,24 @@ initializer's subtree. A jagged element type moves its array specifiers behind t
 dimensions, as in the managed builder. Blocks converted to a span and arrays of anonymous
 types fall back. The share rose from 64.4 % to 64.9 %.
 
+### 3.122 Iterators (item 68y14)
+
+An iterator's body is translated like any other, with two differences in the statement
+builder: `VisitYieldReturn` writes `yield return value;`, the value converted to the
+element type `GetElementTypeFromIEnumerable` finds among the return type's base types
+(`IEnumerable<T>` or `IEnumerator<T>`, else `object` for the non-generic interfaces), and a
+leave of the return container is `yield break;`. A lambda starts its own statement builder,
+which is never an iterator here.
+
+Reading `VisitLeave` again for this step showed a check the lambda step (3.118) had missed:
+inside a lambda, `IsPossibleLossOfTypeInformation` casts a returned value to the return type
+when the types differ and the return type is a tuple or `dynamic`, or the value is `null`.
+Such returns now fall back; none of the bodies served before changed.
+
+Removing the iterator restriction did not raise the share (64.9 %): the iterator bodies of
+the corpus mostly stop at `foreach`, nullable rewraps and pattern matching, whose counts
+rose accordingly.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

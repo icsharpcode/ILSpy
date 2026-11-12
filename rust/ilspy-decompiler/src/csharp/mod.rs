@@ -47,6 +47,10 @@ pub(crate) struct Builder<'f, 't, 'c, 'a> {
     pub(crate) break_target: Option<NodeId>,
     /// The return statements of the current function, for the return type a lambda infers.
     pub(crate) return_statements: Vec<ast::AstId>,
+    /// `currentIsIterator`: a leave of the return container is `yield break`.
+    pub(crate) is_iterator: bool,
+    /// Whether the current function is a lambda, whose returns can keep their type with a cast.
+    pub(crate) in_lambda: bool,
 }
 
 /// The variant name of an instruction, for the reasons of untranslated bodies.

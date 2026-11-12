@@ -84,6 +84,8 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		public const byte Named = 39;
 		public const byte ArrayCreate = 40;
 		public const byte ArrayInitializer = 41;
+		public const byte YieldReturn = 42;
+		public const byte YieldBreak = 43;
 
 		public byte Kind;
 		/// <summary>The instructions the node is annotated with, in order.</summary>
@@ -379,6 +381,10 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					return Annotate(new BreakStatement(), node);
 				case RustBodyNode.Continue:
 					return Annotate(new ContinueStatement(), node);
+				case RustBodyNode.YieldReturn:
+					return Annotate(new YieldReturnStatement { Expression = (Expression)Build(node.Children[0], exprBuilder) }, node);
+				case RustBodyNode.YieldBreak:
+					return Annotate(new YieldBreakStatement(), node);
 				case RustBodyNode.ArrayInitializer:
 					return Annotate(new ArrayInitializerExpression(node.Children.Select(c => (Expression)Build(c, exprBuilder))), node);
 				case RustBodyNode.ArrayCreate:
