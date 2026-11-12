@@ -233,11 +233,6 @@ Examples:
 						result.AddError($"Unrecognized option '{token.Value}'");
 				}
 			});
-			// The parser's own message names the command, not the missing argument.
-			Validators.Add(result => {
-				if (result.GetResult(inputAssemblyNames) is null or { Tokens.Count: 0 })
-					result.AddError("The Assembly file name(s) argument is required.");
-			});
 
 			SetAction(RunAsync);
 		}
