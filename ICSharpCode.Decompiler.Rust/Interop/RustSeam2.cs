@@ -123,6 +123,10 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		public RustBodyNode[]? Initializer;
 		/// <summary>For a foreach statement: the GetEnumerator, MoveNext and get_Current calls of its <see cref="ForeachAnnotation"/>.</summary>
 		public ILInstruction[] ForeachInstructions = [];
+		/// <summary>The type of the user-defined cast <c>ConvertTo</c> dropped around this expression, for its <see cref="CSharp.ImplicitConversionAnnotation"/>.</summary>
+		public IType? DroppedCastType;
+		/// <summary>Whether that cast was an implicit conversion operator's (else a <c>ResolveCast</c>).</summary>
+		public bool DroppedCastIsImplicitOperator;
 		/// <summary>For a generic name: the type arguments written with it.</summary>
 		public IType[] TypeArguments = [];
 		public object? Value;
@@ -205,6 +209,22 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		}
 
 		static AstNode Build(RustBodyNode node, ExpressionBuilder exprBuilder)
+		{
+			var syntax = BuildNode(node, exprBuilder);
+			if (node.DroppedCastType is { } castType)
+			{
+				// The conversion `ConvertTo` keeps in an `ImplicitConversionAnnotation`: the cast's
+				// resolve result over the operand's.
+				var operand = syntax.GetResolveResult();
+				var conversion = node.DroppedCastIsImplicitOperator
+					? new ConversionResolveResult(castType, operand, CSharp.Resolver.CSharpConversions.Get(exprBuilder.compilation).ImplicitConversion(operand.Type, castType))
+					: (ConversionResolveResult)exprBuilder.resolver.WithCheckForOverflow(false).ResolveCast(castType, operand);
+				syntax.AddAnnotation(new ImplicitConversionAnnotation(conversion));
+			}
+			return syntax;
+		}
+
+		static AstNode BuildNode(RustBodyNode node, ExpressionBuilder exprBuilder)
 		{
 			switch (node.Kind)
 			{

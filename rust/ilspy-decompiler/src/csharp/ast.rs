@@ -366,6 +366,9 @@ pub struct Annotations {
     pub il_before_rr: bool,
     /// `ImplicitReturnAnnotation`: the final `leave` a block falls out of.
     pub implicit_return: Option<NodeId>,
+    /// `ImplicitConversionAnnotation`: the type and resolve result (`ImplicitConversion` or
+    /// `Conversion`) of the user-defined cast `ConvertTo` dropped around the expression.
+    pub implicit_conversion: Option<(TypeId, Rr)>,
 }
 
 #[derive(Clone, Debug, Default)]

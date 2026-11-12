@@ -158,28 +158,34 @@ impl Builder<'_, '_, '_, '_> {
             // The cast of an implicit conversion operator carries that user-defined conversion,
             // which `CastCanBeMadeImplicit` drops where the target type is identical.
             let operator = matches!(self.rr_of(e.expression), Rr::ImplicitConversion { .. });
-            let implicit = if operator {
-                Conversions::new(self.ts).identity(ty, target)
-            } else if conversion.is_user_defined() {
-                true
+            // Its conversion is the implicit one from the operand's type (`HandleImplicitConversion`),
+            // which the annotations of the types do not change.
+            let conversion = if operator {
+                let oblivious = crate::typesystem::types::Nullability::Oblivious;
+                let from = self.ts.change_nullability(input_ty, oblivious);
+                let to = self.ts.change_nullability(ty, oblivious);
+                Conversions::new(self.ts).implicit_type(from, to)
             } else {
-                self.cast_can_be_made_implicit(&conversion, input_ty, ty, target)?
+                conversion
             };
-            if (operator || conversion.is_user_defined())
-                && implicit
-                && (!same || allow_implicit_conversion)
-            {
-                // An unwrapped user-defined conversion keeps an `ImplicitConversionAnnotation`.
-                return Err("a conversion of a user-defined cast".to_owned());
-            }
+            let user_defined = conversion.is_user_defined();
+            let implicit = self.cast_can_be_made_implicit(&conversion, input_ty, ty, target)?;
             if same {
                 if allow_implicit_conversion && implicit {
+                    let cast_rr = self.rr_of(e.expression);
                     let unwrapped = self.unwrap_child(e.expression, inner);
+                    // The dropped user-defined conversion is remembered, for a later cast.
+                    if user_defined {
+                        self.ast
+                            .annotations_mut(unwrapped.expression)
+                            .implicit_conversion = Some((ty, cast_rr));
+                    }
                     return self.unwrapped(unwrapped, target, allow_implicit_conversion);
                 }
                 return Ok(e);
             }
-            if implicit {
+            // Between different types a user-defined conversion keeps its cast.
+            if implicit && !user_defined {
                 let unwrapped = self.unwrap_child(e.expression, inner);
                 if allow_implicit_conversion {
                     return self.unwrapped(unwrapped, target, allow_implicit_conversion);
@@ -199,6 +205,26 @@ impl Builder<'_, '_, '_, '_> {
                 return Ok(e);
             }
             _ => {}
+        }
+        // A user-defined conversion dropped from the expression is cast again before any
+        // other conversion.
+        if let Some((cast_type, cast_rr)) = self
+            .ast
+            .annotations_mut(e.expression)
+            .implicit_conversion
+            .take()
+        {
+            let c = self.ast.add(AstNode::Cast {
+                ty: cast_type,
+                expression: e.expression,
+                unchecked: false,
+            });
+            self.ast.with_rr(c, cast_rr);
+            let cast = TranslatedExpression {
+                expression: c,
+                ty: cast_type,
+            };
+            return self.convert_to(cast, target, allow_implicit_conversion);
         }
         let utype = self.ts.nullable_underlying(ty);
         let target_utype = self.ts.nullable_underlying(target);

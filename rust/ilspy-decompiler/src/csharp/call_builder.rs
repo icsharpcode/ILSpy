@@ -279,7 +279,11 @@ impl Builder<'_, '_, '_, '_> {
     ) -> Result<TranslatedExpression, Unsupported> {
         let mut argument = list.arguments[0];
         let target = method.return_type;
-        let conversion = Conversions::new(self.ts).implicit_type(argument.ty, target);
+        // The engine does not look user-defined conversions up through nullability annotations.
+        let oblivious = crate::typesystem::types::Nullability::Oblivious;
+        let from = self.ts.change_nullability(argument.ty, oblivious);
+        let to = self.ts.change_nullability(target, oblivious);
+        let conversion = Conversions::new(self.ts).implicit_type(from, to);
         let direct = conversion.is_valid()
             && match &conversion {
                 crate::semantics::Conversion::UserDefined { method: found, .. } => {

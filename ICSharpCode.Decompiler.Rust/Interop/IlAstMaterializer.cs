@@ -668,6 +668,11 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 			int implicitReturn = Len();
 			if (implicitReturn != 0)
 				node.ImplicitReturn = (Leave)materialized[implicitReturn - 1];
+			if (Bool())
+			{
+				node.DroppedCastIsImplicitOperator = U8() == 0;
+				node.DroppedCastType = Type();
+			}
 			switch (node.Kind)
 			{
 				case RustBodyNode.Block:

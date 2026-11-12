@@ -3424,6 +3424,28 @@ fall back. The node is the indexer expression of array access (3.113) with the p
 resolve result. Parameterized properties that are no indexers keep the call syntax and fall
 back. The share rose from 71.8 % to 73.1 %.
 
+### 3.134 Dropped user-defined casts (item 68y26)
+
+Where `ConvertTo` makes a cast implicit and its conversion is user-defined, the managed code
+puts an `ImplicitConversionAnnotation` with the cast's resolve result on the operand it
+keeps; a later `ConvertTo` of that expression to another type casts it again first. The
+engine fell back on both (3.115, 3.124). It now records the dropped cast's type and resolve
+result on the node, re-wraps it the same way when a later conversion needs it, and sends the
+record with the node; the host computes the conversion as it does for the cast itself
+(the implicit conversion from the operand's type for an implicit operator, `ResolveCast`
+otherwise) and adds the annotation. Between different types a user-defined conversion keeps
+its cast, as in the managed code.
+
+For the cast of an implicit operator the conversion `CastCanBeMadeImplicit` judges is that
+implicit conversion from the operand's type, which need not exist: an ILPretty fixture calls
+an operator whose parameter type differs from the operand's, and the managed builder keeps
+`(ReadOnlySpan<char>)(object)s`. The engine now computes it too, ignoring nullability
+annotations, which it has not ported for user-defined conversion lookup (`XName?`, 3.124).
+The gates found the same gap in `HandleImplicitConversion` itself (3.115), in a body this
+step reached: whether the operand converts to the operator's result directly was looked up
+against the annotated return type, found nothing, and wrote `(Pattern)new NamedNode(...)`;
+that lookup ignores the annotations now as well. The share rose from 73.1 % to 73.5 %.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

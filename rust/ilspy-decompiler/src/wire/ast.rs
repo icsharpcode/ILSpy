@@ -316,6 +316,15 @@ fn node(w: &mut FunctionWriter<'_, '_, '_, '_>, ast: &Ast, id: AstId) -> Result<
             w.out.len(i + 1);
         }
     }
+    match &a.implicit_conversion {
+        None => w.out.bool(false),
+        Some((ty, rr)) => {
+            w.out.bool(true);
+            w.out
+                .u8(u8::from(!matches!(rr, Rr::ImplicitConversion { .. })));
+            w.ty(*ty);
+        }
+    }
     match n {
         AstNode::Block { statements } => {
             w.out.len(statements.len());
