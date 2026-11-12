@@ -61,6 +61,8 @@ mod kind {
     pub const LAMBDA: u8 = 37;
     pub const INTERPOLATED_STRING: u8 = 38;
     pub const NAMED: u8 = 39;
+    pub const ARRAY_CREATE: u8 = 40;
+    pub const ARRAY_INITIALIZER: u8 = 41;
 }
 
 pub(super) fn write_body(
@@ -205,6 +207,8 @@ fn rr(w: &mut FunctionWriter<'_, '_, '_, '_>, rr: Option<&Rr>) -> Result<(), Str
         Some(Rr::Conversion { .. }) => w.out.u8(13),
         Some(Rr::ImplicitConversion { .. }) => w.out.u8(17),
         Some(Rr::LambdaConversion { .. }) => w.out.u8(18),
+        // The host builds the resolve result from the node.
+        Some(Rr::ArrayCreate { .. }) => w.out.u8(0),
         Some(Rr::InitializedObject(ty)) => {
             w.out.u8(19);
             w.ty(*ty);
@@ -272,6 +276,8 @@ fn node(w: &mut FunctionWriter<'_, '_, '_, '_>, ast: &Ast, id: AstId) -> Result<
         AstNode::Lambda { .. } => kind::LAMBDA,
         AstNode::InterpolatedString { .. } => kind::INTERPOLATED_STRING,
         AstNode::Named { .. } => kind::NAMED,
+        AstNode::ArrayCreate { .. } => kind::ARRAY_CREATE,
+        AstNode::ArrayInitializer { .. } => kind::ARRAY_INITIALIZER,
     });
     w.out.len(a.il.len());
     for &inst in &a.il {
@@ -523,6 +529,26 @@ fn node(w: &mut FunctionWriter<'_, '_, '_, '_>, ast: &Ast, id: AstId) -> Result<
                 for e in elements {
                     node(w, ast, e)?;
                 }
+            }
+        }
+        AstNode::ArrayCreate {
+            element_type,
+            arguments,
+            initializer,
+            special_constants,
+        } => {
+            w.ty(element_type);
+            w.out.bool(special_constants);
+            w.out.len(arguments.len());
+            for a in arguments {
+                node(w, ast, a)?;
+            }
+            node(w, ast, initializer)?;
+        }
+        AstNode::ArrayInitializer { elements } => {
+            w.out.len(elements.len());
+            for e in elements {
+                node(w, ast, e)?;
             }
         }
         AstNode::Named { name, expression } => {

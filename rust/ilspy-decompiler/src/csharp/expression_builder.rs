@@ -353,6 +353,11 @@ impl Builder<'_, '_, '_, '_> {
                 instructions,
                 final_inst,
             } => self.object_initializer(inst, &instructions, final_inst),
+            Inst::Block {
+                kind: BlockKind::ArrayInitializer,
+                instructions,
+                final_inst,
+            } => self.array_initializer(inst, &instructions, final_inst),
             Inst::Block { kind, .. } => Err(format!("a block of kind {kind:?}")),
             Inst::Conv {
                 arg,
@@ -1398,6 +1403,130 @@ impl Builder<'_, '_, '_, '_> {
         }
         self.ast.with_il(creation.expression, inst);
         Ok(creation)
+    }
+
+    /// `TranslateArrayInitializer`: `new T[n, ...] { { ... }, ... }` from the stores of an
+    /// array initializer block into the new array, nested by the constant dimensions. A block
+    /// converted to a span and arrays of anonymous types are not translated.
+    fn array_initializer(
+        &mut self,
+        inst: NodeId,
+        instructions: &[NodeId],
+        final_inst: NodeId,
+    ) -> Result<TranslatedExpression, Unsupported> {
+        let Some((&first, rest)) = instructions.split_first() else {
+            return Err("an empty array initializer".to_owned());
+        };
+        let (Inst::StLoc { var, value, .. }, Inst::LdLoc { var: final_var }) =
+            (self.f.inst(first).clone(), self.f.inst(final_inst).clone())
+        else {
+            return Err("an array initializer of another shape".to_owned());
+        };
+        let Inst::NewArr { ty, indices } = self.f.inst(value).clone() else {
+            return Err("an array initializer of another shape".to_owned());
+        };
+        if var != final_var || self.f.var(var).kind != VariableKind::InitializerTarget {
+            return Err("an array initializer of another shape".to_owned());
+        }
+        let element_type = ty.ty;
+        if self.may_contain_anonymous_type(element_type) {
+            return Err("an array initializer of anonymous types".to_owned());
+        }
+        let mut sizes = Vec::with_capacity(indices.len());
+        for &i in &indices {
+            let d = self.translate(i, None)?;
+            let Rr::Constant { value, .. } = self.rr_of(d.expression) else {
+                return Err("an array initializer of a dimension that is not constant".to_owned());
+            };
+            let size = super::translated_expression::integral_value(&value)
+                .ok_or("an array initializer of a dimension that is not an integer")?;
+            sizes.push(size);
+        }
+        let dimensions = sizes.len();
+        let root = self.ast.add(AstNode::ArrayInitializer {
+            elements: Vec::new(),
+        });
+        // The open initializers, each with the count of its elements.
+        let mut container = vec![(root, 0i128)];
+        let push = |b: &mut Self, parent: AstId, child: AstId| {
+            if let AstNode::ArrayInitializer { elements } = b.ast.node_mut(parent) {
+                elements.push(child);
+            }
+        };
+        for &element in rest {
+            let Inst::StObj {
+                target,
+                value,
+                ty: store_type,
+                ..
+            } = self.f.inst(element).clone()
+            else {
+                return Err("an array initializer element of another kind".to_owned());
+            };
+            let Inst::LdElema {
+                ty: element_ty,
+                array,
+                ..
+            } = self.f.inst(target).clone()
+            else {
+                return Err("an array initializer element of another kind".to_owned());
+            };
+            if store_type.ty != element_type
+                || element_ty.ty != element_type
+                || !matches!(*self.f.inst(array), Inst::LdLoc { var: v } if v == var)
+            {
+                return Err("an array initializer element of another kind".to_owned());
+            }
+            while container.len() < dimensions {
+                let nested = self.ast.add(AstNode::ArrayInitializer {
+                    elements: Vec::new(),
+                });
+                let parent = container.last_mut().expect("an open initializer");
+                parent.1 += 1;
+                let parent = parent.0;
+                push(self, parent, nested);
+                container.push((nested, 0));
+            }
+            let v = self.translate(value, Some(element_type))?;
+            let v = self.convert_to(v, element_type, true)?;
+            let current = container
+                .last_mut()
+                .ok_or("more elements than the dimensions")?;
+            current.1 += 1;
+            let current = current.0;
+            push(self, current, v.expression);
+            while container
+                .last()
+                .is_some_and(|&(_, count)| count == sizes[container.len() - 1])
+            {
+                container.pop();
+            }
+        }
+        let mut arguments = Vec::with_capacity(indices.len());
+        for &i in &indices {
+            arguments.push(self.translate(i, None)?.expression);
+        }
+        // `UseSpecialConstants` is off for the elements of integer and decimal arrays.
+        let code = self.ts.type_code(element_type);
+        let special_constants =
+            !(5..=12).contains(&code) && !self.ts.is_known(element_type, KnownTypeCode::Decimal);
+        let array_type = self.ts.intern(TypeData::Array {
+            elem: element_type,
+            rank: dimensions as u32,
+            nullability: crate::typesystem::types::Nullability::Oblivious,
+        });
+        let e = self.ast.add(AstNode::ArrayCreate {
+            element_type,
+            arguments,
+            initializer: root,
+            special_constants,
+        });
+        self.ast.with_il(e, inst);
+        self.ast.with_rr(e, Rr::ArrayCreate { ty: array_type });
+        Ok(TranslatedExpression {
+            expression: e,
+            ty: array_type,
+        })
     }
 
     /// `VisitConv` without lifting, overflow checks and native integers: the argument as is

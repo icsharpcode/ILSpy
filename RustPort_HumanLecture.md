@@ -3209,6 +3209,21 @@ not reused here; nested members, dictionary indexers, `Add` calls (collection
 initializers) and creations other than `newobj` fall back. The share rose from 64.1 % to
 64.4 %.
 
+### 3.121 Array initializers (item 68y13)
+
+`TranslateArrayInitializer` writes an array initializer block as
+`new T[n, ...] { { ... }, ... }`: the constant dimensions of the `newarr` as arguments, and
+the stored elements, each converted to the element type, nested into initializers by
+counting them against the dimensions. Its resolve result is an `ArrayCreateResolveResult`
+over the dimensions' and the elements' resolve results, which the host collects from the
+node it builds. One setting is not visible in the tree: for arrays of integer and decimal
+elements the managed builder turns `UseSpecialConstants` off while it translates the
+elements (an `int[]` holds `2147483647`, not `int.MaxValue`). Since the host writes the
+constants, the node carries the flag and the host switches the AST builder for the
+initializer's subtree. A jagged element type moves its array specifiers behind the
+dimensions, as in the managed builder. Blocks converted to a span and arrays of anonymous
+types fall back. The share rose from 64.4 % to 64.9 %.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

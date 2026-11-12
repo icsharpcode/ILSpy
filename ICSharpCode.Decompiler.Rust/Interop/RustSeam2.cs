@@ -82,6 +82,8 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		public const byte Lambda = 37;
 		public const byte InterpolatedString = 38;
 		public const byte Named = 39;
+		public const byte ArrayCreate = 40;
+		public const byte ArrayInitializer = 41;
 
 		public byte Kind;
 		/// <summary>The instructions the node is annotated with, in order.</summary>
@@ -377,6 +379,52 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					return Annotate(new BreakStatement(), node);
 				case RustBodyNode.Continue:
 					return Annotate(new ContinueStatement(), node);
+				case RustBodyNode.ArrayInitializer:
+					return Annotate(new ArrayInitializerExpression(node.Children.Select(c => (Expression)Build(c, exprBuilder))), node);
+				case RustBodyNode.ArrayCreate:
+				{
+					// `TranslateArrayInitializer`
+					var elementType = node.Type!;
+					var arguments = node.Children.Take(node.Children.Length - 1).Select(c => (Expression)Build(c, exprBuilder)).ToList();
+					var astBuilder = exprBuilder.astBuilder;
+					bool useSpecialConstants = astBuilder.UseSpecialConstants;
+					ArrayInitializerExpression initializer;
+					try
+					{
+						astBuilder.UseSpecialConstants = node.Flag;
+						initializer = (ArrayInitializerExpression)Build(node.Children[node.Children.Length - 1], exprBuilder);
+					}
+					finally
+					{
+						astBuilder.UseSpecialConstants = useSpecialConstants;
+					}
+					var typeExpression = exprBuilder.ConvertType(elementType);
+					ArraySpecifier[] additionalSpecifiers = [];
+					if (typeExpression is ComposedType composed && composed.ArraySpecifiers.Count > 0)
+					{
+						additionalSpecifiers = composed.ArraySpecifiers.Select(a => (ArraySpecifier)a.Clone()).ToArray();
+						composed.ArraySpecifiers.Clear();
+					}
+					var creation = new ArrayCreateExpression { Type = typeExpression, Initializer = initializer };
+					creation.AdditionalArraySpecifiers.AddRange(additionalSpecifiers);
+					creation.Arguments.AddRange(arguments);
+					var elementResults = new List<ResolveResult>();
+					CollectElements(initializer);
+					node.ResolveResult = new ArrayCreateResolveResult(new ArrayType(exprBuilder.compilation, elementType, arguments.Count),
+						arguments.Select(a => a.GetResolveResult()).ToArray(), elementResults);
+					return Annotate(creation, node);
+
+					void CollectElements(ArrayInitializerExpression list)
+					{
+						foreach (var element in list.Elements)
+						{
+							if (element is ArrayInitializerExpression nested)
+								CollectElements(nested);
+							else
+								elementResults.Add(element.GetResolveResult());
+						}
+					}
+				}
 				case RustBodyNode.Named:
 					return Annotate(new NamedExpression((string)node.Value!, (Expression)Build(node.Children[0], exprBuilder)), node);
 				case RustBodyNode.InterpolatedString:

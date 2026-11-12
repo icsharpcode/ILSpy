@@ -145,6 +145,16 @@ pub enum AstNode {
     InterpolatedString { contents: Vec<InterpolatedContent> },
     /// `NamedExpression` of an object initializer: `name = expression`.
     Named { name: String, expression: AstId },
+    /// `ArrayCreateExpression` of the element type with the dimensions as arguments and an
+    /// initializer, whose elements the host writes with `UseSpecialConstants` as given.
+    ArrayCreate {
+        element_type: TypeId,
+        arguments: Vec<AstId>,
+        initializer: AstId,
+        special_constants: bool,
+    },
+    /// `ArrayInitializerExpression`.
+    ArrayInitializer { elements: Vec<AstId> },
     /// `LockStatement`.
     Lock { expression: AstId, body: AstId },
     /// `ThrowStatement`, a rethrow without an expression.
@@ -273,6 +283,9 @@ pub enum Rr {
     Lambda(usize),
     /// `InitializedObjectResolveResult` of the object an initializer initializes.
     InitializedObject(TypeId),
+    /// `ArrayCreateResolveResult` of the array type `ty`, over the resolve results of the
+    /// dimensions and the elements, which the host collects from the node.
+    ArrayCreate { ty: TypeId },
     /// `CSharpInvocationResolveResult` without target of the constructor `method` of the type
     /// `ty`, whose arguments are the resolve results of the object creation's arguments.
     ObjectCreation {

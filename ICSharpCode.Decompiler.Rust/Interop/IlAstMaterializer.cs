@@ -753,6 +753,22 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					node.Children = condition != null ? [body, condition] : [body];
 					break;
 				}
+				case RustBodyNode.ArrayCreate:
+				{
+					// The element type, UseSpecialConstants for the elements, the dimensions, the initializer.
+					node.Type = Type();
+					node.Flag = Bool();
+					var children = new RustBodyNode[Len() + 1];
+					for (int i = 0; i < children.Length; i++)
+						children[i] = BodyNode();
+					node.Children = children;
+					break;
+				}
+				case RustBodyNode.ArrayInitializer:
+					node.Children = new RustBodyNode[Len()];
+					for (int i = 0; i < node.Children.Length; i++)
+						node.Children[i] = BodyNode();
+					break;
 				case RustBodyNode.Named:
 					node.Value = Str();
 					node.Children = [BodyNode()];

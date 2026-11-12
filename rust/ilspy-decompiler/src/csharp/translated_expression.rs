@@ -384,7 +384,7 @@ impl Builder<'_, '_, '_, '_> {
 }
 
 /// The numeric value of an integral or char constant.
-fn integral_value(value: &ConstValue) -> Option<i128> {
+pub(crate) fn integral_value(value: &ConstValue) -> Option<i128> {
     Some(match *value {
         ConstValue::Char(c) => i128::from(c),
         ConstValue::SByte(v) => i128::from(v),
