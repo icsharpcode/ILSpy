@@ -938,13 +938,30 @@ impl Builder<'_, '_, '_, '_> {
         let mut spent_explicit_in = false;
         // `RequireTypeArguments`, which a non-generic method takes too, with none to write.
         let mut type_arguments = false;
-        // `WriteTypeArgumentsInferenceCannotReach`
-        // shortcut: the engine's base types lack the nullability annotations of interface
-        // implementations, so its type inference fails where the managed one finds an annotated
-        // base type; a call whose type arguments inference does not reach falls back. Upgrade
-        // when `all_base_types` carries those annotations.
-        if !method.type_parameters.is_empty() && !self.can_infer_type_arguments(method, list) {
-            return Err("a generic call whose type arguments inference does not reach".to_owned());
+        // `WriteTypeArgumentsInferenceCannotReach`: the type arguments are written up front
+        // where inference from the arguments cannot succeed; casting the arguments takes the
+        // guess back.
+        let mut type_arguments_up_front = false;
+        let extension_call_on_null = self.ts.method_flags(id, None).extension
+            && list
+                .arguments
+                .first()
+                .is_some_and(|a| matches!(self.ast.node(a.expression), AstNode::Null));
+        if !method.type_parameters.is_empty()
+            && !extension_call_on_null
+            && !self.can_infer_type_arguments(method, list)
+        {
+            if method
+                .method_args
+                .iter()
+                .flatten()
+                .any(|&a| self.may_contain_anonymous_type(a))
+            {
+                return Err("a generic call of anonymous types inference does not reach".to_owned());
+            }
+            spent_type_arguments = true;
+            type_arguments = true;
+            type_arguments_up_front = true;
         }
         loop {
             let probe_target = require.then_some(lookup_target);
@@ -964,13 +981,9 @@ impl Builder<'_, '_, '_, '_> {
                 list.use_implicitly_typed_out = false;
                 continue;
             }
-            // `TryRepair`, where a failed inference falls back for the reason above.
-            if errors == OverloadResolutionErrors::TYPE_INFERENCE_FAILED {
-                return Err(
-                    "a generic call whose type arguments inference does not reach".to_owned(),
-                );
-            }
-            if errors == OverloadResolutionErrors::WRONG_NUMBER_OF_TYPE_ARGUMENTS
+            // `TryRepair`
+            if (errors == OverloadResolutionErrors::TYPE_INFERENCE_FAILED
+                || errors == OverloadResolutionErrors::WRONG_NUMBER_OF_TYPE_ARGUMENTS)
                 && !spent_type_arguments
             {
                 spent_type_arguments = true;
@@ -999,6 +1012,12 @@ impl Builder<'_, '_, '_, '_> {
             }
             if !spent_cast_arguments {
                 spent_cast_arguments = true;
+                if type_arguments_up_front {
+                    // The guess did not help: a later step may still reach for it.
+                    type_arguments_up_front = false;
+                    type_arguments = false;
+                    spent_type_arguments = false;
+                }
                 // Cast arguments are written with their types, not as `out var`.
                 list.use_implicitly_typed_out = false;
                 // `CastArguments`: a cast to the parameter type, translated only where it

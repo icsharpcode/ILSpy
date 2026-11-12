@@ -1625,3 +1625,23 @@ fn array_argument_for_read_only_span_parameter_gives_a_lower_bound() {
         },
     );
 }
+
+/// `TupleUnderlyingTypeOrSelf` drops nullability, also the annotation `ChangeNullability`
+/// puts on the generic type of a parameterized type, so `IEnumerator<string>!` (a return type
+/// of a nullable-annotated library) still matches `IEnumerator<T>`.
+#[test]
+fn annotated_parameterized_type_to_its_generic_type() {
+    run(|ti| {
+        let ts = &mut *ti.conversions.ts;
+        let tp = mtp(ts, 0, "T");
+        let string = known(ts, KnownTypeCode::String);
+        let enumerator = known(ts, KnownTypeCode::IEnumeratorOfT);
+        let plain = inst(ts, enumerator, &[string]);
+        let arg = ts.change_nullability(plain, Nullability::NotNullable);
+        assert!(matches!(ts.data(arg), TypeData::Inst { .. }));
+        let param = inst(ts, enumerator, &[tp]);
+        let (r, success) = infer(ti, &[tp], &[expr(arg)], &[param]);
+        assert!(success);
+        assert_eq!(r, vec![string]);
+    });
+}

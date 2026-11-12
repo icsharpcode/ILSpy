@@ -3328,6 +3328,28 @@ managed builder wrote `Test3()`. `IsOptionalArgument` counts a null literal conv
 (`(int?)null`, before the argument is converted) as the constant `null`, which the engine
 now does as well.
 
+### 3.129 Type arguments inference cannot reach (item 68y21)
+
+`Disambiguator.WriteTypeArgumentsInferenceCannotReach` writes a generic call's type arguments
+up front where type inference from the arguments fails (`Enumerable.OfType<T>(source)`), and
+`TryRepair` writes them where overload resolution reports a failed inference; casting the
+arguments takes the up-front guess back. The engine had fallen back in both cases, on the
+assumption (noted as a shortcut since 68k) that its base types lacked the nullability
+annotations of interface implementations, so its inference would fail where the managed one
+succeeds.
+
+Porting the steps showed where the difference really was. A return type from a
+nullable-annotated library, `IEnumerator<string>!`, is a parameterized type whose generic
+type carries the annotation (`ChangeNullability` of a parameterized type annotates its
+generic type), in both type systems. Managed type inference compares generic types after
+`TupleUnderlyingTypeOrSelf`, which ends in `WithoutNullability` and so drops that
+annotation; the engine's port returned the type unchanged, and `IEnumerator<string>!` never
+matched `IEnumerator<T>`. A probe of the managed type system pinned this down, and a test of
+the engine's inference now covers it. With the nullability dropped as in the managed code, the
+engine infers what the managed builder infers, and the type arguments are written exactly
+where it writes them. The user approved the change to the engine's type system. The share
+rose from 68.3 % to 69.3 %.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

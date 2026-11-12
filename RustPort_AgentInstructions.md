@@ -542,7 +542,10 @@ the reasons. This file holds only the ordered steps, their gates and their rules
     Subject: `Translate type tests to C# in the engine`.
   - [x] 68y20. Default values and the `default` literal (settings bit 58 `DefaultLiterals`;
     lecture 3.128). Subject: `Translate default values to C# in the engine`.
-  - [ ] 68y21-. Further construct groups (numbered on from 68y1), in the order of the fallback reasons the ratchet test
+  - [x] 68y21. Type arguments written where inference cannot reach them, and the nullability
+    `TupleUnderlyingTypeOrSelf` drops (a type-system fix the user approved; lecture 3.129).
+    Subject: `Write type arguments inference cannot reach in the engine`.
+  - [ ] 68y22-. Further construct groups (numbered on from 68y1), in the order of the fallback reasons the ratchet test
     prints, until no body of the corpus falls back. Subject pattern:
     `Translate <construct group> to C# in the engine`.
   - [ ] 68z. Request-level seam 2. Subject: `Add the Rust C# AST builders and the AST materializer`.

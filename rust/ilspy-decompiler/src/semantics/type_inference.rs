@@ -551,8 +551,8 @@ impl<'x, 't, 'c, 'a> TypeInference<'x, 't, 'c, 'a> {
             self.make_exact_inference(eu, ev);
             return;
         }
-        let u = ts.tuple_underlying_or_self(u);
-        let v = ts.tuple_underlying_or_self(v);
+        let u = self.conversions.ts.tuple_underlying_or_self(u);
+        let v = self.conversions.ts.tuple_underlying_or_self(v);
         use KnownTypeCode::{ReadOnlySpanOfT as Ros, SpanOfT as Span};
         match (self.element_of(u), self.element_of(v)) {
             (Some((eu, ru)), Some((ev, rv))) if ru == rv => {
@@ -665,7 +665,7 @@ impl<'x, 't, 'c, 'a> TypeInference<'x, 't, 'c, 'a> {
             self.make_exact_inference(eu, ev);
             return;
         }
-        let v = ts.tuple_underlying_or_self(v);
+        let v = self.conversions.ts.tuple_underlying_or_self(v);
         use KnownTypeCode::{ReadOnlySpanOfT as Ros, SpanOfT as Span};
         let first = |s: &Self, t: TypeId| {
             s.conversions

@@ -241,12 +241,14 @@ impl TypeSystem<'_, '_> {
         }
     }
 
-    /// `IType.TupleUnderlyingTypeOrSelf()`.
-    pub fn tuple_underlying_or_self(&self, t: TypeId) -> TypeId {
-        match self.data(t) {
+    /// `IType.TupleUnderlyingTypeOrSelf()`: the underlying type of a tuple, without
+    /// nullability (also that of a generic type definition, as `WithoutNullability` drops it).
+    pub fn tuple_underlying_or_self(&mut self, t: TypeId) -> TypeId {
+        let t = match self.data(t) {
             TypeData::Tuple { underlying, .. } => *underlying,
             _ => t,
-        }
+        };
+        self.change_nullability(t, crate::typesystem::types::Nullability::Oblivious)
     }
 
     /// `TypeSystemExtensions.IsArrayInterfaceType`: `IEnumerable<T>`, `ICollection<T>`,
