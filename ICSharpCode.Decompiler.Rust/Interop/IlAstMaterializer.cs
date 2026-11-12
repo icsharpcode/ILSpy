@@ -765,6 +765,9 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					node.Children = children;
 					break;
 				}
+				case RustBodyNode.DefaultValue:
+					node.Type = Bool() ? Type() : null;
+					break;
 				case RustBodyNode.IsType:
 					node.Type = Type();
 					node.Children = [BodyNode()];
@@ -986,6 +989,8 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					return null;
 				case 19:
 					return new InitializedObjectResolveResult(Type());
+				case 21:
+					return new DefaultLiteralResolveResult(Type());
 				case 18:
 					// RustSeam2 converts the lambda's resolve result.
 					pendingLambdaConversion = true;

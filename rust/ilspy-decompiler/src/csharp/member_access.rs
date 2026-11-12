@@ -43,7 +43,7 @@ impl Builder<'_, '_, '_, '_> {
             | Rr::ArrayLength { ty, .. } => *ty,
             Rr::Field { field, .. } => field.field.ty,
             Rr::Event { ty, .. } => *ty,
-            Rr::Lambda(_) => self.ts.intern(TypeData::NoType),
+            Rr::Lambda(_) | Rr::DefaultLiteral { .. } => self.ts.intern(TypeData::NoType),
             Rr::TypeIs { .. } => self
                 .ts
                 .known_type(crate::typesystem::known::KnownTypeCode::Boolean),

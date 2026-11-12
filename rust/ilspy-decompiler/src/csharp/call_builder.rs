@@ -442,6 +442,10 @@ impl Builder<'_, '_, '_, '_> {
                 }
             }
             let mut arg = self.convert_to(arg, parameter.ty, true)?;
+            // An operator's operand keeps its type: the default literal converts to every type.
+            if method.is_operator {
+                arg = self.restore_default_literal_type(arg)?;
+            }
             if parameter.ref_kind == RefKind::Out {
                 arg = self.change_direction_to_out(arg);
             }
@@ -530,8 +534,28 @@ impl Builder<'_, '_, '_, '_> {
         if !info.optional {
             return Ok(false);
         }
-        let Rr::Constant { value, .. } = self.rr_of(arg.expression) else {
-            return Ok(false);
+        // A constant, or a null literal conversion (whose constant value is null).
+        let value = match self.rr_of(arg.expression) {
+            Rr::Constant { value, .. } => value,
+            Rr::Conversion { ty } => {
+                let AstNode::Cast {
+                    expression: inner, ..
+                } = *self.ast.node(arg.expression)
+                else {
+                    return Ok(false);
+                };
+                let input = self.rr_of(inner);
+                let input_ty = self.rr_type(&input);
+                let input_rr = self.semantic_rr(inner, input_ty);
+                if !Conversions::new(self.ts)
+                    .explicit(&input_rr, ty)
+                    .is_null_literal()
+                {
+                    return Ok(false);
+                }
+                ConstValue::Null
+            }
+            _ => return Ok(false),
         };
         if info.row != 0 {
             let md = &self.ts.comp.module(method.module).md;

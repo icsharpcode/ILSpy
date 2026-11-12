@@ -120,6 +120,7 @@ pub const SETTING_NAMES: &[&str] = &[
     "UsingDeclarations",
     "OptionalArguments",
     "UseLambdaSyntax",
+    "DefaultLiterals",
 ];
 
 /// The values of `SETTING_NAMES`.
@@ -183,6 +184,7 @@ pub struct Settings {
     pub using_declarations: bool,
     pub optional_arguments: bool,
     pub use_lambda_syntax: bool,
+    pub default_literals: bool,
 }
 
 impl Settings {
@@ -248,6 +250,7 @@ impl Settings {
             using_declarations: bit(55),
             optional_arguments: bit(56),
             use_lambda_syntax: bit(57),
+            default_literals: bit(58),
         }
     }
 }

@@ -3308,6 +3308,26 @@ underlying type and a `TypeIsResolveResult` the host builds over the tested expr
 resolve result; `UnwrapBoxingConversion` first drops a boxing cast to `object`, which `is`
 does implicitly. The share rose from 67.6 % to 68.1 %.
 
+### 3.128 Default values (item 68y20)
+
+`GetDefaultValueExpression` writes `null` for a reference type, `(T?)null` for a nullable
+type (the cast's resolve result is the null literal conversion `ResolveCast` gives), and
+`default(T)` otherwise, with a constant resolve result of the type's default value
+(`CSharpResolver.GetDefaultValue`: zero of an enum's underlying type, null for other
+structs and type parameters). All 21 bodies of the group needed the last form, which brings
+the `default` literal with it: where the context supplies the type, `ConvertTo` shortens
+`default(T)` to `default` under the `DefaultLiterals` setting (now bit 58 of the engine's
+settings), with a `DefaultLiteralResolveResult` that remembers the type. Where a later
+conversion needs another type the literal is spelled out again
+(`RestoreDefaultLiteralType`), also after an unwrapped cast and for every operand of an
+operator call, since the literal converts to every type. `0m` falls back, as the host's
+constant writer could spell it differently. The share rose from 68.1 % to 68.3 %.
+
+The gates found the bodies this reached with optional arguments: `Test3(0, null)` where the
+managed builder wrote `Test3()`. `IsOptionalArgument` counts a null literal conversion
+(`(int?)null`, before the argument is converted) as the constant `null`, which the engine
+now does as well.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

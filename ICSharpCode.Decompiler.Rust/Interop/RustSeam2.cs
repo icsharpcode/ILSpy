@@ -91,6 +91,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		public const byte DeclarationPattern = 46;
 		public const byte RecursivePattern = 47;
 		public const byte IsType = 48;
+		public const byte DefaultValue = 49;
 
 		public byte Kind;
 		/// <summary>The instructions the node is annotated with, in order.</summary>
@@ -386,6 +387,8 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					return Annotate(new BreakStatement(), node);
 				case RustBodyNode.Continue:
 					return Annotate(new ContinueStatement(), node);
+				case RustBodyNode.DefaultValue:
+					return Annotate(node.Type == null ? new DefaultValueExpression() : new DefaultValueExpression(exprBuilder.ConvertType(node.Type)), node);
 				case RustBodyNode.IsType:
 				{
 					var tested = (Expression)Build(node.Children[0], exprBuilder);

@@ -60,8 +60,41 @@ impl Builder<'_, '_, '_, '_> {
                 _ => ResolveResult::Expression(ty),
             },
             Some(Rr::Lambda(index)) => self.lambda_rr(*index),
+            Some(Rr::DefaultLiteral { shortened_from }) => {
+                ResolveResult::DefaultLiteral(*shortened_from)
+            }
             _ => ResolveResult::Expression(ty),
         }
+    }
+
+    /// `Unwrapped`: an unwrapped default literal takes its value from the target type, which
+    /// may have to be spelled out again.
+    fn unwrapped(
+        &mut self,
+        e: TranslatedExpression,
+        target: TypeId,
+        allow_implicit_conversion: bool,
+    ) -> Result<TranslatedExpression, Unsupported> {
+        if matches!(self.rr_of(e.expression), Rr::DefaultLiteral { .. }) {
+            return self.convert_to(e, target, allow_implicit_conversion);
+        }
+        Ok(e)
+    }
+
+    /// `RestoreDefaultLiteralType`: `default(T)` again for a `default` literal, with its
+    /// instructions.
+    pub(crate) fn restore_default_literal_type(
+        &mut self,
+        e: TranslatedExpression,
+    ) -> Result<TranslatedExpression, Unsupported> {
+        let Rr::DefaultLiteral { shortened_from } = self.rr_of(e.expression) else {
+            return Ok(e);
+        };
+        let restored = self.default_value_expression(shortened_from)?;
+        for inst in self.ast.annotations(e.expression).il.clone() {
+            self.ast.with_il(restored.expression, inst);
+        }
+        Ok(restored)
     }
 
     /// `TranslatedExpression.ConvertTo(targetType, expressionBuilder, checkForOverflow: false,
@@ -76,9 +109,38 @@ impl Builder<'_, '_, '_, '_> {
         target: TypeId,
         allow_implicit_conversion: bool,
     ) -> Result<TranslatedExpression, Unsupported> {
-        let ty = e.ty;
         let n = Normalization::IGNORE_NULLABILITY_AND_TUPLES;
+        if let Rr::DefaultLiteral { shortened_from } = self.rr_of(e.expression) {
+            // The context still supplies the type the literal was shortened from.
+            if allow_implicit_conversion
+                && self.ts.normalize_with(shortened_from, n) == self.ts.normalize_with(target, n)
+            {
+                return Ok(e);
+            }
+            let restored = self.restore_default_literal_type(e)?;
+            return self.convert_to(restored, target, allow_implicit_conversion);
+        }
+        let ty = e.ty;
         let same = self.ts.normalize_with(ty, n) == self.ts.normalize_with(target, n);
+        // The target type supplied by the context shortens `default(T)` to `default`.
+        if same
+            && allow_implicit_conversion
+            && self.settings.default_literals
+            && matches!(
+                self.ast.node(e.expression),
+                AstNode::DefaultValue { ty: Some(_) }
+            )
+        {
+            *self.ast.node_mut(e.expression) = AstNode::DefaultValue { ty: None };
+            let a = self.ast.annotations_mut(e.expression);
+            a.il_before_rr = !a.il.is_empty();
+            a.rr = Some(Rr::DefaultLiteral { shortened_from: ty });
+            let no_type = self.ts.intern(TypeData::NoType);
+            return Ok(TranslatedExpression {
+                expression: e.expression,
+                ty: no_type,
+            });
+        }
         // A cast the engine made: `CastCanBeMadeImplicit` may unwrap it again.
         if let AstNode::Cast {
             expression: inner, ..
@@ -111,16 +173,16 @@ impl Builder<'_, '_, '_, '_> {
                 return Err("a conversion of a user-defined cast".to_owned());
             }
             if same {
-                return Ok(if allow_implicit_conversion && implicit {
-                    self.unwrap_child(e.expression, inner)
-                } else {
-                    e
-                });
+                if allow_implicit_conversion && implicit {
+                    let unwrapped = self.unwrap_child(e.expression, inner);
+                    return self.unwrapped(unwrapped, target, allow_implicit_conversion);
+                }
+                return Ok(e);
             }
             if implicit {
                 let unwrapped = self.unwrap_child(e.expression, inner);
                 if allow_implicit_conversion {
-                    return Ok(unwrapped);
+                    return self.unwrapped(unwrapped, target, allow_implicit_conversion);
                 }
                 return self.convert_to(unwrapped, target, allow_implicit_conversion);
             }

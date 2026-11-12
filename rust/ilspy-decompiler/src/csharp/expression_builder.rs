@@ -344,6 +344,7 @@ impl Builder<'_, '_, '_, '_> {
             } => self.comp(inst, kind, lifting, sign, input, left, right),
             Inst::Function { .. } => self.translate_function(inst),
             Inst::Match { .. } => self.match_instruction(inst),
+            Inst::DefaultValue { ty, .. } => self.default_value(inst, ty.ty),
             // `VisitNullableRewrap`: the value of a `?.` chain, nullable where it is a value type.
             Inst::NullableRewrap { arg, .. } => {
                 let a = self.translate(arg, None)?;
@@ -1705,6 +1706,76 @@ impl Builder<'_, '_, '_, '_> {
             expression: e,
             ty: boolean,
         })
+    }
+
+    /// `VisitDefaultValue`.
+    fn default_value(
+        &mut self,
+        inst: NodeId,
+        ty: TypeId,
+    ) -> Result<TranslatedExpression, Unsupported> {
+        let e = self.default_value_expression(ty)?;
+        self.ast.with_il(e.expression, inst);
+        Ok(e)
+    }
+
+    /// `GetDefaultValueExpression`: `null` for a reference type, `(T?)null` for a nullable
+    /// type, else `default(T)`, a constant of the type's default value. `0m` is not
+    /// translated.
+    pub(crate) fn default_value_expression(
+        &mut self,
+        ty: TypeId,
+    ) -> Result<TranslatedExpression, Unsupported> {
+        let null_type = self.ts.intern(TypeData::Null);
+        let null = |b: &mut Self| {
+            let n = b.ast.add(AstNode::Null);
+            b.ast.with_rr(
+                n,
+                Rr::Constant {
+                    ty: null_type,
+                    value: ConstValue::Null,
+                },
+            );
+            n
+        };
+        if self.ts.is_reference_type(ty) == Some(true) {
+            let n = null(self);
+            return Ok(TranslatedExpression {
+                expression: n,
+                ty: null_type,
+            });
+        }
+        if self.ts.is_known(ty, KnownTypeCode::NullableOfT) {
+            // `ConversionResolveResult` of the null literal conversion, as `ResolveCast` gives it.
+            let n = null(self);
+            let c = self.ast.add(AstNode::Cast {
+                ty,
+                expression: n,
+                unchecked: false,
+            });
+            self.ast.with_rr(c, Rr::Conversion { ty });
+            return Ok(TranslatedExpression { expression: c, ty });
+        }
+        // `CSharpResolver.GetDefaultValue`, of the underlying type of an enum.
+        let value = match self.ts.enum_underlying_known(ty) {
+            Some(KnownTypeCode::Boolean) => ConstValue::Boolean(false),
+            Some(KnownTypeCode::Char) => ConstValue::Char(0),
+            Some(KnownTypeCode::SByte) => ConstValue::SByte(0),
+            Some(KnownTypeCode::Byte) => ConstValue::Byte(0),
+            Some(KnownTypeCode::Int16) => ConstValue::Int16(0),
+            Some(KnownTypeCode::UInt16) => ConstValue::UInt16(0),
+            Some(KnownTypeCode::Int32) => ConstValue::Int32(0),
+            Some(KnownTypeCode::UInt32) => ConstValue::UInt32(0),
+            Some(KnownTypeCode::Int64) => ConstValue::Int64(0),
+            Some(KnownTypeCode::UInt64) => ConstValue::UInt64(0),
+            Some(KnownTypeCode::Single) => ConstValue::Single(0),
+            Some(KnownTypeCode::Double) => ConstValue::Double(0),
+            Some(KnownTypeCode::Decimal) => return Err("a default decimal".to_owned()),
+            _ => ConstValue::Null,
+        };
+        let e = self.ast.add(AstNode::DefaultValue { ty: Some(ty) });
+        self.ast.with_rr(e, Rr::Constant { ty, value });
+        Ok(TranslatedExpression { expression: e, ty })
     }
 
     /// `IsType`: `arg is T`, without the boxing cast of a value.

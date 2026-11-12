@@ -178,6 +178,8 @@ pub enum AstNode {
     },
     /// `IsExpression`: `expression is T`, the tuple type written as its underlying type.
     IsType { expression: AstId, ty: TypeId },
+    /// `DefaultValueExpression`: `default(T)`, or the `default` literal without a type.
+    DefaultValue { ty: Option<TypeId> },
     /// `LockStatement`.
     Lock { expression: AstId, body: AstId },
     /// `ThrowStatement`, a rethrow without an expression.
@@ -312,6 +314,8 @@ pub enum Rr {
     /// `TypeIsResolveResult` of a test for the type `ty`, over the tested expression's
     /// resolve result.
     TypeIs { ty: TypeId },
+    /// `DefaultLiteralResolveResult` of a `default` literal shortened from `default(T)`.
+    DefaultLiteral { shortened_from: TypeId },
     /// `CSharpInvocationResolveResult` without target of the constructor `method` of the type
     /// `ty`, whose arguments are the resolve results of the object creation's arguments.
     ObjectCreation {
