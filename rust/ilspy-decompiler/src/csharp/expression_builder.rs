@@ -1,9 +1,10 @@
 //! `ExpressionBuilder`: the C# expression of an ILAst instruction.
 
 use crate::il::ast::{
-    BinaryNumericOperator, ComparisonKind, ComparisonLiftingKind, Inst, NodeId, VariableKind,
+    BinaryNumericOperator, ComparisonKind, ComparisonLiftingKind, ConversionKind, Inst, NodeId,
+    VariableKind,
 };
-use crate::il::types::{Sign, StackType};
+use crate::il::types::{PrimitiveType, Sign, StackType};
 use crate::metadata::tables::rows;
 use crate::semantics::Conversions;
 use crate::semantics::types::TypeKind;
@@ -340,6 +341,23 @@ impl Builder<'_, '_, '_, '_> {
                 left,
                 right,
             } => self.comp(inst, kind, lifting, sign, input, left, right),
+            Inst::Conv {
+                arg,
+                input,
+                input_sign,
+                target,
+                check_overflow,
+                is_lifted,
+            } => self.conv(
+                inst,
+                arg,
+                input,
+                input_sign,
+                target,
+                check_overflow,
+                is_lifted,
+                hint,
+            ),
             other => Err(format!("the instruction {}", super::inst_name(&other))),
         }
     }
@@ -1191,6 +1209,108 @@ impl Builder<'_, '_, '_, '_> {
         };
         let target = self.find_integer_type(stack, sign)?;
         self.convert_to(input, target, false)
+    }
+
+    /// `VisitConv` without lifting, overflow checks and native integers: the argument as is
+    /// where the parent's post-condition handles the conversion, else cast to the target.
+    #[allow(clippy::too_many_arguments)]
+    fn conv(
+        &mut self,
+        inst: NodeId,
+        arg: NodeId,
+        input: StackType,
+        input_sign: Sign,
+        target: PrimitiveType,
+        check_overflow: bool,
+        is_lifted: bool,
+        hint: TypeId,
+    ) -> Result<TranslatedExpression, Unsupported> {
+        if is_lifted {
+            return Err("a lifted conversion".to_owned());
+        }
+        if check_overflow {
+            return Err("a conversion with an overflow check".to_owned());
+        }
+        if matches!(input, StackType::I | StackType::Ref | StackType::Unknown)
+            || matches!(
+                target,
+                PrimitiveType::I
+                    | PrimitiveType::U
+                    | PrimitiveType::Ref
+                    | PrimitiveType::None
+                    | PrimitiveType::Unknown
+            )
+        {
+            return Err("a conversion from or to a native integer or reference".to_owned());
+        }
+        let hint_sign = if input_sign == Sign::None {
+            self.ts.type_sign(hint)
+        } else {
+            input_sign
+        };
+        // `FindArithmeticType(inst.InputType, hintSign)`
+        let arg_hint = match input.to_known(hint_sign) {
+            KnownTypeCode::None | KnownTypeCode::Void => {
+                return Err("a conversion of this stack type".to_owned());
+            }
+            code => self.ts.known_type(code),
+        };
+        let mut a = self.translate(arg, Some(arg_hint))?;
+        let input_type = self.ts.nullable_underlying(a.ty);
+        let kind = crate::il::ast::conversion_kind(target, input, input_sign);
+        // The argument converted to the stack type of the given sign first.
+        let to_input = |b: &mut Self, a: TranslatedExpression, sign: Sign| {
+            let t = b.ts.known_type(input.to_known(sign));
+            b.convert_to(a, t, false)
+        };
+        let oversized = |b: &mut Self| b.ts.type_size(input_type) > stack_size(input);
+        match kind {
+            ConversionKind::IntToFloat => {
+                if oversized(self) || self.ts.type_sign(input_type) != input_sign {
+                    a = to_input(self, a, input_sign)?;
+                }
+            }
+            ConversionKind::StartGCTracking => return Ok(a),
+            ConversionKind::SignExtend => {
+                if self.ts.type_sign(input_type) != Sign::Signed || oversized(self) {
+                    a = to_input(self, a, Sign::Signed)?;
+                }
+                self.ast.with_il(a.expression, inst);
+                return Ok(a);
+            }
+            ConversionKind::ZeroExtend => {
+                if self.ts.type_sign(input_type) != Sign::Unsigned || oversized(self) {
+                    a = to_input(self, a, Sign::Unsigned)?;
+                }
+                self.ast.with_il(a.expression, inst);
+                return Ok(a);
+            }
+            ConversionKind::Nop => {
+                self.ast.with_il(a.expression, inst);
+                return Ok(a);
+            }
+            ConversionKind::Truncate
+                if !target.is_small_integer()
+                    || (self.ts.type_size(input_type) <= target.size() as i32
+                        && self.ts.type_sign(input_type) == target.sign()) =>
+            {
+                self.ast.with_il(a.expression, inst);
+                return Ok(a);
+            }
+            ConversionKind::Truncate
+            | ConversionKind::FloatToInt
+            | ConversionKind::FloatPrecisionChange => {}
+            _ => return Err("a conversion of this kind".to_owned()),
+        }
+        // The type hint where it is the target type, else the target's known type.
+        let target_type = if !self.ts.is_nullable(hint) && self.ts.primitive_type(hint) == target {
+            hint
+        } else {
+            self.ts.known_type(target.to_known())
+        };
+        let c = self.convert_to(a, target_type, false)?;
+        self.ast.with_il(c.expression, inst);
+        Ok(c)
     }
 }
 

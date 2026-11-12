@@ -3118,6 +3118,25 @@ where the operand's type declares no `operator !`. Without it the engine wrote
 `!(bool)_material` for the managed `!_material`. The engine now unwraps such casts the same
 way, recognizing them by their resolve result.
 
+### 3.116 Conversions (item 68y8)
+
+`VisitConv` deals with two conversions: the implicit one from the argument's C# type to the
+instruction's input stack type (the expression builder's post-condition lets an expression
+be narrower or wider than its stack type), and the instruction's own conversion to the
+target type. Where the parent's post-condition can do the work, the argument is returned
+as is with the instruction added to its IL annotations: a sign or zero extension (after a
+cast to the input stack type of the right sign where the argument's type has the wrong sign
+or is wider), a no-op, a truncation to a 32- or 64-bit type, and a truncation to a small
+type the argument already fits with the same sign. Every other kind is a cast to the target
+type, or to the type hint where that is the same primitive type; an integer to float
+conversion first fixes the argument's sign. A conversion that starts GC tracking is the
+argument itself.
+
+Lifted conversions, conversions with an overflow check and conversions from or to native
+integers and references fall back to the managed decompiler: they need `checked` casts,
+nullable targets and the `nint`/`IntPtr` choice of the `NativeIntegers` setting. The share
+rose from 61.0 % to 61.7 %.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |
