@@ -158,13 +158,9 @@ impl Builder<'_, '_, '_, '_> {
             // The cast of an implicit conversion operator carries that user-defined conversion,
             // which `CastCanBeMadeImplicit` drops where the target type is identical.
             let operator = matches!(self.rr_of(e.expression), Rr::ImplicitConversion { .. });
-            // Its conversion is the implicit one from the operand's type (`HandleImplicitConversion`),
-            // which the annotations of the types do not change.
+            // Its conversion is the implicit one from the operand's type (`HandleImplicitConversion`).
             let conversion = if operator {
-                let oblivious = crate::typesystem::types::Nullability::Oblivious;
-                let from = self.ts.change_nullability(input_ty, oblivious);
-                let to = self.ts.change_nullability(ty, oblivious);
-                Conversions::new(self.ts).implicit_type(from, to)
+                Conversions::new(self.ts).implicit_type(input_ty, ty)
             } else {
                 conversion
             };

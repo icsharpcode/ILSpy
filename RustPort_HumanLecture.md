@@ -3458,6 +3458,35 @@ comparison's, so `TranslateCeq` keeps the operator as it is, with the resolve re
 with its resolver (a new resolve result tag, as for conditional expressions in 3.124). Other
 comparisons that need casts still fall back. The share rose from 73.5 % to 74.5 %.
 
+### 3.136 Argument casts (item 68y28)
+
+When the arguments as written resolve to another overload, the disambiguation's
+`CastArguments` step converts every argument to its parameter type with
+`ConvertTo(allowImplicitConversion: false)`, which writes a cast where the types differ, and
+tries again. The engine had fallen back at that step for calls, constructor calls and
+indexers; one helper now does it for all three. The managed step treats three kinds of
+parameters apart (a lambda of an anonymous type has its return type changed, `dynamic`
+becomes `object`, an `in` argument loses its `in`), which still fall back. The first attempt
+excluded every parameter type the engine's anonymous type check could not see into, which
+is every nullable-annotated type, and served nothing more; the check now follows
+`ContainsAnonymousType` through annotations, modifiers and element types, with the name
+test of `IsAnonymousType` alone (a stricter test than the managed one, so it errs towards
+falling back).
+
+The gates then showed casts the managed builder does not write, `new Thread((ThreadStart)(()
+=> ...))` and `Attribute((XName?)name)`: overload resolution in the engine had failed for
+these calls, where the managed one succeeds, so the cast step was reached at all. A dump of
+the candidates showed parameter types annotated by a nullable-aware library (`ThreadStart!`),
+and the engine's member lookup answered nothing for an annotated type: `member_source` knew
+plain definitions and instances only, so no `Invoke` was found for the lambda conversion and
+no operator for the user-defined one. The managed `NullabilityAnnotatedType` and
+`ModifiedType` are decorators that forward every member query to the type they decorate. The
+user chose to make the engine's lookup do the same rather than strip annotations at the
+conversions or fall back: every `get_*` member query now starts from the undecorated type,
+and a conversion test pins a lambda converting to an annotated delegate type. The two local
+workarounds of 3.134, which ignored annotations around implicit operator conversions, are
+gone with it. The share rose from 74.5 % to 75.4 %.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

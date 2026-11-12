@@ -279,11 +279,7 @@ impl Builder<'_, '_, '_, '_> {
     ) -> Result<TranslatedExpression, Unsupported> {
         let mut argument = list.arguments[0];
         let target = method.return_type;
-        // The engine does not look user-defined conversions up through nullability annotations.
-        let oblivious = crate::typesystem::types::Nullability::Oblivious;
-        let from = self.ts.change_nullability(argument.ty, oblivious);
-        let to = self.ts.change_nullability(target, oblivious);
-        let conversion = Conversions::new(self.ts).implicit_type(from, to);
+        let conversion = Conversions::new(self.ts).implicit_type(argument.ty, target);
         let direct = conversion.is_valid()
             && match &conversion {
                 crate::semantics::Conversion::UserDefined { method: found, .. } => {
@@ -730,14 +726,7 @@ impl Builder<'_, '_, '_, '_> {
             }
             if !spent_cast_arguments {
                 spent_cast_arguments = true;
-                // `CastArguments`: a cast to the parameter type, translated only where it
-                // is none.
-                let n = Normalization::IGNORE_NULLABILITY_AND_TUPLES;
-                for (a, p) in list.arguments.clone().iter().zip(&method.parameters) {
-                    if self.ts.normalize_with(a.ty, n) != self.ts.normalize_with(p.ty, n) {
-                        return Err("a constructor call that needs argument casts".to_owned());
-                    }
-                }
+                self.cast_arguments(&mut list.arguments, &method.parameters)?;
                 continue;
             }
             // No spelling resolves; the most explicit one is written anyway.
@@ -880,12 +869,7 @@ impl Builder<'_, '_, '_, '_> {
             }
             if !spent_cast_arguments {
                 spent_cast_arguments = true;
-                let n = Normalization::IGNORE_NULLABILITY_AND_TUPLES;
-                for (a, p) in list.arguments.clone().iter().zip(&method.parameters) {
-                    if self.ts.normalize_with(a.ty, n) != self.ts.normalize_with(p.ty, n) {
-                        return Err("an indexer access that needs argument casts".to_owned());
-                    }
-                }
+                self.cast_arguments(&mut list.arguments, &method.parameters)?;
                 continue;
             }
             if !spent_cast_target {
@@ -1231,14 +1215,7 @@ impl Builder<'_, '_, '_, '_> {
                 }
                 // Cast arguments are written with their types, not as `out var`.
                 list.use_implicitly_typed_out = false;
-                // `CastArguments`: a cast to the parameter type, translated only where it
-                // is none.
-                let n = Normalization::IGNORE_NULLABILITY_AND_TUPLES;
-                for (a, p) in list.arguments.clone().iter().zip(&method.parameters) {
-                    if self.ts.normalize_with(a.ty, n) != self.ts.normalize_with(p.ty, n) {
-                        return Err("a call that needs argument casts".to_owned());
-                    }
-                }
+                self.cast_arguments(&mut list.arguments, &method.parameters)?;
                 continue;
             }
             if !spent_require {
@@ -1271,6 +1248,53 @@ impl Builder<'_, '_, '_, '_> {
             // No spelling resolves; the most explicit one is written anyway.
             return Ok((require, type_arguments));
         }
+    }
+
+    /// `ContainsAnonymousType` by the name check of `IsAnonymousType` alone (a type named like
+    /// an anonymous type counts even where it is no compiler-generated one), through the
+    /// annotations, modifiers and element types the managed visitor visits.
+    fn contains_anonymous_type_name(&self, t: TypeId) -> bool {
+        match self.ts.data(t) {
+            TypeData::Def(def) => self.ts.comp.type_def(*def).is_ok_and(|i| {
+                i.full_name.top.ns.is_empty()
+                    && (i.full_name.name().contains("AnonType")
+                        || i.full_name.name().contains("AnonymousType"))
+            }),
+            TypeData::Inst { generic, args } => {
+                self.contains_anonymous_type_name(*generic)
+                    || args.iter().any(|&a| self.contains_anonymous_type_name(a))
+            }
+            TypeData::Array { elem, .. } => self.contains_anonymous_type_name(*elem),
+            TypeData::Pointer(e) | TypeData::ByRef(e) | TypeData::Pinned(e) => {
+                self.contains_anonymous_type_name(*e)
+            }
+            TypeData::Annotated { inner, .. } | TypeData::Modified { inner, .. } => {
+                self.contains_anonymous_type_name(*inner)
+            }
+            TypeData::Tuple { underlying, .. } => self.contains_anonymous_type_name(*underlying),
+            TypeData::FnPtr(_) | TypeData::Intersection(_) => true,
+            _ => false,
+        }
+    }
+
+    /// `Disambiguator.CastArguments`: every argument converted to its parameter type with an
+    /// explicit cast where it is of another type. Parameters of anonymous or dynamic types
+    /// and `in` parameters, which the managed code treats apart, are not translated.
+    fn cast_arguments(
+        &mut self,
+        arguments: &mut [TranslatedExpression],
+        parameters: &[crate::semantics::Parameter],
+    ) -> Result<(), Unsupported> {
+        for (a, p) in arguments.iter_mut().zip(parameters) {
+            if self.contains_anonymous_type_name(p.ty)
+                || self.ts.kind(p.ty) == TypeKind::Dynamic
+                || p.ref_kind == RefKind::In
+            {
+                return Err("argument casts to anonymous, dynamic or in parameters".to_owned());
+            }
+            *a = self.convert_to(*a, p.ty, false)?;
+        }
+        Ok(())
     }
 
     /// `CanInferTypeArgumentsFromArguments`: whether type inference from the arguments

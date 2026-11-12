@@ -28,6 +28,18 @@ impl MemberOptions {
 }
 
 impl TypeSystem<'_, '_> {
+    /// `DecoratedType`: a nullability-annotated or modified type answers member queries as
+    /// its underlying type does.
+    fn undecorated(&self, t: TypeId) -> TypeId {
+        let mut t = t;
+        while let TypeData::Annotated { inner, .. } | TypeData::Modified { inner, .. } =
+            self.data(t)
+        {
+            t = *inner;
+        }
+        t
+    }
+
     /// The types whose declared members a lookup visits.
     fn lookup_types(&mut self, t: TypeId, options: MemberOptions) -> Result<Vec<TypeId>> {
         if options.ignore_inherited {
@@ -80,6 +92,7 @@ impl TypeSystem<'_, '_> {
         type_arguments: Option<&[TypeId]>,
         options: MemberOptions,
     ) -> Result<Vec<ResolvedMethod>> {
+        let t = self.undecorated(t);
         let method_args = type_arguments.filter(|a| !a.is_empty());
         let mut result = Vec::new();
         for base in self.member_lookup_types(t, options)? {
@@ -112,6 +125,7 @@ impl TypeSystem<'_, '_> {
         t: TypeId,
         options: MemberOptions,
     ) -> Result<Vec<ResolvedMethod>> {
+        let t = self.undecorated(t);
         let mut result = Vec::new();
         for base in self.member_lookup_types(t, options)? {
             let Some(def) = self.member_source(base) else {
@@ -131,6 +145,7 @@ impl TypeSystem<'_, '_> {
         t: TypeId,
         options: MemberOptions,
     ) -> Result<Vec<Option<ResolvedMethod>>> {
+        let t = self.undecorated(t);
         let mut result = Vec::new();
         for base in self.member_lookup_types(t, options)? {
             let Some(def) = self.member_source(base) else {
@@ -191,6 +206,7 @@ impl TypeSystem<'_, '_> {
 
     /// `IType.GetProperties()`.
     pub fn get_properties(&mut self, t: TypeId, options: MemberOptions) -> Result<Vec<MemberRef>> {
+        let t = self.undecorated(t);
         self.member_refs(t, options, |ts, def| {
             Ok(ts
                 .comp
@@ -203,6 +219,7 @@ impl TypeSystem<'_, '_> {
 
     /// `IType.GetFields()`.
     pub fn get_fields(&mut self, t: TypeId, options: MemberOptions) -> Result<Vec<MemberRef>> {
+        let t = self.undecorated(t);
         self.member_refs(t, options, |ts, def| {
             Ok(ts
                 .comp
@@ -215,6 +232,7 @@ impl TypeSystem<'_, '_> {
 
     /// `IType.GetEvents()`.
     pub fn get_events(&mut self, t: TypeId, options: MemberOptions) -> Result<Vec<MemberRef>> {
+        let t = self.undecorated(t);
         self.member_refs(t, options, |ts, def| {
             Ok(ts
                 .comp
@@ -234,6 +252,7 @@ impl TypeSystem<'_, '_> {
         type_arguments: Option<&[TypeId]>,
         options: MemberOptions,
     ) -> Result<Vec<TypeId>> {
+        let t = self.undecorated(t);
         // A type definition's own nested types are returned as definitions.
         if let TypeData::Def(def) = *self.data(t)
             && options.ignore_inherited

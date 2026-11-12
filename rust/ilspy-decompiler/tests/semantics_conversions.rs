@@ -2480,3 +2480,26 @@ impl IntoLambdaRr for Rc<ilspy_decompiler::semantics::decompiled_lambda::Decompi
         ResolveResult::Lambda(self)
     }
 }
+
+/// `NullabilityAnnotatedType` answers member queries as its underlying type: a lambda converts
+/// to `Action!` (a non-generic delegate type of a nullable-annotated library) as to `Action`.
+#[test]
+fn lambda_converts_to_annotated_delegate_type() {
+    use ilspy_decompiler::semantics::decompiled_lambda::DecompiledLambda;
+    Fixture::new().run(|c| {
+        let void = known(c, KnownTypeCode::Void);
+        let action = t(c, "System.Action");
+        let annotated = c.ts.change_nullability(action, Nullability::NotNullable);
+        assert!(matches!(c.ts.data(annotated), TypeData::Annotated { .. }));
+        let lambda = Rc::new(DecompiledLambda {
+            delegate_type: action,
+            inferred_return_type: void,
+            return_type: void,
+            parameters: Vec::new(),
+            attempted_conversion_with_type_mismatch: std::cell::Cell::new(false),
+        })
+        .rr();
+        assert!(c.implicit(&lambda, action).is_valid());
+        assert!(c.implicit(&lambda, annotated).is_valid());
+    });
+}
