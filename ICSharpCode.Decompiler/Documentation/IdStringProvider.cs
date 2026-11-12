@@ -1199,7 +1199,7 @@ namespace ICSharpCode.Decompiler.Documentation
 		{
 			var typeDef = metadata.GetTypeDefinition(declaringTypeHandle);
 			string lookupName = typeParameterCount > 0 ? name + "`" + typeParameterCount : name;
-			foreach (var nestedHandle in typeDef.GetNestedTypes())
+			foreach (var nestedHandle in typeDef.GetNestedTypes(metadata, declaringTypeHandle))
 			{
 				var nestedDef = metadata.GetTypeDefinition(nestedHandle);
 				if (metadata.StringComparer.Equals(nestedDef.Name, lookupName))
