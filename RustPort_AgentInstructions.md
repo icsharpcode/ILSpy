@@ -524,7 +524,9 @@ the reasons. This file holds only the ordered steps, their gates and their rules
     user decided; lecture 3.118). Subject: `Translate lambdas to C# in the engine`.
   - [x] 68y11. Interpolated strings of string handlers (lecture 3.119).
     Subject: `Translate interpolated strings to C# in the engine`.
-  - [ ] 68y12-. Further construct groups (numbered on from 68y1), in the order of the fallback reasons the ratchet test
+  - [x] 68y12. Object initializers that set members of the new object itself (lecture 3.120).
+    Subject: `Translate object initializers to C# in the engine`.
+  - [ ] 68y13-. Further construct groups (numbered on from 68y1), in the order of the fallback reasons the ratchet test
     prints, until no body of the corpus falls back. Subject pattern:
     `Translate <construct group> to C# in the engine`.
   - [ ] 68z. Request-level seam 2. Subject: `Add the Rust C# AST builders and the AST materializer`.

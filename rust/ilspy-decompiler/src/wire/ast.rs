@@ -60,6 +60,7 @@ mod kind {
     pub const USING: u8 = 36;
     pub const LAMBDA: u8 = 37;
     pub const INTERPOLATED_STRING: u8 = 38;
+    pub const NAMED: u8 = 39;
 }
 
 pub(super) fn write_body(
@@ -204,6 +205,10 @@ fn rr(w: &mut FunctionWriter<'_, '_, '_, '_>, rr: Option<&Rr>) -> Result<(), Str
         Some(Rr::Conversion { .. }) => w.out.u8(13),
         Some(Rr::ImplicitConversion { .. }) => w.out.u8(17),
         Some(Rr::LambdaConversion { .. }) => w.out.u8(18),
+        Some(Rr::InitializedObject(ty)) => {
+            w.out.u8(19);
+            w.ty(*ty);
+        }
         // The host builds the lambda's resolve result from the node.
         Some(Rr::Lambda(_)) => w.out.u8(0),
         Some(Rr::TypeOf { ty, referenced }) => {
@@ -266,6 +271,7 @@ fn node(w: &mut FunctionWriter<'_, '_, '_, '_>, ast: &Ast, id: AstId) -> Result<
         AstNode::Using { .. } => kind::USING,
         AstNode::Lambda { .. } => kind::LAMBDA,
         AstNode::InterpolatedString { .. } => kind::INTERPOLATED_STRING,
+        AstNode::Named { .. } => kind::NAMED,
     });
     w.out.len(a.il.len());
     for &inst in &a.il {
@@ -501,12 +507,27 @@ fn node(w: &mut FunctionWriter<'_, '_, '_, '_>, ast: &Ast, id: AstId) -> Result<
                 node(w, ast, e)?;
             }
         }
-        AstNode::ObjectCreate { ty, arguments } => {
+        AstNode::ObjectCreate {
+            ty,
+            arguments,
+            initializer,
+        } => {
             w.ty(ty);
             w.out.len(arguments.len());
             for a in arguments {
                 node(w, ast, a)?;
             }
+            w.out.bool(initializer.is_some());
+            if let Some(elements) = initializer {
+                w.out.len(elements.len());
+                for e in elements {
+                    node(w, ast, e)?;
+                }
+            }
+        }
+        AstNode::Named { name, expression } => {
+            w.string(&name);
+            node(w, ast, expression)?;
         }
         AstNode::BinaryOperator {
             op,

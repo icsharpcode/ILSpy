@@ -3194,6 +3194,21 @@ suffix from its constant arguments. Only the block is annotated with IL; the cal
 not. The engine sends the contents inline in the node, the interpolations' expressions as
 child nodes. The share rose from 63.5 % to 64.1 %.
 
+### 3.120 Object initializers (item 68y12)
+
+`TranslateObjectAndCollectionInitializer` turns an initializer block into
+`new T(...) { Member = value, ... }`: the object creation the block's first store makes,
+with an initializer of one element per remaining instruction, and the block added to the
+creation's IL annotations. `BuildArrayInitializerExpression` follows the access path of
+each instruction from the initializer variable and nests elements where paths share a
+prefix. The engine translates the flat case only: a field store or a property setter call
+directly on the new object, written as a `NamedExpression` whose resolve result is the
+member over an `InitializedObjectResolveResult` (a new tag), with the value converted to
+the member's type. The access path port of the IL transform works on its own context and is
+not reused here; nested members, dictionary indexers, `Add` calls (collection
+initializers) and creations other than `newobj` fall back. The share rose from 64.1 % to
+64.4 %.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

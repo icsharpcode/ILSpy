@@ -753,6 +753,10 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					node.Children = condition != null ? [body, condition] : [body];
 					break;
 				}
+				case RustBodyNode.Named:
+					node.Value = Str();
+					node.Children = [BodyNode()];
+					break;
 				case RustBodyNode.InterpolatedString:
 				{
 					// Texts, and interpolations with alignment and suffix, whose expressions are the children.
@@ -842,6 +846,12 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					for (int i = 0; i < arguments.Length; i++)
 						arguments[i] = BodyNode();
 					node.Children = arguments;
+					if (Bool())
+					{
+						node.Initializer = new RustBodyNode[Len()];
+						for (int i = 0; i < node.Initializer.Length; i++)
+							node.Initializer[i] = BodyNode();
+					}
 					break;
 				}
 				case RustBodyNode.BinaryOperator:
@@ -936,6 +946,8 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					// RustSeam2 computes the implicit conversion of the operand.
 					pendingImplicitConversion = true;
 					return null;
+				case 19:
+					return new InitializedObjectResolveResult(Type());
 				case 18:
 					// RustSeam2 converts the lambda's resolve result.
 					pendingLambdaConversion = true;

@@ -81,6 +81,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		public const byte Using = 36;
 		public const byte Lambda = 37;
 		public const byte InterpolatedString = 38;
+		public const byte Named = 39;
 
 		public byte Kind;
 		/// <summary>The instructions the node is annotated with, in order.</summary>
@@ -107,6 +108,8 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		public bool LambdaConversion;
 		/// <summary>For a lambda: <see cref="DecompiledLambdaResolveResult.AttemptedConversionWithTypeMismatch"/>.</summary>
 		public bool AttemptedConversionWithTypeMismatch;
+		/// <summary>For an object creation: the elements of its initializer, if it has one.</summary>
+		public RustBodyNode[]? Initializer;
 		/// <summary>For a generic name: the type arguments written with it.</summary>
 		public IType[] TypeArguments = [];
 		public object? Value;
@@ -274,7 +277,10 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 						.Select(a => (a is NamedArgumentExpression named ? named.Expression : a).GetResolveResult())
 						.ToArray();
 					node.ResolveResult = new CSharpInvocationResolveResult(null!, node.Call!.Value.Method, argumentResults);
-					return Annotate(new ObjectCreateExpression(exprBuilder.ConvertType(node.Type!), arguments), node);
+					var creation = new ObjectCreateExpression(exprBuilder.ConvertType(node.Type!), arguments);
+					if (node.Initializer != null)
+						creation.Initializer = new ArrayInitializerExpression(node.Initializer.Select(e => (Expression)Build(e, exprBuilder)));
+					return Annotate(creation, node);
 				}
 				case RustBodyNode.Throw:
 				{
@@ -371,6 +377,8 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					return Annotate(new BreakStatement(), node);
 				case RustBodyNode.Continue:
 					return Annotate(new ContinueStatement(), node);
+				case RustBodyNode.Named:
+					return Annotate(new NamedExpression((string)node.Value!, (Expression)Build(node.Children[0], exprBuilder)), node);
 				case RustBodyNode.InterpolatedString:
 				{
 					var content = new List<InterpolatedStringContent>();

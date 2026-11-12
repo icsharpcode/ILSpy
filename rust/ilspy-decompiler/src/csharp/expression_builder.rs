@@ -13,6 +13,7 @@ use crate::typesystem::members::ConstValue;
 use crate::typesystem::types::{TypeData, TypeId};
 
 use super::ast::{AstId, AstNode, BinaryOp, InterpolatedContent, Overflow, Rr};
+use super::call_builder::ACCESSOR_SETTER;
 use super::{Builder, TranslatedExpression, Unsupported};
 
 impl Builder<'_, '_, '_, '_> {
@@ -347,6 +348,11 @@ impl Builder<'_, '_, '_, '_> {
                 instructions,
                 ..
             } => self.interpolated_string(inst, &instructions),
+            Inst::Block {
+                kind: BlockKind::ObjectInitializer,
+                instructions,
+                final_inst,
+            } => self.object_initializer(inst, &instructions, final_inst),
             Inst::Block { kind, .. } => Err(format!("a block of kind {kind:?}")),
             Inst::Conv {
                 arg,
@@ -1286,6 +1292,112 @@ impl Builder<'_, '_, '_, '_> {
             expression: e,
             ty: string,
         })
+    }
+
+    /// `TranslateObjectAndCollectionInitializer` for `new T(...) { Member = value, ... }`: an
+    /// object creation whose initializer sets fields and properties of the new object itself.
+    /// Nested members, indexers, `Add` calls and other creations are not translated.
+    fn object_initializer(
+        &mut self,
+        inst: NodeId,
+        instructions: &[NodeId],
+        final_inst: NodeId,
+    ) -> Result<TranslatedExpression, Unsupported> {
+        let Some((&first, rest)) = instructions.split_first() else {
+            return Err("an empty initializer".to_owned());
+        };
+        let (Inst::StLoc { var, value, .. }, Inst::LdLoc { var: final_var }) =
+            (self.f.inst(first).clone(), self.f.inst(final_inst).clone())
+        else {
+            return Err("an initializer of another shape".to_owned());
+        };
+        if var != final_var || self.f.var(var).kind != VariableKind::InitializerTarget {
+            return Err("an initializer of another shape".to_owned());
+        }
+        if !matches!(self.f.inst(value), Inst::NewObj(_)) {
+            return Err("an initializer of another creation".to_owned());
+        }
+        let creation = self.translate(value, None)?;
+        if !matches!(
+            self.ast.node(creation.expression),
+            AstNode::ObjectCreate { .. }
+        ) {
+            return Err("an initializer of an object creation with syntax of its own".to_owned());
+        }
+        let object = Rr::InitializedObject(creation.ty);
+        let is_target = |b: &Self, n: NodeId| matches!(*b.f.inst(n), Inst::LdLoc { var: v } | Inst::LdLoca { var: v } if v == var);
+        let mut elements = Vec::with_capacity(rest.len());
+        for &element in rest {
+            // `GetAccessPath` of a setter on the object itself.
+            let (name, member_type, value, member) = match self.f.inst(element).clone() {
+                Inst::StObj { target, value, .. } => {
+                    let Inst::LdFlda {
+                        target: object_ref,
+                        field,
+                        ..
+                    } = self.f.inst(target).clone()
+                    else {
+                        return Err("an initializer element of another kind".to_owned());
+                    };
+                    if !is_target(self, object_ref) {
+                        return Err("a nested initializer".to_owned());
+                    }
+                    let rr = Rr::Field {
+                        target: Some(Box::new(object.clone())),
+                        field: field.clone(),
+                    };
+                    (field.field.name.clone(), field.field.ty, value, rr)
+                }
+                Inst::Call(call) | Inst::CallVirt(call)
+                    if call.method.method.accessor_kind == ACCESSOR_SETTER
+                        && call.args.len() == 2 =>
+                {
+                    if !is_target(self, call.args[0]) {
+                        return Err("a nested initializer".to_owned());
+                    }
+                    let name = call
+                        .method
+                        .method
+                        .name
+                        .strip_prefix("set_")
+                        .filter(|n| !n.contains('.'))
+                        .ok_or("an initializer of an explicitly named setter")?
+                        .to_owned();
+                    let params = call.method.method.params().map_err(|e| e.to_string())?;
+                    let ty = *params.last().ok_or("a setter without parameters")?;
+                    let rr = Rr::Property {
+                        target: Box::new(object.clone()),
+                        accessor: Box::new(call.method.clone()),
+                        ty,
+                        found_by_lookup: false,
+                    };
+                    (name, ty, call.args[1], rr)
+                }
+                _ => return Err("an initializer element of another kind".to_owned()),
+            };
+            if self
+                .f
+                .descendants_post(value)
+                .into_iter()
+                .any(|n| is_target(self, n))
+            {
+                return Err("an initializer value that uses the object".to_owned());
+            }
+            let v = self.translate(value, Some(member_type))?;
+            let v = self.convert_to(v, member_type, true)?;
+            let e = self.ast.add(AstNode::Named {
+                name,
+                expression: v.expression,
+            });
+            self.ast.with_il(e, element);
+            self.ast.with_rr(e, member);
+            elements.push(e);
+        }
+        if let AstNode::ObjectCreate { initializer, .. } = self.ast.node_mut(creation.expression) {
+            *initializer = Some(elements);
+        }
+        self.ast.with_il(creation.expression, inst);
+        Ok(creation)
     }
 
     /// `VisitConv` without lifting, overflow checks and native integers: the argument as is

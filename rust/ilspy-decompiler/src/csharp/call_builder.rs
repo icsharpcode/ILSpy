@@ -26,7 +26,7 @@ use super::ast::{AstId, AstNode, Rr};
 use super::{Builder, TranslatedExpression, Unsupported};
 
 /// `MethodSemanticsAttributes.Setter` and `Getter`.
-const ACCESSOR_SETTER: u16 = 0x01;
+pub(crate) const ACCESSOR_SETTER: u16 = 0x01;
 const ACCESSOR_GETTER: u16 = 0x02;
 
 /// The opcode of the call (`ExpectedTargetDetails.CallOpCode`).
@@ -617,6 +617,7 @@ impl Builder<'_, '_, '_, '_> {
         let e = self.ast.add(AstNode::ObjectCreate {
             ty: declaring,
             arguments,
+            initializer: None,
         });
         self.ast.with_rr(
             e,

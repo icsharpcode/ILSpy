@@ -143,12 +143,18 @@ pub enum AstNode {
     },
     /// `InterpolatedStringExpression`.
     InterpolatedString { contents: Vec<InterpolatedContent> },
+    /// `NamedExpression` of an object initializer: `name = expression`.
+    Named { name: String, expression: AstId },
     /// `LockStatement`.
     Lock { expression: AstId, body: AstId },
     /// `ThrowStatement`, a rethrow without an expression.
     Throw { expression: Option<AstId> },
     /// `ObjectCreateExpression` of `ExpressionBuilder.ConvertType(ty)`, which the host builds.
-    ObjectCreate { ty: TypeId, arguments: Vec<AstId> },
+    ObjectCreate {
+        ty: TypeId,
+        arguments: Vec<AstId>,
+        initializer: Option<Vec<AstId>>,
+    },
     /// `BinaryOperatorExpression`.
     BinaryOperator {
         op: BinaryOp,
@@ -265,6 +271,8 @@ pub enum Rr {
     /// `DecompiledLambdaResolveResult`, at this index of `Ast::lambdas`, which the host builds
     /// for the lambda's node.
     Lambda(usize),
+    /// `InitializedObjectResolveResult` of the object an initializer initializes.
+    InitializedObject(TypeId),
     /// `CSharpInvocationResolveResult` without target of the constructor `method` of the type
     /// `ty`, whose arguments are the resolve results of the object creation's arguments.
     ObjectCreation {
