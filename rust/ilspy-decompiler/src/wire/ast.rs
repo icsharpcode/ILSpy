@@ -65,6 +65,7 @@ mod kind {
     pub const ARRAY_INITIALIZER: u8 = 41;
     pub const YIELD_RETURN: u8 = 42;
     pub const YIELD_BREAK: u8 = 43;
+    pub const NULL_CONDITIONAL: u8 = 44;
 }
 
 pub(super) fn write_body(
@@ -282,6 +283,7 @@ fn node(w: &mut FunctionWriter<'_, '_, '_, '_>, ast: &Ast, id: AstId) -> Result<
         AstNode::ArrayInitializer { .. } => kind::ARRAY_INITIALIZER,
         AstNode::YieldReturn { .. } => kind::YIELD_RETURN,
         AstNode::YieldBreak => kind::YIELD_BREAK,
+        AstNode::NullConditional { .. } => kind::NULL_CONDITIONAL,
     });
     w.out.len(a.il.len());
     for &inst in &a.il {
@@ -550,6 +552,10 @@ fn node(w: &mut FunctionWriter<'_, '_, '_, '_>, ast: &Ast, id: AstId) -> Result<
             node(w, ast, initializer)?;
         }
         AstNode::YieldReturn { expression } => node(w, ast, expression)?,
+        AstNode::NullConditional { expression, rewrap } => {
+            w.out.bool(rewrap);
+            node(w, ast, expression)?;
+        }
         AstNode::ArrayInitializer { elements } => {
             w.out.len(elements.len());
             for e in elements {

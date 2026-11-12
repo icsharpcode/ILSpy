@@ -764,6 +764,10 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					node.Children = children;
 					break;
 				}
+				case RustBodyNode.NullConditional:
+					node.Flag = Bool();
+					node.Children = [BodyNode()];
+					break;
 				case RustBodyNode.YieldReturn:
 					node.Children = [BodyNode()];
 					break;

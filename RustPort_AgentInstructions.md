@@ -530,7 +530,9 @@ the reasons. This file holds only the ordered steps, their gates and their rules
     Subject: `Translate array initializers to C# in the engine`.
   - [x] 68y14. Iterators: `yield return` and `yield break`; lambda returns the managed builder casts
     fall back (lecture 3.122). Subject: `Translate iterators to C# in the engine`.
-  - [ ] 68y15-. Further construct groups (numbered on from 68y1), in the order of the fallback reasons the ratchet test
+  - [x] 68y15. Null-conditional access (`?.`): nullable unwraps and rewraps (lecture 3.123).
+    Subject: `Translate null-conditional access to C# in the engine`.
+  - [ ] 68y16-. Further construct groups (numbered on from 68y1), in the order of the fallback reasons the ratchet test
     prints, until no body of the corpus falls back. Subject pattern:
     `Translate <construct group> to C# in the engine`.
   - [ ] 68z. Request-level seam 2. Subject: `Add the Rust C# AST builders and the AST materializer`.

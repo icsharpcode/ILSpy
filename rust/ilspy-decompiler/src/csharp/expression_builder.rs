@@ -343,6 +343,45 @@ impl Builder<'_, '_, '_, '_> {
                 right,
             } => self.comp(inst, kind, lifting, sign, input, left, right),
             Inst::Function { .. } => self.translate_function(inst),
+            // `VisitNullableRewrap`: the value of a `?.` chain, nullable where it is a value type.
+            Inst::NullableRewrap { arg, .. } => {
+                let a = self.translate(arg, None)?;
+                let ty = if self.ts.is_non_nullable_value_type(a.ty) {
+                    self.ts.make_nullable(a.ty)
+                } else {
+                    a.ty
+                };
+                let e = self.ast.add(AstNode::NullConditional {
+                    expression: a.expression,
+                    rewrap: true,
+                });
+                self.ast.with_il(e, inst);
+                self.ast.with_rr(e, Rr::Plain(ty));
+                Ok(TranslatedExpression { expression: e, ty })
+            }
+            // `VisitNullableUnwrap`: `arg?`, of the underlying type.
+            Inst::NullableUnwrap {
+                arg,
+                result,
+                ref_input,
+                ..
+            } => {
+                let mut a = self.translate(arg, None)?;
+                if ref_input
+                    && result != StackType::Ref
+                    && let AstNode::RefDirection { expression } = *self.ast.node(a.expression)
+                {
+                    a = self.unwrap_child(a.expression, expression);
+                }
+                let ty = self.ts.nullable_underlying(a.ty);
+                let e = self.ast.add(AstNode::NullConditional {
+                    expression: a.expression,
+                    rewrap: false,
+                });
+                self.ast.with_il(e, inst);
+                self.ast.with_rr(e, Rr::Plain(ty));
+                Ok(TranslatedExpression { expression: e, ty })
+            }
             Inst::Block {
                 kind: BlockKind::InterpolatedString,
                 instructions,

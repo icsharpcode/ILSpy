@@ -3242,6 +3242,17 @@ Removing the iterator restriction did not raise the share (64.9 %): the iterator
 the corpus mostly stop at `foreach`, nullable rewraps and pattern matching, whose counts
 rose accordingly.
 
+### 3.123 Null-conditional access (item 68y15)
+
+`NullPropagationTransform` leaves `a?.b` in the ILAst as a `nullable.rewrap` around the
+access chain, with a `nullable.unwrap` of `a` where the chain starts. The expression
+builder writes both as unary operators the output visitor turns into the `?.` syntax:
+`VisitNullableUnwrap` as `NullConditional` of the underlying type (dropping the `ref` of a
+by-reference input whose result is a value), `VisitNullableRewrap` as
+`NullConditionalRewrap` of the chain's type, made nullable where it is a value type. With
+the iterators of the previous step no longer rejected, this was the largest group (47).
+The share rose from 64.9 % to 65.7 %.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

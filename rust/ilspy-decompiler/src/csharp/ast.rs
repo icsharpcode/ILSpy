@@ -159,6 +159,9 @@ pub enum AstNode {
     YieldReturn { expression: AstId },
     /// `YieldBreakStatement`.
     YieldBreak,
+    /// `UnaryOperatorExpression` of `NullConditional` (`expression?`), or of
+    /// `NullConditionalRewrap` (the end of a `?.` chain) when `rewrap`.
+    NullConditional { expression: AstId, rewrap: bool },
     /// `LockStatement`.
     Lock { expression: AstId, body: AstId },
     /// `ThrowStatement`, a rethrow without an expression.
