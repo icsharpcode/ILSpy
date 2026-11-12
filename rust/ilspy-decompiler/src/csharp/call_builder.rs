@@ -250,8 +250,9 @@ impl Builder<'_, '_, '_, '_> {
         }
         let (require, require_type_arguments) =
             self.disambiguate_call(&method, id, op, &mut target, &mut list, require, declaring)?;
-        // The overload the call resolves to may be an override of the method, whose parameter
-        // names the written argument names take.
+        // The overload the call resolves to may be an override of the method, or the method
+        // with other inferred type arguments; the written argument names take its parameter
+        // names, and the call its return type.
         let found_override = self.found_override.take();
         if let Some(found) = &found_override {
             if is_extension {
@@ -265,6 +266,9 @@ impl Builder<'_, '_, '_, '_> {
         }
 
         // the invocation
+        let return_type = found_override
+            .as_ref()
+            .map_or(method.return_type, |f| f.return_type);
         let type_arguments = match &method.method_args {
             Some(args) if require_type_arguments => args.clone(),
             _ => Vec::new(),
@@ -311,7 +315,7 @@ impl Builder<'_, '_, '_, '_> {
             Rr::Invocation {
                 target: Box::new(target_rr),
                 method: Box::new(operand.clone()),
-                ty: method.return_type,
+                ty: return_type,
                 extension: false,
                 delegate: false,
                 found_by_lookup: found_override.is_some(),
@@ -320,7 +324,7 @@ impl Builder<'_, '_, '_, '_> {
         self.ast.with_il(e, inst);
         Ok(TranslatedExpression {
             expression: e,
-            ty: method.return_type,
+            ty: return_type,
         })
     }
 
@@ -1623,9 +1627,9 @@ impl Builder<'_, '_, '_, '_> {
             });
         }
         // The resolve result names the method found, whose inferred type arguments may differ
-        // from the call's in tuple names or nullability.
+        // from the call's in tuple names or nullability; the host finds it again.
         if found.method_args != method.method_args {
-            return Err("a generic call whose inferred type arguments differ".to_owned());
+            self.found_override = Some(found.clone());
         }
         Ok(OverloadResolutionErrors::NONE)
     }

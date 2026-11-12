@@ -578,7 +578,9 @@ the reasons. This file holds only the ordered steps, their gates and their rules
     (lecture 3.143). Subject: `Translate implicitly typed lambdas to C# in the engine`.
   - [x] 68y36. Async functions and `await` (lecture 3.144).
     Subject: `Translate async functions to C# in the engine`.
-  - [ ] 68y37-. Further construct groups (numbered on from 68y1), in the order of the fallback reasons the ratchet test
+  - [x] 68y37. Generic calls whose overload resolution infers other type arguments
+    (lecture 3.145). Subject: `Annotate generic calls with the inferred method in the engine`.
+  - [ ] 68y38-. Further construct groups (numbered on from 68y1), in the order of the fallback reasons the ratchet test
     prints, until no body of the corpus falls back. Subject pattern:
     `Translate <construct group> to C# in the engine`.
   - [ ] 68z. Request-level seam 2. Subject: `Add the Rust C# AST builders and the AST materializer`.

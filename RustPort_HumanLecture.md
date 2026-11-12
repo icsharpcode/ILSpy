@@ -3603,6 +3603,18 @@ host's member lookup does not see), a constrained operand and an operand that al
 cast (a box the managed builder looks through) fall back. Async lambdas still fall back as
 well. The share rose from 80.9 % to 81.3 %.
 
+### 3.145 Inferred type arguments (item 68y37)
+
+The overload resolution of a generic call can find the called method with type arguments
+that differ from the call's in tuple element names or nullability, and the managed builder
+annotates the invocation with the method it found, whose return type is the expression's
+type from then on. The engine had fallen back. It now treats the found method as it treats
+an override the name binds to (3.141): the invocation's resolve result is marked, the host
+finds the method again with the overload resolution of the call as written, and the engine
+takes the call's type from the found method's return type. An extension method call in
+this situation still falls back, because the host's lookup does not see extension methods.
+The share rose from 81.3 % to 81.8 %.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |
