@@ -11,7 +11,7 @@ permissions:
 
 env:
   DOTNET_SDK_VERSION: '11.0.x'
-  DOTNET_SDK_QUALITY: 'preview'
+  DOTNET_SDK_QUALITY: 'ga'
   StagingDirectory: buildartifacts
 
 jobs:
