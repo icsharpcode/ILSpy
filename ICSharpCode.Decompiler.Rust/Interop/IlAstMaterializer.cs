@@ -775,6 +775,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				case RustBodyNode.LogicNot:
 				case RustBodyNode.Await:
 				case RustBodyNode.ThrowExpression:
+				case RustBodyNode.BitNot:
 					node.Children = [BodyNode()];
 					break;
 				case RustBodyNode.Throw:

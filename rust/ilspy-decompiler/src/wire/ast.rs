@@ -80,6 +80,7 @@ mod kind {
     pub const POST_INCREMENT: u8 = 56;
     pub const AS: u8 = 57;
     pub const THROW_EXPRESSION: u8 = 58;
+    pub const BIT_NOT: u8 = 59;
 }
 
 pub(super) fn write_body(
@@ -353,6 +354,7 @@ fn node(w: &mut FunctionWriter<'_, '_, '_, '_>, ast: &Ast, id: AstId) -> Result<
         AstNode::PostIncrement { .. } => kind::POST_INCREMENT,
         AstNode::As { .. } => kind::AS,
         AstNode::ThrowExpression { .. } => kind::THROW_EXPRESSION,
+        AstNode::BitNot { .. } => kind::BIT_NOT,
     });
     w.out.len(a.il.len());
     for &inst in &a.il {
@@ -457,6 +459,7 @@ fn node(w: &mut FunctionWriter<'_, '_, '_, '_>, ast: &Ast, id: AstId) -> Result<
         | AstNode::ExpressionStatement { expression }
         | AstNode::LogicNot { expression }
         | AstNode::ThrowExpression { expression }
+        | AstNode::BitNot { expression }
         | AstNode::Await { expression } => {
             node(w, ast, expression)?;
         }

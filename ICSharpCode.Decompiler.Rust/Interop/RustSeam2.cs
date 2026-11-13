@@ -101,6 +101,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		public const byte PostIncrement = 56;
 		public const byte As = 57;
 		public const byte ThrowExpression = 58;
+		public const byte BitNot = 59;
 
 		public byte Kind;
 		/// <summary>The instructions the node is annotated with, in order.</summary>
@@ -420,6 +421,12 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					while (child < node.Children.Length)
 						section.Statements.Add((Statement)Build(node.Children[child++], exprBuilder));
 					return Annotate(section, node);
+				}
+				case RustBodyNode.BitNot:
+				{
+					var operand = (Expression)Build(node.Children[0], exprBuilder);
+					node.ResolveResult = exprBuilder.resolver.ResolveUnaryOperator(UnaryOperatorType.BitNot, operand.GetResolveResult());
+					return Annotate(new UnaryOperatorExpression(UnaryOperatorType.BitNot, operand), node);
 				}
 				case RustBodyNode.ThrowExpression:
 					return Annotate(new ThrowExpression((Expression)Build(node.Children[0], exprBuilder)), node);

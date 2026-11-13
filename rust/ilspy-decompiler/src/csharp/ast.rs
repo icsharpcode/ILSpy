@@ -85,6 +85,8 @@ pub enum AstNode {
         expression: AstId,
         overflow: Overflow,
     },
+    /// `UnaryOperatorExpression` of `BitNot`, whose operator the host resolves.
+    BitNot { expression: AstId },
     /// `ThrowExpression`: `throw expression`.
     ThrowExpression { expression: AstId },
     /// `AsExpression`: `expression as ty`.

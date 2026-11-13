@@ -248,16 +248,17 @@ impl Builder<'_, '_, '_, '_> {
             return self.implicit_conversion_call(inst, &method, &list);
         }
 
-        // A delegate's `Invoke` is the invocation of the delegate itself.
-        if method.name == "Invoke" && self.ts.kind(declaring) == TypeKind::Delegate {
-            if self.is_cast_target(target.expression) {
-                return Err("a cast as the target of a member or reference".to_owned());
-            }
-            if matches!(
+        // A delegate's `Invoke` is the invocation of the delegate itself, unless the target is
+        // null-conditional: `d?.Invoke(...)` is an ordinary call.
+        if method.name == "Invoke"
+            && self.ts.kind(declaring) == TypeKind::Delegate
+            && !matches!(
                 self.ast.node(target.expression),
                 AstNode::NullConditional { rewrap: false, .. }
-            ) {
-                return Err("a null-conditional delegate invocation".to_owned());
+            )
+        {
+            if self.is_cast_target(target.expression) {
+                return Err("a cast as the target of a member or reference".to_owned());
             }
             let arguments = self.written_arguments(&list, 0);
             let e = self.ast.add(AstNode::Invocation {
@@ -1451,11 +1452,12 @@ impl Builder<'_, '_, '_, '_> {
                     // value-type target, which the managed probe resolves without the cast where
                     // the engine's does not, is not translated.
                     // A `this` or `base` target, which the managed probe resolves without the
-                    // cast (a constructor initializer), is not translated either.
+                    // cast (a constructor initializer), is not translated either; nor is a
+                    // null-conditional target, which would be cast inside its `?`.
                     if self.ts.is_reference_type(target.ty) != Some(true)
                         || matches!(
                             self.ast.node(target.expression),
-                            AstNode::This | AstNode::Base
+                            AstNode::This | AstNode::Base | AstNode::NullConditional { .. }
                         )
                     {
                         return Err("a reference that needs a cast of its target".to_owned());

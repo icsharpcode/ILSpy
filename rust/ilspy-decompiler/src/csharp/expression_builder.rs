@@ -444,6 +444,10 @@ impl Builder<'_, '_, '_, '_> {
             // `VisitIsInst`: `arg as T` for a reference type, a boxing conversion of the argument
             // dropped; a value type, emulated with `is` and a conditional, is not translated.
             Inst::UnboxAny { arg, ty } => self.unbox_any(inst, arg, ty.ty),
+            Inst::BitNot {
+                arg,
+                lifted_underlying: None,
+            } => self.bit_not(inst, arg, hint),
             // `VisitThrow`: `throw ex`, the exception translated with `Exception` as type hint.
             Inst::Throw { arg } => {
                 let exception = self.ts.known_type(KnownTypeCode::Exception);
@@ -512,6 +516,55 @@ impl Builder<'_, '_, '_, '_> {
         let (ty, value) = self.constant_value_rr(ty, value, true)?;
         self.ast.with_rr(e, Rr::Constant { ty, value });
         self.ast.with_il(e, inst);
+        Ok(TranslatedExpression { expression: e, ty })
+    }
+
+    /// `VisitBitNot` without lifting: `~arg`, an undersized argument, a small integer enum, a
+    /// `bool` or a `char` first converted to the result's integer type.
+    fn bit_not(
+        &mut self,
+        inst: NodeId,
+        arg: NodeId,
+        hint: TypeId,
+    ) -> Result<TranslatedExpression, Unsupported> {
+        let result_stack = self.f.result_type(self.ts, inst);
+        let mut a = self.translate(arg, None)?;
+        if self.ts.is_known(a.ty, KnownTypeCode::NullableOfT) {
+            return Err("a ~ of a nullable value".to_owned());
+        }
+        let stack = self.ts.stack_type(a.ty);
+        if stack == StackType::I || result_stack == StackType::I {
+            return Err("a ~ of a native integer".to_owned());
+        }
+        let small = self.ts.type_size(a.ty) > 0 && self.ts.type_size(a.ty) < 4;
+        let enum_type = self.ts.kind(a.ty) == TypeKind::Enum;
+        if stack_size(stack) < stack_size(result_stack)
+            || (enum_type && small)
+            || self.ts.is_known(a.ty, KnownTypeCode::Boolean)
+            || self.ts.is_known(a.ty, KnownTypeCode::Char)
+        {
+            let mut sign = self.ts.type_sign(hint);
+            if sign == Sign::None {
+                sign = self.ts.type_sign(a.ty);
+            }
+            let target = self.find_integer_type(result_stack, sign)?;
+            a = self.convert_to(a, target, false)?;
+        }
+        // The type of the predefined `~`: an enum's own, `int` for the small integers.
+        let ty = if self.ts.kind(a.ty) == TypeKind::Enum {
+            a.ty
+        } else {
+            match self.ts.type_code(a.ty) {
+                5..=9 => self.ts.known_type(KnownTypeCode::Int32),
+                10..=12 => a.ty,
+                _ => return Err("a ~ of these types".to_owned()),
+            }
+        };
+        let e = self.ast.add(AstNode::BitNot {
+            expression: a.expression,
+        });
+        self.ast.with_il(e, inst);
+        self.ast.with_rr(e, Rr::ResolvedOperator { ty });
         Ok(TranslatedExpression { expression: e, ty })
     }
 
@@ -1335,8 +1388,28 @@ impl Builder<'_, '_, '_, '_> {
                 return Err("a dynamic ??".to_owned());
             }
         }
+        // A nullable value `a ?? b`: of the underlying type where `b` converts to it, else of
+        // the nullable type; the host resolves the operator.
         if self.ts.is_known(value.ty, KnownTypeCode::NullableOfT) {
-            return Err("a ?? of a nullable value type".to_owned());
+            let underlying = self.ts.nullable_underlying(value.ty);
+            let fallback_rr = self.semantic_rr(fallback.expression, fallback.ty);
+            let mut conversions = Conversions::new(self.ts);
+            let ty = if conversions.implicit(&fallback_rr, underlying).is_valid() {
+                underlying
+            } else if conversions.implicit(&fallback_rr, value.ty).is_valid() {
+                value.ty
+            } else {
+                return Err("a ?? of a nullable value type that needs conversions".to_owned());
+            };
+            let e = self.ast.add(AstNode::BinaryOperator {
+                overflow: Overflow::None,
+                op: BinaryOp::NullCoalescing,
+                left: value.expression,
+                right: fallback.expression,
+            });
+            self.ast.with_il(e, inst);
+            self.ast.with_rr(e, Rr::ResolvedOperator { ty });
+            return Ok(TranslatedExpression { expression: e, ty });
         }
         if matches!(self.ts.kind(value.ty), TypeKind::Null | TypeKind::None) {
             return Err("a ?? that needs conversions".to_owned());

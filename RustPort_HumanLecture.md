@@ -3781,6 +3781,23 @@ resolve result `HandleAccessorCall` gives the assignment. A raise accessor falls
 
 The share rose from 87.6 % to 88.3 %.
 
+### 3.155 A batch: nullable ??, bitwise not, null-conditional Invoke (item 68y47)
+
+*Nullable ??.* `a ?? b` with `a` of a nullable value type is of the underlying type where
+`b` converts to it, else of the nullable type, as the C# operator is; the host resolves the
+operator, so its resolve result is the resolver's.
+
+*Bitwise not.* `VisitBitNot` converts an argument that is narrower than the result, a
+small integer enum, a `bool` or a `char` to the result's integer type first; the type of
+`~` is then the enum's, or `int` for the small integers, and the host resolves the unary
+operator over the built operand. Lifted and native integer operands fall back.
+
+*Null-conditional Invoke.* A delegate's `Invoke` is written as the invocation of the
+delegate unless its target is null-conditional; `d?.Invoke(x)` goes the way of an ordinary
+call, as in the managed builder.
+
+The share rose from 88.3 % to 89.1 %.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |
