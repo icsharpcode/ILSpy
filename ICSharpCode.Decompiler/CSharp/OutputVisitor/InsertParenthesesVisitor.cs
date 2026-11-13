@@ -55,6 +55,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			Shift,          // << >>
 			Additive,       // binary + -
 			Multiplicative, // * / %
+			With,           // C# 9 with expression
 			Switch,         // C# 8 switch expression
 			Range,          // ..
 			Unary,
@@ -154,6 +155,8 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			}
 			if (expr is SwitchExpression)
 				return PrecedenceLevel.Switch;
+			if (expr is WithInitializerExpression)
+				return PrecedenceLevel.With;
 			if (expr is IsExpression || expr is AsExpression)
 				return PrecedenceLevel.RelationalAndTypeTesting;
 			if (expr is ConditionalExpression || expr is DirectionExpression)
@@ -562,9 +565,19 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			base.VisitNamedExpression(namedExpression);
 		}
 
+		public override void VisitWithInitializerExpression(WithInitializerExpression withInitializerExpression)
+		{
+			ParenthesizeIfRequired(withInitializerExpression.Expression, PrecedenceLevel.With);
+			if (InsertParenthesesForReadability && withInitializerExpression.Expression is SwitchExpression)
+				Parenthesize(withInitializerExpression.Expression);
+			base.VisitWithInitializerExpression(withInitializerExpression);
+		}
+
 		public override void VisitSwitchExpression(SwitchExpression switchExpression)
 		{
 			ParenthesizeIfRequired(switchExpression.Expression, PrecedenceLevel.Switch + 1);
+			if (InsertParenthesesForReadability && switchExpression.Expression is UnaryOperatorExpression)
+				Parenthesize(switchExpression.Expression);
 			base.VisitSwitchExpression(switchExpression);
 		}
 	}

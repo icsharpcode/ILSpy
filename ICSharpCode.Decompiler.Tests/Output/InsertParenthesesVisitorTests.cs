@@ -511,5 +511,103 @@ namespace ICSharpCode.Decompiler.Tests.Output
 			Assert.That(InsertRequired(expr2), Is.EqualTo("new Data { X = 42 }"));
 			Assert.That(InsertRequired(expr3), Is.EqualTo("new Dictionary<int, string> { [0] = \"42\" }"));
 		}
+
+		[Test]
+		public void WithExpressionAsMemberReferenceTarget()
+		{
+			Expression expr = new InvocationExpression {
+				Target = new MemberReferenceExpression {
+					Target = new WithInitializerExpression {
+						Expression = new IdentifierExpression("databaseHeader"),
+						Initializer = new ArrayInitializerExpression {
+							Elements = { new NamedExpression("PageCount", new IdentifierExpression("committedDatabaseSize")) }
+						}
+					},
+					MemberName = "Write"
+				},
+				Arguments = { new IdentifierExpression("array") }
+			};
+
+			Assert.That(InsertRequired(expr), Is.EqualTo("(databaseHeader with { PageCount = committedDatabaseSize }).Write (array)"));
+			Assert.That(InsertReadable(expr), Is.EqualTo("(databaseHeader with { PageCount = committedDatabaseSize }).Write (array)"));
+		}
+
+		[Test]
+		public void ComplexExpressionAsWithReceiver()
+		{
+			Expression expr = new WithInitializerExpression {
+				Expression = new BinaryOperatorExpression(new IdentifierExpression("a"), BinaryOperatorType.Add, new IdentifierExpression("b")),
+				Initializer = new ArrayInitializerExpression {
+					Elements = { new NamedExpression("Value", new IdentifierExpression("value")) }
+				}
+			};
+
+			Assert.That(InsertRequired(expr), Is.EqualTo("(a + b) with { Value = value }"));
+			Assert.That(InsertReadable(expr), Is.EqualTo("(a + b) with { Value = value }"));
+		}
+
+		[Test]
+		public void NestedWithExpressions()
+		{
+			Expression expr = new WithInitializerExpression {
+				Expression = new WithInitializerExpression {
+					Expression = new IdentifierExpression("a"),
+					Initializer = new ArrayInitializerExpression {
+						Elements = { new NamedExpression("First", new IdentifierExpression("first")) }
+					}
+				},
+				Initializer = new ArrayInitializerExpression {
+					Elements = { new NamedExpression("Second", new IdentifierExpression("second")) }
+				}
+			};
+
+			Assert.That(InsertRequired(expr), Is.EqualTo("a with { First = first } with { Second = second }"));
+			Assert.That(InsertReadable(expr), Is.EqualTo("a with { First = first } with { Second = second }"));
+		}
+
+		[Test]
+		public void SwitchExpressionAsWithReceiver()
+		{
+			Expression expr = new WithInitializerExpression {
+				Expression = new SwitchExpression {
+					Expression = new IdentifierExpression("a")
+				},
+				Initializer = new ArrayInitializerExpression {
+					Elements = { new NamedExpression("Value", new IdentifierExpression("value")) }
+				}
+			};
+
+			Assert.That(InsertRequired(expr), Is.EqualTo("a switch { } with { Value = value }"));
+			Assert.That(InsertReadable(expr), Is.EqualTo("(a switch { }) with { Value = value }"));
+		}
+
+		[Test]
+		public void WithExpressionAsSwitchExpressionInput()
+		{
+			Expression expr = new SwitchExpression {
+				Expression = new WithInitializerExpression {
+					Expression = new IdentifierExpression("a"),
+					Initializer = new ArrayInitializerExpression {
+						Elements = { new NamedExpression("Value", new IdentifierExpression("value")) }
+					}
+				}
+			};
+
+			Assert.That(InsertRequired(expr), Is.EqualTo("(a with { Value = value }) switch { }"));
+			Assert.That(InsertReadable(expr), Is.EqualTo("(a with { Value = value }) switch { }"));
+		}
+
+		[TestCase(UnaryOperatorType.Not, "!i", "(!i)")]
+		[TestCase(UnaryOperatorType.Minus, "-i", "(-i)")]
+		[TestCase(UnaryOperatorType.PostIncrement, "i++", "(i++)")]
+		public void UnaryExpressionAsSwitchExpressionInput(UnaryOperatorType op, string requiredInput, string readableInput)
+		{
+			Expression expr = new SwitchExpression {
+				Expression = new UnaryOperatorExpression(op, new IdentifierExpression("i"))
+			};
+
+			Assert.That(InsertRequired(expr), Is.EqualTo(requiredInput + " switch { }"));
+			Assert.That(InsertReadable(expr), Is.EqualTo(readableInput + " switch { }"));
+		}
 	}
 }
