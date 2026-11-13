@@ -264,6 +264,11 @@ fn rr(w: &mut FunctionWriter<'_, '_, '_, '_>, rr: Option<&Rr>) -> Result<(), Str
             w.out.u8(25);
             w.ty(*ty);
         }
+        Some(Rr::FormatString { ty, format }) => {
+            w.out.u8(26);
+            w.ty(*ty);
+            utf16(w, format);
+        }
         // The host builds the lambda's resolve result from the node.
         Some(Rr::Lambda(_)) => w.out.u8(0),
         Some(Rr::TypeOf { ty, referenced }) => {

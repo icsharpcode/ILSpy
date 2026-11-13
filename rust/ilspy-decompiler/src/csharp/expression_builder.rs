@@ -694,6 +694,7 @@ impl Builder<'_, '_, '_, '_> {
         // applies, or one over another stack type, an operand is cast to the comparison's type,
         // and both where one is not enough.
         let mut converts_operands = resolved.unwrap_or(false);
+        let mut operator_built = false;
         if !self.fits_comparison(resolved, &l, &r, input) {
             let target = self.comparison_target_type(input, l.ty, r.ty);
             if target == l.ty {
@@ -707,7 +708,14 @@ impl Builder<'_, '_, '_, '_> {
                 l = self.convert_to(l, target, false)?;
                 r = self.convert_to(r, target, false)?;
                 converts_operands = false;
+                operator_built = true;
             }
+        }
+        // The resolver folds a comparison of two constants into a constant, which the host
+        // computes by resolving the operator; only the operator built over both converted
+        // operands stays an operator.
+        if !operator_built && self.both_constant(&l, &r) {
+            converts_operands = true;
         }
         let e = self.ast.add(AstNode::BinaryOperator {
             overflow: Overflow::None,
@@ -916,11 +924,6 @@ impl Builder<'_, '_, '_, '_> {
             || (r_null && self.ts.is_reference_type(lt) == Some(false))
         {
             return Err("a lifted comparison".to_owned());
-        }
-        if matches!(self.rr_of(l.expression), Rr::Constant { .. })
-            && matches!(self.rr_of(r.expression), Rr::Constant { .. })
-        {
-            return Err("a comparison of constants".to_owned());
         }
         // `BinaryNumericPromotion` converts unless both are the same type of at least `int`:
         // Int32, UInt32, Int64, UInt64, Single or Double.
@@ -1339,11 +1342,6 @@ impl Builder<'_, '_, '_, '_> {
                 return Err("a relational comparison of these types".to_owned());
             }
         }
-        if matches!(self.rr_of(l.expression), Rr::Constant { .. })
-            && matches!(self.rr_of(r.expression), Rr::Constant { .. })
-        {
-            return Err("a comparison of constants".to_owned());
-        }
         // `ResolveBinaryOperator` leaves operands of the same type from Int32 to Double alone.
         let (lc, rc) = (self.ts.type_code(l.ty), self.ts.type_code(r.ty));
         if lc != rc || !(9..=14).contains(&lc) {
@@ -1363,6 +1361,13 @@ impl Builder<'_, '_, '_, '_> {
         } else {
             return Err("a relational comparison of references".to_owned());
         };
+        // Two constants fold into a constant, which the host computes by resolving the
+        // operator.
+        let rr = if self.both_constant(&l, &r) {
+            Rr::ResolvedOperator { ty: boolean }
+        } else {
+            Rr::Operator { ty: boolean }
+        };
         let e = self.ast.add(AstNode::BinaryOperator {
             overflow: Overflow::None,
             op,
@@ -1370,11 +1375,17 @@ impl Builder<'_, '_, '_, '_> {
             right: r.expression,
         });
         self.ast.with_il(e, inst);
-        self.ast.with_rr(e, Rr::Operator { ty: boolean });
+        self.ast.with_rr(e, rr);
         Ok(TranslatedExpression {
             expression: e,
             ty: boolean,
         })
+    }
+
+    /// Whether both operands are constants.
+    fn both_constant(&self, l: &TranslatedExpression, r: &TranslatedExpression) -> bool {
+        matches!(self.rr_of(l.expression), Rr::Constant { .. })
+            && matches!(self.rr_of(r.expression), Rr::Constant { .. })
     }
 
     /// `PrepareArithmeticArgument` without lifting: an operand wider than the stack type is

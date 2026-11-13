@@ -63,6 +63,7 @@ impl Builder<'_, '_, '_, '_> {
             Some(Rr::MethodGroup { index, .. }) => {
                 ResolveResult::MethodGroup(self.ast.method_groups[*index].clone())
             }
+            Some(Rr::FormatString { ty, .. }) => ResolveResult::InterpolatedString(*ty),
             Some(Rr::DefaultLiteral { shortened_from }) => {
                 ResolveResult::DefaultLiteral(*shortened_from)
             }

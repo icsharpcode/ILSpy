@@ -3722,6 +3722,25 @@ parameter target falls back.
 
 The share rose from 84.6 % to 86.0 %.
 
+### 3.152 A batch: constant comparisons, string.Format (item 68y44)
+
+*Comparisons of two constants.* The resolver folds them into a constant, so the engine lets
+the host resolve the operator, as it does for converted operands; only the operator
+`TranslateCeq` builds by hand over two converted operands stays an operator.
+
+*string.Format.* `HandleStringInterpolation` writes `string.Format("...", args)` with a
+constant format string as an interpolated string when `TokenizeFormatString` splits it into
+text and arguments numbered in order and no other argument contains a string literal; else
+the call is an ordinary one, which the engine no longer counts among the calls with syntax
+of their own. The tokenizer is ported with its unit test. The resolve result is an
+`InterpolatedStringResolveResult` of the format string, whose arguments the host takes from
+the interpolations it builds. The `params` overload (written so only in the expanded form
+or for an array literal) and `FormattableStringFactory.Create` fall back.
+
+Deferred: method group arguments in the extension method question (9 bodies) need the
+group's methods and its chosen method on the wire, which the semantic method group does
+not keep. The share rose from 86.0 % to 86.5 %.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

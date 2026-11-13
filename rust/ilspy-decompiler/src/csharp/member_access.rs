@@ -43,7 +43,8 @@ impl Builder<'_, '_, '_, '_> {
             | Rr::TypeOf { ty, .. }
             | Rr::ArrayLength { ty, .. }
             | Rr::TupleElement { ty, .. }
-            | Rr::TryCast { ty } => *ty,
+            | Rr::TryCast { ty }
+            | Rr::FormatString { ty, .. } => *ty,
             Rr::Field { field, .. } => field.field.ty,
             Rr::Event { ty, .. } => *ty,
             Rr::Lambda(_) | Rr::DefaultLiteral { .. } | Rr::MethodGroup { .. } => {

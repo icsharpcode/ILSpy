@@ -1110,6 +1110,12 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					return null;
 				case 19:
 					return new InitializedObjectResolveResult(Type());
+				case 26:
+				{
+					// RustSeam2 adds the arguments, the interpolations' resolve results.
+					var type = Type();
+					return new InterpolatedStringResolveResult(type, String());
+				}
 				case 25:
 					// RustSeam2 replaces it with the TryCast conversion of the `as` node's operand.
 					return new ResolveResult(Type());

@@ -180,7 +180,24 @@ impl Builder<'_, '_, '_, '_> {
         // the arguments
         let is_setter =
             (property.is_some() && method.parameters.len() == 1) || indexer == Some(true);
+        let first_argument_node = self.ast.nodes.len();
         let mut list = self.argument_list(call, &method, id, first_param, declaring, is_setter)?;
+
+        // `IsInterpolatedStringCreation` for `string.Format`: an interpolated string where the
+        // format string tokenizes, else an ordinary call. A `params` overload, written as an
+        // interpolated string only for an array literal or the expanded form, is not translated.
+        if self.settings.string_interpolation
+            && method.is_static
+            && method.name == "Format"
+            && self.ts.is_known(declaring, KnownTypeCode::String)
+        {
+            if method.parameters.last().is_some_and(|p| p.is_params) {
+                return Err("a string.Format call of a params overload".to_owned());
+            }
+            if let Some(e) = self.format_interpolation(inst, &list, first_argument_node)? {
+                return Ok(e);
+            }
+        }
 
         // `HandleImplicitConversion`: an implicit conversion operator is written as the conversion.
         if method.is_operator && method.name == "op_Implicit" && list.arguments.len() == 1 {
@@ -1152,8 +1169,7 @@ impl Builder<'_, '_, '_, '_> {
                         .first_type_argument(p.ty)
                         .is_some_and(|a| ts.is_known(a, KnownTypeCode::Char))
             });
-        let special = (ts.is_known(declaring, KnownTypeCode::String)
-            && (method.name == "Format" || span_concat))
+        let special = (ts.is_known(declaring, KnownTypeCode::String) && span_concat)
             || in_namespace(
                 "System.Runtime.CompilerServices",
                 "FormattableStringFactory",
@@ -1532,6 +1548,73 @@ impl Builder<'_, '_, '_, '_> {
         })
     }
 
+    /// `HandleStringInterpolation` for `string.Format`: the interpolated string the format
+    /// string's tokens make with the arguments, or `None` where `TryGetStringInterpolationTokens`
+    /// fails (the call is then written as it is).
+    fn format_interpolation(
+        &mut self,
+        inst: NodeId,
+        list: &ArgumentList,
+        first_argument_node: usize,
+    ) -> Result<Option<TranslatedExpression>, Unsupported> {
+        let Some(format_arg) = list.arguments.first() else {
+            return Ok(None);
+        };
+        let format = match self.rr_of(format_arg.expression) {
+            Rr::Constant {
+                ty,
+                value: ConstValue::String(s),
+            } if self.ts.is_known(ty, KnownTypeCode::String) => s,
+            _ => return Ok(None),
+        };
+        // No other argument may contain a string literal.
+        let format_node = format_arg.expression.0 as usize;
+        let has_string_literal = self.ast.nodes[first_argument_node..]
+            .iter()
+            .enumerate()
+            .any(|(i, (n, _))| {
+                first_argument_node + i != format_node
+                    && matches!(
+                        n,
+                        AstNode::StringLiteral { .. }
+                            | AstNode::ConstantValue {
+                                value: ConstValue::String(_),
+                                ..
+                            }
+                    )
+            });
+        if has_string_literal {
+            return Ok(None);
+        }
+        let Some(tokens) = format_tokens(&format) else {
+            return Ok(None);
+        };
+        if tokens.is_empty()
+            || tokens.iter().filter(|t| t.index.is_some()).count() + 1 != list.arguments.len()
+        {
+            return Ok(None);
+        }
+        let contents = tokens
+            .into_iter()
+            .map(|t| match t.index {
+                None => super::ast::InterpolatedContent::Text(t.text),
+                Some(index) => super::ast::InterpolatedContent::Interpolation {
+                    expression: list.arguments[index + 1].expression,
+                    alignment: t.alignment,
+                    suffix: t.format,
+                },
+            })
+            .collect();
+        let string = self.ts.known_type(KnownTypeCode::String);
+        let e = self.ast.add(AstNode::InterpolatedString { contents });
+        self.ast.with_il(e, inst);
+        self.ast.with_rr(e, Rr::FormatString { ty: string, format });
+        Ok(Some(TranslatedExpression {
+            expression: e,
+            ty: string,
+        }))
+    }
+
     /// `Disambiguator.ProbeCall`: the overload resolution of the current spelling, over the
     /// method group the host looks the name up to.
     #[allow(clippy::too_many_arguments)]
@@ -1864,5 +1947,197 @@ impl Builder<'_, '_, '_, '_> {
             }
         }
         Ok(false)
+    }
+}
+
+/// A token of `TryGetStringInterpolationTokens`: text (`index` none, with its `{{` and `}}`
+/// kept), or an argument with its alignment and format.
+struct FormatToken {
+    index: Option<usize>,
+    text: Vec<u16>,
+    alignment: i32,
+    format: Option<Vec<u16>>,
+}
+
+/// `TokenizeFormatString` and `TryGetStringInterpolationTokens`: the tokens of a composite
+/// format string whose arguments are numbered in order, `None` for any other string.
+fn format_tokens(value: &[u16]) -> Option<Vec<FormatToken>> {
+    #[derive(Clone, Copy, PartialEq)]
+    enum Kind {
+        String,
+        Argument,
+        WithFormat,
+        WithAlignment,
+        WithAlignmentAndFormat,
+    }
+    let (open, close, colon, comma) = (
+        u16::from(b'{'),
+        u16::from(b'}'),
+        u16::from(b':'),
+        u16::from(b','),
+    );
+    let mut raw: Vec<(Kind, Vec<u16>)> = Vec::new();
+    let mut kind = Kind::String;
+    let mut sb: Vec<u16> = Vec::new();
+    let mut pos = 0;
+    while pos < value.len() {
+        let c = value[pos];
+        pos += 1;
+        let peek = value.get(pos).copied();
+        if c == open {
+            if peek == Some(open) {
+                kind = Kind::String;
+                sb.extend([open, open]);
+                pos += 1;
+            } else {
+                if !sb.is_empty() {
+                    raw.push((kind, std::mem::take(&mut sb)));
+                }
+                kind = Kind::Argument;
+                sb.clear();
+            }
+        } else if c == close {
+            if kind != Kind::String {
+                raw.push((kind, std::mem::take(&mut sb)));
+                kind = Kind::String;
+            } else if peek == Some(close) {
+                sb.extend([close, close]);
+                pos += 1;
+            } else {
+                return None;
+            }
+        } else if c == colon {
+            if kind == Kind::Argument {
+                kind = Kind::WithFormat;
+            } else if kind == Kind::WithAlignment {
+                kind = Kind::WithAlignmentAndFormat;
+            }
+            sb.push(colon);
+        } else if c == comma {
+            if kind == Kind::Argument {
+                kind = Kind::WithAlignment;
+            }
+            sb.push(comma);
+        } else {
+            sb.push(c);
+        }
+    }
+    if !sb.is_empty() {
+        if kind != Kind::String {
+            return None;
+        }
+        raw.push((kind, sb));
+    }
+    // `int.TryParse`: an optional sign, digits, surrounding white space.
+    let parse =
+        |s: &[u16]| -> Option<i32> { String::from_utf16(s).ok()?.trim().parse::<i32>().ok() };
+    let split = |s: &[u16], seps: &[u16], parts: usize| -> Vec<Vec<u16>> {
+        let mut out = vec![Vec::new()];
+        for &c in s {
+            if out.len() < parts && seps.contains(&c) {
+                out.push(Vec::new());
+            } else {
+                out.last_mut().expect("a part").push(c);
+            }
+        }
+        out
+    };
+    let mut next = 0;
+    let mut tokens = Vec::new();
+    for (kind, data) in raw {
+        let (index, alignment, format) = match kind {
+            Kind::String => {
+                tokens.push(FormatToken {
+                    index: None,
+                    text: data,
+                    alignment: 0,
+                    format: None,
+                });
+                continue;
+            }
+            Kind::Argument => (parse(&data)?, 0, None),
+            Kind::WithFormat => {
+                let parts = split(&data, &[colon], 2);
+                if parts.len() != 2 || parts[1].is_empty() {
+                    return None;
+                }
+                (parse(&parts[0])?, 0, Some(parts[1].clone()))
+            }
+            Kind::WithAlignment => {
+                let parts = split(&data, &[comma], 2);
+                if parts.len() != 2 || parts[1].is_empty() {
+                    return None;
+                }
+                (parse(&parts[0])?, parse(&parts[1])?, None)
+            }
+            Kind::WithAlignmentAndFormat => {
+                let parts = split(&data, &[comma, colon], 3);
+                if parts.len() != 3 || parts[1].is_empty() || parts[2].is_empty() {
+                    return None;
+                }
+                (parse(&parts[0])?, parse(&parts[1])?, Some(parts[2].clone()))
+            }
+        };
+        if usize::try_from(index).ok()? != next {
+            return None;
+        }
+        next += 1;
+        tokens.push(FormatToken {
+            index: Some(next - 1),
+            text: Vec::new(),
+            alignment,
+            format,
+        });
+    }
+    Some(tokens)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::format_tokens;
+
+    fn utf16(s: &str) -> Vec<u16> {
+        s.encode_utf16().collect()
+    }
+
+    /// The tokens of `TryGetStringInterpolationTokens`, as (index, text, alignment, format).
+    fn tokens(s: &str) -> Option<Vec<(Option<usize>, String, i32, Option<String>)>> {
+        Some(
+            format_tokens(&utf16(s))?
+                .into_iter()
+                .map(|t| {
+                    (
+                        t.index,
+                        String::from_utf16(&t.text).unwrap(),
+                        t.alignment,
+                        t.format.map(|f| String::from_utf16(&f).unwrap()),
+                    )
+                })
+                .collect(),
+        )
+    }
+
+    #[test]
+    fn format_strings_tokenize_as_the_managed_builder_does() {
+        assert_eq!(
+            tokens("a {0} b {1,-5:x2}{{c}}"),
+            Some(vec![
+                (None, "a ".to_owned(), 0, None),
+                (Some(0), String::new(), 0, None),
+                (None, " b ".to_owned(), 0, None),
+                (Some(1), String::new(), -5, Some("x2".to_owned())),
+                (None, "{{c}}".to_owned(), 0, None),
+            ])
+        );
+        assert_eq!(
+            tokens("{0:N}"),
+            Some(vec![(Some(0), String::new(), 0, Some("N".to_owned()))])
+        );
+        // Arguments out of order, a lone brace, an unterminated argument, an empty format.
+        assert_eq!(tokens("{1}{0}"), None);
+        assert_eq!(tokens("a } b"), None);
+        assert_eq!(tokens("{0"), None);
+        assert_eq!(tokens("{0:}"), None);
+        assert_eq!(tokens(""), Some(Vec::new()));
     }
 }

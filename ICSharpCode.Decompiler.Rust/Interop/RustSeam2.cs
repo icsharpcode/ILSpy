@@ -624,6 +624,12 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 						else
 							content.Add(new Interpolation((Expression)Build(node.Children[child++], exprBuilder), alignment, suffix));
 					}
+					// A `string.Format` call: the arguments are the interpolated expressions.
+					if (node.ResolveResult is InterpolatedStringResolveResult format)
+					{
+						node.ResolveResult = new InterpolatedStringResolveResult(format.Type, format.FormatString,
+							content.OfType<Interpolation>().Select(i => i.Expression.GetResolveResult()).ToArray());
+					}
 					return Annotate(new InterpolatedStringExpression(content), node);
 				}
 				case RustBodyNode.Lambda:

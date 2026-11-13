@@ -303,6 +303,9 @@ pub enum Rr {
         target: Option<Box<Rr>>,
         field: crate::il::ast::FieldOperand,
     },
+    /// `InterpolatedStringResolveResult` of a `string.Format` call written as an interpolated
+    /// string, whose arguments the host takes from the interpolations.
+    FormatString { ty: TypeId, format: Vec<u16> },
     /// `ConversionResolveResult` of `Conversion.TryCast` to `ty`, which the host computes from
     /// the `as` node's operand.
     TryCast { ty: TypeId },
