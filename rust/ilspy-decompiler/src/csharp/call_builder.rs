@@ -134,11 +134,26 @@ impl Builder<'_, '_, '_, '_> {
         // `IsWrittenAsMemberAccess`: the name of the property the accessor belongs to; for an
         // indexer whether the accessor is its setter.
         let mut indexer: Option<bool> = None;
+        // For an event's add or remove accessor: the compound assignment operator, `+=` (1) or
+        // `-=` (2) as `AssignmentOperatorType`.
+        let mut event_op: Option<u8> = None;
         let property = match self.ts.accessor_owner(id) {
             None => None,
+            Some((token, semantics)) if token >> 24 == 0x14 => {
+                event_op = Some(match semantics {
+                    0x08 => 1,
+                    0x10 => 2,
+                    _ => return Err("an event raise call".to_owned()),
+                });
+                let md = &self.ts.comp.module(id.module).md;
+                let e = md
+                    .get::<crate::metadata::tables::rows::Event>(token & 0x00FF_FFFF)
+                    .map_err(|e| e.to_string())?;
+                Some(md.string(e.name).map_err(|e| e.to_string())?.into_owned())
+            }
             Some((token, semantics)) => {
                 if token >> 24 != 0x17 {
-                    return Err("an event accessor call".to_owned());
+                    return Err("an accessor of another kind".to_owned());
                 }
                 let parameters = usize::from(semantics == ACCESSOR_SETTER);
                 if !matches!(semantics, ACCESSOR_GETTER | ACCESSOR_SETTER) {
@@ -273,7 +288,9 @@ impl Builder<'_, '_, '_, '_> {
             );
         }
         if let Some(name) = property {
-            return self.accessor_call(inst, operand, &method, op, target, list, name, declaring);
+            return self.accessor_call(
+                inst, operand, &method, op, target, list, name, declaring, event_op,
+            );
         }
 
         // `GetRequiredTransformationsForCall`
@@ -818,6 +835,9 @@ impl Builder<'_, '_, '_, '_> {
             || ts.is_known(declaring, KnownTypeCode::UIntPtr)
         {
             Some("a native integer")
+        } else if ts.is_known(declaring, KnownTypeCode::NullableOfT) {
+            // `new T?(x)` is written as `x` where it converts implicitly.
+            Some("a nullable value")
         } else {
             match name.as_ref() {
                 None => Some("an unnamed type"),
@@ -933,6 +953,7 @@ impl Builder<'_, '_, '_, '_> {
         list: ArgumentList,
         name: String,
         declaring: TypeId,
+        event_op: Option<u8>,
     ) -> Result<TranslatedExpression, Unsupported> {
         let declaring_def = self.ts.definition(declaring);
         let require = self.requires_qualifier_dispatching(
@@ -975,10 +996,19 @@ impl Builder<'_, '_, '_, '_> {
                 ty,
             });
         };
-        let e = self.ast.add(AstNode::Assignment {
-            left: reference,
-            right: value.expression,
-        });
+        // An event's accessor is `+=` or `-=`.
+        let e = match event_op {
+            Some(op) => self.ast.add(AstNode::CompoundAssignment {
+                op,
+                left: reference,
+                right: value.expression,
+                overflow: super::ast::Overflow::None,
+            }),
+            None => self.ast.add(AstNode::Assignment {
+                left: reference,
+                right: value.expression,
+            }),
+        };
         self.ast.with_rr(e, Rr::Type(ty));
         self.ast.with_il(e, inst);
         Ok(TranslatedExpression { expression: e, ty })

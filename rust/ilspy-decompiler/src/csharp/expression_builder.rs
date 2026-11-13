@@ -29,6 +29,16 @@ impl Builder<'_, '_, '_, '_> {
         };
         match self.f.inst(inst).clone() {
             Inst::LdcI4 { value } => self.ldc_i4(inst, value, hint),
+            Inst::LdcI8 { value } => self.ldc_i8(inst, value, hint),
+            // `VisitLdcF4` and `VisitLdcF8`: the literal of the floating point type.
+            Inst::LdcF4 { bits } => {
+                let ty = self.ts.known_type(KnownTypeCode::Single);
+                self.float_constant(inst, ty, ConstValue::Single(bits))
+            }
+            Inst::LdcF8 { bits } => {
+                let ty = self.ts.known_type(KnownTypeCode::Double);
+                self.float_constant(inst, ty, ConstValue::Double(bits))
+            }
             Inst::LdStr { value } => {
                 let string = self.ts.known_type(KnownTypeCode::String);
                 let e = self.ast.add(AstNode::StringLiteral {
@@ -500,6 +510,54 @@ impl Builder<'_, '_, '_, '_> {
             allow_implicit_conversion: true,
         });
         let (ty, value) = self.constant_value_rr(ty, value, true)?;
+        self.ast.with_rr(e, Rr::Constant { ty, value });
+        self.ast.with_il(e, inst);
+        Ok(TranslatedExpression { expression: e, ty })
+    }
+
+    /// `VisitLdcI8`: the `long` (or, for an unsigned hint, `ulong`) constant, adjusted to the hint.
+    fn ldc_i8(
+        &mut self,
+        inst: NodeId,
+        value: i64,
+        hint: TypeId,
+    ) -> Result<TranslatedExpression, Unsupported> {
+        let (ty, value) = if self.ts.type_sign(hint) == Sign::Unsigned {
+            (
+                self.ts.known_type(KnownTypeCode::UInt64),
+                ConstValue::UInt64(value as u64),
+            )
+        } else {
+            (
+                self.ts.known_type(KnownTypeCode::Int64),
+                ConstValue::Int64(value),
+            )
+        };
+        let (ty, value) = self.adjust_constant_to_type(ty, value, hint)?;
+        let e = self.ast.add(AstNode::ConstantValue {
+            ty,
+            value: value.clone(),
+            allow_implicit_conversion: true,
+        });
+        let (ty, value) = self.constant_value_rr(ty, value, true)?;
+        self.ast.with_rr(e, Rr::Constant { ty, value });
+        self.ast.with_il(e, inst);
+        Ok(TranslatedExpression { expression: e, ty })
+    }
+
+    /// `TypeSystemAstBuilder.ConvertConstantValue(type, value)` of a floating point literal.
+    fn float_constant(
+        &mut self,
+        inst: NodeId,
+        ty: TypeId,
+        value: ConstValue,
+    ) -> Result<TranslatedExpression, Unsupported> {
+        let e = self.ast.add(AstNode::ConstantValue {
+            ty,
+            value: value.clone(),
+            allow_implicit_conversion: false,
+        });
+        let (ty, value) = self.constant_value_rr(ty, value, false)?;
         self.ast.with_rr(e, Rr::Constant { ty, value });
         self.ast.with_il(e, inst);
         Ok(TranslatedExpression { expression: e, ty })

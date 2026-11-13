@@ -3762,6 +3762,25 @@ them, omitted optional arguments and a call that resolves to another method fall
 
 The share rose from 86.5 % to 87.6 %.
 
+### 3.154 A batch: struct constructors, literals, event accessors (item 68y46)
+
+*Struct constructors.* The host lists a type's accessible constructors for the engine's
+overload resolution by metadata row, and a value type's synthesized parameterless
+constructor has none, so the list failed for any struct. The host now leaves it out where
+the called constructor takes arguments (and has no `params`), since it cannot apply then.
+That reached `new T?(x)` for the first time, which the managed builder writes as `x`; a
+nullable creation stays a fallback.
+
+*Literals.* `ldc.i8` is `VisitLdcI4` with the 64-bit types; `ldc.r4` and `ldc.r8` are the
+floating point literals of `TypeSystemAstBuilder.ConvertConstantValue`.
+
+*Event accessors.* An event's add or remove accessor is written as `target.E += value` or
+`-=`, through the property accessor path: the same disambiguation (the host's accessor
+query works for any accessor owner), the event's member resolve result, and the type
+resolve result `HandleAccessorCall` gives the assignment. A raise accessor falls back.
+
+The share rose from 87.6 % to 88.3 %.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

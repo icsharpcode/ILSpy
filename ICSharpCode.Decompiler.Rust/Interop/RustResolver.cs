@@ -392,8 +392,12 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 			var method = query.Method;
 			var lookup = new MemberLookup(resolver.CurrentTypeDefinition, resolver.CurrentTypeDefinition.ParentModule);
 			bool allowProtectedAccess = resolver.CurrentTypeDefinition == method.DeclaringTypeDefinition;
+			// A value type's synthesized parameterless constructor has no metadata row; it cannot
+			// apply to a call with arguments, so leaving it out does not change the resolution.
+			bool takesArguments = method.Parameters.Count > 0 && !method.Parameters.Any(p => p.IsParams);
 			var constructors = method.DeclaringType.GetConstructors()
 				.Where(c => lookup.IsAccessible(c, allowProtectedAccess))
+				.Where(c => !(takesArguments && c.Parameters.Count == 0 && c.MetadataToken.IsNil))
 				.ToList<IParameterizedMember>();
 			return EncodeMethodLists([(method.DeclaringType, constructors)]);
 		}

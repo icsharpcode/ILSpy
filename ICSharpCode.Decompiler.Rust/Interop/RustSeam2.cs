@@ -385,8 +385,12 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					var op = (AssignmentOperatorType)node.Value!;
 					var left = (Expression)Build(node.Children[0], exprBuilder);
 					var right = (Expression)Build(node.Children[1], exprBuilder);
-					node.ResolveResult = new OperatorResolveResult(node.OperatorType!, AssignmentExpression.GetLinqNodeType(op, node.Overflow == 1),
-						left.GetResolveResult(), right.GetResolveResult());
+					// An event's `+=` or `-=` keeps the type resolve result it comes with.
+					if (node.OperatorType != null)
+					{
+						node.ResolveResult = new OperatorResolveResult(node.OperatorType, AssignmentExpression.GetLinqNodeType(op, node.Overflow == 1),
+							left.GetResolveResult(), right.GetResolveResult());
+					}
 					return AddOverflowAnnotation(Annotate(new AssignmentExpression(left, op, right), node), node);
 				}
 				case RustBodyNode.PostIncrement:
