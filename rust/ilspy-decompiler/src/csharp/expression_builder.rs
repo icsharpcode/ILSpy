@@ -674,11 +674,26 @@ impl Builder<'_, '_, '_, '_> {
                 ty: boolean,
             });
         }
-        let converts_operands = self.resolve_builtin_equality(op, &l, &r)?;
-        // The check `TranslateCeq` makes before it takes the resolve result.
-        let operand = self.ts.nullable_underlying(l.ty);
-        if self.ts.stack_type(operand) != input {
-            return Err("a comparison that needs casts".to_owned());
+        let resolved = self.resolve_builtin_equality(op, &l, &r)?;
+        let (mut l, mut r) = (l, r);
+        // The check `TranslateCeq` makes before it takes the resolve result: where no operator
+        // applies, or one over another stack type, an operand is cast to the comparison's type,
+        // and both where one is not enough.
+        let mut converts_operands = resolved.unwrap_or(false);
+        if !self.fits_comparison(resolved, &l, input) {
+            let target = self.comparison_target_type(input, l.ty, r.ty);
+            if target == l.ty {
+                r = self.convert_to(r, target, false)?;
+            } else {
+                l = self.convert_to(l, target, false)?;
+            }
+            let resolved = self.resolve_builtin_equality(op, &l, &r)?;
+            converts_operands = resolved.unwrap_or(false);
+            if !self.fits_comparison(resolved, &l, input) {
+                l = self.convert_to(l, target, false)?;
+                r = self.convert_to(r, target, false)?;
+                converts_operands = false;
+            }
         }
         let e = self.ast.add(AstNode::BinaryOperator {
             overflow: Overflow::None,
@@ -698,6 +713,36 @@ impl Builder<'_, '_, '_, '_> {
             expression: e,
             ty: boolean,
         })
+    }
+
+    /// Whether the operator resolved over the comparison's stack type.
+    fn fits_comparison(
+        &mut self,
+        resolved: Option<bool>,
+        l: &TranslatedExpression,
+        input: StackType,
+    ) -> bool {
+        let operand = self.ts.nullable_underlying(l.ty);
+        resolved.is_some() && self.ts.stack_type(operand) == input
+    }
+
+    /// The type `TranslateCeq` casts an operand to: `object` for a comparison of references,
+    /// else the type of the operand that has the comparison's stack type and is no small
+    /// integer, else the stack type's type with the left operand's sign.
+    fn comparison_target_type(&mut self, input: StackType, left: TypeId, right: TypeId) -> TypeId {
+        if input == StackType::Obj {
+            return self.ts.known_type(KnownTypeCode::Object);
+        }
+        let lu = self.ts.nullable_underlying(left);
+        let ru = self.ts.nullable_underlying(right);
+        for u in [lu, ru] {
+            let size = self.ts.type_size(u);
+            if self.ts.stack_type(u) == input && !(size > 0 && size < 4) {
+                return u;
+            }
+        }
+        let sign = self.ts.primitive_type(lu).sign();
+        self.find_type(input, sign)
     }
 
     /// `AdjustConstantExpressionToType`: a constant converted to the type hint where that loses
@@ -744,13 +789,13 @@ impl Builder<'_, '_, '_, '_> {
     /// The part of `CSharpResolver.ResolveBinaryOperator` for `==` and `!=` that ends in a
     /// built-in operator whose parameters are the operands' types, so that its
     /// `OperatorResolveResult` has the operands' resolve results unchanged; every other
-    /// outcome is unsupported.
+    /// outcome is unsupported. `None` is a comparison no operator applies to.
     fn resolve_builtin_equality(
         &mut self,
         op: BinaryOp,
         l: &TranslatedExpression,
         r: &TranslatedExpression,
-    ) -> Result<bool, Unsupported> {
+    ) -> Result<Option<bool>, Unsupported> {
         let (lt, rt) = (l.ty, r.ty);
         for t in [lt, rt] {
             match self.ts.kind(t) {
@@ -795,7 +840,7 @@ impl Builder<'_, '_, '_, '_> {
         // Int32, UInt32, Int64, UInt64, Single or Double.
         // bool operator ==(E x, E y) of an enum type
         if lt == rt && self.ts.kind(lt) == TypeKind::Enum {
-            return Ok(false);
+            return Ok(Some(false));
         }
         if self.ts.kind(lt) == TypeKind::Enum || self.ts.kind(rt) == TypeKind::Enum {
             return Err("an enum comparison that needs conversions".to_owned());
@@ -803,26 +848,26 @@ impl Builder<'_, '_, '_, '_> {
         let (lc, rc) = (self.ts.type_code(lt), self.ts.type_code(rt));
         if (4..=15).contains(&lc) && (4..=15).contains(&rc) {
             return if lc == rc && (9..=14).contains(&lc) {
-                Ok(false)
+                Ok(Some(false))
             } else {
                 Err("a comparison that promotes its operands".to_owned())
             };
         }
         // bool operator ==(bool x, bool y)
         if lc == 3 && rc == 3 {
-            return Ok(false);
+            return Ok(Some(false));
         }
         // A reference comparison converts both operands to object.
         if self.ts.is_known(lt, KnownTypeCode::Object)
             && self.ts.is_known(rt, KnownTypeCode::Object)
         {
-            return Ok(false);
+            return Ok(Some(false));
         }
         // A type that can be null compared with the null literal.
         if l_null != r_null {
             let other = if l_null { rt } else { lt };
             if self.ts.is_reference_type(other) != Some(false) {
-                return Ok(false);
+                return Ok(Some(false));
             }
         }
         // Two values of one class or interface type: the reference equality of
@@ -831,7 +876,20 @@ impl Builder<'_, '_, '_, '_> {
             && self.ts.is_reference_type(lt) == Some(true)
             && matches!(self.ts.kind(lt), TypeKind::Class | TypeKind::Interface)
         {
-            return Ok(true);
+            return Ok(Some(true));
+        }
+        // Two reference types: the reference equality where one converts to the other by a
+        // reference conversion, else no operator applies (an error the caller casts for).
+        if self.ts.is_reference_type(lt) == Some(true)
+            && self.ts.is_reference_type(rt) == Some(true)
+            && !l_null
+            && !r_null
+        {
+            let mut conversions = Conversions::new(self.ts);
+            let related = conversions.identity(lt, rt)
+                || conversions.explicit_type(lt, rt).is_reference()
+                || conversions.explicit_type(rt, lt).is_reference();
+            return Ok(related.then_some(true));
         }
         Err("a comparison that needs casts".to_owned())
     }

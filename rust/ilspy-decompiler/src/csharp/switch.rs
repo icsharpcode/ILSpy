@@ -213,7 +213,7 @@ impl Builder<'_, '_, '_, '_> {
     }
 
     /// `FindType(stackType, sign)`.
-    fn find_type(&mut self, stack: StackType, sign: Sign) -> TypeId {
+    pub(super) fn find_type(&mut self, stack: StackType, sign: Sign) -> TypeId {
         let code = stack.to_primitive(sign).to_known();
         self.ts.known_type(code)
     }

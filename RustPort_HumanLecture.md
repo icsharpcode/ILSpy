@@ -3628,6 +3628,18 @@ strings, blocks that other branches reach (`goto case`) or that no section inlin
 and a governing type reached through a conversion operator fall back. The share rose from
 81.8 % to 82.3 %.
 
+### 3.147 Comparisons with casts (item 68y39)
+
+`TranslateCeq` takes the operator the resolver finds unless none applies or it compares
+another stack type than the instruction; then it casts one operand to the comparison's type
+(`object` for references, else an operand's type that has the stack type and is no small
+integer, else the stack type's own type), resolves again, and casts both where that is still
+not enough. The engine ports that path, and its equality resolver now covers two reference
+types as `CSharpResolver` does: they compare by reference equality where one converts to
+the other by an identity or explicit reference conversion, and otherwise no operator
+applies, which the resolver reports instead of giving up, so that the cast to `object`
+follows. The share rose from 82.3 % to 83.0 %.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |
