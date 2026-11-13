@@ -10,6 +10,19 @@ DOTNET_FORMAT_VERSION=10.0.100-rtm.25531.102
 DOTNET_FORMAT_SOURCE="https://pkgs.dev.azure.com/dnceng/public/_packaging/dotnet10-transport/nuget/v3/index.json"
 export OPENSSL_ENABLE_SHA1_SIGNATURES=1
 
+if [ -z "${DOTNET_ROOT:-}" ] || [ ! -d "$DOTNET_ROOT/shared" ]; then
+	DOTNET_COMMAND="$(command -v dotnet || true)"
+	if [ -n "$DOTNET_COMMAND" ]; then
+		export DOTNET_ROOT="$(dirname "$DOTNET_COMMAND")"
+	fi
+fi
+if [ -z "${DOTNET_ROOT_X64:-}" ] || [ ! -d "$DOTNET_ROOT_X64/shared" ]; then
+	export DOTNET_ROOT_X64="${DOTNET_ROOT:-}"
+fi
+if [ -z "${DOTNET_ROLL_FORWARD:-}" ]; then
+	export DOTNET_ROLL_FORWARD=LatestMajor
+fi
+
 # Per-OS tool cache location + binary suffix. Windows uses %LOCALAPPDATA% and a .exe
 # suffix; Unix-likes follow the XDG basedir spec (falling back to ~/.local/share) and
 # drop the suffix. Keeping the tool installed under the same logical path on both
