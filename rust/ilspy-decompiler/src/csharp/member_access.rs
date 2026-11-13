@@ -637,7 +637,25 @@ impl Builder<'_, '_, '_, '_> {
         Ok(e)
     }
 
-    /// `VisitStLoc` for a variable that is no stack slot.
+    /// `CanUseTypeForStackSlot`: a single definition, or stores that all infer `ty` (up to
+    /// type erasure).
+    fn can_use_type_for_stack_slot(&mut self, var: VarId, ty: TypeId) -> bool {
+        if self.f.var(var).is_single_definition() {
+            return true;
+        }
+        let n = Normalization::TYPE_ERASURE;
+        let expected = self.ts.normalize_with(ty, n);
+        let stores = self.f.var(var).store_instructions.clone();
+        stores.iter().all(|&s| match *self.f.inst(s) {
+            Inst::StLoc { value, .. } => {
+                let t = self.f.infer_type(self.ts, value);
+                self.ts.normalize_with(t, n) == expected
+            }
+            _ => false,
+        })
+    }
+
+    /// `VisitStLoc`.
     pub(crate) fn st_loc(
         &mut self,
         inst: NodeId,
@@ -645,10 +663,26 @@ impl Builder<'_, '_, '_, '_> {
         value: NodeId,
     ) -> Result<TranslatedExpression, Unsupported> {
         let var_type = self.f.var(var).ty;
+        let value_inst = value;
         let value = self.translate(value, Some(var_type))?;
-        if self.f.var(var).kind == VariableKind::StackSlot {
-            return Err("a store to a stack slot".to_owned());
+        // Stack slots have inaccurate types (`object` for any reference), which the type of
+        // the value replaces where every store agrees on it.
+        if self.f.var(var).kind == VariableKind::StackSlot
+            && !self.loaded_stack_slots.contains(&var)
+        {
+            let stack = self.f.var(var).stack_type;
+            if self.can_use_type_for_stack_slot(var, value.ty)
+                && stack == self.ts.stack_type(value.ty)
+                && self.ts.kind(value.ty) != TypeKind::Null
+            {
+                self.f.var_mut(var).ty = value.ty;
+            } else if let Inst::DefaultValue { ty, .. } = *self.f.inst(value_inst)
+                && self.ts.stack_type(ty.ty) == StackType::VT
+            {
+                self.f.var_mut(var).ty = ty.ty;
+            }
         }
+        let var_type = self.f.var(var).ty;
         if matches!(self.ts.data(var_type), TypeData::ByRef(_)) {
             return Err("a ref reassignment".to_owned());
         }

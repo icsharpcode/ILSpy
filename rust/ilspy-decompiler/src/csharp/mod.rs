@@ -60,6 +60,9 @@ pub(crate) struct Builder<'f, 't, 'c, 'a> {
     pub(crate) root_variables: Vec<crate::il::ast::VarId>,
     /// The override the last successful call probe resolved to, in place of the method called.
     pub(crate) found_override: Option<crate::semantics::Method>,
+    /// `loadedVariablesSet`: the single-definition stack slots loaded so far, whose type a
+    /// later store keeps.
+    pub(crate) loaded_stack_slots: Vec<crate::il::ast::VarId>,
 }
 
 /// The variant name of an instruction, for the reasons of untranslated bodies.

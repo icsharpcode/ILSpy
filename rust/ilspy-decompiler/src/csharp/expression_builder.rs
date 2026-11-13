@@ -65,6 +65,13 @@ impl Builder<'_, '_, '_, '_> {
                 })
             }
             Inst::LdLoc { var } => {
+                let v = self.f.var(var);
+                if v.kind == VariableKind::StackSlot
+                    && v.is_single_definition()
+                    && !self.loaded_stack_slots.contains(&var)
+                {
+                    self.loaded_stack_slots.push(var);
+                }
                 let e = self.convert_variable(var)?;
                 self.ast.with_il(e.expression, inst);
                 Ok(e)

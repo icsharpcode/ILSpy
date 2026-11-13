@@ -3652,6 +3652,18 @@ the disambiguation compares it with the form overload resolution picks, the invo
 resolve result records it, and named primitive arguments are not written for it. That is
 a step of its own. The share rose from 83.0 % to 83.1 %.
 
+### 3.149 Stores to stack slots (item 68y41)
+
+A stack slot that survives the transforms has the inaccurate type of its stack type
+(`object` for any reference), and `VisitStLoc` replaces it while translating a store: with
+the stored value's type where the slot has a single definition or every store infers that
+type (up to type erasure), the stack types agree and the value is no null literal, or with
+the type of a `default` value type. A slot a load has already been translated for keeps its
+type (`loadedVariablesSet`, which records single-definition slots as they are loaded). The
+engine retypes the slot on the function copy the builder works on, which the host receives
+with the body, so the declaration carries the new type. The share rose from 83.1 % to
+83.4 %.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

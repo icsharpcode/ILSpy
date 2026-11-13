@@ -58,6 +58,7 @@ pub fn convert_body(
         in_lambda: false,
         root_variables: read.variables.clone(),
         found_override: None,
+        loaded_stack_slots: Vec::new(),
     };
     let stmt = b.convert(body)?;
     b.ast.with_il(stmt, body);
