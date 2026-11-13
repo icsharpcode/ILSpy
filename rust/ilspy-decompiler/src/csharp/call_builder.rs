@@ -460,8 +460,8 @@ impl Builder<'_, '_, '_, '_> {
         }))
     }
 
-    /// `BuildArgumentList` for by-value arguments without `params`, optional or dynamic
-    /// parameters, each translated and converted to its parameter type.
+    /// `BuildArgumentList` for by-value arguments without expanded `params`, optional or
+    /// dynamic parameters, each translated and converted to its parameter type.
     fn argument_list(
         &mut self,
         call: &CallData,
@@ -502,15 +502,28 @@ impl Builder<'_, '_, '_, '_> {
             ) {
                 return Err("an in argument".to_owned());
             }
-            if parameter.is_params {
-                return Err("a params argument".to_owned());
-            }
             if self.ts.kind(parameter.ty) == TypeKind::Dynamic {
                 return Err("an argument of a dynamic parameter".to_owned());
             }
             let arg = self.translate(call.args[first_param + i], Some(parameter.ty))?;
             if self.ts.kind(arg.ty) == TypeKind::Dynamic {
                 return Err("a dynamic argument".to_owned());
+            }
+            // `TransformParamsArgument` expands an array creation, `Array.Empty<T>()`, a span
+            // constructor or a span conversion of an array creation into the call's arguments,
+            // which is not translated; any other argument of a `params` parameter is an
+            // ordinary one.
+            if parameter.is_params
+                && matches!(
+                    self.rr_of(arg.expression),
+                    Rr::ArrayCreate { .. }
+                        | Rr::Invocation { .. }
+                        | Rr::ObjectCreation { .. }
+                        | Rr::Conversion { .. }
+                        | Rr::ImplicitConversion { .. }
+                )
+            {
+                return Err("a params argument".to_owned());
             }
             let primitive = matches!(self.rr_of(arg.expression), Rr::Constant { .. })
                 && !declaring_is_nullable

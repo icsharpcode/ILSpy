@@ -3640,6 +3640,18 @@ the other by an identity or explicit reference conversion, and otherwise no oper
 applies, which the resolver reports instead of giving up, so that the cast to `object`
 follows. The share rose from 82.3 % to 83.0 %.
 
+### 3.148 Unexpanded params arguments (item 68y40)
+
+The engine fell back on every call with a `params` parameter. `TransformParamsArgument`,
+however, only expands an argument that is an array creation, `Array.Empty<T>()`, a span
+constructor or a span conversion of an array creation; any other argument, such as an
+array held in a variable, is an ordinary argument of the array's type. The engine now
+passes such arguments, and still falls back on the shapes the managed builder may expand.
+Porting the expansion itself means carrying the expanded form through the argument list:
+the disambiguation compares it with the form overload resolution picks, the invocation's
+resolve result records it, and named primitive arguments are not written for it. That is
+a step of its own. The share rose from 83.0 % to 83.1 %.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |
