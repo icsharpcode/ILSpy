@@ -476,7 +476,7 @@ impl Builder<'_, '_, '_, '_> {
     }
 
     /// `IType.GetEnumUnderlyingType()`.
-    fn enum_underlying(&mut self, t: TypeId) -> TypeId {
+    pub(crate) fn enum_underlying(&mut self, t: TypeId) -> TypeId {
         let underlying = self
             .ts
             .definition(t)
@@ -509,7 +509,10 @@ pub(crate) fn integral_value(value: &ConstValue) -> Option<i128> {
 /// `CSharpPrimitiveCast.Cast(targetType, input, checkForOverflow: false)` for integral, char
 /// and bool constants; `None` where the managed cast throws (an `ErrorResolveResult`).
 /// Floating point and decimal values are not translated yet.
-fn primitive_cast(target: u8, value: &ConstValue) -> Result<Option<ConstValue>, Unsupported> {
+pub(crate) fn primitive_cast(
+    target: u8,
+    value: &ConstValue,
+) -> Result<Option<ConstValue>, Unsupported> {
     let input: i128 = match *value {
         ConstValue::Boolean(b) => {
             return Ok((target == code::BOOLEAN).then_some(ConstValue::Boolean(b)));

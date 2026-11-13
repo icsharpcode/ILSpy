@@ -74,6 +74,8 @@ mod kind {
     pub const FOREACH: u8 = 50;
     pub const DELEGATE_CREATE: u8 = 51;
     pub const AWAIT: u8 = 52;
+    pub const SWITCH: u8 = 53;
+    pub const SWITCH_SECTION: u8 = 54;
 }
 
 pub(super) fn write_body(
@@ -325,6 +327,8 @@ fn node(w: &mut FunctionWriter<'_, '_, '_, '_>, ast: &Ast, id: AstId) -> Result<
         AstNode::Foreach { .. } => kind::FOREACH,
         AstNode::DelegateCreate { .. } => kind::DELEGATE_CREATE,
         AstNode::Await { .. } => kind::AWAIT,
+        AstNode::Switch { .. } => kind::SWITCH,
+        AstNode::SwitchSection { .. } => kind::SWITCH_SECTION,
     });
     w.out.len(a.il.len());
     for &inst in &a.il {
@@ -351,6 +355,29 @@ fn node(w: &mut FunctionWriter<'_, '_, '_, '_>, ast: &Ast, id: AstId) -> Result<
     }
     match n {
         AstNode::Block { statements } => {
+            w.out.len(statements.len());
+            for s in statements {
+                node(w, ast, s)?;
+            }
+        }
+        AstNode::Switch {
+            expression,
+            sections,
+        } => {
+            node(w, ast, expression)?;
+            w.out.len(sections.len());
+            for s in sections {
+                node(w, ast, s)?;
+            }
+        }
+        AstNode::SwitchSection { labels, statements } => {
+            w.out.len(labels.len());
+            for l in labels {
+                w.out.bool(l.is_some());
+                if let Some(l) = l {
+                    node(w, ast, l)?;
+                }
+            }
             w.out.len(statements.len());
             for s in statements {
                 node(w, ast, s)?;

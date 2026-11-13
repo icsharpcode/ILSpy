@@ -486,7 +486,8 @@ impl Builder<'_, '_, '_, '_> {
             && instructions.len() == 1
             && matches!(self.f.inst(instructions[0]), Inst::Switch { .. })
         {
-            return Err("a switch".to_owned());
+            let switch = instructions[0];
+            return self.translate_switch(container, blocks, switch);
         }
         let block = self.convert_block_container(container, blocks, false)?;
         Ok(self.ast.with_il(block, container))

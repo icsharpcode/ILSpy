@@ -685,6 +685,34 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					for (int i = 0; i < node.Children.Length; i++)
 						node.Children[i] = BodyNode();
 					break;
+				case RustBodyNode.Switch:
+				{
+					// The value, then the sections.
+					var value = BodyNode();
+					node.Children = new RustBodyNode[Len() + 1];
+					node.Children[0] = value;
+					for (int i = 1; i < node.Children.Length; i++)
+						node.Children[i] = BodyNode();
+					break;
+				}
+				case RustBodyNode.SwitchSection:
+				{
+					// Whether each label has an expression (and the expression), then the statements.
+					var labels = new bool[Len()];
+					var children = new List<RustBodyNode>();
+					for (int i = 0; i < labels.Length; i++)
+					{
+						labels[i] = Bool();
+						if (labels[i])
+							children.Add(BodyNode());
+					}
+					int statements = Len();
+					for (int i = 0; i < statements; i++)
+						children.Add(BodyNode());
+					node.Value = labels;
+					node.Children = children.ToArray();
+					break;
+				}
 				case RustBodyNode.Return:
 					node.Children = Bool() ? [BodyNode()] : [];
 					break;

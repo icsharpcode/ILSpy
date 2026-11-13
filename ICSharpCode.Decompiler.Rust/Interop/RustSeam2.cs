@@ -95,6 +95,8 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		public const byte Foreach = 50;
 		public const byte DelegateCreate = 51;
 		public const byte Await = 52;
+		public const byte Switch = 53;
+		public const byte SwitchSection = 54;
 
 		public byte Kind;
 		/// <summary>The instructions the node is annotated with, in order.</summary>
@@ -358,6 +360,25 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					var trueStatement = (Statement)Build(node.Children[1], exprBuilder);
 					var falseStatement = node.Children.Length == 3 ? (Statement)Build(node.Children[2], exprBuilder) : null;
 					return Annotate(new IfElseStatement(condition, trueStatement, falseStatement), node);
+				}
+				case RustBodyNode.Switch:
+				{
+					var statement = new SwitchStatement { Expression = (Expression)Build(node.Children[0], exprBuilder) };
+					foreach (var section in node.Children.Skip(1))
+						statement.SwitchSections.Add((ICSharpCode.Decompiler.CSharp.Syntax.SwitchSection)Build(section, exprBuilder));
+					return Annotate(statement, node);
+				}
+				case RustBodyNode.SwitchSection:
+				{
+					// The labels (null for `default`), then the statements.
+					var section = new ICSharpCode.Decompiler.CSharp.Syntax.SwitchSection();
+					var labels = (bool[])node.Value!;
+					int child = 0;
+					foreach (bool hasExpression in labels)
+						section.CaseLabels.Add(hasExpression ? new CaseLabel((Expression)Build(node.Children[child++], exprBuilder)) : new CaseLabel());
+					while (child < node.Children.Length)
+						section.Statements.Add((Statement)Build(node.Children[child++], exprBuilder));
+					return Annotate(section, node);
 				}
 				case RustBodyNode.Await:
 					return Annotate(new UnaryOperatorExpression(UnaryOperatorType.Await, (Expression)Build(node.Children[0], exprBuilder)), node);

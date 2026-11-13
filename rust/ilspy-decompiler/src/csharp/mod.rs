@@ -12,6 +12,7 @@ mod foreach;
 mod lambda;
 mod member_access;
 mod statement_builder;
+mod switch;
 mod translated_expression;
 
 use crate::il::ast::{Function, NodeId};

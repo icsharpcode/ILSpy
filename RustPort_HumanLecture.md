@@ -3615,6 +3615,19 @@ takes the call's type from the found method's return type. An extension method c
 this situation still falls back, because the host's lookup does not see extension methods.
 The share rose from 81.3 % to 81.8 %.
 
+### 3.146 Switch statements (item 68y38)
+
+A block container whose entry is a single switch instruction becomes a `SwitchStatement`
+(`TranslateSwitch`): the value converted to its governing type (widened to the stack type,
+and to `int` where a small type cannot hold every label), one section per IL section with
+its labels typed by `CreateTypedCaseLabel`, the section with the most labels as `default`,
+and `break` while the switch is the break target. A section that branches to a block of the
+container writes that block inline; a `default` that only leaves the switch is dropped. The
+engine and host gained `Switch` and `SwitchSection` nodes. Lifted switches, switches on
+strings, blocks that other branches reach (`goto case`) or that no section inlines (labels),
+and a governing type reached through a conversion operator fall back. The share rose from
+81.8 % to 82.3 %.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

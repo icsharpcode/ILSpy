@@ -61,6 +61,16 @@ pub enum AstNode {
     },
     /// `UnaryOperatorExpression` with `UnaryOperatorType.Not`.
     LogicNot { expression: AstId },
+    /// `SwitchStatement`: the value and the `SwitchSection` nodes.
+    Switch {
+        expression: AstId,
+        sections: Vec<AstId>,
+    },
+    /// `SwitchSection`: its case labels (`None` is `default`) and statements.
+    SwitchSection {
+        labels: Vec<Option<AstId>>,
+        statements: Vec<AstId>,
+    },
     /// `UnaryOperatorExpression` with `UnaryOperatorType.Await`.
     Await { expression: AstId },
     /// `ConditionalExpression`: `condition ? true_expression : false_expression`.
