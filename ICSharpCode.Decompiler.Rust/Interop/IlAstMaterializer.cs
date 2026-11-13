@@ -792,6 +792,21 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					node.Type = Type();
 					node.Children = [BodyNode()];
 					break;
+				case RustBodyNode.Tuple:
+				{
+					// The ValueTuple type, then per element its name (if any) and the element.
+					node.Type = Type();
+					node.Flag = Bool();
+					var names = new string?[Len()];
+					node.Children = new RustBodyNode[names.Length];
+					for (int i = 0; i < names.Length; i++)
+					{
+						names[i] = Bool() ? Str() : null;
+						node.Children[i] = BodyNode();
+					}
+					node.Value = names;
+					break;
+				}
 				case RustBodyNode.OutDirection:
 					node.Children = [BodyNode()];
 					node.Flag = Bool();

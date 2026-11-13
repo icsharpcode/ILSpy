@@ -3798,6 +3798,30 @@ call, as in the managed builder.
 
 The share rose from 88.3 % to 89.1 %.
 
+### 3.156 A batch: two settings words, tuple literals, ref extensions (item 68y48)
+
+*Two settings words.* The engine receives the decompiler settings it reads as a bit set,
+and the 64 bits were taken. The host now passes two words (`ilspy_session_read_function`
+takes a second one), `Settings::from_bits` reads bits from 64 on from the second, and the
+settings test checks both. `TupleTypes` and `RefExtensionMethods` are the first two there.
+
+*Tuple literals.* `new ValueTuple<...>(a, b)` of two to seven elements is the literal
+`(a, b)`, named where the type hint is a tuple type with names, with a
+`TupleResolveResult` the host builds over the elements. A literal converted to a tuple type
+is converted element-wise and takes the target's names, while its resolve result carries
+none, as in `TranslatedExpression.ConvertTo`. The first attempt read the names on the host
+with the UTF-16 reader the engine does not write them with, which desynchronized the rest
+of the body and showed as members that failed to decompile.
+
+*Ref extension methods.* A `ref this` extension method's first argument `ref x` is written
+as the target `x`; an `out` argument, or the setting off, keeps the static call.
+
+The previous batch also made a null-conditional call target that needs `CastTarget` a
+fallback, after the Newtonsoft.Json round-trip showed `((T)(x?)).M()`, which does not
+compile; the equality corpus has no such call.
+
+The share rose from 89.1 % to 89.6 %.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

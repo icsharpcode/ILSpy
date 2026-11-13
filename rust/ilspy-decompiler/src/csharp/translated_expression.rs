@@ -235,6 +235,50 @@ impl Builder<'_, '_, '_, '_> {
             };
             return self.convert_to(cast, target, allow_implicit_conversion);
         }
+        // A tuple literal converted to a tuple type: element-wise, with the target's names written.
+        if let AstNode::Tuple { elements, .. } = self.ast.node(e.expression).clone()
+            && let TypeData::Tuple {
+                underlying,
+                elements: element_types,
+                names,
+            } = self.ts.data(target).clone()
+            && elements.len() == element_types.len()
+        {
+            let mut converted = Vec::with_capacity(elements.len());
+            let mut types = Vec::with_capacity(elements.len());
+            for (&element, &element_type) in elements.iter().zip(element_types.iter()) {
+                let rr = self.rr_of(element);
+                let element = TranslatedExpression {
+                    expression: element,
+                    ty: self.rr_type(&rr),
+                };
+                let c = self.convert_to(element, element_type, allow_implicit_conversion)?;
+                converted.push(c.expression);
+                types.push(c.ty);
+            }
+            let value_tuple = underlying;
+            let assembly = self.ts.definition(value_tuple).map(|d| d.module);
+            let underlying = self.ts.tuple_underlying(&types, assembly);
+            let ty = self.ts.intern(TypeData::Tuple {
+                underlying,
+                elements: types.into(),
+                names: vec![None; elements.len()].into(),
+            });
+            let n = self.ast.add(AstNode::Tuple {
+                elements: converted,
+                names: names
+                    .iter()
+                    .map(|n| n.as_deref().map(str::to_owned))
+                    .collect(),
+                value_tuple,
+                names_in_rr: false,
+            });
+            for inst in self.ast.annotations(e.expression).il.clone() {
+                self.ast.with_il(n, inst);
+            }
+            self.ast.with_rr(n, Rr::Plain(ty));
+            return Ok(TranslatedExpression { expression: n, ty });
+        }
         let utype = self.ts.nullable_underlying(ty);
         let target_utype = self.ts.nullable_underlying(target);
         let target_ustack = self.ts.stack_type(target_utype);

@@ -608,7 +608,10 @@ the reasons. This file holds only the ordered steps, their gates and their rules
   - [x] 68y47. A batch (lecture 3.155): `??` of a nullable value type, `~`, and
     `d?.Invoke(...)`. Subject: `Translate nullable ??, bitwise not and null-conditional
     delegate calls in the engine`.
-  - [ ] 68y48-. Further construct groups (numbered on from 68y1), in the order of the fallback reasons the ratchet test
+  - [x] 68y48. A batch (lecture 3.156): the settings word widened to two, tuple literals, and
+    `ref this` extension method calls. Subject: `Translate tuple literals and ref extension
+    calls in the engine`.
+  - [ ] 68y49-. Further construct groups (numbered on from 68y1), in the order of the fallback reasons the ratchet test
     prints, until no body of the corpus falls back. Subject pattern:
     `Translate <construct group> to C# in the engine`.
   - [ ] 68z. Request-level seam 2. Subject: `Add the Rust C# AST builders and the AST materializer`.

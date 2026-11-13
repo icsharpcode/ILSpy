@@ -81,6 +81,7 @@ mod kind {
     pub const AS: u8 = 57;
     pub const THROW_EXPRESSION: u8 = 58;
     pub const BIT_NOT: u8 = 59;
+    pub const TUPLE: u8 = 60;
 }
 
 pub(super) fn write_body(
@@ -355,6 +356,7 @@ fn node(w: &mut FunctionWriter<'_, '_, '_, '_>, ast: &Ast, id: AstId) -> Result<
         AstNode::As { .. } => kind::AS,
         AstNode::ThrowExpression { .. } => kind::THROW_EXPRESSION,
         AstNode::BitNot { .. } => kind::BIT_NOT,
+        AstNode::Tuple { .. } => kind::TUPLE,
     });
     w.out.len(a.il.len());
     for &inst in &a.il {
@@ -396,6 +398,23 @@ fn node(w: &mut FunctionWriter<'_, '_, '_, '_>, ast: &Ast, id: AstId) -> Result<
             w.out.u8(overflow as u8);
             node(w, ast, left)?;
             node(w, ast, right)?;
+        }
+        AstNode::Tuple {
+            elements,
+            names,
+            value_tuple,
+            names_in_rr,
+        } => {
+            w.ty(value_tuple);
+            w.out.bool(names_in_rr);
+            w.out.len(elements.len());
+            for (e, n) in elements.into_iter().zip(names) {
+                w.out.bool(n.is_some());
+                if let Some(n) = n {
+                    w.string(&n);
+                }
+                node(w, ast, e)?;
+            }
         }
         AstNode::As { expression, ty } => {
             w.ty(ty);

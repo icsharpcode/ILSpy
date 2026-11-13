@@ -42,15 +42,22 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		/// <summary>The setting names, in bit order.</summary>
 		public static string[] Names => properties.Select(p => p.Name).ToArray();
 
-		public static ulong Bits(DecompilerSettings settings)
+		/// <summary>The settings as two words: bits 0 to 63, and the following ones.</summary>
+		public static (ulong Low, ulong High) Bits(DecompilerSettings settings)
 		{
-			ulong bits = 0;
+			if (properties.Length > 128)
+				throw new InvalidOperationException("The engine reads more settings than two words hold");
+			ulong low = 0, high = 0;
 			for (int i = 0; i < properties.Length; i++)
 			{
-				if ((bool)properties[i].GetValue(settings)!)
-					bits |= 1UL << i;
+				if (!(bool)properties[i].GetValue(settings)!)
+					continue;
+				if (i < 64)
+					low |= 1UL << i;
+				else
+					high |= 1UL << (i - 64);
 			}
-			return bits;
+			return (low, high);
 		}
 	}
 }

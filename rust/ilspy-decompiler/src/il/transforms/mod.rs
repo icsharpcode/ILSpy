@@ -126,6 +126,8 @@ pub const SETTING_NAMES: &[&str] = &[
     "ForEachWithGetEnumeratorExtension",
     "UseImplicitMethodGroupConversion",
     "AnonymousTypes",
+    "TupleTypes",
+    "RefExtensionMethods",
 ];
 
 /// The values of `SETTING_NAMES`.
@@ -195,12 +197,17 @@ pub struct Settings {
     pub foreach_with_get_enumerator_extension: bool,
     pub use_implicit_method_group_conversion: bool,
     pub anonymous_types: bool,
+    pub tuple_types: bool,
+    pub ref_extension_methods: bool,
 }
 
 impl Settings {
-    /// Bit `i` is `SETTING_NAMES[i]`.
-    pub fn from_bits(bits: u64) -> Settings {
-        let bit = |i: usize| bits & (1 << i) != 0;
+    /// Bit `i` is `SETTING_NAMES[i]`: bits 0 to 63 in `bits`, the following ones in `high`.
+    pub fn from_bits(bits: u64, high: u64) -> Settings {
+        let bit = |i: usize| match i.checked_sub(64) {
+            None => bits & (1 << i) != 0,
+            Some(j) => high & (1 << j) != 0,
+        };
         Settings {
             remove_dead_stores: bit(0),
             sort_switch_sections: bit(1),
@@ -266,6 +273,8 @@ impl Settings {
             foreach_with_get_enumerator_extension: bit(61),
             use_implicit_method_group_conversion: bit(62),
             anonymous_types: bit(63),
+            tuple_types: bit(64),
+            ref_extension_methods: bit(65),
         }
     }
 }

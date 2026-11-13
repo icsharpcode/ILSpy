@@ -102,6 +102,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		public const byte As = 57;
 		public const byte ThrowExpression = 58;
 		public const byte BitNot = 59;
+		public const byte Tuple = 60;
 
 		public byte Kind;
 		/// <summary>The instructions the node is annotated with, in order.</summary>
@@ -421,6 +422,23 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					while (child < node.Children.Length)
 						section.Statements.Add((Statement)Build(node.Children[child++], exprBuilder));
 					return Annotate(section, node);
+				}
+				case RustBodyNode.Tuple:
+				{
+					// `MatchTupleConstruction`: the elements, named where the type hint names them.
+					var names = (string?[])node.Value!;
+					var tuple = new TupleExpression();
+					var elementResults = new List<ResolveResult>();
+					for (int i = 0; i < node.Children.Length; i++)
+					{
+						var element = (Expression)Build(node.Children[i], exprBuilder);
+						elementResults.Add(element.GetResolveResult());
+						tuple.Elements.Add(names[i] is { Length: > 0 } name ? new NamedArgumentExpression(name, element) : element);
+					}
+					var elementNames = node.Flag && names.Any(n => n != null) ? System.Collections.Immutable.ImmutableArray.Create(names) : default;
+					node.ResolveResult = new TupleResolveResult(exprBuilder.compilation, System.Collections.Immutable.ImmutableArray.CreateRange(elementResults),
+						elementNames, valueTupleAssembly: node.Type!.GetDefinition()?.ParentModule);
+					return Annotate(tuple, node);
 				}
 				case RustBodyNode.BitNot:
 				{

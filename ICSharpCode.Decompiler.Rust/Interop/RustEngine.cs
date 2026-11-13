@@ -118,8 +118,9 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				: new RustResolver(resolver, MetadataTokens.GetRowNumber(method), typeSystem, modules, settings, body);
 			var declaringType = ((MetadataModule)typeSystem.MainModule).GetDefinition(method).DeclaringTypeDefinition;
 			byte[] rootNames = declaringType == null ? [] : RootNames(declaringType, usingScope);
+			var (settingsLow, settingsHigh) = RustSettings.Bits(settings);
 			var status = NativeMethods.ilspy_session_read_function(session, (uint)MetadataTokens.GetToken(method), (uint)ilPrefix,
-				flags, RustSettings.Bits(settings), IntPtr.Zero, bridge?.Delegate, IntPtr.Zero, resolverBridge?.Delegate,
+				flags, settingsLow, settingsHigh, IntPtr.Zero, bridge?.Delegate, IntPtr.Zero, resolverBridge?.Delegate,
 				rootNames, (UIntPtr)rootNames.Length, out var buffer);
 			GC.KeepAlive(bridge);
 			GC.KeepAlive(resolverBridge);

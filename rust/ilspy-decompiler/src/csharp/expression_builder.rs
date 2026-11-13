@@ -122,7 +122,7 @@ impl Builder<'_, '_, '_, '_> {
             Inst::StLoc { var, value, .. } => self.st_loc(inst, var, value),
             Inst::Call(c) => self.call(inst, &c, super::call_builder::CallOp::Call),
             Inst::CallVirt(c) => self.call(inst, &c, super::call_builder::CallOp::CallVirt),
-            Inst::NewObj(c) => self.new_obj(inst, &c),
+            Inst::NewObj(c) => self.new_obj(inst, &c, hint),
             Inst::BinaryNumeric {
                 op,
                 check_overflow,

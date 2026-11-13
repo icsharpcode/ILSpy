@@ -85,6 +85,15 @@ pub enum AstNode {
         expression: AstId,
         overflow: Overflow,
     },
+    /// `TupleExpression`, elements with a name written as named arguments; the host's
+    /// `TupleResolveResult` takes its assembly from `value_tuple`.
+    Tuple {
+        elements: Vec<AstId>,
+        names: Vec<Option<String>>,
+        value_tuple: TypeId,
+        /// Whether the resolve result carries the names (a converted literal's does not).
+        names_in_rr: bool,
+    },
     /// `UnaryOperatorExpression` of `BitNot`, whose operator the host resolves.
     BitNot { expression: AstId },
     /// `ThrowExpression`: `throw expression`.

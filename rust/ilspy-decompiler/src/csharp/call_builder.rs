@@ -457,8 +457,8 @@ impl Builder<'_, '_, '_, '_> {
         if names.as_ref().is_some_and(|n| n[0].is_some()) {
             return Ok(None);
         }
-        let first = list.arguments[0];
-        let target_rr = self.rr_of(first.expression);
+        let mut first = list.arguments[0];
+        let mut target_rr = self.rr_of(first.expression);
         if matches!(
             target_rr,
             Rr::Constant {
@@ -468,11 +468,18 @@ impl Builder<'_, '_, '_, '_> {
         ) {
             return Err("an extension method call on null".to_owned());
         }
-        if matches!(
-            self.ast.node(first.expression),
-            AstNode::RefDirection { .. } | AstNode::OutDirection { .. }
-        ) {
-            return Err("an extension method call on a reference".to_owned());
+        // A `ref this` extension method takes the referenced expression as its target, which
+        // carries the reference implicitly; an `out` argument is no target.
+        match *self.ast.node(first.expression) {
+            AstNode::RefDirection { expression } if self.settings.ref_extension_methods => {
+                target_rr = self.rr_of(expression);
+                first = TranslatedExpression {
+                    expression,
+                    ty: self.rr_type(&target_rr),
+                };
+            }
+            AstNode::RefDirection { .. } | AstNode::OutDirection { .. } => return Ok(None),
+            _ => {}
         }
         let resolver = self
             .resolver
@@ -792,7 +799,11 @@ impl Builder<'_, '_, '_, '_> {
         &mut self,
         inst: NodeId,
         call: &CallData,
+        hint: TypeId,
     ) -> Result<TranslatedExpression, Unsupported> {
+        if let Some(tuple) = self.tuple_construction(inst, call, hint)? {
+            return Ok(tuple);
+        }
         let operand = &call.method;
         if operand.local_function.is_some()
             || operand.specialized_by.is_some()
@@ -1723,6 +1734,80 @@ impl Builder<'_, '_, '_, '_> {
         let result = result?;
         self.ast.with_il(result.expression, block);
         Ok(result)
+    }
+
+    /// `MatchTupleConstruction` in `CallBuilder.Build`: `new ValueTuple<...>(a, b)` as the tuple
+    /// literal `(a, b)`, with the element names of a tuple type hint. Tuples of more than seven
+    /// elements (nested through `Rest`) are not translated.
+    fn tuple_construction(
+        &mut self,
+        inst: NodeId,
+        call: &CallData,
+        hint: TypeId,
+    ) -> Result<Option<TranslatedExpression>, Unsupported> {
+        let Some(declaring) = call.method.method.declaring else {
+            return Ok(None);
+        };
+        let is_value_tuple = self
+            .ts
+            .definition(declaring)
+            .and_then(|d| self.ts.comp.type_def(d).ok())
+            .is_some_and(|i| {
+                i.kind == crate::typesystem::compilation::TypeKind::Struct
+                    && i.full_name.top.ns == "System"
+                    && i.full_name.name() == "ValueTuple"
+                    && (2..8).contains(&i.type_parameter_count)
+            });
+        if !self.settings.tuple_types || !is_value_tuple {
+            return Ok(None);
+        }
+        let TypeData::Inst { args, .. } = self.ts.data(declaring).clone() else {
+            return Ok(None);
+        };
+        if call.args.len() != args.len() {
+            return Ok(None);
+        }
+        let names: Vec<Option<String>> = match self.ts.data(hint) {
+            TypeData::Tuple { names, .. } => {
+                if names.len() != args.len() {
+                    return Err("a tuple literal of a hint of another arity".to_owned());
+                }
+                names
+                    .iter()
+                    .map(|n| n.as_deref().map(str::to_owned))
+                    .collect()
+            }
+            _ => vec![None; args.len()],
+        };
+        let mut elements = Vec::with_capacity(args.len());
+        let mut types = Vec::with_capacity(args.len());
+        for (&a, &ty) in call.args.iter().zip(args.iter()) {
+            let e = self.translate(a, Some(ty))?;
+            let e = self.convert_to(e, ty, true)?;
+            elements.push(e.expression);
+            types.push(e.ty);
+        }
+        // `TupleResolveResult`: a tuple type of the elements' types, from the module the
+        // `ValueTuple` comes from.
+        let assembly = self.ts.definition(declaring).map(|d| d.module);
+        let underlying = self.ts.tuple_underlying(&types, assembly);
+        let ty = self.ts.intern(TypeData::Tuple {
+            underlying,
+            elements: types.into(),
+            names: names
+                .iter()
+                .map(|n| n.as_deref().map(Box::<str>::from))
+                .collect(),
+        });
+        let e = self.ast.add(AstNode::Tuple {
+            elements,
+            names,
+            value_tuple: declaring,
+            names_in_rr: true,
+        });
+        self.ast.with_il(e, inst);
+        self.ast.with_rr(e, Rr::Plain(ty));
+        Ok(Some(TranslatedExpression { expression: e, ty }))
     }
 
     /// `HandleStringInterpolation` for `string.Format`: the interpolated string the format
