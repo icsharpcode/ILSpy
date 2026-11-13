@@ -146,15 +146,29 @@ impl Builder<'_, '_, '_, '_> {
             matches!(n, AstNode::Identifier { .. })
                 && matches!(a.rr, Some(Rr::Variable { var, .. }) if parameter_vars.contains(&var))
         });
+        // A lambda needs a parameter list its unused parameters can be written in:
+        // `ParameterTypesAreAccessible` and `ParametersAreNameable`, else the function is an
+        // anonymous method without parameter list, `delegate { ... }`.
+        let mut anonymous_method = false;
         if !used && !parameters.is_empty() {
-            return Err("a lambda that does not use its parameters".to_owned());
+            // The names are the method's parameters' (`function.Parameters`).
+            let nameable = params
+                .iter()
+                .all(|p| crate::il::transforms::assign_variable_names::is_valid_name(&p.name));
+            let types: Vec<_> = parameters.iter().map(|&(t, _)| t).collect();
+            let accessible = self
+                .resolver
+                .is_some_and(|r| r.types_accessible(self.ts, &types));
+            anonymous_method = !nameable || !accessible;
         }
 
         let statements = match self.ast.node(block) {
             AstNode::Block { statements } => statements.clone(),
             _ => unreachable!("a block"),
         };
+        // An anonymous method always has a block.
         let expression_body = match statements.as_slice() {
+            _ if anonymous_method => None,
             [s] => match *self.ast.node(*s) {
                 AstNode::Return {
                     expression: Some(e),
@@ -201,6 +215,7 @@ impl Builder<'_, '_, '_, '_> {
                 .collect(),
             attempted_conversion_with_type_mismatch: Cell::new(false),
             implicitly_typed,
+            anonymous_method,
         }));
         let l = self.ast.add(AstNode::Lambda {
             body,

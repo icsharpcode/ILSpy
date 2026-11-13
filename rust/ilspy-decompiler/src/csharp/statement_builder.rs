@@ -78,7 +78,7 @@ pub fn convert_body(
             | Rr::Property { target: inner, .. },
         ) => matches!(
             **inner,
-            Rr::Conversion { .. } | Rr::ImplicitConversion { .. }
+            Rr::Conversion { .. } | Rr::ImplicitConversion { .. } | Rr::TryCast { .. }
         ),
         _ => false,
     });

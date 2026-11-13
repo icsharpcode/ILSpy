@@ -24,15 +24,18 @@ pub struct DecompiledLambda {
     /// `IsImplicitlyTyped`: the parameter list is written without types (a parameter of an
     /// anonymous type).
     pub implicitly_typed: bool,
+    /// `IsAnonymousMethod` without `HasParameterList`: `delegate { ... }`, which converts to any
+    /// parameter list.
+    pub anonymous_method: bool,
 }
 
 impl Lambda for DecompiledLambda {
     fn has_parameter_list(&self) -> bool {
-        true
+        !self.anonymous_method
     }
 
     fn is_anonymous_method(&self) -> bool {
-        false
+        self.anonymous_method
     }
 
     fn is_implicitly_typed(&self) -> bool {
@@ -66,11 +69,17 @@ impl Lambda for DecompiledLambda {
         parameter_types: &[TypeId],
         return_type: TypeId,
     ) -> Conversion {
-        if self.parameters.len() != parameter_types.len() {
-            return Conversion::None;
-        }
+        // An anonymous method without parameter list is applicable to any parameter list.
+        let checked: &[Parameter] = if self.anonymous_method {
+            &[]
+        } else {
+            if self.parameters.len() != parameter_types.len() {
+                return Conversion::None;
+            }
+            &self.parameters
+        };
         let n = Normalization::IGNORE_NULLABILITY;
-        for (&t, p) in parameter_types.iter().zip(&self.parameters) {
+        for (&t, p) in parameter_types.iter().zip(checked) {
             if conversions.ts.normalize_with(t, n) == conversions.ts.normalize_with(p.ty, n) {
                 continue;
             }

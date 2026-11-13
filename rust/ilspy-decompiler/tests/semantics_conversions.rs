@@ -2444,6 +2444,7 @@ fn decompiled_lambda_conversions() {
             parameters: vec![param_x(param)],
             attempted_conversion_with_type_mismatch: std::cell::Cell::new(false),
             implicitly_typed: false,
+            anonymous_method: false,
         };
 
         // (int x) => int converts to Func<int, int> and Func<int, double>.
@@ -2478,6 +2479,17 @@ fn decompiled_lambda_conversions() {
         };
         assert!(l.is_valid(c, &[double], int).is_anonymous_function());
         assert!(l.attempted_conversion_with_type_mismatch.get());
+
+        // An anonymous method without parameter list converts to any parameter list.
+        let l = DecompiledLambda {
+            anonymous_method: true,
+            ..lambda(int)
+        };
+        assert!(
+            l.is_valid(c, &[double, object], int)
+                .is_anonymous_function()
+        );
+        assert!(!l.attempted_conversion_with_type_mismatch.get());
     });
 }
 
@@ -2508,6 +2520,7 @@ fn lambda_converts_to_annotated_delegate_type() {
             parameters: Vec::new(),
             attempted_conversion_with_type_mismatch: std::cell::Cell::new(false),
             implicitly_typed: false,
+            anonymous_method: false,
         })
         .rr();
         assert!(c.implicit(&lambda, action).is_valid());

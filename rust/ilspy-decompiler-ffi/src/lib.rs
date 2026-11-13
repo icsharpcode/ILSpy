@@ -615,6 +615,17 @@ impl Resolver for HostResolver {
         ilspy_decompiler::wire::ilast::method_group_answer(&answer)
     }
 
+    fn types_accessible(
+        &self,
+        ts: &TypeSystem<'_, '_>,
+        types: &[ilspy_decompiler::typesystem::types::TypeId],
+    ) -> bool {
+        let Ok(bytes) = ilspy_decompiler::wire::ilast::types_accessible_query(ts, types) else {
+            return false;
+        };
+        self.ask(&bytes) == 1
+    }
+
     fn singularize(&self, ts: &TypeSystem<'_, '_>, word: &str) -> Option<String> {
         let bytes = ilspy_decompiler::wire::ilast::singularize_query(ts, word).ok()?;
         String::from_utf8(self.ask_data(&bytes)?).ok()

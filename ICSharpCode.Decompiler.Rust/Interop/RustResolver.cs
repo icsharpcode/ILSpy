@@ -65,6 +65,8 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		public const byte IndexersKind = 10;
 		/// <summary><c>Disambiguator.LookUpName</c> for a method reference: the method group of <see cref="Name"/>, not as an invocation target.</summary>
 		public const byte MethodReferenceKind = 11;
+		/// <summary><c>ExpressionBuilder.ParameterTypesAreAccessible</c> for the types in <see cref="Arguments"/>.</summary>
+		public const byte TypesAccessibleKind = 12;
 
 		/// <summary><see cref="TargetKind"/>: <c>this</c> or <c>base</c>.</summary>
 		public const byte ThisTarget = 0;
@@ -164,6 +166,8 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					return CanUseExtensionMethodSyntax(q);
 				if (q.Kind == RustResolverQuery.AccessorKind)
 					return AccessorReference(q);
+				if (q.Kind == RustResolverQuery.TypesAccessibleKind)
+					return TypesAccessible(q.Arguments) ? 1 : 0;
 				if (q.Kind is RustResolverQuery.MethodGroupKind or RustResolverQuery.ConstructorsKind or RustResolverQuery.SingularizeKind or RustResolverQuery.IndexersKind or RustResolverQuery.MethodReferenceKind)
 				{
 					// The full answer's length; the engine asks again when it does not fit.
@@ -183,6 +187,35 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 			{
 				failure ??= ExceptionDispatchInfo.Capture(ex);
 				return -1;
+			}
+		}
+
+		/// <summary>`ExpressionBuilder.ParameterTypesAreAccessible` over the given types.</summary>
+		bool TypesAccessible(IType[] types)
+		{
+			var bodyResolver = (body ?? throw new InvalidOperationException("The engine asked about a C# body without the body's context")).Resolver;
+			var currentTypeDefinition = bodyResolver.CurrentTypeDefinition;
+			if (currentTypeDefinition == null)
+				return true;
+			var lookup = new MemberLookup(currentTypeDefinition, currentTypeDefinition.ParentModule);
+			return types.All(IsAccessible);
+
+			bool IsAccessible(IType type)
+			{
+				switch (type)
+				{
+					case ParameterizedType pt:
+						return IsAccessible(pt.GenericType) && pt.TypeArguments.All(IsAccessible);
+					case ICSharpCode.Decompiler.TypeSystem.Implementation.TypeWithElementType t:
+						return IsAccessible(t.ElementType);
+					default:
+						for (var td = type.GetDefinition(); td != null; td = td.DeclaringTypeDefinition)
+						{
+							if (!lookup.IsAccessible(td, allowProtectedAccess: true))
+								return false;
+						}
+						return true;
+				}
 			}
 		}
 

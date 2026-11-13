@@ -3695,6 +3695,33 @@ initializer, which the array creation node now marks as optional.
 
 The share rose from 83.4 % to 84.6 %.
 
+### 3.151 A batch: compound assignments, unused parameters, as, unboxing (item 68y43)
+
+*Compound assignments.* `HandleCompoundAssignment` writes `target op= value`, the value
+converted to the target's type (an enum's underlying type for `+=` and `-=`), and
+`target++` or `target--` where the instruction evaluates to the old value. The engine and
+host gained a compound assignment and a postfix increment node, both with the checked or
+unchecked annotation the managed builder adds. Shifts, lifted operators, pointer, native
+integer and dynamic targets, and a value whose conversion would be checked fall back.
+
+*Lambdas that do not use their parameters.* The managed builder writes such a function as a
+lambda where its parameter list can be written (`ParameterTypesAreAccessible` and
+`ParametersAreNameable`), else as `delegate { ... }` without parameter list. The engine
+has no accessibility of its own, so the host answers a new query (kind 12) with the body's
+resolver; the names are those of the lambda method's parameters, not of the function's
+variables, a first attempt with the latter wrote `delegate` where a lambda belongs. The
+anonymous method's resolve result has no parameter list, and converts to any delegate.
+
+*As.* `isinst` of a reference type is `expr as T`, a boxing cast of the argument dropped,
+with the `TryCast` conversion the host computes from the node; inside another resolve
+result it falls back as a cast does.
+
+*Unboxing.* `unbox.any T(isinst T(expr))` of a nullable or reference type is `expr as T`,
+any other `unbox.any` the cast `(T)arg` of the argument converted to `object`. A type
+parameter target falls back.
+
+The share rose from 84.6 % to 86.0 %.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

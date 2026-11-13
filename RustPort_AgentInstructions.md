@@ -593,7 +593,10 @@ the reasons. This file holds only the ordered steps, their gates and their rules
     groups go in batches: the filtered ratchet and equality tests per group, the full gates
     and one commit per batch. Subject: `Translate tuple elements, zero enum comparisons,
     promoting comparisons and new arrays in the engine`.
-  - [ ] 68y43-. Further construct groups (numbered on from 68y1), in the order of the fallback reasons the ratchet test
+  - [x] 68y43. A batch (lecture 3.151): compound assignments, lambdas that do not use their
+    parameters (and `delegate { }`), `as` expressions, and unboxing. Subject: `Translate
+    compound assignments, unused-parameter lambdas, as and unboxing in the engine`.
+  - [ ] 68y44-. Further construct groups (numbered on from 68y1), in the order of the fallback reasons the ratchet test
     prints, until no body of the corpus falls back. Subject pattern:
     `Translate <construct group> to C# in the engine`.
   - [ ] 68z. Request-level seam 2. Subject: `Add the Rust C# AST builders and the AST materializer`.

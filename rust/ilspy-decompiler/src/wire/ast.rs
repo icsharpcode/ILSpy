@@ -76,6 +76,9 @@ mod kind {
     pub const AWAIT: u8 = 52;
     pub const SWITCH: u8 = 53;
     pub const SWITCH_SECTION: u8 = 54;
+    pub const COMPOUND_ASSIGNMENT: u8 = 55;
+    pub const POST_INCREMENT: u8 = 56;
+    pub const AS: u8 = 57;
 }
 
 pub(super) fn write_body(
@@ -257,6 +260,10 @@ fn rr(w: &mut FunctionWriter<'_, '_, '_, '_>, rr: Option<&Rr>) -> Result<(), Str
             w.out.u8(19);
             w.ty(*ty);
         }
+        Some(Rr::TryCast { ty }) => {
+            w.out.u8(25);
+            w.ty(*ty);
+        }
         // The host builds the lambda's resolve result from the node.
         Some(Rr::Lambda(_)) => w.out.u8(0),
         Some(Rr::TypeOf { ty, referenced }) => {
@@ -335,6 +342,9 @@ fn node(w: &mut FunctionWriter<'_, '_, '_, '_>, ast: &Ast, id: AstId) -> Result<
         AstNode::Await { .. } => kind::AWAIT,
         AstNode::Switch { .. } => kind::SWITCH,
         AstNode::SwitchSection { .. } => kind::SWITCH_SECTION,
+        AstNode::CompoundAssignment { .. } => kind::COMPOUND_ASSIGNMENT,
+        AstNode::PostIncrement { .. } => kind::POST_INCREMENT,
+        AstNode::As { .. } => kind::AS,
     });
     w.out.len(a.il.len());
     for &inst in &a.il {
@@ -365,6 +375,30 @@ fn node(w: &mut FunctionWriter<'_, '_, '_, '_>, ast: &Ast, id: AstId) -> Result<
             for s in statements {
                 node(w, ast, s)?;
             }
+        }
+        AstNode::CompoundAssignment {
+            op,
+            left,
+            right,
+            overflow,
+        } => {
+            w.out.u8(op);
+            w.out.u8(overflow as u8);
+            node(w, ast, left)?;
+            node(w, ast, right)?;
+        }
+        AstNode::As { expression, ty } => {
+            w.ty(ty);
+            node(w, ast, expression)?;
+        }
+        AstNode::PostIncrement {
+            increment,
+            expression,
+            overflow,
+        } => {
+            w.out.bool(increment);
+            w.out.u8(overflow as u8);
+            node(w, ast, expression)?;
         }
         AstNode::Switch {
             expression,
@@ -535,6 +569,7 @@ fn node(w: &mut FunctionWriter<'_, '_, '_, '_>, ast: &Ast, id: AstId) -> Result<
             w.ty(l.inferred_return_type);
             w.out.bool(l.attempted_conversion_with_type_mismatch.get());
             w.out.bool(l.implicitly_typed);
+            w.out.bool(l.anonymous_method);
             w.out.bool(expression_body);
             node(w, ast, body)?;
         }

@@ -401,6 +401,13 @@ pub trait Resolver {
     fn singularize(&self, _ts: &TypeSystem<'_, '_>, _word: &str) -> Option<String> {
         None
     }
+
+    /// `ExpressionBuilder.ParameterTypesAreAccessible`: whether every type, and the type
+    /// arguments and element types it is built of, is accessible from the current type;
+    /// `false` when the host cannot answer.
+    fn types_accessible(&self, _ts: &TypeSystem<'_, '_>, _types: &[TypeId]) -> bool {
+        false
+    }
 }
 
 /// What a property name binds to (`Resolver::accessor_reference`).

@@ -323,6 +323,15 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					throw new InvalidOperationException("Trailing bytes after the resolver query");
 				return query;
 			}
+			if (query.Kind == RustResolverQuery.TypesAccessibleKind)
+			{
+				query.Arguments = new IType[reader.Len()];
+				for (int i = 0; i < query.Arguments.Length; i++)
+					query.Arguments[i] = reader.Type();
+				if (!reader.AtEnd)
+					throw new InvalidOperationException("Trailing bytes after the resolver query");
+				return query;
+			}
 			if (query.Kind is RustResolverQuery.MethodGroupKind or RustResolverQuery.AccessorKind or RustResolverQuery.IndexersKind or RustResolverQuery.MethodReferenceKind)
 			{
 				if (query.Kind == RustResolverQuery.AccessorKind)
@@ -434,8 +443,10 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 			}
 			var function = new ILFunction(returnType, parameters, default, new Nop(), ILFunctionKind.Delegate) { DelegateType = delegateType };
 			bool attemptedConversionWithTypeMismatch = Bool();
+			bool isImplicitlyTyped = Bool();
+			bool isAnonymousMethod = Bool();
 			return new DecompiledLambdaResolveResult(function, delegateType, inferredReturnType,
-				hasParameterList: true, isAnonymousMethod: false, isImplicitlyTyped: Bool()) {
+				hasParameterList: !isAnonymousMethod, isAnonymousMethod: isAnonymousMethod, isImplicitlyTyped: isImplicitlyTyped) {
 				AttemptedConversionWithTypeMismatch = attemptedConversionWithTypeMismatch
 			};
 		}
@@ -775,6 +786,10 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				case RustBodyNode.TypeOf:
 					node.Type = Type();
 					break;
+				case RustBodyNode.As:
+					node.Type = Type();
+					node.Children = [BodyNode()];
+					break;
 				case RustBodyNode.OutDirection:
 					node.Children = [BodyNode()];
 					node.Flag = Bool();
@@ -890,6 +905,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					node.Value = Type();
 					node.AttemptedConversionWithTypeMismatch = Bool();
 					node.ImplicitlyTyped = Bool();
+					node.AnonymousMethod = Bool();
 					node.Flag = Bool();
 					node.Children = [BodyNode()];
 					break;
@@ -965,6 +981,16 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					node.Value = (CSharp.Syntax.BinaryOperatorType)U8();
 					node.Overflow = U8();
 					node.Children = [BodyNode(), BodyNode()];
+					break;
+				case RustBodyNode.CompoundAssignment:
+					node.Value = (CSharp.Syntax.AssignmentOperatorType)U8();
+					node.Overflow = U8();
+					node.Children = [BodyNode(), BodyNode()];
+					break;
+				case RustBodyNode.PostIncrement:
+					node.Flag = Bool();
+					node.Overflow = U8();
+					node.Children = [BodyNode()];
 					break;
 			}
 			return node;
@@ -1084,6 +1110,9 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					return null;
 				case 19:
 					return new InitializedObjectResolveResult(Type());
+				case 25:
+					// RustSeam2 replaces it with the TryCast conversion of the `as` node's operand.
+					return new ResolveResult(Type());
 				case 23:
 				{
 					// RustSeam2 looks the method group up again and narrows it to the method.

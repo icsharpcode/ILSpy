@@ -425,6 +425,27 @@ impl Builder<'_, '_, '_, '_> {
                 hint,
             ),
             Inst::NewArr { ty, ref indices } => self.new_arr(inst, ty.ty, indices),
+            Inst::NumericCompoundAssign { .. } => self.numeric_compound_assign(inst),
+            // `VisitIsInst`: `arg as T` for a reference type, a boxing conversion of the argument
+            // dropped; a value type, emulated with `is` and a conditional, is not translated.
+            Inst::UnboxAny { arg, ty } => self.unbox_any(inst, arg, ty.ty),
+            Inst::IsInst { arg, ty } => {
+                if self.ts.is_reference_type(ty.ty) != Some(true) {
+                    return Err("an isinst of a value type".to_owned());
+                }
+                let a = self.translate(arg, None)?;
+                let a = self.unwrap_boxing_conversion(a);
+                let e = self.ast.add(AstNode::As {
+                    expression: a.expression,
+                    ty: ty.ty,
+                });
+                self.ast.with_il(e, inst);
+                self.ast.with_rr(e, Rr::TryCast { ty: ty.ty });
+                Ok(TranslatedExpression {
+                    expression: e,
+                    ty: ty.ty,
+                })
+            }
             Inst::Await {
                 value,
                 get_awaiter,
@@ -1520,6 +1541,171 @@ impl Builder<'_, '_, '_, '_> {
         });
         self.ast.with_il(e, inst);
         self.ast.with_rr(e, Rr::Operator { ty });
+        Ok(TranslatedExpression { expression: e, ty })
+    }
+
+    /// `HandleCompoundAssignment`: `target op= value`, or `target++` / `target--` for the old
+    /// value. Shifts, lifted operators, pointer and native integer targets, dynamic targets and
+    /// a checked conversion of the value are not translated.
+    fn numeric_compound_assign(
+        &mut self,
+        inst: NodeId,
+    ) -> Result<TranslatedExpression, Unsupported> {
+        use crate::il::ast::{CompoundEvalMode, CompoundTargetKind};
+        let Inst::NumericCompoundAssign {
+            op,
+            check_overflow,
+            sign,
+            right_input,
+            underlying_result,
+            is_lifted,
+            ty,
+            eval_mode,
+            target_kind,
+            target,
+            value,
+            ..
+        } = self.f.inst(inst).clone()
+        else {
+            unreachable!("a compound assignment");
+        };
+        // `AssignmentOperatorType`: Add 1, Subtract 2, Multiply 3, Divide 4, Modulus 5,
+        // BitwiseAnd 9, BitwiseOr 10, ExclusiveOr 11.
+        let assignment_op: u8 = match op {
+            BinaryNumericOperator::Add => 1,
+            BinaryNumericOperator::Sub => 2,
+            BinaryNumericOperator::Mul => 3,
+            BinaryNumericOperator::Div => 4,
+            BinaryNumericOperator::Rem => 5,
+            BinaryNumericOperator::BitAnd => 9,
+            BinaryNumericOperator::BitOr => 10,
+            BinaryNumericOperator::BitXor => 11,
+            _ => return Err("a compound shift".to_owned()),
+        };
+        if is_lifted {
+            return Err("a lifted compound assignment".to_owned());
+        }
+        let target = match target_kind {
+            // `LdObj(inst.Target, inst.Type)`: the target address dereferenced.
+            CompoundTargetKind::Address => {
+                if self.f.result_type(self.ts, target) != StackType::Ref {
+                    return Err("a compound assignment through a pointer".to_owned());
+                }
+                let hint = self.ts.intern(TypeData::ByRef(ty));
+                let address = self.translate(target, Some(hint))?;
+                if !self.is_compatible_pointer_type_for_memory_access(address.ty, ty) {
+                    return Err("a compound assignment that needs a pointer cast".to_owned());
+                }
+                let AstNode::RefDirection { expression } = *self.ast.node(address.expression)
+                else {
+                    return Err(
+                        "a compound assignment through a reference that is no ref expression"
+                            .to_owned(),
+                    );
+                };
+                self.unwrap_child(address.expression, expression)
+            }
+            CompoundTargetKind::Property => self.translate(target, Some(ty))?,
+            CompoundTargetKind::Dynamic => {
+                return Err("a dynamic compound assignment target".to_owned());
+            }
+        };
+        let target_underlying = self.ts.nullable_underlying(target.ty);
+        if matches!(
+            self.ts.kind(target_underlying),
+            TypeKind::Pointer | TypeKind::NInt | TypeKind::NUInt | TypeKind::Dynamic
+        ) || self.ts.stack_type(target_underlying) == StackType::I
+            || self.ts.is_known(target.ty, KnownTypeCode::NullableOfT)
+        {
+            return Err("a compound assignment of these types".to_owned());
+        }
+        let bitwise = matches!(assignment_op, 9..=11);
+        let overflow = if bitwise || matches!(underlying_result, StackType::F4 | StackType::F8) {
+            Overflow::None
+        } else if check_overflow {
+            Overflow::Checked
+        } else {
+            Overflow::Unchecked
+        };
+        let target_rr_ty = target.ty;
+        if eval_mode == CompoundEvalMode::EvaluatesToOldValue {
+            let e = self.ast.add(AstNode::PostIncrement {
+                increment: assignment_op == 1,
+                expression: target.expression,
+                overflow,
+            });
+            self.ast.with_il(e, inst);
+            self.ast.with_rr(e, Rr::Operator { ty: target_rr_ty });
+            return Ok(TranslatedExpression {
+                expression: e,
+                ty: target_rr_ty,
+            });
+        }
+        let v = self.translate(value, None)?;
+        let v = self.prepare_arithmetic_argument(v, right_input, sign)?;
+        // `ConvertValue`: to the target's type (an enum's underlying type for `+=` and `-=`).
+        let mut value_type = target_underlying;
+        if matches!(assignment_op, 1 | 2) && self.ts.kind(value_type) == TypeKind::Enum {
+            value_type = self.enum_underlying(value_type);
+        }
+        let converted = self.convert_to(v, value_type, true)?;
+        if check_overflow && converted.expression != v.expression {
+            return Err("a checked conversion of a compound assignment value".to_owned());
+        }
+        let e = self.ast.add(AstNode::CompoundAssignment {
+            op: assignment_op,
+            left: target.expression,
+            right: converted.expression,
+            overflow,
+        });
+        self.ast.with_il(e, inst);
+        self.ast.with_rr(e, Rr::Operator { ty: target_rr_ty });
+        Ok(TranslatedExpression {
+            expression: e,
+            ty: target_rr_ty,
+        })
+    }
+
+    /// `VisitUnboxAny`: `expr as T` for `unbox.any T(isinst T(expr))` of a nullable or
+    /// reference type, else `(T)arg` with the argument converted to `object`. A type parameter
+    /// target, cast through its effective base class where needed, is not translated.
+    fn unbox_any(
+        &mut self,
+        inst: NodeId,
+        arg: NodeId,
+        ty: TypeId,
+    ) -> Result<TranslatedExpression, Unsupported> {
+        if let Inst::IsInst {
+            arg: inner,
+            ty: isinst_type,
+        } = *self.f.inst(arg)
+            && isinst_type.ty == ty
+            && (self.ts.is_known(ty, KnownTypeCode::NullableOfT)
+                || self.ts.is_reference_type(ty) == Some(true))
+        {
+            let a = self.translate(inner, None)?;
+            let a = self.unwrap_boxing_conversion(a);
+            let e = self.ast.add(AstNode::As {
+                expression: a.expression,
+                ty,
+            });
+            self.ast.with_il(e, inst);
+            self.ast.with_rr(e, Rr::TryCast { ty });
+            return Ok(TranslatedExpression { expression: e, ty });
+        }
+        if self.ts.kind(ty) == TypeKind::TypeParameter {
+            return Err("an unboxing to a type parameter".to_owned());
+        }
+        let a = self.translate(arg, None)?;
+        let object = self.ts.known_type(KnownTypeCode::Object);
+        let a = self.convert_to(a, object, false)?;
+        let e = self.ast.add(AstNode::Cast {
+            ty,
+            expression: a.expression,
+            unchecked: false,
+        });
+        self.ast.with_il(e, inst);
+        self.ast.with_rr(e, Rr::Conversion { ty });
         Ok(TranslatedExpression { expression: e, ty })
     }
 

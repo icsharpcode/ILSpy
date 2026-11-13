@@ -1831,6 +1831,7 @@ pub fn extension_method_syntax_query(
                     }
                     w.out.bool(d.attempted_conversion_with_type_mismatch.get());
                     w.out.bool(d.implicitly_typed);
+                    w.out.bool(d.anonymous_method);
                 }
                 _ => return Err("an operand of another kind".to_owned()),
             }
@@ -1866,6 +1867,22 @@ pub fn constructors_query(
     query_message(ts, |w| {
         w.out.u8(7);
         w.call_method(constructor)?;
+        Ok(())
+    })
+}
+
+/// Encodes whether `types` are accessible from the current type (kind 12); the answer is 1
+/// for yes.
+pub fn types_accessible_query(
+    ts: &TypeSystem<'_, '_>,
+    types: &[TypeId],
+) -> Result<Vec<u8>, String> {
+    query_message(ts, |w| {
+        w.out.u8(12);
+        w.out.len(types.len());
+        for &t in types {
+            w.ty(t);
+        }
         Ok(())
     })
 }

@@ -42,7 +42,8 @@ impl Builder<'_, '_, '_, '_> {
             | Rr::ResolvedOperator { ty }
             | Rr::TypeOf { ty, .. }
             | Rr::ArrayLength { ty, .. }
-            | Rr::TupleElement { ty, .. } => *ty,
+            | Rr::TupleElement { ty, .. }
+            | Rr::TryCast { ty } => *ty,
             Rr::Field { field, .. } => field.field.ty,
             Rr::Event { ty, .. } => *ty,
             Rr::Lambda(_) | Rr::DefaultLiteral { .. } | Rr::MethodGroup { .. } => {
@@ -93,7 +94,7 @@ impl Builder<'_, '_, '_, '_> {
     }
 
     /// `TypeUtils.IsCompatiblePointerTypeForMemoryAccess`.
-    fn is_compatible_pointer_type_for_memory_access(
+    pub(crate) fn is_compatible_pointer_type_for_memory_access(
         &mut self,
         pointer: TypeId,
         access: TypeId,

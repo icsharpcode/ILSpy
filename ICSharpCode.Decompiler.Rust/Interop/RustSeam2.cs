@@ -97,6 +97,9 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		public const byte Await = 52;
 		public const byte Switch = 53;
 		public const byte SwitchSection = 54;
+		public const byte CompoundAssignment = 55;
+		public const byte PostIncrement = 56;
+		public const byte As = 57;
 
 		public byte Kind;
 		/// <summary>The instructions the node is annotated with, in order.</summary>
@@ -127,6 +130,8 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		public (bool HasTarget, IType[] TypeArguments, IMethod Method)? MethodGroup;
 		/// <summary>For a lambda: <see cref="DecompiledLambdaResolveResult.IsImplicitlyTyped"/>.</summary>
 		public bool ImplicitlyTyped;
+		/// <summary>For a lambda: an anonymous method without parameter list.</summary>
+		public bool AnonymousMethod;
 		/// <summary>For a lambda: <see cref="DecompiledLambdaResolveResult.AttemptedConversionWithTypeMismatch"/>.</summary>
 		public bool AttemptedConversionWithTypeMismatch;
 		/// <summary>For an object creation: the elements of its initializer, if it has one.</summary>
@@ -216,6 +221,18 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 			var statement = (Statement)Build(translation.Body, statementBuilder.exprBuilder);
 			Interlocked.Increment(ref served);
 			return statement as BlockStatement ?? new BlockStatement { statement };
+		}
+
+		/// <summary>The checked or unchecked annotation of <see cref="RustBodyNode.Overflow"/> (1 checked, 2 unchecked).</summary>
+		static T AddOverflowAnnotation<T>(T expression, RustBodyNode node) where T : Expression
+		{
+			if (node.Overflow != 0)
+			{
+				expression.AddAnnotation(node.Overflow == 1
+					? CSharp.Transforms.AddCheckedBlocks.CheckedAnnotation
+					: CSharp.Transforms.AddCheckedBlocks.UncheckedAnnotation);
+			}
+			return expression;
 		}
 
 		/// <summary>A call target's resolve result that is the one of its built target expression.</summary>
@@ -360,6 +377,25 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					var trueStatement = (Statement)Build(node.Children[1], exprBuilder);
 					var falseStatement = node.Children.Length == 3 ? (Statement)Build(node.Children[2], exprBuilder) : null;
 					return Annotate(new IfElseStatement(condition, trueStatement, falseStatement), node);
+				}
+				case RustBodyNode.CompoundAssignment:
+				{
+					// `HandleCompoundAssignment`: the operator over the target's and value's resolve results.
+					var op = (AssignmentOperatorType)node.Value!;
+					var left = (Expression)Build(node.Children[0], exprBuilder);
+					var right = (Expression)Build(node.Children[1], exprBuilder);
+					node.ResolveResult = new OperatorResolveResult(node.OperatorType!, AssignmentExpression.GetLinqNodeType(op, node.Overflow == 1),
+						left.GetResolveResult(), right.GetResolveResult());
+					return AddOverflowAnnotation(Annotate(new AssignmentExpression(left, op, right), node), node);
+				}
+				case RustBodyNode.PostIncrement:
+				{
+					var operand = (Expression)Build(node.Children[0], exprBuilder);
+					node.ResolveResult = new OperatorResolveResult(node.OperatorType!,
+						node.Flag ? System.Linq.Expressions.ExpressionType.PostIncrementAssign : System.Linq.Expressions.ExpressionType.PostDecrementAssign,
+						operand.GetResolveResult());
+					var unary = new UnaryOperatorExpression(node.Flag ? UnaryOperatorType.PostIncrement : UnaryOperatorType.PostDecrement, operand);
+					return AddOverflowAnnotation(Annotate(unary, node), node);
 				}
 				case RustBodyNode.Switch:
 				{
@@ -595,6 +631,16 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					// `TranslateFunction` for a lambda with a parameter list, explicitly typed unless a
 					// parameter has an anonymous type.
 					var function = (ILFunction)node.IL[0];
+					if (node.AnonymousMethod)
+					{
+						// `delegate { ... }`: the parameters are not used and cannot be written.
+						var anonymous = new AnonymousMethodExpression { Body = (BlockStatement)Build(node.Children[0], exprBuilder) };
+						node.ResolveResult = new DecompiledLambdaResolveResult(function, node.Type!, (IType)node.Value!,
+							hasParameterList: false, isAnonymousMethod: true, isImplicitlyTyped: false) {
+							AttemptedConversionWithTypeMismatch = node.AttemptedConversionWithTypeMismatch
+						};
+						return Annotate(anonymous, node);
+					}
 					var lambda = new LambdaExpression();
 					lambda.Parameters.AddRange(MakeParameters(function, exprBuilder));
 					if (node.ImplicitlyTyped)
@@ -638,6 +684,12 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				}
 				case RustBodyNode.TypeOf:
 					return Annotate(new TypeOfExpression(exprBuilder.ConvertType(node.Type!)), node);
+				case RustBodyNode.As:
+				{
+					var operand = (Expression)Build(node.Children[0], exprBuilder);
+					node.ResolveResult = new ConversionResolveResult(node.Type!, operand.GetResolveResult(), Conversion.TryCast);
+					return Annotate(new AsExpression(operand, exprBuilder.ConvertType(node.Type!)), node);
+				}
 				case RustBodyNode.Cast:
 				{
 					var operand = (Expression)Build(node.Children[0], exprBuilder);

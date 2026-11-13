@@ -71,6 +71,22 @@ pub enum AstNode {
         labels: Vec<Option<AstId>>,
         statements: Vec<AstId>,
     },
+    /// `AssignmentExpression` of a compound operator (`AssignmentOperatorType` from `Add`),
+    /// with the checked or unchecked annotation of `overflow`.
+    CompoundAssignment {
+        op: u8,
+        left: AstId,
+        right: AstId,
+        overflow: Overflow,
+    },
+    /// `UnaryOperatorExpression` of `PostIncrement` (or `PostDecrement`).
+    PostIncrement {
+        increment: bool,
+        expression: AstId,
+        overflow: Overflow,
+    },
+    /// `AsExpression`: `expression as ty`.
+    As { expression: AstId, ty: TypeId },
     /// `UnaryOperatorExpression` with `UnaryOperatorType.Await`.
     Await { expression: AstId },
     /// `ConditionalExpression`: `condition ? true_expression : false_expression`.
@@ -287,6 +303,9 @@ pub enum Rr {
         target: Option<Box<Rr>>,
         field: crate::il::ast::FieldOperand,
     },
+    /// `ConversionResolveResult` of `Conversion.TryCast` to `ty`, which the host computes from
+    /// the `as` node's operand.
+    TryCast { ty: TypeId },
     /// `MemberResolveResult` of a tuple element's field with the element type of the target's
     /// tuple type (`returnTypeOverride`).
     TupleElement {
