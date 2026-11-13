@@ -59,6 +59,7 @@ pub fn convert_body(
         root_variables: read.variables.clone(),
         found_override: None,
         loaded_stack_slots: Vec::new(),
+        named_argument_map: None,
     };
     let stmt = b.convert(body)?;
     b.ast.with_il(stmt, body);

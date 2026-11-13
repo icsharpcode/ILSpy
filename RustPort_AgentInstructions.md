@@ -599,7 +599,10 @@ the reasons. This file holds only the ordered steps, their gates and their rules
   - [x] 68y44. A batch (lecture 3.152): comparisons of two constants, and `string.Format`
     written as an interpolated string. Subject: `Translate constant comparisons and
     string.Format interpolation in the engine`.
-  - [ ] 68y45-. Further construct groups (numbered on from 68y1), in the order of the fallback reasons the ratchet test
+  - [x] 68y45. A batch (lecture 3.153): constrained calls, calls with named arguments
+    (`CallWithNamedArgs`, the target included), and throw expressions. Subject: `Translate
+    constrained calls, named arguments and throw expressions in the engine`.
+  - [ ] 68y46-. Further construct groups (numbered on from 68y1), in the order of the fallback reasons the ratchet test
     prints, until no body of the corpus falls back. Subject pattern:
     `Translate <construct group> to C# in the engine`.
   - [ ] 68z. Request-level seam 2. Subject: `Add the Rust C# AST builders and the AST materializer`.

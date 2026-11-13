@@ -79,6 +79,7 @@ mod kind {
     pub const COMPOUND_ASSIGNMENT: u8 = 55;
     pub const POST_INCREMENT: u8 = 56;
     pub const AS: u8 = 57;
+    pub const THROW_EXPRESSION: u8 = 58;
 }
 
 pub(super) fn write_body(
@@ -260,6 +261,7 @@ fn rr(w: &mut FunctionWriter<'_, '_, '_, '_>, rr: Option<&Rr>) -> Result<(), Str
             w.out.u8(19);
             w.ty(*ty);
         }
+        Some(Rr::Throw) => w.out.u8(27),
         Some(Rr::TryCast { ty }) => {
             w.out.u8(25);
             w.ty(*ty);
@@ -350,6 +352,7 @@ fn node(w: &mut FunctionWriter<'_, '_, '_, '_>, ast: &Ast, id: AstId) -> Result<
         AstNode::CompoundAssignment { .. } => kind::COMPOUND_ASSIGNMENT,
         AstNode::PostIncrement { .. } => kind::POST_INCREMENT,
         AstNode::As { .. } => kind::AS,
+        AstNode::ThrowExpression { .. } => kind::THROW_EXPRESSION,
     });
     w.out.len(a.il.len());
     for &inst in &a.il {
@@ -453,6 +456,7 @@ fn node(w: &mut FunctionWriter<'_, '_, '_, '_>, ast: &Ast, id: AstId) -> Result<
         AstNode::RefDirection { expression }
         | AstNode::ExpressionStatement { expression }
         | AstNode::LogicNot { expression }
+        | AstNode::ThrowExpression { expression }
         | AstNode::Await { expression } => {
             node(w, ast, expression)?;
         }

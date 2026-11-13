@@ -63,6 +63,8 @@ pub(crate) struct Builder<'f, 't, 'c, 'a> {
     /// `loadedVariablesSet`: the single-definition stack slots loaded so far, whose type a
     /// later store keeps.
     pub(crate) loaded_stack_slots: Vec<crate::il::ast::VarId>,
+    /// The parameter of each argument of the call a `CallWithNamedArgs` block translates.
+    pub(crate) named_argument_map: Option<Vec<usize>>,
 }
 
 /// The variant name of an instruction, for the reasons of untranslated bodies.

@@ -406,6 +406,11 @@ impl Builder<'_, '_, '_, '_> {
                 instructions,
                 final_inst,
             } => self.array_initializer(inst, &instructions, final_inst),
+            Inst::Block {
+                kind: BlockKind::CallWithNamedArgs,
+                instructions,
+                final_inst,
+            } => self.call_with_named_args(inst, &instructions, final_inst),
             Inst::Block { kind, .. } => Err(format!("a block of kind {kind:?}")),
             Inst::Conv {
                 arg,
@@ -429,6 +434,20 @@ impl Builder<'_, '_, '_, '_> {
             // `VisitIsInst`: `arg as T` for a reference type, a boxing conversion of the argument
             // dropped; a value type, emulated with `is` and a conditional, is not translated.
             Inst::UnboxAny { arg, ty } => self.unbox_any(inst, arg, ty.ty),
+            // `VisitThrow`: `throw ex`, the exception translated with `Exception` as type hint.
+            Inst::Throw { arg } => {
+                let exception = self.ts.known_type(KnownTypeCode::Exception);
+                let ex = self.translate(arg, Some(exception))?;
+                let e = self.ast.add(AstNode::ThrowExpression {
+                    expression: ex.expression,
+                });
+                self.ast.with_il(e, inst);
+                self.ast.with_rr(e, Rr::Throw);
+                Ok(TranslatedExpression {
+                    expression: e,
+                    ty: self.ts.intern(TypeData::NoType),
+                })
+            }
             Inst::IsInst { arg, ty } => {
                 if self.ts.is_reference_type(ty.ty) != Some(true) {
                     return Err("an isinst of a value type".to_owned());

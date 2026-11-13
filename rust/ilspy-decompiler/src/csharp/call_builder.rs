@@ -49,6 +49,10 @@ struct ArgumentList {
     ref_kinds: Vec<RefKind>,
     /// `UseImplicitlyTypedOut`: `out` arguments are written and resolved as `out var`.
     use_implicitly_typed_out: bool,
+    /// `ArgumentToParameterMap` of a call with named arguments: the parameter of each argument.
+    parameter_map: Option<Vec<usize>>,
+    /// `ArgumentNames`: the names written from the first argument out of its place on.
+    explicit_names: Option<Vec<Option<String>>>,
 }
 
 impl ArgumentList {
@@ -60,23 +64,32 @@ impl ArgumentList {
         }
     }
 
-    /// `GetArgumentNames()`: names for the bool literals, where every parameter has a name.
+    /// `GetArgumentNames()`: the explicit names, and names for the bool literals where every
+    /// parameter has a name, up to the arguments written.
     fn argument_names(&self) -> Option<Vec<Option<String>>> {
-        if !self.add_names_to_primitive_values
-            || !self.is_primitive_value.iter().any(|&p| p)
-            || self.parameter_names.iter().any(String::is_empty)
+        let mut names = self.explicit_names.clone();
+        if self.add_names_to_primitive_values
+            && self.is_primitive_value.iter().any(|&p| p)
+            && !self.parameter_names.iter().any(String::is_empty)
         {
-            return None;
+            let names = names.get_or_insert_with(|| vec![None; self.arguments.len()]);
+            for (i, &primitive) in self.is_primitive_value.iter().enumerate() {
+                if primitive && names[i].is_none() {
+                    names[i] = Some(self.parameter_names[i].clone());
+                }
+            }
         }
-        // The names of the written arguments.
-        Some(
-            self.is_primitive_value
-                .iter()
-                .zip(&self.parameter_names)
-                .take(self.actual_count())
-                .map(|(&primitive, name)| primitive.then(|| name.clone()))
-                .collect(),
-        )
+        let mut names = names?;
+        names.truncate(self.actual_count());
+        Some(names)
+    }
+
+    /// `ExpectedParameters`: the method's parameters in argument order.
+    fn expected_parameters(&self, method: &Method) -> Vec<crate::semantics::Parameter> {
+        match &self.parameter_map {
+            Some(map) => map.iter().map(|&p| method.parameters[p].clone()).collect(),
+            None => method.parameters.clone(),
+        }
     }
 }
 
@@ -90,9 +103,6 @@ impl Builder<'_, '_, '_, '_> {
     ) -> Result<TranslatedExpression, Unsupported> {
         if call.is_tail {
             return Err("a tail call".to_owned());
-        }
-        if call.constrained_to.is_some() {
-            return Err("a constrained call".to_owned());
         }
         let operand = &call.method;
         if operand.local_function.is_some()
@@ -168,20 +178,39 @@ impl Builder<'_, '_, '_, '_> {
 
         // the target
         let first_param = usize::from(!method.is_static);
-        let this_arg = call.args.first().copied().filter(|_| !method.is_static);
+        let constrained_to = call.constrained_to.as_ref().map(|t| t.ty);
+        let mut this_arg = call.args.first().copied().filter(|_| !method.is_static);
         if let Some(t) = this_arg
-            && matches!(self.f.inst(t), Inst::LdObjIfRef { .. })
+            && let Inst::LdObjIfRef { target, .. } = *self.f.inst(t)
         {
-            return Err("a call on a constrained target".to_owned());
+            if constrained_to.is_none() {
+                return Err("a call on a constrained target".to_owned());
+            }
+            this_arg = Some(target);
         }
-        let mut target =
-            self.translate_target(this_arg, op == CallOp::Call, method.is_static, declaring)?;
+        let mut target = self.translate_constrained_target(
+            this_arg,
+            op == CallOp::Call,
+            method.is_static,
+            declaring,
+            constrained_to,
+        )?;
 
         // the arguments
         let is_setter =
             (property.is_some() && method.parameters.len() == 1) || indexer == Some(true);
         let first_argument_node = self.ast.nodes.len();
         let mut list = self.argument_list(call, &method, id, first_param, declaring, is_setter)?;
+        // Named arguments of an extension method, an accessor or a delegate invocation are not
+        // translated.
+        if list.parameter_map.is_some()
+            && (is_extension
+                || property.is_some()
+                || indexer.is_some()
+                || (method.name == "Invoke" && self.ts.kind(declaring) == TypeKind::Delegate))
+        {
+            return Err("named arguments of an extension, accessor or delegate call".to_owned());
+        }
 
         // `IsInterpolatedStringCreation` for `string.Format`: an interpolated string where the
         // format string tokenizes, else an ordinary call. A `params` overload, written as an
@@ -267,11 +296,19 @@ impl Builder<'_, '_, '_, '_> {
         }
         let (require, require_type_arguments) =
             self.disambiguate_call(&method, id, op, &mut target, &mut list, require, declaring)?;
+        // The managed builder comments a cast target of a `constrained.` call, which is not
+        // translated.
+        if constrained_to.is_some() && self.is_cast_target(target.expression) {
+            return Err("a cast target of a constrained call".to_owned());
+        }
         // The overload the call resolves to may be an override of the method, or the method
         // with other inferred type arguments; the written argument names take its parameter
         // names, and the call its return type.
         let found_override = self.found_override.take();
         if let Some(found) = &found_override {
+            if list.parameter_map.is_some() {
+                return Err("named arguments of a call that resolves to another method".to_owned());
+            }
             if is_extension {
                 return Err("an extension call that resolves to another method".to_owned());
             }
@@ -495,9 +532,33 @@ impl Builder<'_, '_, '_, '_> {
         if call.args.len() != first_param + method.parameters.len() {
             return Err("a call with mismatched arguments".to_owned());
         }
+        // The parameter of each argument: the named argument map of `CallWithNamedArgs`.
+        let map = self.named_argument_map.take();
+        if map.is_some() && (is_setter || method.is_operator) {
+            return Err("named arguments of a setter or operator".to_owned());
+        }
+        let order: Vec<usize> = map
+            .clone()
+            .unwrap_or_else(|| (0..method.parameters.len()).collect());
+        // Names start at the first argument out of its place.
+        let mut explicit_names: Option<Vec<Option<String>>> = None;
+        for (i, &p) in order.iter().enumerate() {
+            if explicit_names.is_none() && p != i {
+                explicit_names = Some(vec![None; order.len()]);
+            }
+            let name = &method.parameters[p].name;
+            if let Some(names) = &mut explicit_names
+                && crate::il::transforms::assign_variable_names::is_valid_name(name)
+            {
+                names[i] = Some(name.clone());
+            }
+        }
         let mut list = ArgumentList {
             arguments: Vec::with_capacity(method.parameters.len()),
-            parameter_names: method.parameters.iter().map(|p| p.name.clone()).collect(),
+            parameter_names: order
+                .iter()
+                .map(|&p| method.parameters[p].name.clone())
+                .collect(),
             is_primitive_value: Vec::with_capacity(method.parameters.len()),
             add_names_to_primitive_values: self.settings.named_arguments
                 && self.settings.non_trailing_named_arguments,
@@ -506,11 +567,17 @@ impl Builder<'_, '_, '_, '_> {
             } else {
                 -1
             },
-            ref_kinds: method.parameters.iter().map(|p| p.ref_kind).collect(),
+            ref_kinds: order
+                .iter()
+                .map(|&p| method.parameters[p].ref_kind)
+                .collect(),
             use_implicitly_typed_out: true,
+            parameter_map: map,
+            explicit_names,
         };
         let declaring_is_nullable = self.ts.is_known(declaring, KnownTypeCode::NullableOfT);
-        for (i, parameter) in method.parameters.iter().enumerate() {
+        for (i, &pi) in order.iter().enumerate() {
+            let parameter = &method.parameters[pi];
             // `out` arguments resolve as `OutVarResolveResult`s and `in` arguments may be made
             // explicit, which is not translated.
             if !matches!(
@@ -548,7 +615,7 @@ impl Builder<'_, '_, '_, '_> {
             list.is_primitive_value.push(primitive);
             // The assigned value of a setter does not end the run of optional arguments.
             if !(is_setter && i + 1 == method.parameters.len()) {
-                if self.is_optional_argument(id, &infos[i], arg)? {
+                if self.is_optional_argument(id, &infos[pi], arg)? {
                     if list.first_optional == -2 {
                         list.first_optional = i as i32;
                     }
@@ -565,6 +632,11 @@ impl Builder<'_, '_, '_, '_> {
                 arg = self.change_direction_to_out(arg);
             }
             list.arguments.push(arg);
+        }
+        // Omitted optional arguments among named ones are found through the map, which the
+        // engine does not follow.
+        if list.parameter_map.is_some() && list.first_optional >= 0 {
+            return Err("omitted optional arguments with named arguments".to_owned());
         }
         Ok(list)
     }
@@ -837,7 +909,10 @@ impl Builder<'_, '_, '_, '_> {
             }
             if !spent_cast_arguments {
                 spent_cast_arguments = true;
-                self.cast_arguments(&mut list.arguments, &method.parameters)?;
+                {
+                    let expected = list.expected_parameters(method);
+                    self.cast_arguments(&mut list.arguments, &expected)?;
+                }
                 continue;
             }
             // No spelling resolves; the most explicit one is written anyway.
@@ -980,7 +1055,10 @@ impl Builder<'_, '_, '_, '_> {
             }
             if !spent_cast_arguments {
                 spent_cast_arguments = true;
-                self.cast_arguments(&mut list.arguments, &method.parameters)?;
+                {
+                    let expected = list.expected_parameters(method);
+                    self.cast_arguments(&mut list.arguments, &expected)?;
+                }
                 continue;
             }
             if !spent_cast_target {
@@ -1323,7 +1401,10 @@ impl Builder<'_, '_, '_, '_> {
                 }
                 // Cast arguments are written with their types, not as `out var`.
                 list.use_implicitly_typed_out = false;
-                self.cast_arguments(&mut list.arguments, &method.parameters)?;
+                {
+                    let expected = list.expected_parameters(method);
+                    self.cast_arguments(&mut list.arguments, &expected)?;
+                }
                 continue;
             }
             if !spent_require {
@@ -1430,7 +1511,13 @@ impl Builder<'_, '_, '_, '_> {
             .iter()
             .map(|a| self.semantic_rr(a.expression, a.ty))
             .collect();
-        let parameters: Vec<TypeId> = method.definition_parameters.iter().map(|p| p.ty).collect();
+        let parameters: Vec<TypeId> = match &list.parameter_map {
+            Some(map) => map
+                .iter()
+                .map(|&p| method.definition_parameters[p].ty)
+                .collect(),
+            None => method.definition_parameters.iter().map(|p| p.ty).collect(),
+        };
         let mut conversions = Conversions::new(self.ts);
         let mut ti = TypeInference::new(&mut conversions);
         ti.algorithm = TypeInferenceAlgorithm::Improved;
@@ -1518,6 +1605,8 @@ impl Builder<'_, '_, '_, '_> {
             first_optional: -2,
             ref_kinds: Vec::new(),
             use_implicitly_typed_out: false,
+            parameter_map: None,
+            explicit_names: None,
         };
         let op = if get_awaiter_callvirt {
             CallOp::CallVirt
@@ -1546,6 +1635,62 @@ impl Builder<'_, '_, '_, '_> {
             expression: e,
             ty: result.return_type,
         })
+    }
+
+    /// `CallWithNamedArgs`: the call with the arguments the block stores in temporaries first,
+    /// in their order, then the others, each with the index of its parameter.
+    pub(crate) fn call_with_named_args(
+        &mut self,
+        block: NodeId,
+        instructions: &[NodeId],
+        final_inst: NodeId,
+    ) -> Result<TranslatedExpression, Unsupported> {
+        let (call, op) = match self.f.inst(final_inst) {
+            Inst::Call(c) => (c.clone(), CallOp::Call),
+            Inst::CallVirt(c) => (c.clone(), CallOp::CallVirt),
+            _ => return Err("named arguments of an object creation".to_owned()),
+        };
+        let first_param = usize::from(!call.method.method.is_static);
+        let is_named = |b: &Self, n: NodeId| match *b.f.inst(n) {
+            Inst::LdLoc { var } => b.f.var(var).kind == crate::il::ast::VariableKind::NamedArgument,
+            _ => false,
+        };
+        let mut args: Vec<NodeId> = call.args[..first_param].to_vec();
+        let mut map = Vec::with_capacity(call.args.len() - first_param);
+        for (k, &store) in instructions.iter().enumerate() {
+            let Inst::StLoc { var, value, .. } = *self.f.inst(store) else {
+                return Err("a named argument block of another shape".to_owned());
+            };
+            // The target stored first (its parameter index -1 in the managed map).
+            if first_param == 1
+                && matches!(*self.f.inst(call.args[0]), Inst::LdLoc { var: v } if v == var)
+            {
+                if k != 0 {
+                    return Err("a named argument target stored after an argument".to_owned());
+                }
+                args[0] = value;
+                continue;
+            }
+            let position = call.args[first_param..]
+                .iter()
+                .position(|&a| matches!(*self.f.inst(a), Inst::LdLoc { var: v } if v == var))
+                .ok_or("a named argument the call does not load")?;
+            args.push(value);
+            map.push(position);
+        }
+        for (position, &a) in call.args[first_param..].iter().enumerate() {
+            if !is_named(self, a) {
+                args.push(a);
+                map.push(position);
+            }
+        }
+        let call = crate::il::ast::CallData { args, ..call };
+        self.named_argument_map = Some(map);
+        let result = self.call(final_inst, &call, op);
+        self.named_argument_map = None;
+        let result = result?;
+        self.ast.with_il(result.expression, block);
+        Ok(result)
     }
 
     /// `HandleStringInterpolation` for `string.Format`: the interpolated string the format
@@ -1699,6 +1844,9 @@ impl Builder<'_, '_, '_, '_> {
             self.found_override = Some(found.clone());
         }
         // An `out var` must declare the type of the parameter found.
+        if list.parameter_map.is_some() && out_vars.iter().any(Option::is_some) {
+            return Err("an out var among named arguments".to_owned());
+        }
         for (i, out_var) in out_vars.iter().enumerate() {
             if let Some(element) = *out_var
                 && let Some(p) = found.parameters.get(i)

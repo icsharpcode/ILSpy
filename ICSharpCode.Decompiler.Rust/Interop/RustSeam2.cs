@@ -100,6 +100,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		public const byte CompoundAssignment = 55;
 		public const byte PostIncrement = 56;
 		public const byte As = 57;
+		public const byte ThrowExpression = 58;
 
 		public byte Kind;
 		/// <summary>The instructions the node is annotated with, in order.</summary>
@@ -416,6 +417,8 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 						section.Statements.Add((Statement)Build(node.Children[child++], exprBuilder));
 					return Annotate(section, node);
 				}
+				case RustBodyNode.ThrowExpression:
+					return Annotate(new ThrowExpression((Expression)Build(node.Children[0], exprBuilder)), node);
 				case RustBodyNode.Await:
 					return Annotate(new UnaryOperatorExpression(UnaryOperatorType.Await, (Expression)Build(node.Children[0], exprBuilder)), node);
 				case RustBodyNode.LogicNot:

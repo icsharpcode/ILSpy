@@ -47,7 +47,7 @@ impl Builder<'_, '_, '_, '_> {
             | Rr::FormatString { ty, .. } => *ty,
             Rr::Field { field, .. } => field.field.ty,
             Rr::Event { ty, .. } => *ty,
-            Rr::Lambda(_) | Rr::DefaultLiteral { .. } | Rr::MethodGroup { .. } => {
+            Rr::Lambda(_) | Rr::DefaultLiteral { .. } | Rr::MethodGroup { .. } | Rr::Throw => {
                 self.ts.intern(TypeData::NoType)
             }
             Rr::TypeIs { .. } => self
@@ -444,12 +444,32 @@ impl Builder<'_, '_, '_, '_> {
         member_static: bool,
         declaring: TypeId,
     ) -> Result<TranslatedExpression, Unsupported> {
+        self.translate_constrained_target(
+            target,
+            non_virtual_invocation,
+            member_static,
+            declaring,
+            None,
+        )
+    }
+
+    /// `TranslateTarget` with `constrainedTo`: the type of a `constrained.` call's target,
+    /// which takes the declaring type's place.
+    pub(crate) fn translate_constrained_target(
+        &mut self,
+        target: Option<NodeId>,
+        non_virtual_invocation: bool,
+        member_static: bool,
+        declaring: TypeId,
+        constrained_to: Option<TypeId>,
+    ) -> Result<TranslatedExpression, Unsupported> {
+        let target_type = constrained_to.unwrap_or(declaring);
         let Some(target) = target.filter(|_| !member_static) else {
-            let e = self.ast.add(AstNode::TypeReference { ty: declaring });
-            self.ast.with_rr(e, Rr::Type(declaring));
+            let e = self.ast.add(AstNode::TypeReference { ty: target_type });
+            self.ast.with_rr(e, Rr::Type(target_type));
             return Ok(TranslatedExpression {
                 expression: e,
-                ty: declaring,
+                ty: target_type,
             });
         };
         let current_is_struct = self
@@ -494,6 +514,7 @@ impl Builder<'_, '_, '_, '_> {
         }
         // `CallInstruction.ExpectedTypeForThisPointer`
         let expected = match self.ts.is_reference_type(declaring) {
+            _ if constrained_to.is_some() => StackType::Ref,
             _ if matches!(self.ts.data(declaring), TypeData::TypeParam { .. }) => StackType::Ref,
             Some(true) => StackType::Obj,
             Some(false) => StackType::Ref,
@@ -503,9 +524,9 @@ impl Builder<'_, '_, '_, '_> {
         let requires_managed_reference = expected == StackType::Ref
             || (expected == StackType::Unknown && target_result == StackType::Ref);
         let hint = if !requires_managed_reference {
-            declaring
+            target_type
         } else if target_result == StackType::Ref {
-            self.ts.intern(TypeData::ByRef(declaring))
+            self.ts.intern(TypeData::ByRef(target_type))
         } else {
             return Err("a member access through a pointer".to_owned());
         };
@@ -515,7 +536,7 @@ impl Builder<'_, '_, '_, '_> {
             let n = Normalization::TYPE_ERASURE;
             let same = match *self.ts.data(translated.ty) {
                 TypeData::ByRef(element) => {
-                    self.ts.normalize_with(element, n) == self.ts.normalize_with(declaring, n)
+                    self.ts.normalize_with(element, n) == self.ts.normalize_with(target_type, n)
                 }
                 _ => false,
             };

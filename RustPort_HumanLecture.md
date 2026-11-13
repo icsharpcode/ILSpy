@@ -3741,6 +3741,27 @@ Deferred: method group arguments in the extension method question (9 bodies) nee
 group's methods and its chosen method on the wire, which the semantic method group does
 not keep. The share rose from 86.0 % to 86.5 %.
 
+### 3.153 A batch: constrained calls, named arguments, throw expressions (item 68y45)
+
+*Constrained calls.* `TranslateTarget` takes the `constrained.` type in place of the
+declaring type: as the type hint, as the type of the reference the target must be, and as
+the type name of a static call (`T.M()`); the `ldobj.if.ref` around the target is looked
+through. A cast target, which the managed builder comments, falls back.
+
+*Named arguments.* A `CallWithNamedArgs` block stores some arguments in temporaries before
+the call; its arguments are those values in order, then the rest, each with the index of
+its parameter (the target, stored first, keeps its place). The argument list carries that
+map: from the first argument out of place on, every argument is written with its
+parameter's name, merged with the names of primitive values as `GetArgumentNames` does,
+and `CastArguments` and type inference take the parameters in argument order. Named
+arguments of extension methods, accessors and delegate invocations, an `out var` among
+them, omitted optional arguments and a call that resolves to another method fall back.
+
+*Throw expressions.* `throw` as an expression is a `ThrowExpression` with a
+`ThrowResolveResult` of no type.
+
+The share rose from 86.5 % to 87.6 %.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

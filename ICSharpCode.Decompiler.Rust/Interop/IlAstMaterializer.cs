@@ -774,6 +774,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				}
 				case RustBodyNode.LogicNot:
 				case RustBodyNode.Await:
+				case RustBodyNode.ThrowExpression:
 					node.Children = [BodyNode()];
 					break;
 				case RustBodyNode.Throw:
@@ -1110,6 +1111,8 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					return null;
 				case 19:
 					return new InitializedObjectResolveResult(Type());
+				case 27:
+					return new ThrowResolveResult();
 				case 26:
 				{
 					// RustSeam2 adds the arguments, the interpolations' resolve results.

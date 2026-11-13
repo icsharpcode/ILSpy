@@ -85,6 +85,8 @@ pub enum AstNode {
         expression: AstId,
         overflow: Overflow,
     },
+    /// `ThrowExpression`: `throw expression`.
+    ThrowExpression { expression: AstId },
     /// `AsExpression`: `expression as ty`.
     As { expression: AstId, ty: TypeId },
     /// `UnaryOperatorExpression` with `UnaryOperatorType.Await`.
@@ -306,6 +308,8 @@ pub enum Rr {
     /// `InterpolatedStringResolveResult` of a `string.Format` call written as an interpolated
     /// string, whose arguments the host takes from the interpolations.
     FormatString { ty: TypeId, format: Vec<u16> },
+    /// `ThrowResolveResult`, of no type.
+    Throw,
     /// `ConversionResolveResult` of `Conversion.TryCast` to `ty`, which the host computes from
     /// the `as` node's operand.
     TryCast { ty: TypeId },
