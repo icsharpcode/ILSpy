@@ -424,6 +424,7 @@ impl Builder<'_, '_, '_, '_> {
                 is_lifted,
                 hint,
             ),
+            Inst::NewArr { ty, ref indices } => self.new_arr(inst, ty.ty, indices),
             Inst::Await {
                 value,
                 get_awaiter,
@@ -643,23 +644,8 @@ impl Builder<'_, '_, '_, '_> {
         {
             return Err("a comparison of a pointer with null".to_owned());
         }
-        // `TryUniteEqualityOperandType` treats an int zero compared with an enum apart (by the
-        // enum's fields), which is not translated; other constants become the enum's.
-        for (a, b) in [(&l, &r), (&r, &l)] {
-            let zero = matches!(
-                self.rr_of(a.expression),
-                Rr::Constant {
-                    value: ConstValue::Int32(0),
-                    ..
-                }
-            );
-            let u = self.ts.nullable_underlying(b.ty);
-            if zero && self.ts.kind(u) == TypeKind::Enum {
-                return Err("an enum comparison with zero".to_owned());
-            }
-        }
-        let l = self.adjust_constant_expression_to_type(l, r.ty)?;
-        let r = self.adjust_constant_expression_to_type(r, l.ty)?;
+        let l = self.unite_equality_operand_type(l, &r)?;
+        let r = self.unite_equality_operand_type(r, &l)?;
         let op = if kind == ComparisonKind::Equality {
             BinaryOp::Equality
         } else {
@@ -687,7 +673,7 @@ impl Builder<'_, '_, '_, '_> {
         // applies, or one over another stack type, an operand is cast to the comparison's type,
         // and both where one is not enough.
         let mut converts_operands = resolved.unwrap_or(false);
-        if !self.fits_comparison(resolved, &l, input) {
+        if !self.fits_comparison(resolved, &l, &r, input) {
             let target = self.comparison_target_type(input, l.ty, r.ty);
             if target == l.ty {
                 r = self.convert_to(r, target, false)?;
@@ -696,7 +682,7 @@ impl Builder<'_, '_, '_, '_> {
             }
             let resolved = self.resolve_builtin_equality(op, &l, &r)?;
             converts_operands = resolved.unwrap_or(false);
-            if !self.fits_comparison(resolved, &l, input) {
+            if !self.fits_comparison(resolved, &l, &r, input) {
                 l = self.convert_to(l, target, false)?;
                 r = self.convert_to(r, target, false)?;
                 converts_operands = false;
@@ -727,10 +713,28 @@ impl Builder<'_, '_, '_, '_> {
         &mut self,
         resolved: Option<bool>,
         l: &TranslatedExpression,
+        r: &TranslatedExpression,
         input: StackType,
     ) -> bool {
-        let operand = self.ts.nullable_underlying(l.ty);
+        let operand = self.equality_operand_type(l.ty, r.ty);
         resolved.is_some() && self.ts.stack_type(operand) == input
+    }
+
+    /// The type of the operator's first operand (`rr.Operands[0].Type`): the promoted type of
+    /// two numeric operands, else the left operand's type, without nullability.
+    fn equality_operand_type(&mut self, left: TypeId, right: TypeId) -> TypeId {
+        let lu = self.ts.nullable_underlying(left);
+        let ru = self.ts.nullable_underlying(right);
+        let (lc, rc) = (self.ts.type_code(lu), self.ts.type_code(ru));
+        if self.ts.kind(lu) != TypeKind::Enum
+            && self.ts.kind(ru) != TypeKind::Enum
+            && (4..=15).contains(&lc)
+            && (4..=15).contains(&rc)
+            && let Ok(Some(p)) = numeric_promotion(lc, rc)
+        {
+            return self.ts.known_type(known_of_type_code(p));
+        }
+        lu
     }
 
     /// The type `TranslateCeq` casts an operand to: `object` for a comparison of references,
@@ -750,6 +754,60 @@ impl Builder<'_, '_, '_, '_> {
         }
         let sign = self.ts.primitive_type(lu).sign();
         self.find_type(input, sign)
+    }
+
+    /// `TryUniteEqualityOperandType`: a constant operand as the other operand's type, except an
+    /// int zero compared with an enum where `AvoidConvertingZeroToEnum`, which stays `0`.
+    fn unite_equality_operand_type(
+        &mut self,
+        operand: TranslatedExpression,
+        other: &TranslatedExpression,
+    ) -> Result<TranslatedExpression, Unsupported> {
+        let zero = matches!(
+            self.rr_of(operand.expression),
+            Rr::Constant {
+                value: ConstValue::Int32(0),
+                ..
+            }
+        );
+        if zero && self.avoid_converting_zero_to_enum(other) {
+            let int = self.ts.known_type(KnownTypeCode::Int32);
+            return self.adjust_constant_expression_to_type(operand, int);
+        }
+        self.adjust_constant_expression_to_type(operand, other.ty)
+    }
+
+    /// `AvoidConvertingZeroToEnum`: `0` compared with an enum stays an integer for a flag check
+    /// `(e & E.X) == 0`, and where the enum has no member of value zero to write instead.
+    fn avoid_converting_zero_to_enum(&mut self, other: &TranslatedExpression) -> bool {
+        let enum_type = self.ts.nullable_underlying(other.ty);
+        if self.ts.kind(enum_type) != TypeKind::Enum {
+            return false;
+        }
+        if matches!(
+            self.ast.node(other.expression),
+            AstNode::BinaryOperator {
+                op: BinaryOp::BitwiseAnd,
+                ..
+            }
+        ) {
+            return true;
+        }
+        let Some(def) = self.ts.definition(enum_type) else {
+            return true;
+        };
+        let fields = self
+            .ts
+            .comp
+            .module(def.module)
+            .md
+            .type_fields(def.row)
+            .unwrap_or_default();
+        let has_zero = fields.iter().any(|&f| {
+            super::translated_expression::integral_value(&self.ts.field_constant(def.module, f))
+                .is_some_and(|v| v as u64 == 0)
+        });
+        !has_zero
     }
 
     /// `AdjustConstantExpressionToType`: a constant converted to the type hint where that loses
@@ -854,11 +912,16 @@ impl Builder<'_, '_, '_, '_> {
         }
         let (lc, rc) = (self.ts.type_code(lt), self.ts.type_code(rt));
         if (4..=15).contains(&lc) && (4..=15).contains(&rc) {
-            return if lc == rc && (9..=14).contains(&lc) {
-                Ok(Some(false))
-            } else {
-                Err("a comparison that promotes its operands".to_owned())
-            };
+            // A constant converts implicitly to a type it fits, which the promotion does not
+            // model.
+            if lc != rc
+                && (matches!(self.rr_of(l.expression), Rr::Constant { .. })
+                    || matches!(self.rr_of(r.expression), Rr::Constant { .. }))
+            {
+                return Err("a comparison that promotes a constant".to_owned());
+            }
+            // The operator over the promoted type, converting the operands not of that type.
+            return Ok(numeric_promotion(lc, rc)?.map(|p| !(lc == p && rc == p)));
         }
         // bool operator ==(bool x, bool y)
         if lc == 3 && rc == 3 {
@@ -1460,6 +1523,36 @@ impl Builder<'_, '_, '_, '_> {
         Ok(TranslatedExpression { expression: e, ty })
     }
 
+    /// `VisitNewArr`: `new T[n]`, with each dimension translated as an array index.
+    fn new_arr(
+        &mut self,
+        inst: NodeId,
+        element_type: TypeId,
+        indices: &[NodeId],
+    ) -> Result<TranslatedExpression, Unsupported> {
+        let mut arguments = Vec::with_capacity(indices.len());
+        for &i in indices {
+            arguments.push(self.translate_array_index(i)?.expression);
+        }
+        let array_type = self.ts.intern(TypeData::Array {
+            elem: element_type,
+            rank: indices.len() as u32,
+            nullability: crate::typesystem::types::Nullability::Oblivious,
+        });
+        let e = self.ast.add(AstNode::ArrayCreate {
+            element_type,
+            arguments,
+            initializer: None,
+            special_constants: true,
+        });
+        self.ast.with_il(e, inst);
+        self.ast.with_rr(e, Rr::ArrayCreate { ty: array_type });
+        Ok(TranslatedExpression {
+            expression: e,
+            ty: array_type,
+        })
+    }
+
     /// `TranslateArrayIndex`: the index converted to an integer type an array index takes.
     fn translate_array_index(&mut self, i: NodeId) -> Result<TranslatedExpression, Unsupported> {
         let stack = self.f.result_type(self.ts, i);
@@ -1777,7 +1870,7 @@ impl Builder<'_, '_, '_, '_> {
         let e = self.ast.add(AstNode::ArrayCreate {
             element_type,
             arguments,
-            initializer: root,
+            initializer: Some(root),
             special_constants,
         });
         self.ast.with_il(e, inst);
@@ -2086,5 +2179,58 @@ fn stack_size(stack: StackType) -> i32 {
         StackType::I4 => 4,
         StackType::I8 => 8,
         _ => crate::il::types::NATIVE_INT_SIZE,
+    }
+}
+
+/// `BinaryNumericPromotion` for `==` and `!=` over two numeric type codes (`Char` to `Decimal`):
+/// the type code of the operator's operands, `None` where no predefined operator applies (an
+/// `ulong` with a signed operand). Decimal comparisons are not translated.
+fn numeric_promotion(lc: u8, rc: u8) -> Result<Option<u8>, Unsupported> {
+    const DECIMAL: u8 = 15;
+    const DOUBLE: u8 = 14;
+    const SINGLE: u8 = 13;
+    const UINT64: u8 = 12;
+    const INT64: u8 = 11;
+    const UINT32: u8 = 10;
+    const INT32: u8 = 9;
+    // SByte, Int16, Int32, Int64
+    let signed = |c: u8| matches!(c, 5 | 7 | 9 | 11);
+    let either = |c: u8| lc == c || rc == c;
+    let other = |c: u8| if lc == c { rc } else { lc };
+    if either(DECIMAL) {
+        return Err("a decimal comparison".to_owned());
+    }
+    Ok(Some(if either(DOUBLE) {
+        DOUBLE
+    } else if either(SINGLE) {
+        SINGLE
+    } else if either(UINT64) {
+        if signed(other(UINT64)) {
+            return Ok(None);
+        }
+        UINT64
+    } else if either(INT64) {
+        INT64
+    } else if either(UINT32) {
+        if signed(other(UINT32)) { INT64 } else { UINT32 }
+    } else {
+        INT32
+    }))
+}
+
+/// The `KnownTypeCode` of a primitive `TypeCode` from `Char` to `Double`.
+fn known_of_type_code(code: u8) -> KnownTypeCode {
+    match code {
+        4 => KnownTypeCode::Char,
+        5 => KnownTypeCode::SByte,
+        6 => KnownTypeCode::Byte,
+        7 => KnownTypeCode::Int16,
+        8 => KnownTypeCode::UInt16,
+        9 => KnownTypeCode::Int32,
+        10 => KnownTypeCode::UInt32,
+        11 => KnownTypeCode::Int64,
+        12 => KnownTypeCode::UInt64,
+        13 => KnownTypeCode::Single,
+        _ => KnownTypeCode::Double,
     }
 }

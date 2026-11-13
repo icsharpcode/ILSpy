@@ -160,12 +160,13 @@ pub enum AstNode {
     InterpolatedString { contents: Vec<InterpolatedContent> },
     /// `NamedExpression` of an object initializer: `name = expression`.
     Named { name: String, expression: AstId },
-    /// `ArrayCreateExpression` of the element type with the dimensions as arguments and an
-    /// initializer, whose elements the host writes with `UseSpecialConstants` as given.
+    /// `ArrayCreateExpression` of the element type with the dimensions as arguments and, for
+    /// an array initializer, the initializer, whose elements the host writes with
+    /// `UseSpecialConstants` as given.
     ArrayCreate {
         element_type: TypeId,
         arguments: Vec<AstId>,
-        initializer: AstId,
+        initializer: Option<AstId>,
         special_constants: bool,
     },
     /// `ArrayInitializerExpression`.
@@ -285,6 +286,13 @@ pub enum Rr {
     Field {
         target: Option<Box<Rr>>,
         field: crate::il::ast::FieldOperand,
+    },
+    /// `MemberResolveResult` of a tuple element's field with the element type of the target's
+    /// tuple type (`returnTypeOverride`).
+    TupleElement {
+        target: Box<Rr>,
+        field: crate::il::ast::FieldOperand,
+        ty: TypeId,
     },
     /// `MemberResolveResult` of an event of the main module (its Event row and type) with
     /// the target's resolve result.

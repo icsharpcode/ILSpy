@@ -3664,6 +3664,37 @@ engine retypes the slot on the function copy the builder works on, which the hos
 with the body, so the declaration carries the new type. The share rose from 83.1 % to
 83.4 %.
 
+### 3.150 A batch: tuples, zero, promotion, new arrays (item 68y42)
+
+With the gates taking about forty minutes, the user asked for more per run: from this item
+on, several construct groups go into one commit, each checked on its own with the ratchet
+and the equality tests, the batch then with the full gates.
+
+*Tuple elements.* `MatchTupleFieldAccess` writes a field `ItemN` of a `ValueTuple` as the
+element's name, taken from the target's tuple type. The managed builder looks a member up
+on the target's type, so `s.Field` of a `GenericStruct<(int A, int B)> s` has the type
+`(int A, int B)`; the engine substitutes the member's type from the IL reference, which
+carries no names. The engine therefore writes element names only where it knows the
+target's type exactly, a variable or a field of a non-generic type, and falls back
+otherwise, as for elements past the seventh.
+
+*An enum compared with zero.* `TryUniteEqualityOperandType` keeps an int `0` compared with
+an enum as `0` for a flag test `(e & E.X) == 0` and where the enum has no member of value
+zero; otherwise the zero becomes the enum's, which the host writes as that member.
+
+*Promoting comparisons.* Two numeric operands of different types compare over their
+promoted type (`int == long` as `long`; `uint` with a signed type as `long`; an `ulong`
+with a signed type has no operator, and the cast path of 3.147 follows). The check against
+the comparison's stack type uses that promoted type, as the managed code checks
+`rr.Operands[0].Type`. A constant of another type still falls back: it converts implicitly
+to any type it fits, which the promotion does not model, and the first attempt wrote
+`0uL` where the managed builder writes `0`.
+
+*New arrays.* `VisitNewArr` writes `new T[n]` with the dimensions as array indices and no
+initializer, which the array creation node now marks as optional.
+
+The share rose from 83.4 % to 84.6 %.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

@@ -71,6 +71,7 @@ pub fn convert_body(
                 ..
             }
             | Rr::Event { target: inner, .. }
+            | Rr::TupleElement { target: inner, .. }
             | Rr::ByReference(inner)
             | Rr::ByReferenceOut(inner)
             | Rr::ArrayLength { target: inner, .. }

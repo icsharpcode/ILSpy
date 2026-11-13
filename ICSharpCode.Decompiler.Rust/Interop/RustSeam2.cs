@@ -525,20 +525,25 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					return Annotate(new ArrayInitializerExpression(node.Children.Select(c => (Expression)Build(c, exprBuilder))), node);
 				case RustBodyNode.ArrayCreate:
 				{
-					// `TranslateArrayInitializer`
+					// `TranslateArrayInitializer`, or `VisitNewArr` without initializer.
 					var elementType = node.Type!;
-					var arguments = node.Children.Take(node.Children.Length - 1).Select(c => (Expression)Build(c, exprBuilder)).ToList();
+					bool hasInitializer = (bool)node.Value!;
+					int dimensions = node.Children.Length - (hasInitializer ? 1 : 0);
+					var arguments = node.Children.Take(dimensions).Select(c => (Expression)Build(c, exprBuilder)).ToList();
 					var astBuilder = exprBuilder.astBuilder;
 					bool useSpecialConstants = astBuilder.UseSpecialConstants;
-					ArrayInitializerExpression initializer;
-					try
+					ArrayInitializerExpression? initializer = null;
+					if (hasInitializer)
 					{
-						astBuilder.UseSpecialConstants = node.Flag;
-						initializer = (ArrayInitializerExpression)Build(node.Children[node.Children.Length - 1], exprBuilder);
-					}
-					finally
-					{
-						astBuilder.UseSpecialConstants = useSpecialConstants;
+						try
+						{
+							astBuilder.UseSpecialConstants = node.Flag;
+							initializer = (ArrayInitializerExpression)Build(node.Children[dimensions], exprBuilder);
+						}
+						finally
+						{
+							astBuilder.UseSpecialConstants = useSpecialConstants;
+						}
 					}
 					var typeExpression = exprBuilder.ConvertType(elementType);
 					ArraySpecifier[] additionalSpecifiers = [];
@@ -547,11 +552,14 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 						additionalSpecifiers = composed.ArraySpecifiers.Select(a => (ArraySpecifier)a.Clone()).ToArray();
 						composed.ArraySpecifiers.Clear();
 					}
-					var creation = new ArrayCreateExpression { Type = typeExpression, Initializer = initializer };
+					var creation = new ArrayCreateExpression { Type = typeExpression };
+					if (initializer != null)
+						creation.Initializer = initializer;
 					creation.AdditionalArraySpecifiers.AddRange(additionalSpecifiers);
 					creation.Arguments.AddRange(arguments);
 					var elementResults = new List<ResolveResult>();
-					CollectElements(initializer);
+					if (initializer != null)
+						CollectElements(initializer);
 					node.ResolveResult = new ArrayCreateResolveResult(new ArrayType(exprBuilder.compilation, elementType, arguments.Count),
 						arguments.Select(a => a.GetResolveResult()).ToArray(), elementResults);
 					return Annotate(creation, node);

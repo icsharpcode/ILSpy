@@ -588,7 +588,12 @@ the reasons. This file holds only the ordered steps, their gates and their rules
     Subject: `Pass unexpanded params arguments in the engine`.
   - [x] 68y41. Stores to stack slots, retyped from the stored value (lecture 3.149).
     Subject: `Translate stores to stack slots in the engine`.
-  - [ ] 68y42-. Further construct groups (numbered on from 68y1), in the order of the fallback reasons the ratchet test
+  - [x] 68y42. A batch of four groups (lecture 3.150): tuple element access, an enum compared
+    with zero, comparisons that promote their operands, and `new T[n]`. From here on the
+    groups go in batches: the filtered ratchet and equality tests per group, the full gates
+    and one commit per batch. Subject: `Translate tuple elements, zero enum comparisons,
+    promoting comparisons and new arrays in the engine`.
+  - [ ] 68y43-. Further construct groups (numbered on from 68y1), in the order of the fallback reasons the ratchet test
     prints, until no body of the corpus falls back. Subject pattern:
     `Translate <construct group> to C# in the engine`.
   - [ ] 68z. Request-level seam 2. Subject: `Add the Rust C# AST builders and the AST materializer`.

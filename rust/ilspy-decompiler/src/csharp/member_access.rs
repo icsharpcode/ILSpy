@@ -41,7 +41,8 @@ impl Builder<'_, '_, '_, '_> {
             | Rr::ArrayCreate { ty }
             | Rr::ResolvedOperator { ty }
             | Rr::TypeOf { ty, .. }
-            | Rr::ArrayLength { ty, .. } => *ty,
+            | Rr::ArrayLength { ty, .. }
+            | Rr::TupleElement { ty, .. } => *ty,
             Rr::Field { field, .. } => field.field.ty,
             Rr::Event { ty, .. } => *ty,
             Rr::Lambda(_) | Rr::DefaultLiteral { .. } | Rr::MethodGroup { .. } => {
@@ -153,13 +154,15 @@ impl Builder<'_, '_, '_, '_> {
         if field.field.name == "FixedElementField" {
             return Err("a fixed buffer element".to_owned());
         }
-        if target.is_some() && self.is_value_tuple(field.field.declaring) {
-            return Err("a tuple element access".to_owned());
-        }
         if self.f.result_type(self.ts, inst) == StackType::I {
             return Err("a field address as a native pointer".to_owned());
         }
-        let e = self.convert_field(field, target)?;
+        let e = match target {
+            Some(t) if self.is_value_tuple(field.field.declaring) => {
+                self.tuple_field_access(field, t)?
+            }
+            _ => self.convert_field(field, target)?,
+        };
         self.ast.with_il(e.expression, inst);
         let element = self.rr_of(e.expression);
         let d = self.ast.add(AstNode::RefDirection {
@@ -174,6 +177,81 @@ impl Builder<'_, '_, '_, '_> {
         t.and_then(|t| self.ts.definition(t))
             .and_then(|d| self.ts.comp.type_def(d).ok())
             .is_some_and(|i| i.full_name.top.ns == "System" && i.full_name.name() == "ValueTuple")
+    }
+
+    /// The tuple element `MatchTupleFieldAccess` finds for a field of a `ValueTuple`: the
+    /// element's name on a target of a matching tuple type, else `ConvertField`. Elements past
+    /// the seventh (reached through `Rest`) and targets whose type is no tuple type are not
+    /// translated.
+    fn tuple_field_access(
+        &mut self,
+        field: &FieldOperand,
+        target: NodeId,
+    ) -> Result<TranslatedExpression, Unsupported> {
+        let Some(position) = field
+            .field
+            .name
+            .strip_prefix("Item")
+            .and_then(|p| p.parse::<usize>().ok())
+        else {
+            return self.convert_field(field, Some(target));
+        };
+        if let Inst::LdFlda { field: rest, .. } = self.f.inst(target)
+            && rest.field.name == "Rest"
+        {
+            return Err("a tuple element past the seventh".to_owned());
+        }
+        let underlying = field
+            .field
+            .declaring
+            .ok_or("a tuple field without declaring type")?;
+        let translated = self.translate_target(Some(target), true, false, underlying)?;
+        // The managed type system reads every `ValueTuple` as a tuple type, with the element
+        // names of `[TupleElementNames]`. The engine keeps the names of a variable's type and of
+        // a field of a non-generic type; a member of a generic type is substituted from the IL
+        // reference, without the names the target's type gives its type arguments, and is not
+        // translated.
+        let names_known = match self.rr_of(translated.expression) {
+            Rr::Variable { .. } => true,
+            Rr::Field { field, .. } => field
+                .field
+                .declaring
+                .is_some_and(|d| !matches!(self.ts.data(d), TypeData::Inst { .. })),
+            _ => false,
+        };
+        if !names_known || !matches!(self.ts.data(translated.ty), TypeData::Tuple { .. }) {
+            return Err("a tuple element whose names the engine may not know".to_owned());
+        }
+        let n = Normalization::TYPE_ERASURE;
+        let element = match self.ts.data(translated.ty) {
+            TypeData::Tuple {
+                elements, names, ..
+            } if position >= 1 && position <= names.len() => Some((
+                elements[position - 1],
+                names[position - 1].as_deref().map(str::to_owned),
+            )),
+            _ => None,
+        };
+        let Some((ty, name)) = element.filter(|_| {
+            self.ts.normalize_with(translated.ty, n) == self.ts.normalize_with(underlying, n)
+        }) else {
+            return self.convert_field(field, Some(target));
+        };
+        let name = name.unwrap_or_else(|| format!("Item{position}"));
+        let target_rr = self.rr_of(translated.expression);
+        let e = self.ast.add(AstNode::MemberReference {
+            target: translated.expression,
+            name,
+        });
+        self.ast.with_rr(
+            e,
+            Rr::TupleElement {
+                target: Box::new(target_rr),
+                field: field.clone(),
+                ty,
+            },
+        );
+        Ok(TranslatedExpression { expression: e, ty })
     }
 
     /// `ConvertField(field, targetInstruction)` for a field that is no backing field.

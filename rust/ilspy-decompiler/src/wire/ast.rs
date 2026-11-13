@@ -171,6 +171,12 @@ fn rr(w: &mut FunctionWriter<'_, '_, '_, '_>, rr: Option<&Rr>) -> Result<(), Str
             self::rr(w, target.as_deref())?;
             w.member(field.token, field.context);
         }
+        Some(Rr::TupleElement { target, field, ty }) => {
+            w.out.u8(24);
+            self::rr(w, Some(target))?;
+            w.member(field.token, field.context);
+            w.ty(*ty);
+        }
         Some(Rr::Event {
             target, event_row, ..
         }) => {
@@ -630,7 +636,10 @@ fn node(w: &mut FunctionWriter<'_, '_, '_, '_>, ast: &Ast, id: AstId) -> Result<
             for a in arguments {
                 node(w, ast, a)?;
             }
-            node(w, ast, initializer)?;
+            w.out.bool(initializer.is_some());
+            if let Some(i) = initializer {
+                node(w, ast, i)?;
+            }
         }
         AstNode::YieldReturn { expression } => node(w, ast, expression)?,
         AstNode::DelegateCreate {

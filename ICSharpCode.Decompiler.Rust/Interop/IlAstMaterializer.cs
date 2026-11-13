@@ -802,13 +802,19 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				}
 				case RustBodyNode.ArrayCreate:
 				{
-					// The element type, UseSpecialConstants for the elements, the dimensions, the initializer.
+					// The element type, UseSpecialConstants for the elements, the dimensions, then
+					// whether an initializer follows, and the initializer.
 					node.Type = Type();
 					node.Flag = Bool();
-					var children = new RustBodyNode[Len() + 1];
-					for (int i = 0; i < children.Length; i++)
-						children[i] = BodyNode();
-					node.Children = children;
+					var children = new List<RustBodyNode>();
+					int dimensions = Len();
+					for (int i = 0; i < dimensions; i++)
+						children.Add(BodyNode());
+					bool hasInitializer = Bool();
+					if (hasInitializer)
+						children.Add(BodyNode());
+					node.Value = hasInitializer;
+					node.Children = children.ToArray();
 					break;
 				}
 				case RustBodyNode.DelegateCreate:
@@ -1033,6 +1039,13 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				{
 					var target = BodyResolveResult(out _);
 					return new MemberResolveResult(target, Field());
+				}
+				case 24:
+				{
+					// A tuple element: the field with the element type of the target's tuple type.
+					var target = BodyResolveResult(out _);
+					var field = Field();
+					return new MemberResolveResult(target, field, returnTypeOverride: Type());
 				}
 				case 6:
 					return new ByReferenceResolveResult(BodyResolveResult(out _)!, ReferenceKind.Ref);
