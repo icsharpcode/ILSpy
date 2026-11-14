@@ -411,7 +411,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			if (InsertParenthesesForReadability)
 			{
 				// few people know the precedence of 'as', so always put parentheses in nice-looking mode.
-				ParenthesizeIfRequired(asExpression.Expression, PrecedenceLevel.NullableRewrap);
+				ParenthesizeIfRequired(asExpression.Expression, PrecedenceLevel.PostUnary);
 			}
 			else
 			{
@@ -468,9 +468,9 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			if (InsertParenthesesForReadability && !IsConditionalRefExpression(conditionalExpression))
 			{
 				// Precedence of ?: can be confusing; so always put parentheses in nice-looking mode.
-				ParenthesizeIfRequired(conditionalExpression.Condition, PrecedenceLevel.NullableRewrap);
-				ParenthesizeIfRequired(conditionalExpression.TrueExpression, PrecedenceLevel.NullableRewrap);
-				ParenthesizeIfRequired(conditionalExpression.FalseExpression, PrecedenceLevel.NullableRewrap);
+				ParenthesizeIfRequired(conditionalExpression.Condition, PrecedenceLevel.PostUnary);
+				ParenthesizeIfRequired(conditionalExpression.TrueExpression, PrecedenceLevel.PostUnary);
+				ParenthesizeIfRequired(conditionalExpression.FalseExpression, PrecedenceLevel.PostUnary);
 			}
 			else
 			{
