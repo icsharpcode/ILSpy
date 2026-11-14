@@ -623,7 +623,9 @@ the reasons. This file holds only the ordered steps, their gates and their rules
   - [x] 68y52. A batch (lecture 3.160): lifted equality comparisons, unboxing to a type
     parameter, and calls that bind to an override in a value type. Subject: `Translate lifted
     comparisons, type parameter unboxing and value type overrides in the engine`.
-  - [ ] 68y53-. Further construct groups (numbered on from 68y1), in the order of the fallback reasons the ratchet test
+  - [x] 68y53. Expanded `params` arguments of method calls (lecture 3.161). Subject:
+    `Expand params arguments of calls in the engine`.
+  - [ ] 68y54-. Further construct groups (numbered on from 68y1), in the order of the fallback reasons the ratchet test
     prints, until no body of the corpus falls back. Subject pattern:
     `Translate <construct group> to C# in the engine`.
   - [ ] 68z. Request-level seam 2. Subject: `Add the Rust C# AST builders and the AST materializer`.

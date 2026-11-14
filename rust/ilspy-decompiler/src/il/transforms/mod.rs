@@ -128,6 +128,7 @@ pub const SETTING_NAMES: &[&str] = &[
     "AnonymousTypes",
     "TupleTypes",
     "RefExtensionMethods",
+    "ExpandParamsArguments",
 ];
 
 /// The values of `SETTING_NAMES`.
@@ -199,6 +200,7 @@ pub struct Settings {
     pub anonymous_types: bool,
     pub tuple_types: bool,
     pub ref_extension_methods: bool,
+    pub expand_params_arguments: bool,
 }
 
 impl Settings {
@@ -275,6 +277,7 @@ impl Settings {
             anonymous_types: bit(63),
             tuple_types: bit(64),
             ref_extension_methods: bit(65),
+            expand_params_arguments: bit(66),
         }
     }
 }

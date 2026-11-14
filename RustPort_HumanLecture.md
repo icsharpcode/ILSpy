@@ -3897,6 +3897,31 @@ target falls back), so such a call follows the base member chain like any other.
 
 The share rose from 91.0 % to 91.4 %.
 
+### 3.161 Expanded params arguments (item 68y53)
+
+`TransformParamsArgument` writes the last argument of a `params` parameter that is an array
+creation (or `Array.Empty<T>()`) as the array's elements, where the call as written that way
+resolves to the method in its expanded form. The engine reads `ExpandParamsArguments` (the
+third setting of the second settings word); the argument list records the elements of an
+array creation of constant size whose initializer gives them all, and `call` probes the
+expanded list with the call's lookup target before it takes it. The list carries the
+expanded form: its expected parameters are the element type in place of the array, it
+names no primitive values, the probes compare the form overload resolution picks with it
+(where they used to take any expanded form as a failure), and the invocation's resolve
+result has `isExpandedForm`.
+
+Constructors, extension methods, accessors, operators, delegate invocations and generic
+methods fall back where an argument could be expanded; so do spans and arrays with default
+elements. A first attempt let constructors through with their array unexpanded.
+
+`string.Format` of the `params` overload is an interpolated string in the expanded form. Its
+check that no other argument contains a string literal scans the nodes made for the
+arguments, which also holds the format strings of nested calls written as interpolated
+strings; those are left out now, and another literal there falls back rather than writing
+the call as it is. With the array literal itself the call still falls back.
+
+The share rose from 91.4 % to 91.9 %.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

@@ -115,7 +115,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		/// <summary>For an assignment or <c>!</c>: the type of its <see cref="OperatorResolveResult"/>, whose operands are the children's.</summary>
 		public IType? OperatorType;
 		/// <summary>For an invocation or object creation: the target, method and extension method flag of its <see cref="CSharpInvocationResolveResult"/>, whose arguments are the node's.</summary>
-		public (ResolveResult? Target, IMethod Method, bool IsExtension, bool IsDelegate, bool FoundByLookup)? Call;
+		public (ResolveResult? Target, IMethod Method, bool IsExtension, bool IsDelegate, bool FoundByLookup, bool IsExpanded)? Call;
 		public Leave? ImplicitReturn;
 		public RustBodyNode[] Children = [];
 		public IType? Type;
@@ -363,7 +363,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				{
 					var target = (Expression)Build(node.Children[0], exprBuilder);
 					var arguments = node.Children.Skip(1).Select(c => (Expression)Build(c, exprBuilder)).ToList();
-					var (targetResult, method, isExtension, isDelegate, foundByLookup) = node.Call!.Value;
+					var (targetResult, method, isExtension, isDelegate, foundByLookup, isExpanded) = node.Call!.Value;
 					// The target of a member reference, or the invoked delegate itself.
 					if (ReferenceEquals(targetResult, PendingTarget))
 						targetResult = (target is MemberReferenceExpression mre ? mre.Target : target).GetResolveResult();
@@ -374,7 +374,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					// An override the name resolves to: the overload resolution of the written call.
 					if (foundByLookup)
 						method = FindOverload(exprBuilder, target, method, arguments, argumentResults);
-					node.ResolveResult = new CSharpInvocationResolveResult(targetResult!, method, argumentResults, isExtensionMethodInvocation: isExtension, isDelegateInvocation: isDelegate);
+					node.ResolveResult = new CSharpInvocationResolveResult(targetResult!, method, argumentResults, isExpandedForm: isExpanded, isExtensionMethodInvocation: isExtension, isDelegateInvocation: isDelegate);
 					return Annotate(new InvocationExpression(target, arguments), node);
 				}
 				case RustBodyNode.ObjectCreate:

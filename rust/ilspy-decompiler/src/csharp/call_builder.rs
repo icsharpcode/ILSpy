@@ -53,6 +53,14 @@ struct ArgumentList {
     parameter_map: Option<Vec<usize>>,
     /// `ArgumentNames`: the names written from the first argument out of its place on.
     explicit_names: Option<Vec<Option<String>>>,
+    /// `IsExpandedForm`: the elements of a `params` array are the last arguments.
+    is_expanded_form: bool,
+    /// `ExpectedParameters` of the expanded form: the parameters with the `params` one
+    /// replaced by one of its element type per element.
+    expanded_parameters: Option<Vec<crate::semantics::Parameter>>,
+    /// The elements `TransformParamsArgument` would expand the `params` argument into, and
+    /// their type; `call` probes the expanded form before it takes it.
+    params_candidate: Option<(Vec<TranslatedExpression>, TypeId)>,
 }
 
 impl ArgumentList {
@@ -70,6 +78,7 @@ impl ArgumentList {
         let mut names = self.explicit_names.clone();
         if self.add_names_to_primitive_values
             && self.is_primitive_value.iter().any(|&p| p)
+            && !self.is_expanded_form
             && !self.parameter_names.iter().any(String::is_empty)
         {
             let names = names.get_or_insert_with(|| vec![None; self.arguments.len()]);
@@ -86,10 +95,54 @@ impl ArgumentList {
 
     /// `ExpectedParameters`: the method's parameters in argument order.
     fn expected_parameters(&self, method: &Method) -> Vec<crate::semantics::Parameter> {
+        if let Some(expanded) = &self.expanded_parameters {
+            return expanded.clone();
+        }
         match &self.parameter_map {
             Some(map) => map.iter().map(|&p| method.parameters[p].clone()).collect(),
             None => method.parameters.clone(),
         }
+    }
+}
+
+impl ArgumentList {
+    /// The list with the `params` argument replaced by the elements of its candidate, in the
+    /// expanded form (`TransformParamsArgument`).
+    fn expanded(&self, method: &Method) -> Option<ArgumentList> {
+        let (elements, element_type) = self.params_candidate.clone()?;
+        let keep = self.arguments.len() - 1;
+        let n = elements.len();
+        let mut parameters = method.parameters[..keep].to_vec();
+        parameters.extend((0..n).map(|_| crate::semantics::Parameter::of_type(element_type)));
+        let mut arguments = self.arguments[..keep].to_vec();
+        arguments.extend(elements);
+        let extend = |v: &[String]| {
+            let mut v = v[..keep].to_vec();
+            v.extend((0..n).map(|_| String::new()));
+            v
+        };
+        Some(ArgumentList {
+            arguments,
+            parameter_names: extend(&self.parameter_names),
+            is_primitive_value: {
+                let mut v = self.is_primitive_value[..keep].to_vec();
+                v.extend((0..n).map(|_| false));
+                v
+            },
+            add_names_to_primitive_values: self.add_names_to_primitive_values,
+            first_optional: -1,
+            ref_kinds: {
+                let mut v = self.ref_kinds[..keep].to_vec();
+                v.extend((0..n).map(|_| RefKind::None));
+                v
+            },
+            use_implicitly_typed_out: self.use_implicitly_typed_out,
+            parameter_map: None,
+            explicit_names: None,
+            is_expanded_form: true,
+            expanded_parameters: Some(parameters),
+            params_candidate: None,
+        })
     }
 }
 
@@ -216,6 +269,48 @@ impl Builder<'_, '_, '_, '_> {
             (property.is_some() && method.parameters.len() == 1) || indexer == Some(true);
         let first_argument_node = self.ast.nodes.len();
         let mut list = self.argument_list(call, &method, id, first_param, declaring, is_setter)?;
+        // `TransformParamsArgument`: the expanded form where the call as written with it resolves
+        // to the method in that form.
+        if let Some(expanded) = list.expanded(&method) {
+            if is_extension
+                || property.is_some()
+                || indexer.is_some()
+                || method.is_operator
+                || method.method_args.is_some()
+                || (method.name == "Invoke" && self.ts.kind(declaring) == TypeKind::Delegate)
+            {
+                return Err("an expanded params argument of this call".to_owned());
+            }
+            let resolver = self
+                .resolver
+                .ok_or("a member reference without the host's resolver")?;
+            let lookup_target = match self.rr_of(target.expression) {
+                Rr::This {
+                    ty,
+                    causes_non_virtual_invocation,
+                    ..
+                } => LookupTarget::This {
+                    ty,
+                    causes_non_virtual_invocation,
+                },
+                Rr::Type(ty) => LookupTarget::Type(ty),
+                _ => LookupTarget::Expression(target.ty),
+            };
+            let errors = self.probe_call(
+                resolver,
+                &method,
+                op,
+                Some(lookup_target),
+                &target,
+                &expanded,
+                &[],
+            )?;
+            self.found_override = None;
+            if errors == OverloadResolutionErrors::NONE {
+                list = expanded;
+            }
+            list.params_candidate = None;
+        }
         // Named arguments of an extension method, an accessor or a delegate invocation are not
         // translated.
         if list.parameter_map.is_some()
@@ -228,14 +323,14 @@ impl Builder<'_, '_, '_, '_> {
         }
 
         // `IsInterpolatedStringCreation` for `string.Format`: an interpolated string where the
-        // format string tokenizes, else an ordinary call. A `params` overload, written as an
-        // interpolated string only for an array literal or the expanded form, is not translated.
+        // format string tokenizes, else an ordinary call. A `params` overload is one in the
+        // expanded form; with the array literal itself it is not translated.
         if self.settings.string_interpolation
             && method.is_static
             && method.name == "Format"
             && self.ts.is_known(declaring, KnownTypeCode::String)
         {
-            if method.parameters.last().is_some_and(|p| p.is_params) {
+            if method.parameters.last().is_some_and(|p| p.is_params) && !list.is_expanded_form {
                 return Err("a string.Format call of a params overload".to_owned());
             }
             if let Some(e) = self.format_interpolation(inst, &list, first_argument_node)? {
@@ -275,6 +370,7 @@ impl Builder<'_, '_, '_, '_> {
                     extension: false,
                     delegate: true,
                     found_by_lookup: false,
+                    expanded: false,
                 },
             );
             self.ast.with_il(e, inst);
@@ -391,6 +487,7 @@ impl Builder<'_, '_, '_, '_> {
                 extension: false,
                 delegate: false,
                 found_by_lookup: found_override.is_some(),
+                expanded: list.is_expanded_form,
             },
         );
         self.ast.with_il(e, inst);
@@ -530,6 +627,7 @@ impl Builder<'_, '_, '_, '_> {
                 extension: true,
                 delegate: false,
                 found_by_lookup: false,
+                expanded: false,
             },
         );
         self.ast.with_il(e, inst);
@@ -599,6 +697,9 @@ impl Builder<'_, '_, '_, '_> {
             use_implicitly_typed_out: true,
             parameter_map: map,
             explicit_names,
+            is_expanded_form: false,
+            expanded_parameters: None,
+            params_candidate: None,
         };
         let declaring_is_nullable = self.ts.is_known(declaring, KnownTypeCode::NullableOfT);
         for (i, &pi) in order.iter().enumerate() {
@@ -618,21 +719,16 @@ impl Builder<'_, '_, '_, '_> {
             if self.ts.kind(arg.ty) == TypeKind::Dynamic {
                 return Err("a dynamic argument".to_owned());
             }
-            // `TransformParamsArgument` expands an array creation, `Array.Empty<T>()`, a span
-            // constructor or a span conversion of an array creation into the call's arguments,
-            // which is not translated; any other argument of a `params` parameter is an
-            // ordinary one.
+            // `TransformParamsArgument`: an array creation or `Array.Empty<T>()` as the last
+            // argument of a `params` parameter is a candidate for the expanded form, which `call`
+            // probes; a span constructor or conversion is not translated.
             if parameter.is_params
-                && matches!(
-                    self.rr_of(arg.expression),
-                    Rr::ArrayCreate { .. }
-                        | Rr::Invocation { .. }
-                        | Rr::ObjectCreation { .. }
-                        | Rr::Conversion { .. }
-                        | Rr::ImplicitConversion { .. }
-                )
+                && self.settings.expand_params_arguments
+                && !is_setter
+                && list.parameter_map.is_none()
+                && i + 1 == order.len()
             {
-                return Err("a params argument".to_owned());
+                list.params_candidate = self.params_elements(arg, parameter.ty)?;
             }
             let primitive = matches!(self.rr_of(arg.expression), Rr::Constant { .. })
                 && !declaring_is_nullable
@@ -875,6 +971,10 @@ impl Builder<'_, '_, '_, '_> {
             return Err("a call of an unresolved method".to_owned());
         };
         let mut list = self.argument_list(call, &method, id, 0, declaring, false)?;
+        // The expanded `params` form of a constructor call is not translated.
+        if list.params_candidate.is_some() {
+            return Err("an expanded params argument of a constructor".to_owned());
+        }
         self.disambiguate_constructor(operand, &method, &mut list)?;
         let arguments = self.written_arguments(&list, 0);
         let e = self.ast.add(AstNode::ObjectCreate {
@@ -1650,6 +1750,9 @@ impl Builder<'_, '_, '_, '_> {
             use_implicitly_typed_out: false,
             parameter_map: None,
             explicit_names: None,
+            is_expanded_form: false,
+            expanded_parameters: None,
+            params_candidate: None,
         };
         let op = if get_awaiter_callvirt {
             CallOp::CallVirt
@@ -1810,6 +1913,89 @@ impl Builder<'_, '_, '_, '_> {
         Ok(Some(TranslatedExpression { expression: e, ty }))
     }
 
+    /// `ExtractArguments` of `TransformParamsArgument`: the elements of an array creation of
+    /// constant size whose initializer gives every element, or none for `Array.Empty<T>()`,
+    /// with the element type of the `params` array. Other arguments stay ordinary ones;
+    /// spans and an array creation with default elements are not translated.
+    fn params_elements(
+        &mut self,
+        arg: TranslatedExpression,
+        params_type: TypeId,
+    ) -> Result<Option<(Vec<TranslatedExpression>, TypeId)>, Unsupported> {
+        let rr = self.rr_of(arg.expression);
+        if matches!(
+            rr,
+            Rr::ObjectCreation { .. } | Rr::Conversion { .. } | Rr::ImplicitConversion { .. }
+        ) && (self.ts.is_known(arg.ty, KnownTypeCode::ReadOnlySpanOfT)
+            || self.ts.is_known(arg.ty, KnownTypeCode::SpanOfT))
+        {
+            return Err("a params argument of a span".to_owned());
+        }
+        let element_type = match *self.ts.data(params_type) {
+            TypeData::Array { elem, rank: 1, .. } => elem,
+            _ => {
+                return if matches!(rr, Rr::ArrayCreate { .. }) {
+                    Err("a params argument of a span or collection".to_owned())
+                } else {
+                    Ok(None)
+                };
+            }
+        };
+        match rr {
+            Rr::Invocation { method, .. }
+                if method.method.name == "Empty"
+                    && method
+                        .method
+                        .declaring
+                        .is_some_and(|d| self.ts.is_known(d, KnownTypeCode::Array)) =>
+            {
+                Ok(Some((Vec::new(), element_type)))
+            }
+            Rr::ArrayCreate { .. } => {
+                let AstNode::ArrayCreate {
+                    ref arguments,
+                    initializer,
+                    ..
+                } = *self.ast.node(arg.expression)
+                else {
+                    return Ok(None);
+                };
+                let [size] = arguments.as_slice() else {
+                    return Ok(None);
+                };
+                let Rr::Constant {
+                    value: ConstValue::Int32(n),
+                    ..
+                } = self.rr_of(*size)
+                else {
+                    return Ok(None);
+                };
+                let elements = match initializer {
+                    None => Vec::new(),
+                    Some(init) => match self.ast.node(init) {
+                        AstNode::ArrayInitializer { elements } => elements.clone(),
+                        _ => return Ok(None),
+                    },
+                };
+                if elements.len() != n as usize {
+                    return Err("a params array with default elements".to_owned());
+                }
+                let elements = elements
+                    .into_iter()
+                    .map(|e| {
+                        let rr = self.rr_of(e);
+                        TranslatedExpression {
+                            expression: e,
+                            ty: self.rr_type(&rr),
+                        }
+                    })
+                    .collect();
+                Ok(Some((elements, element_type)))
+            }
+            _ => Ok(None),
+        }
+    }
+
     /// `HandleStringInterpolation` for `string.Format`: the interpolated string the format
     /// string's tokens make with the arguments, or `None` where `TryGetStringInterpolationTokens`
     /// fails (the call is then written as it is).
@@ -1829,13 +2015,17 @@ impl Builder<'_, '_, '_, '_> {
             } if self.ts.is_known(ty, KnownTypeCode::String) => s,
             _ => return Ok(None),
         };
-        // No other argument may contain a string literal.
+        // No other argument may contain a string literal. The nodes made for the arguments are
+        // scanned, without the format strings nested interpolations consumed; a literal among
+        // them that may not be part of the arguments is not translated.
         let format_node = format_arg.expression.0 as usize;
         let has_string_literal = self.ast.nodes[first_argument_node..]
             .iter()
             .enumerate()
             .any(|(i, (n, _))| {
-                first_argument_node + i != format_node
+                let id = first_argument_node + i;
+                id != format_node
+                    && !self.consumed_format_strings.contains(&id)
                     && matches!(
                         n,
                         AstNode::StringLiteral { .. }
@@ -1846,7 +2036,9 @@ impl Builder<'_, '_, '_, '_> {
                     )
             });
         if has_string_literal {
-            return Ok(None);
+            return Err(
+                "a string.Format call whose arguments may contain a string literal".to_owned(),
+            );
         }
         let Some(tokens) = format_tokens(&format) else {
             return Ok(None);
@@ -1868,6 +2060,7 @@ impl Builder<'_, '_, '_, '_> {
             })
             .collect();
         let string = self.ts.known_type(KnownTypeCode::String);
+        self.consumed_format_strings.push(format_node);
         let e = self.ast.add(AstNode::InterpolatedString { contents });
         self.ast.with_il(e, inst);
         self.ast.with_rr(e, Rr::FormatString { ty: string, format });
@@ -1980,7 +2173,7 @@ impl Builder<'_, '_, '_, '_> {
         // The normal form was meant. The omitted arguments are the defaults of the method
         // found, which is the one called (`OmittedArgumentsAreDefaultsOf`); writing them out
         // again corrects a resolution that reached the expanded form.
-        if or.best_candidate_is_expanded_form() {
+        if or.best_candidate_is_expanded_form() != list.is_expanded_form {
             return Ok(if list.first_optional >= 0 {
                 OverloadResolutionErrors::MISSING_ARGUMENT_FOR_REQUIRED_PARAMETER
             } else {
