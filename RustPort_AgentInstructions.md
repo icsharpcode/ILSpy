@@ -611,7 +611,10 @@ the reasons. This file holds only the ordered steps, their gates and their rules
   - [x] 68y48. A batch (lecture 3.156): the settings word widened to two, tuple literals, and
     `ref this` extension method calls. Subject: `Translate tuple literals and ref extension
     calls in the engine`.
-  - [ ] 68y49-. Further construct groups (numbered on from 68y1), in the order of the fallback reasons the ratchet test
+  - [x] 68y49. A batch (lecture 3.157): binary numeric promotion for arithmetic and relational
+    operators, and implicit constant conversions in the promotion. Subject: `Promote the
+    operands of binary operators in the engine`.
+  - [ ] 68y50-. Further construct groups (numbered on from 68y1), in the order of the fallback reasons the ratchet test
     prints, until no body of the corpus falls back. Subject pattern:
     `Translate <construct group> to C# in the engine`.
   - [ ] 68z. Request-level seam 2. Subject: `Add the Rust C# AST builders and the AST materializer`.

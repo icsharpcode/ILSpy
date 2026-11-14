@@ -3822,6 +3822,21 @@ compile; the equality corpus has no such call.
 
 The share rose from 89.1 % to 89.6 %.
 
+### 3.157 A batch: binary numeric promotion (item 68y49)
+
+*Arithmetic and relational operators.* The promotion 3.150 ported for `==` and `!=` now
+serves `+ - * / %`, `& | ^` and `< <= > >=` too. Where the promoted type has the stack type
+(and, for a comparison, the sign) of the instruction, the operands stay as written and the
+host resolves the operator; otherwise both are cast to the instruction's type, and the
+operator is the one built over the casts, as `HandleBinaryNumeric` and `TranslateComp` do.
+
+*Constants.* Overload resolution sees the implicit constant conversions: a non-negative
+`int` constant next to a `uint` or `ulong` operand converts to that type, as does a
+non-negative `long` constant next to an `ulong` one, and the unsigned operator is then the
+better candidate. With that, a constant of another type no longer falls back.
+
+The share rose from 89.6 % to 90.1 %.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

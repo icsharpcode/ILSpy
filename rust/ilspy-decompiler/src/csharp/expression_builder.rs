@@ -875,25 +875,69 @@ impl Builder<'_, '_, '_, '_> {
         r: &TranslatedExpression,
         input: StackType,
     ) -> bool {
-        let operand = self.equality_operand_type(l.ty, r.ty);
+        let operand = self.equality_operand_type(l, r);
         resolved.is_some() && self.ts.stack_type(operand) == input
     }
 
     /// The type of the operator's first operand (`rr.Operands[0].Type`): the promoted type of
     /// two numeric operands, else the left operand's type, without nullability.
-    fn equality_operand_type(&mut self, left: TypeId, right: TypeId) -> TypeId {
-        let lu = self.ts.nullable_underlying(left);
-        let ru = self.ts.nullable_underlying(right);
+    fn equality_operand_type(
+        &mut self,
+        l: &TranslatedExpression,
+        r: &TranslatedExpression,
+    ) -> TypeId {
+        let lu = self.ts.nullable_underlying(l.ty);
+        let ru = self.ts.nullable_underlying(r.ty);
         let (lc, rc) = (self.ts.type_code(lu), self.ts.type_code(ru));
         if self.ts.kind(lu) != TypeKind::Enum
             && self.ts.kind(ru) != TypeKind::Enum
             && (4..=15).contains(&lc)
             && (4..=15).contains(&rc)
-            && let Ok(Some(p)) = numeric_promotion(lc, rc)
+            && let Ok(Some(p)) = self.operator_promotion(l, r, lc, rc)
         {
             return self.ts.known_type(known_of_type_code(p));
         }
         lu
+    }
+
+    /// The type code of a binary operator's operands, `BinaryNumericPromotion` with the implicit
+    /// constant conversions overload resolution sees: a non-negative `int` or `long` constant
+    /// next to a `uint` or `ulong` operand converts to that type, whose operator is then the
+    /// better one.
+    fn operator_promotion(
+        &self,
+        l: &TranslatedExpression,
+        r: &TranslatedExpression,
+        lc: u8,
+        rc: u8,
+    ) -> Result<Option<u8>, Unsupported> {
+        const UINT32: u8 = 10;
+        const UINT64: u8 = 12;
+        if lc != rc {
+            for (a, other) in [(l, rc), (r, lc)] {
+                // An `int` constant converts to `uint` and `ulong`, a `long` constant to `ulong`.
+                let (value, is_long) = match self.rr_of(a.expression) {
+                    Rr::Constant {
+                        value: ConstValue::Int32(v),
+                        ..
+                    } => (i128::from(v), false),
+                    Rr::Constant {
+                        value: ConstValue::Int64(v),
+                        ..
+                    } => (i128::from(v), true),
+                    _ => continue,
+                };
+                let max = match other {
+                    UINT32 if !is_long => i128::from(u32::MAX),
+                    UINT64 => i128::from(u64::MAX),
+                    _ => continue,
+                };
+                if (0..=max).contains(&value) {
+                    return Ok(Some(other));
+                }
+            }
+        }
+        numeric_promotion(lc, rc)
     }
 
     /// The type `TranslateCeq` casts an operand to: `object` for a comparison of references,
@@ -1066,16 +1110,10 @@ impl Builder<'_, '_, '_, '_> {
         }
         let (lc, rc) = (self.ts.type_code(lt), self.ts.type_code(rt));
         if (4..=15).contains(&lc) && (4..=15).contains(&rc) {
-            // A constant converts implicitly to a type it fits, which the promotion does not
-            // model.
-            if lc != rc
-                && (matches!(self.rr_of(l.expression), Rr::Constant { .. })
-                    || matches!(self.rr_of(r.expression), Rr::Constant { .. }))
-            {
-                return Err("a comparison that promotes a constant".to_owned());
-            }
             // The operator over the promoted type, converting the operands not of that type.
-            return Ok(numeric_promotion(lc, rc)?.map(|p| !(lc == p && rc == p)));
+            return Ok(self
+                .operator_promotion(l, r, lc, rc)?
+                .map(|p| !(lc == p && rc == p)));
         }
         // bool operator ==(bool x, bool y)
         if lc == 3 && rc == 3 {
@@ -1492,14 +1530,39 @@ impl Builder<'_, '_, '_, '_> {
                 return Err("a relational comparison of these types".to_owned());
             }
         }
-        // `ResolveBinaryOperator` leaves operands of the same type from Int32 to Double alone.
+        // `ResolveBinaryOperator`: the operator over the promoted type of two numeric operands;
+        // a constant of another type converts implicitly in ways the promotion does not model.
         let (lc, rc) = (self.ts.type_code(l.ty), self.ts.type_code(r.ty));
-        if lc != rc || !(9..=14).contains(&lc) {
-            return Err("a relational comparison that promotes its operands".to_owned());
+        if !(4..=14).contains(&lc) || !(4..=14).contains(&rc) {
+            return Err("a relational comparison of these types".to_owned());
         }
+        let promoted = self
+            .operator_promotion(&l, &r, lc, rc)?
+            .map(|p| self.ts.known_type(known_of_type_code(p)));
         let boolean = self.ts.known_type(KnownTypeCode::Boolean);
-        let (l, r) = if self.ts.type_sign(l.ty) == sign && self.ts.stack_type(l.ty) == input {
-            (l, r)
+        // The resolver's operator where its operands have the comparison's sign and stack type;
+        // the operator built over operands cast to the input type otherwise.
+        let fits = promoted
+            .is_some_and(|p| self.ts.type_sign(p) == sign && self.ts.stack_type(p) == input);
+        let (l, r) = if fits {
+            let p = promoted.expect("a promoted type");
+            let rr = if p != l.ty || p != r.ty || self.both_constant(&l, &r) {
+                Rr::ResolvedOperator { ty: boolean }
+            } else {
+                Rr::Operator { ty: boolean }
+            };
+            let e = self.ast.add(AstNode::BinaryOperator {
+                overflow: Overflow::None,
+                op,
+                left: l.expression,
+                right: r.expression,
+            });
+            self.ast.with_il(e, inst);
+            self.ast.with_rr(e, rr);
+            return Ok(TranslatedExpression {
+                expression: e,
+                ty: boolean,
+            });
         } else if input.is_integer() {
             // Ensure the inputs have the correct sign.
             let input_type = self.find_integer_type(input, sign)?;
@@ -1511,13 +1574,6 @@ impl Builder<'_, '_, '_, '_> {
         } else {
             return Err("a relational comparison of references".to_owned());
         };
-        // Two constants fold into a constant, which the host computes by resolving the
-        // operator.
-        let rr = if self.both_constant(&l, &r) {
-            Rr::ResolvedOperator { ty: boolean }
-        } else {
-            Rr::Operator { ty: boolean }
-        };
         let e = self.ast.add(AstNode::BinaryOperator {
             overflow: Overflow::None,
             op,
@@ -1525,7 +1581,7 @@ impl Builder<'_, '_, '_, '_> {
             right: r.expression,
         });
         self.ast.with_il(e, inst);
-        self.ast.with_rr(e, rr);
+        self.ast.with_rr(e, Rr::Operator { ty: boolean });
         Ok(TranslatedExpression {
             expression: e,
             ty: boolean,
@@ -1647,14 +1703,26 @@ impl Builder<'_, '_, '_, '_> {
         {
             return Err("an arithmetic operation on constants".to_owned());
         }
-        // `ResolveBinaryOperator` leaves operands of the same type from Int32 to Double alone.
+        // `ResolveBinaryOperator`: the operator over the promoted type of two numeric operands
+        // (`None` where no predefined operator applies); a constant of another type converts
+        // implicitly in ways the promotion does not model.
         let (lc, rc) = (self.ts.type_code(l.ty), self.ts.type_code(r.ty));
-        if lc != rc || !(9..=14).contains(&lc) {
-            return Err("an arithmetic operation that promotes its operands".to_owned());
+        if !(4..=14).contains(&lc) || !(4..=14).contains(&rc) {
+            return Err("arithmetic on these types".to_owned());
         }
+        let promoted = self
+            .operator_promotion(&l, &r, lc, rc)?
+            .map(|p| self.ts.known_type(known_of_type_code(p)));
         let result_stack = crate::il::ast::binary_result_type(operator, left_input, right_input);
         let compatible = |b: &mut Self, t: TypeId| sign == Sign::None || b.ts.type_sign(t) == sign;
-        let (l, r) = if self.ts.stack_type(l.ty) == result_stack && compatible(self, l.ty) {
+        let fits =
+            promoted.is_some_and(|p| self.ts.stack_type(p) == result_stack && compatible(self, p));
+        // With operands converted by the promotion, the host resolves the operator.
+        let mut resolved_type = None;
+        let (l, r) = if let Some(p) = promoted.filter(|_| fits) {
+            if p != l.ty || p != r.ty {
+                resolved_type = Some(p);
+            }
             (l, r)
         } else {
             // The operands are converted to a common type.
@@ -1693,7 +1761,7 @@ impl Builder<'_, '_, '_, '_> {
         } else {
             Overflow::Unchecked
         };
-        let ty = l.ty;
+        let ty = resolved_type.unwrap_or(l.ty);
         let e = self.ast.add(AstNode::BinaryOperator {
             op,
             left: l.expression,
@@ -1701,7 +1769,12 @@ impl Builder<'_, '_, '_, '_> {
             overflow,
         });
         self.ast.with_il(e, inst);
-        self.ast.with_rr(e, Rr::Operator { ty });
+        let rr = if resolved_type.is_some() {
+            Rr::ResolvedOperator { ty }
+        } else {
+            Rr::Operator { ty }
+        };
+        self.ast.with_rr(e, rr);
         Ok(TranslatedExpression { expression: e, ty })
     }
 
