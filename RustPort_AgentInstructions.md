@@ -635,7 +635,9 @@ the reasons. This file holds only the ordered steps, their gates and their rules
     (declarations and calls). Subject: `Translate local functions and cast member targets in the engine`.
   - [x] 68y58. A batch (lecture 3.166): delegates of local functions, arrays of anonymous types, and
     recursive patterns. Subject: `Translate recursive patterns and local function delegates in the engine`.
-  - [ ] 68y59-. Further construct groups (numbered on from 68y1), in the order of the fallback reasons the ratchet test
+  - [x] 68y59. Extension calls with method group arguments, or that resolve to the method with other
+    type arguments (lecture 3.167). Subject: `Translate extension calls with method groups and inferred type arguments`.
+  - [ ] 68y60-. Further construct groups (numbered on from 68y1), in the order of the fallback reasons the ratchet test
     prints, until no body of the corpus falls back. Subject pattern:
     `Translate <construct group> to C# in the engine`.
   - [ ] 68z. Request-level seam 2. Subject: `Add the Rust C# AST builders and the AST materializer`.

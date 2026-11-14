@@ -139,7 +139,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 			return result;
 		}
 
-		IType[] TypeList()
+		internal IType[] TypeList()
 		{
 			var result = new IType[Len()];
 			for (int i = 0; i < result.Length; i++)
@@ -392,6 +392,8 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				query.TypeArguments = new IType[reader.Len()];
 				for (int i = 0; i < query.TypeArguments.Length; i++)
 					query.TypeArguments[i] = reader.Type();
+				if (reader.Bool())
+					query.Method = WithMethodTypeArguments(query.Method, reader.TypeList());
 				query.TargetResult = reader.QueryOperand();
 				query.ArgumentResults = new ResolveResult[reader.Len()];
 				for (int i = 0; i < query.ArgumentResults.Length; i++)
@@ -411,11 +413,23 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		/// <summary>
 		/// An operand of a resolver query: 0 and the type of an expression, 1, the type and the
 		/// constant, 2, the element type and the <see cref="ReferenceKind"/> of a by-reference
-		/// argument, 3 and the type of an <c>out var</c>, 4 and the delegate type of a lambda.
+		/// argument, 3 and the type of an <c>out var</c>, 4 and the delegate type of a lambda; 5, a
+		/// method group as a <see cref="QueryMethodGroup"/>.
 		/// </summary>
 		ResolveResult QueryOperand()
 		{
 			byte kind = U8();
+			if (kind == 5)
+			{
+				var method = CallMethod();
+				byte targetKind = U8();
+				bool nonVirtual = targetKind == 1 && Bool();
+				var target = targetKind == 0 ? null : Type();
+				var typeArguments = new IType[Len()];
+				for (int i = 0; i < typeArguments.Length; i++)
+					typeArguments[i] = Type();
+				return new QueryMethodGroup(method, targetKind, nonVirtual, target, typeArguments);
+			}
 			var type = Type();
 			return kind switch {
 				0 => new ResolveResult(type),
@@ -1052,6 +1066,10 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		/// computes from the cast's node) is <see cref="RustSeam2.PendingTarget"/>, without
 		/// marking the call's node as a cast.
 		/// </summary>
+		/// <summary>The definition of <paramref name="method"/> with its class type arguments and these method type arguments.</summary>
+		static IMethod WithMethodTypeArguments(IMethod method, IType[] typeArguments)
+			=> ((IMethod)method.MemberDefinition).Specialize(new TypeParameterSubstitution(method.Substitution.ClassTypeArguments, typeArguments));
+
 		ResolveResult? NestedTargetResolveResult()
 		{
 			var result = BodyResolveResult(out _);
@@ -1130,7 +1148,12 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				{
 					// The arguments are the invocation's; RustSeam2 completes the resolve result.
 					var target = NestedTargetResolveResult();
-					pendingInvocation = (target, CallMethod(), Bool(), Bool(), Bool(), Bool());
+					var method = CallMethod();
+					bool isExtension = Bool(), isDelegate = Bool(), foundByLookup = Bool(), isExpanded = Bool();
+					// The method the call resolves to, with other type arguments.
+					if (Bool())
+						method = WithMethodTypeArguments(method, TypeList());
+					pendingInvocation = (target, method, isExtension, isDelegate, foundByLookup, isExpanded);
 					return null;
 				}
 				case 10:

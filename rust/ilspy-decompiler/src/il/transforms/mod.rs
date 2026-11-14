@@ -365,15 +365,19 @@ pub trait Resolver {
 
     /// `CSharpResolver.CanTransformToExtensionMethodCall(method, type_arguments, target,
     /// arguments, names)` as the decompiled method's `ExpressionBuilder` resolves it, for
-    /// `CallBuilder.TryUseExtensionMethodSyntax`; the target and the arguments are expressions
-    /// or constants.
+    /// `CallBuilder.TryUseExtensionMethodSyntax`; the target and the arguments are expressions,
+    /// constants or the method groups `method_groups` describes at their index. `method_args`
+    /// replaces the method's type arguments where the call resolves to the method with others.
+    #[allow(clippy::too_many_arguments)]
     fn can_use_extension_method_syntax(
         &self,
         ts: &TypeSystem<'_, '_>,
         method: &super::ast::MethodOperand,
+        method_args: Option<&[TypeId]>,
         type_arguments: &[TypeId],
         target: &crate::semantics::ResolveResult,
         arguments: &[crate::semantics::ResolveResult],
+        method_groups: &[Option<MethodGroupOperand<'_>>],
         names: Option<&[Option<String>]>,
     ) -> Option<bool>;
 
@@ -469,6 +473,16 @@ pub enum LookupTarget {
     Type(TypeId),
     /// Any other expression of the given type.
     Expression(TypeId),
+}
+
+/// A method group argument of an extension method question: the method reference's chosen
+/// method, the target its name is looked up on (none for a simple name) and the type
+/// arguments written with it, from which the host looks the method group up again.
+#[derive(Clone, Copy, Debug)]
+pub struct MethodGroupOperand<'a> {
+    pub method: &'a super::ast::MethodOperand,
+    pub target: Option<LookupTarget>,
+    pub type_arguments: &'a [TypeId],
 }
 
 /// A `CanTransformToExtensionMethodCall` question.

@@ -99,6 +99,44 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 	}
 
 	/// <summary>
+	/// A method group argument of an extension method question, which the body's resolver looks
+	/// up again as <c>Disambiguator.LookUpName</c> does without invocation, then narrows to the
+	/// method reference's method.
+	/// </summary>
+	internal sealed class QueryMethodGroup : ResolveResult
+	{
+		readonly IMethod method;
+		readonly byte targetKind;
+		readonly bool nonVirtual;
+		readonly IType? target;
+		readonly IType[] typeArguments;
+
+		public QueryMethodGroup(IMethod method, byte targetKind, bool nonVirtual, IType? target, IType[] typeArguments)
+			: base(SpecialType.UnknownType)
+		{
+			this.method = method;
+			this.targetKind = targetKind;
+			this.nonVirtual = nonVirtual;
+			this.target = target;
+			this.typeArguments = typeArguments;
+		}
+
+		/// <summary>The method group, or null where the name does not find one.</summary>
+		public MethodGroupResolveResult? LookUp(CSharpResolver resolver)
+		{
+			var found = target == null
+				? resolver.ResolveSimpleName(method.Name, typeArguments, isInvocationTarget: false)
+				: new MemberLookup(resolver.CurrentTypeDefinition, resolver.CurrentTypeDefinition.ParentModule)
+					.Lookup(targetKind switch {
+						1 => new ThisResolveResult(new ILVariable(VariableKind.Parameter, target, -1), target, nonVirtual),
+						2 => new TypeResolveResult(target),
+						_ => new ResolveResult(target),
+					}, method.Name, typeArguments, isInvocation: false);
+			return (found as MethodGroupResolveResult)?.WithChosenMethod(method);
+		}
+	}
+
+	/// <summary>
 	/// What the questions of the engine's C# body translation are answered from: the resolver the
 	/// statement builder's ExpressionBuilder creates, and the context it decompiles the body in.
 	/// </summary>
@@ -488,6 +526,15 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		int CanUseExtensionMethodSyntax(RustResolverQuery query)
 		{
 			var context = body ?? throw new InvalidOperationException("The engine asked about a C# body without the body's context");
+			for (int i = 0; i < query.ArgumentResults.Length; i++)
+			{
+				if (query.ArgumentResults[i] is QueryMethodGroup group)
+				{
+					if (group.LookUp(context.Resolver) is not { } found)
+						return -1;
+					query.ArgumentResults[i] = found;
+				}
+			}
 			int answer = context.Resolver.CanTransformToExtensionMethodCall(query.Method, query.TypeArguments,
 				query.TargetResult!, query.ArgumentResults, query.ArgumentNames!) ? 1 : 0;
 			int bit = 2;

@@ -7,7 +7,7 @@
 //! span helpers) fall back.
 
 use crate::il::ast::{CallData, Inst, MethodOperand, NodeId};
-use crate::il::transforms::{AccessorBinding, LookupTarget, MethodGroupList};
+use crate::il::transforms::{AccessorBinding, LookupTarget, MethodGroupList, MethodGroupOperand};
 use crate::semantics::overload_resolution::OverloadResolutionErrors;
 use crate::semantics::types::TypeKind;
 use crate::semantics::{
@@ -385,6 +385,7 @@ impl Builder<'_, '_, '_, '_> {
                     delegate: true,
                     found_by_lookup: false,
                     expanded: false,
+                    method_args: None,
                 },
             );
             self.ast.with_il(e, inst);
@@ -435,7 +436,9 @@ impl Builder<'_, '_, '_, '_> {
             if list.parameter_map.is_some() {
                 return Err("named arguments of a call that resolves to another method".to_owned());
             }
-            if is_extension {
+            // An extension call resolves to the method with other type arguments, which the
+            // invocation and its extension method question take.
+            if is_extension && found.key != method.key {
                 return Err("an extension call that resolves to another method".to_owned());
             }
             if list.parameter_names.len() >= found.parameters.len() {
@@ -449,7 +452,15 @@ impl Builder<'_, '_, '_, '_> {
         let return_type = found_override
             .as_ref()
             .map_or(method.return_type, |f| f.return_type);
-        let type_arguments = match &method.method_args {
+        let found_method_args = found_override
+            .as_ref()
+            .filter(|_| is_extension)
+            .map(|f| f.method_args.clone().unwrap_or_default());
+        let written_method_args = match &found_method_args {
+            Some(args) => Some(args),
+            None => method.method_args.as_ref(),
+        };
+        let type_arguments = match written_method_args {
             Some(args) if require_type_arguments => args.clone(),
             _ => Vec::new(),
         };
@@ -461,8 +472,14 @@ impl Builder<'_, '_, '_, '_> {
             return Err("type arguments that may be anonymous types".to_owned());
         }
         if is_extension
-            && let Some(e) =
-                self.extension_method_call(inst, operand, &method, &list, &type_arguments)?
+            && let Some(e) = self.extension_method_call(
+                inst,
+                operand,
+                found_override.as_ref().unwrap_or(&method),
+                &list,
+                &type_arguments,
+                found_method_args.as_deref(),
+            )?
         {
             return Ok(e);
         }
@@ -500,6 +517,7 @@ impl Builder<'_, '_, '_, '_> {
                 delegate: false,
                 found_by_lookup: found_override.is_some(),
                 expanded: list.is_expanded_form,
+                method_args: None,
             },
         );
         self.ast.with_il(e, inst);
@@ -553,6 +571,7 @@ impl Builder<'_, '_, '_, '_> {
         method: &Method,
         list: &ArgumentList,
         type_arguments: &[TypeId],
+        method_args: Option<&[TypeId]>,
     ) -> Result<Option<TranslatedExpression>, Unsupported> {
         // Without using declarations an extension method's namespace is not imported.
         if list.arguments.is_empty()
@@ -600,13 +619,80 @@ impl Builder<'_, '_, '_, '_> {
             .as_ref()
             .map(|n| n[1..].to_vec())
             .filter(|n| n.iter().any(Option::is_some));
+        // A method group argument goes with the method reference it was written as, which the
+        // host looks up again.
+        let mut groups = Vec::with_capacity(arguments.len());
+        for a in &list.arguments[1..list.actual_count()] {
+            groups.push(match self.rr_of(a.expression) {
+                Rr::MethodGroup {
+                    target,
+                    method,
+                    type_arguments,
+                    ..
+                } => {
+                    let target = match target.as_deref() {
+                        None => None,
+                        Some(&Rr::This {
+                            ty,
+                            causes_non_virtual_invocation,
+                            ..
+                        }) => Some(LookupTarget::This {
+                            ty,
+                            causes_non_virtual_invocation,
+                        }),
+                        Some(&Rr::Type(ty)) => Some(LookupTarget::Type(ty)),
+                        Some(rr) => Some(LookupTarget::Expression(self.rr_type(rr))),
+                    };
+                    Some((*method, target, type_arguments))
+                }
+                _ => None,
+            });
+        }
+        if groups.len() != arguments.len() {
+            return Err("an extension method question of another argument count".to_owned());
+        }
+        let method_groups: Vec<_> = groups
+            .iter()
+            .map(|g| {
+                g.as_ref()
+                    .map(|(method, target, type_arguments)| MethodGroupOperand {
+                        method,
+                        target: *target,
+                        type_arguments,
+                    })
+            })
+            .collect();
+        // The question carries expressions, constants, references, `out var`, lambdas and
+        // method groups.
+        for (i, rr) in std::iter::once(&target).chain(&arguments).enumerate() {
+            let kind = match rr {
+                ResolveResult::Expression(_)
+                | ResolveResult::Constant { .. }
+                | ResolveResult::ByReference { .. }
+                | ResolveResult::OutVar(_)
+                | ResolveResult::Lambda(_) => continue,
+                ResolveResult::MethodGroup(_) if i > 0 && method_groups[i - 1].is_some() => {
+                    continue;
+                }
+                ResolveResult::Type(_) => "a type",
+                ResolveResult::DefaultLiteral(_) => "a default literal",
+                ResolveResult::InterpolatedString(_) => "an interpolated string",
+                ResolveResult::Throw => "a throw expression",
+                ResolveResult::Tuple { .. } => "a tuple",
+                ResolveResult::This { .. } => "this",
+                ResolveResult::MethodGroup(_) => "a method group",
+            };
+            return Err(format!("an extension method question with {kind}"));
+        }
         let can = resolver
             .can_use_extension_method_syntax(
                 self.ts,
                 operand,
+                method_args,
                 type_arguments,
                 &target,
                 &arguments,
+                &method_groups,
                 remaining.as_deref(),
             )
             .ok_or("an extension method question the host cannot answer")?;
@@ -640,6 +726,7 @@ impl Builder<'_, '_, '_, '_> {
                 delegate: false,
                 found_by_lookup: false,
                 expanded: false,
+                method_args: method_args.map(<[TypeId]>::to_vec),
             },
         );
         self.ast.with_il(e, inst);

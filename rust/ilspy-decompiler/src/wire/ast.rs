@@ -218,6 +218,7 @@ fn rr(w: &mut FunctionWriter<'_, '_, '_, '_>, rr: Option<&Rr>) -> Result<(), Str
             delegate,
             found_by_lookup,
             expanded,
+            method_args,
             ..
         }) => {
             w.out.u8(9);
@@ -227,6 +228,13 @@ fn rr(w: &mut FunctionWriter<'_, '_, '_, '_>, rr: Option<&Rr>) -> Result<(), Str
             w.out.bool(*delegate);
             w.out.bool(*found_by_lookup);
             w.out.bool(*expanded);
+            w.out.bool(method_args.is_some());
+            if let Some(args) = method_args {
+                w.out.len(args.len());
+                for &t in args {
+                    w.ty(t);
+                }
+            }
         }
         Some(Rr::Property {
             target,

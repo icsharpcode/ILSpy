@@ -4033,6 +4033,29 @@ calls give their constant. `HasDesignator` counts the loads beyond one per sub-p
 
 The share rose from 94.1 % to 94.8 %.
 
+### 3.167 Extension calls: method group arguments and other type arguments (item 68y59)
+
+*Method group arguments.* The question `TryUseExtensionMethodSyntax` asks the host
+(`CanTransformToExtensionMethodCall`) could not carry a method group argument, such as
+`Select(Convert)`. Such an argument now goes with the method reference it was written as:
+its chosen method, the target its name is looked up on and the written type arguments. The
+host looks the group up again with the body's resolver, as it does for the method
+reference's own node (`Disambiguator.LookUpName` without invocation, then
+`WithChosenMethod`), and answers that it cannot where the name finds no method group, so
+the body falls back instead of being answered wrongly. The fallback reason of the question
+now names the operand kind it cannot carry.
+
+*Another instantiation.* An extension call whose probe resolves to the same method with
+other inferred type arguments was the attempt 3.164 took back: the host looked the written
+call up again, which failed in null-conditional chains. The engine now sends the found
+method's type arguments, with the invocation's resolve result and with the extension
+method question, and the host specializes the method's definition with them (keeping the
+class type arguments). The syntax writes the found method's type arguments, as
+`TryUseExtensionMethodSyntax(foundMethod, ...)` does. A probe that finds another
+definition still falls back.
+
+The share rose from 94.8 % to 96.1 %.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

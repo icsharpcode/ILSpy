@@ -422,6 +422,9 @@ pub enum Rr {
         found_by_lookup: bool,
         /// `isExpandedForm`: the `params` array's elements are the last arguments.
         expanded: bool,
+        /// The type arguments of the method the call resolves to where they are not `method`'s
+        /// (the found method), which the host specializes the method's definition with.
+        method_args: Option<Vec<TypeId>>,
     },
     /// A plain `ResolveResult` of the given type.
     Plain(TypeId),

@@ -183,6 +183,7 @@ impl Builder<'_, '_, '_, '_> {
                 delegate: false,
                 found_by_lookup: false,
                 expanded: false,
+                method_args: None,
             },
         );
         self.ast.with_il(e, inst);

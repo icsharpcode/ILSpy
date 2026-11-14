@@ -1780,14 +1780,18 @@ pub fn accessor_reference_query(
 /// `ReferenceKind`) for a by-reference argument, 3 and the type for an `out var`, and the
 /// argument names (0 for none, else 1 and per argument whether it has a name and the name).
 /// The answer is 1 for yes.
+#[allow(clippy::too_many_arguments)]
 pub fn extension_method_syntax_query(
     ts: &TypeSystem<'_, '_>,
     method: &crate::il::ast::MethodOperand,
+    method_args: Option<&[crate::typesystem::types::TypeId]>,
     type_arguments: &[crate::typesystem::types::TypeId],
     target: &crate::semantics::ResolveResult,
     arguments: &[crate::semantics::ResolveResult],
+    method_groups: &[Option<crate::il::transforms::MethodGroupOperand<'_>>],
     names: Option<&[Option<String>]>,
 ) -> Result<Vec<u8>, String> {
+    use crate::il::transforms::LookupTarget;
     use crate::semantics::ResolveResult;
     query_message(ts, |w| {
         w.out.u8(8);
@@ -1795,6 +1799,14 @@ pub fn extension_method_syntax_query(
         w.out.len(type_arguments.len());
         for &t in type_arguments {
             w.ty(t);
+        }
+        // The type arguments that replace the method's.
+        w.out.bool(method_args.is_some());
+        if let Some(args) = method_args {
+            w.out.len(args.len());
+            for &t in args {
+                w.ty(t);
+            }
         }
         let operand = |w: &mut FunctionWriter<'_, '_, '_, '_>, rr: &ResolveResult| {
             match rr {
@@ -1839,7 +1851,37 @@ pub fn extension_method_syntax_query(
         };
         operand(w, target)?;
         w.out.len(arguments.len());
-        for a in arguments {
+        for (i, a) in arguments.iter().enumerate() {
+            // 5: a method group, which the host looks up again (`Disambiguator.LookUpName`
+            // without invocation, then `WithChosenMethod`).
+            if let Some(Some(group)) = method_groups.get(i) {
+                w.out.u8(5);
+                w.call_method(group.method)?;
+                match group.target {
+                    None => w.out.u8(0),
+                    Some(LookupTarget::This {
+                        ty,
+                        causes_non_virtual_invocation,
+                    }) => {
+                        w.out.u8(1);
+                        w.out.bool(causes_non_virtual_invocation);
+                        w.ty(ty);
+                    }
+                    Some(LookupTarget::Type(ty)) => {
+                        w.out.u8(2);
+                        w.ty(ty);
+                    }
+                    Some(LookupTarget::Expression(ty)) => {
+                        w.out.u8(3);
+                        w.ty(ty);
+                    }
+                }
+                w.out.len(group.type_arguments.len());
+                for &t in group.type_arguments {
+                    w.ty(t);
+                }
+                continue;
+            }
             operand(w, a)?;
         }
         match names {

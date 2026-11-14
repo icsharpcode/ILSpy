@@ -548,17 +548,21 @@ impl Resolver for HostResolver {
         &self,
         ts: &TypeSystem<'_, '_>,
         method: &ilspy_decompiler::il::ast::MethodOperand,
+        method_args: Option<&[ilspy_decompiler::typesystem::types::TypeId]>,
         type_arguments: &[ilspy_decompiler::typesystem::types::TypeId],
         target: &ilspy_decompiler::semantics::ResolveResult,
         arguments: &[ilspy_decompiler::semantics::ResolveResult],
+        method_groups: &[Option<ilspy_decompiler::il::transforms::MethodGroupOperand<'_>>],
         names: Option<&[Option<String>]>,
     ) -> Option<bool> {
         let bytes = ilspy_decompiler::wire::ilast::extension_method_syntax_query(
             ts,
             method,
+            method_args,
             type_arguments,
             target,
             arguments,
+            method_groups,
             names,
         )
         .ok()?;
