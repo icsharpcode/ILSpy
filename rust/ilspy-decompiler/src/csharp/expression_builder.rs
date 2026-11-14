@@ -964,6 +964,35 @@ impl Builder<'_, '_, '_, '_> {
         lu
     }
 
+    /// The type of the predefined enum operator `+` or `-` the operands resolve to: `E + U`
+    /// and `U + E` and `E - U` are of type `E`, `E - E` of type `U`, where `U` is the enum's
+    /// underlying type and the other operand converts implicitly to it.
+    fn enum_operator(
+        &mut self,
+        op: BinaryOp,
+        l: &TranslatedExpression,
+        r: &TranslatedExpression,
+    ) -> Option<TypeId> {
+        let is_enum = |b: &Self, t: TypeId| b.ts.kind(t) == TypeKind::Enum;
+        let (le, re) = (is_enum(self, l.ty), is_enum(self, r.ty));
+        let converts = |b: &mut Self, e: &TranslatedExpression, to: TypeId| {
+            let rr = b.semantic_rr(e.expression, e.ty);
+            Conversions::new(b.ts).implicit(&rr, to).is_valid()
+        };
+        match (op, le, re) {
+            (BinaryOp::Subtract, true, true) if l.ty == r.ty => Some(self.enum_underlying(l.ty)),
+            (BinaryOp::Add | BinaryOp::Subtract, true, false) => {
+                let u = self.enum_underlying(l.ty);
+                converts(self, r, u).then_some(l.ty)
+            }
+            (BinaryOp::Add, false, true) => {
+                let u = self.enum_underlying(r.ty);
+                converts(self, l, u).then_some(r.ty)
+            }
+            _ => None,
+        }
+    }
+
     /// The type code of a binary operator's operands, `BinaryNumericPromotion` with the implicit
     /// constant conversions overload resolution sees: a non-negative `int` or `long` constant
     /// next to a `uint` or `ulong` operand converts to that type, whose operator is then the
@@ -1606,30 +1635,36 @@ impl Builder<'_, '_, '_, '_> {
         // Special case comparisons with enum and char literals
         let l = self.adjust_constant_expression_to_type(l, r.ty)?;
         let r = self.adjust_constant_expression_to_type(r, l.ty)?;
+        // The enum comparison operators of two operands of one enum type.
+        let same_enum = self.ts.kind(l.ty) == TypeKind::Enum && l.ty == r.ty;
         for t in [l.ty, r.ty] {
             let k = self.ts.kind(self.ts.nullable_underlying(t));
-            if matches!(
-                k,
-                TypeKind::Enum
-                    | TypeKind::Pointer
-                    | TypeKind::Dynamic
-                    | TypeKind::NInt
-                    | TypeKind::NUInt
-                    | TypeKind::TypeParameter
-            ) || self.ts.is_known(t, KnownTypeCode::NullableOfT)
+            if (k == TypeKind::Enum && !same_enum)
+                || matches!(
+                    k,
+                    TypeKind::Pointer
+                        | TypeKind::Dynamic
+                        | TypeKind::NInt
+                        | TypeKind::NUInt
+                        | TypeKind::TypeParameter
+                )
+                || self.ts.is_known(t, KnownTypeCode::NullableOfT)
             {
                 return Err("a relational comparison of these types".to_owned());
             }
         }
         // `ResolveBinaryOperator`: the operator over the promoted type of two numeric operands;
         // a constant of another type converts implicitly in ways the promotion does not model.
-        let (lc, rc) = (self.ts.type_code(l.ty), self.ts.type_code(r.ty));
-        if !(4..=14).contains(&lc) || !(4..=14).contains(&rc) {
-            return Err("a relational comparison of these types".to_owned());
-        }
-        let promoted = self
-            .operator_promotion(&l, &r, lc, rc)?
-            .map(|p| self.ts.known_type(known_of_type_code(p)));
+        let promoted = if same_enum {
+            Some(l.ty)
+        } else {
+            let (lc, rc) = (self.ts.type_code(l.ty), self.ts.type_code(r.ty));
+            if !(4..=14).contains(&lc) || !(4..=14).contains(&rc) {
+                return Err("a relational comparison of these types".to_owned());
+            }
+            self.operator_promotion(&l, &r, lc, rc)?
+                .map(|p| self.ts.known_type(known_of_type_code(p)))
+        };
         let boolean = self.ts.known_type(KnownTypeCode::Boolean);
         // The resolver's operator where its operands have the comparison's sign and stack type;
         // the operator built over operands cast to the input type otherwise.
@@ -1785,7 +1820,9 @@ impl Builder<'_, '_, '_, '_> {
                     | TypeKind::NInt
                     | TypeKind::NUInt
                     | TypeKind::TypeParameter
-            ) || (k == TypeKind::Enum && !bitwise)
+            ) || (k == TypeKind::Enum
+                && !bitwise
+                && !matches!(op, BinaryOp::Add | BinaryOp::Subtract))
                 || self.ts.is_known(t, KnownTypeCode::NullableOfT)
             {
                 let nullable = if self.ts.is_known(t, KnownTypeCode::NullableOfT) {
@@ -1818,15 +1855,33 @@ impl Builder<'_, '_, '_, '_> {
         // type, the enum's operator where both are of the enum type.
         let enum_operands = bitwise
             && (self.ts.kind(l.ty) == TypeKind::Enum || self.ts.kind(r.ty) == TypeKind::Enum);
-        let (l, r) = if enum_operands {
+        let (mut l, mut r) = if enum_operands {
             let l = self.adjust_constant_expression_to_type(l, r.ty)?;
             let r = self.adjust_constant_expression_to_type(r, l.ty)?;
             (l, r)
         } else {
             (l, r)
         };
+        let enum_arithmetic = matches!(op, BinaryOp::Add | BinaryOp::Subtract)
+            && (self.ts.kind(l.ty) == TypeKind::Enum || self.ts.kind(r.ty) == TypeKind::Enum);
         let promoted = if enum_operands {
             (l.ty == r.ty).then_some(l.ty)
+        } else if enum_arithmetic {
+            // The enum operators `E + U`, `U + E`, `E - U` (of type `E`) and `E - E` (of type
+            // `U`); where they do not resolve, the constants as the enum's bit patterns.
+            match self.enum_operator(op, &l, &r) {
+                Some(p) => Some(p),
+                None => {
+                    let al = self.adjust_constant_expression_to_type(l, r.ty)?;
+                    let ar = self.adjust_constant_expression_to_type(r, l.ty)?;
+                    let p = self.enum_operator(op, &al, &ar);
+                    if p.is_some() {
+                        l = al;
+                        r = ar;
+                    }
+                    p
+                }
+            }
         } else {
             let (lc, rc) = (self.ts.type_code(l.ty), self.ts.type_code(r.ty));
             // The predefined logical operators of `bool`.

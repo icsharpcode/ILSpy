@@ -4079,6 +4079,26 @@ operand kinds now, so that the remaining groups can be told apart.
 
 The share rose from 96.1 % to 96.5 %.
 
+### 3.169 Enum operators (item 68y61)
+
+*Enum arithmetic.* `ResolveBinaryOperator` of `+` and `-` with an enum operand is the
+predefined enum operator: `E + U`, `U + E` and `E - U` are of type `E`, `E - E` of the
+underlying type `U`, where the other operand converts implicitly to `U`. Where none
+applies, the operands are tried again with their constants as the enum's bit patterns
+(`AdjustConstantExpressionToType`, issue #1142), then cast to the common arithmetic type as
+before. The host resolves the operator over the written operands, as it does for promoted
+numeric operands.
+
+*Enum comparisons.* A relational comparison of two operands of one enum type is the enum's
+own operator, whose sign and stack type are those of the underlying type; mixed operands
+still fall back.
+
+*Deferred.* A `string.Format` call whose other arguments contain a string literal is an
+ordinary call in the managed builder; the engine cannot yet tell the nodes of the written
+arguments from those a discarded translation left behind, so it keeps falling back.
+
+The share rose from 96.5 % to 96.8 %.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |
