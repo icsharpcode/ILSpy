@@ -79,6 +79,25 @@ namespace ICSharpCode.ILSpyCmd.Tests
 			Assert.That(html, Does.Contain("\"" + nameof(DumpTableSample) + "\""));
 		}
 
+		[Test]
+		public async Task DiagramCommandUsesTheDiagrammerPipeline()
+		{
+			var result = await RunAsync("diagram", testAssemblyPath, "--disable-updatecheck", "--generate-diagrammer-json-only", "-o", outputDirectory);
+
+			Assert.That(result.ExitCode, Is.EqualTo(0), result.Error);
+			Assert.That(File.Exists(Path.Combine(outputDirectory, "model.json")), "model.json");
+		}
+
+		[Test]
+		public async Task DecompileCommandUsesTheDefaultPipeline()
+		{
+			var result = await RunAsync("decompile", testAssemblyPath, "--disable-updatecheck", "-t", nameof(DumpTableSample));
+
+			Assert.That(result.ExitCode, Is.EqualTo(0), result.Error);
+			Assert.That(result.Output, Does.Contain("class " + nameof(DumpTableSample)));
+			Assert.That(result.Error, Does.Not.Contain("verbless command-line form"));
+		}
+
 		static void AssertModelDescribesThisAssembly(JsonElement model)
 		{
 			Assert.That(model.TryGetProperty("OutsideReferences", out var outsideReferences), "OutsideReferences");
