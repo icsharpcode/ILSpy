@@ -154,6 +154,18 @@ impl Builder<'_, '_, '_, '_> {
         {
             return Ok(self.unwrap_child(e.expression, reference));
         }
+        // `new T?(x)` converted implicitly to its own type is written as `x`.
+        if same
+            && allow_implicit_conversion
+            && self.ts.is_known(ty, KnownTypeCode::NullableOfT)
+            && matches!(self.rr_of(e.expression), Rr::ObjectCreation { .. })
+            && let AstNode::ObjectCreate { ref arguments, .. } = *self.ast.node(e.expression)
+            && let [argument] = arguments.as_slice()
+        {
+            let argument = *argument;
+            let unwrapped = self.unwrap_child(e.expression, argument);
+            return self.unwrapped(unwrapped, target, allow_implicit_conversion);
+        }
         // A cast the engine made: `CastCanBeMadeImplicit` may unwrap it again.
         if let AstNode::Cast {
             expression: inner, ..

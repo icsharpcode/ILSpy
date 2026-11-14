@@ -32,6 +32,19 @@ impl Builder<'_, '_, '_, '_> {
             Inst::LdVirtFtn { method, .. } => (method, CallOp::CallVirt),
             _ => return Err("a delegate construction of another shape".to_owned()),
         };
+        self.delegate_construction_of(inst, this_arg, &operand, op, delegate_type)
+    }
+
+    /// The delegate construction of `operand` on `this_arg`, of `newobj D(target, ldftn)` or of
+    /// `ldvirtdelegate` (`Build(LdVirtDelegate)`, a `callvirt`).
+    pub(crate) fn delegate_construction_of(
+        &mut self,
+        inst: NodeId,
+        this_arg: NodeId,
+        operand: &MethodOperand,
+        op: CallOp,
+        delegate_type: TypeId,
+    ) -> Result<TranslatedExpression, Unsupported> {
         let MethodOrigin::Def(id) = operand.method.origin else {
             return Err("a delegate of an unresolved method".to_owned());
         };
@@ -64,11 +77,11 @@ impl Builder<'_, '_, '_, '_> {
             method.is_static,
             declaring,
         )?;
-        let reference = self.method_reference(&operand, &method, op, target, declaring)?;
+        let reference = self.method_reference(operand, &method, op, target, declaring)?;
         let e = self.ast.add(AstNode::DelegateCreate {
             ty: delegate_type,
             reference,
-            method: operand,
+            method: operand.clone(),
             is_virtual: op == CallOp::CallVirt,
         });
         self.ast.with_il(e, inst);

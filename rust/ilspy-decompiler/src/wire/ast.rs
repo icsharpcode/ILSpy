@@ -288,9 +288,12 @@ fn rr(w: &mut FunctionWriter<'_, '_, '_, '_>, rr: Option<&Rr>) -> Result<(), Str
             w.out.u8(12);
             w.ty(*ty);
         }
-        Some(Rr::ObjectCreation { method, .. }) => {
+        Some(Rr::ObjectCreation {
+            method, expanded, ..
+        }) => {
             w.out.u8(11);
             w.call_method(method)?;
+            w.out.bool(*expanded);
         }
     }
     Ok(())

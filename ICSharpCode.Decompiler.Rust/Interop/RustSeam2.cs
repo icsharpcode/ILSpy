@@ -389,7 +389,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					var argumentResults = arguments
 						.Select(a => (a is NamedArgumentExpression named ? named.Expression : a).GetResolveResult())
 						.ToArray();
-					node.ResolveResult = new CSharpInvocationResolveResult(null!, node.Call!.Value.Method, argumentResults);
+					node.ResolveResult = new CSharpInvocationResolveResult(null!, node.Call!.Value.Method, argumentResults, isExpandedForm: node.Call!.Value.IsExpanded);
 					var creation = new ObjectCreateExpression(exprBuilder.ConvertType(node.Type!), arguments);
 					if (node.Initializer != null)
 						creation.Initializer = new ArrayInitializerExpression(node.Initializer.Select(e => (Expression)Build(e, exprBuilder)));

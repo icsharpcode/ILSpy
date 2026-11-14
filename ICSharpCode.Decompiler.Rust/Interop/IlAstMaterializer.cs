@@ -1125,7 +1125,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				}
 				case 11:
 					// A constructor call has no target; RustSeam2 completes the resolve result.
-					pendingInvocation = (null, CallMethod(), false, false, false, false);
+					pendingInvocation = (null, CallMethod(), false, false, false, Bool());
 					return null;
 				case 12:
 					return new ResolveResult(Type());

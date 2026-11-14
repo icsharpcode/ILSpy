@@ -3958,6 +3958,30 @@ falls back.
 
 The share rose from 92.2 % to 92.9 %.
 
+### 3.164 A batch: nullable creations, virtual delegates, params of constructors, decimals (item 68y56)
+
+*Nullable creations.* `new int?(x)` in an implicit conversion to its own type is written as
+the converted value, the way `ConvertTo` unwraps an `ObjectCreateExpression` of
+`Nullable<T>` with one argument; the call builder no longer refuses the creation itself.
+
+*Virtual delegates.* `ldvirtdelegate` is the delegate construction of a `callvirt`: the
+engine shares the delegate construction of `newobj D(target, ldftn)` and passes the
+instruction's target, method and delegate type to it.
+
+*Expanded `params` of constructors.* A creation whose last argument is a `params` array
+takes the expanded form where the constructors, probed with the elements as arguments,
+resolve back to the constructor; the object creation's resolve result carries the
+`isExpandedForm` flag to the host, as invocations do.
+
+*Decimal literals.* `ldc.decimal` is a constant of `decimal`, which the wire already
+carried for field constants.
+
+*Deferred.* An extension call whose name resolves to another method was tried and taken
+back: the host's lookup of the written call failed inside null-conditional LINQ chains,
+where the call it saw was not marked as an extension call. It stays a fallback.
+
+The share rose from 92.9 % to 93.4 %.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

@@ -948,9 +948,6 @@ impl Builder<'_, '_, '_, '_> {
             || ts.is_known(declaring, KnownTypeCode::UIntPtr)
         {
             Some("a native integer")
-        } else if ts.is_known(declaring, KnownTypeCode::NullableOfT) {
-            // `new T?(x)` is written as `x` where it converts implicitly.
-            Some("a nullable value")
         } else {
             match name.as_ref() {
                 None => Some("an unnamed type"),
@@ -976,9 +973,27 @@ impl Builder<'_, '_, '_, '_> {
             return Err("a call of an unresolved method".to_owned());
         };
         let mut list = self.argument_list(call, &method, id, 0, declaring, false)?;
-        // The expanded `params` form of a constructor call is not translated.
-        if list.params_candidate.is_some() {
-            return Err("an expanded params argument of a constructor".to_owned());
+        // `TransformParamsArgument`: the expanded form where the creation as written with it
+        // resolves to the constructor in that form.
+        if let Some(expanded) = list.expanded(&method) {
+            let resolver = self
+                .resolver
+                .ok_or("a member reference without the host's resolver")?;
+            let group = resolver
+                .constructors(self.ts, operand)
+                .ok_or("constructors the host cannot list")?;
+            let errors = self.probe_group(
+                &group,
+                method.declaring,
+                &method,
+                CallOp::Call,
+                &expanded,
+                &[],
+            )?;
+            if errors == OverloadResolutionErrors::NONE {
+                list = expanded;
+            }
+            list.params_candidate = None;
         }
         self.disambiguate_constructor(operand, &method, &mut list)?;
         let arguments = self.written_arguments(&list, 0);
@@ -992,6 +1007,7 @@ impl Builder<'_, '_, '_, '_> {
             Rr::ObjectCreation {
                 method: Box::new(operand.clone()),
                 ty: declaring,
+                expanded: list.is_expanded_form,
             },
         );
         self.ast.with_il(e, inst);

@@ -39,6 +39,11 @@ impl Builder<'_, '_, '_, '_> {
                 let ty = self.ts.known_type(KnownTypeCode::Double);
                 self.float_constant(inst, ty, ConstValue::Double(bits))
             }
+            // `VisitLdcDecimal`: the literal of `decimal`.
+            Inst::LdcDecimal { bits } => {
+                let ty = self.ts.known_type(KnownTypeCode::Decimal);
+                self.float_constant(inst, ty, ConstValue::Decimal(bits))
+            }
             Inst::LdStr { value } => {
                 let string = self.ts.known_type(KnownTypeCode::String);
                 let e = self.ast.add(AstNode::StringLiteral {
@@ -448,6 +453,18 @@ impl Builder<'_, '_, '_, '_> {
             // `VisitIsInst`: `arg as T` for a reference type, a boxing conversion of the argument
             // dropped; a value type, emulated with `is` and a conditional, is not translated.
             Inst::UnboxAny { arg, ty } => self.unbox_any(inst, arg, ty.ty),
+            // `Build(LdVirtDelegate)`: the delegate construction of a `callvirt`.
+            Inst::LdVirtDelegate {
+                arg,
+                ty,
+                ref method,
+            } => self.delegate_construction_of(
+                inst,
+                arg,
+                method,
+                super::call_builder::CallOp::CallVirt,
+                ty,
+            ),
             Inst::BitNot {
                 arg,
                 lifted_underlying: None,

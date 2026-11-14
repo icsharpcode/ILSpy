@@ -430,6 +430,8 @@ pub enum Rr {
     ObjectCreation {
         method: Box<crate::il::ast::MethodOperand>,
         ty: TypeId,
+        /// `isExpandedForm`: the `params` array's elements are the last arguments.
+        expanded: bool,
     },
     /// `MemberResolveResult` of the property (of the given type) `accessor` belongs to, with
     /// the target's resolve result.
