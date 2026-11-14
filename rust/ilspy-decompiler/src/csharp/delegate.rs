@@ -51,6 +51,9 @@ impl Builder<'_, '_, '_, '_> {
         let method = Method::from_resolved(self.ts, &operand.method)
             .ok_or("a delegate of an unresolved method")?;
         let declaring = method.declaring.ok_or("a method without declaring type")?;
+        if operand.local_function.is_some() {
+            return self.local_function_delegate(inst, this_arg, operand, &method, delegate_type);
+        }
         let flags = self.ts.method_flags(id, None);
         if flags.extension
             || self.ts.accessor_owner(id).is_some()
@@ -83,6 +86,42 @@ impl Builder<'_, '_, '_, '_> {
             reference,
             method: operand.clone(),
             is_virtual: op == CallOp::CallVirt,
+        });
+        self.ast.with_il(e, inst);
+        self.ast.with_rr(e, Rr::Plain(delegate_type));
+        Ok(TranslatedExpression {
+            expression: e,
+            ty: delegate_type,
+        })
+    }
+
+    /// `HandleDelegateConstruction` of a local function, whose reduced method is static:
+    /// `new D(Name)` without target or disambiguation (`DisambiguateDelegateReference`), the
+    /// name resolved to `ToMethodGroup`. Generic local functions are not translated.
+    fn local_function_delegate(
+        &mut self,
+        inst: NodeId,
+        this_arg: NodeId,
+        operand: &MethodOperand,
+        method: &Method,
+        delegate_type: TypeId,
+    ) -> Result<TranslatedExpression, Unsupported> {
+        let reference = self.local_function_reference(operand, method, false)?;
+        // `CanUseDelegateConstruction` of a static method.
+        let invoke = self
+            .ts
+            .delegate_invoke(delegate_type)
+            .ok_or("a delegate type without Invoke")?;
+        if invoke.parameters.len() != method.parameters.len()
+            || !matches!(self.f.inst(this_arg), Inst::LdNull)
+        {
+            return Err("a delegate construction that binds its first argument".to_owned());
+        }
+        let e = self.ast.add(AstNode::DelegateCreate {
+            ty: delegate_type,
+            reference,
+            method: operand.clone(),
+            is_virtual: false,
         });
         self.ast.with_il(e, inst);
         self.ast.with_rr(e, Rr::Plain(delegate_type));

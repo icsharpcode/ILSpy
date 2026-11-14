@@ -106,6 +106,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		public const byte HexConstant = 61;
 		public const byte SwitchExpression = 62;
 		public const byte LocalFunctionDeclaration = 63;
+		public const byte PatternUnary = 64;
 
 		public byte Kind;
 		/// <summary>The instructions the node is annotated with, in order.</summary>
@@ -151,6 +152,8 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		/// <summary>For a generic name: the type arguments written with it.</summary>
 		public IType[] TypeArguments = [];
 		public object? Value;
+		/// <summary>For a recursive pattern: the member of each sub-pattern.</summary>
+		public IMember[] Members = [];
 		public bool Flag;
 	}
 
@@ -609,9 +612,29 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				case RustBodyNode.RecursivePattern:
 				{
 					var pattern = new RecursivePatternExpression();
+					if (node.Type != null)
+						pattern.Type = exprBuilder.ConvertType(node.Type);
+					for (int i = 0; i < node.Members.Length; i++)
+					{
+						var member = node.Members[i];
+						var sub = new NamedArgumentExpression { Name = member.Name, Expression = (Expression)Build(node.Children[i], exprBuilder) };
+						sub.AddAnnotation(new MemberResolveResult(null, member));
+						pattern.SubPatterns.Add(sub);
+					}
 					if (node.Value is ILVariable variable)
 						pattern.Designation = Designation(variable);
 					return Annotate(pattern, node);
+				}
+				case RustBodyNode.PatternUnary:
+				{
+					var op = (int)node.Value! switch {
+						0 => UnaryOperatorType.PatternNot,
+						1 => UnaryOperatorType.PatternRelationalLessThan,
+						2 => UnaryOperatorType.PatternRelationalLessThanOrEqual,
+						3 => UnaryOperatorType.PatternRelationalGreaterThan,
+						_ => UnaryOperatorType.PatternRelationalGreaterThanOrEqual,
+					};
+					return Annotate(new UnaryOperatorExpression(op, (Expression)Build(node.Children[0], exprBuilder)), node);
 				}
 				case RustBodyNode.NullConditional:
 					return Annotate(new UnaryOperatorExpression(node.Flag ? UnaryOperatorType.NullConditionalRewrap : UnaryOperatorType.NullConditional,
@@ -644,18 +667,26 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 							astBuilder.UseSpecialConstants = useSpecialConstants;
 						}
 					}
-					var typeExpression = exprBuilder.ConvertType(elementType);
-					ArraySpecifier[] additionalSpecifiers = [];
-					if (typeExpression is ComposedType composed && composed.ArraySpecifiers.Count > 0)
+					// An array of anonymous types is implicitly typed, `new[] { ... }`.
+					bool anonymous = hasInitializer && exprBuilder.settings.AnonymousTypes && elementType.ContainsAnonymousType();
+					AstType? typeExpression = null;
+					ArraySpecifier[] additionalSpecifiers = [new ArraySpecifier()];
+					if (!anonymous)
 					{
-						additionalSpecifiers = composed.ArraySpecifiers.Select(a => (ArraySpecifier)a.Clone()).ToArray();
-						composed.ArraySpecifiers.Clear();
+						typeExpression = exprBuilder.ConvertType(elementType);
+						additionalSpecifiers = [];
+						if (typeExpression is ComposedType composed && composed.ArraySpecifiers.Count > 0)
+						{
+							additionalSpecifiers = composed.ArraySpecifiers.Select(a => (ArraySpecifier)a.Clone()).ToArray();
+							composed.ArraySpecifiers.Clear();
+						}
 					}
-					var creation = new ArrayCreateExpression { Type = typeExpression };
+					var creation = new ArrayCreateExpression { Type = typeExpression! };
 					if (initializer != null)
 						creation.Initializer = initializer;
 					creation.AdditionalArraySpecifiers.AddRange(additionalSpecifiers);
-					creation.Arguments.AddRange(arguments);
+					if (!(hasInitializer && elementType.ContainsAnonymousType()))
+						creation.Arguments.AddRange(arguments);
 					var elementResults = new List<ResolveResult>();
 					if (initializer != null)
 						CollectElements(initializer);

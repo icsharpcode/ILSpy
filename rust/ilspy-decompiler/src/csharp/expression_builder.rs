@@ -6,13 +6,17 @@ use crate::il::ast::{
 };
 use crate::il::types::{PrimitiveType, Sign, StackType};
 use crate::metadata::tables::rows;
-use crate::semantics::Conversions;
 use crate::semantics::types::TypeKind;
+use crate::semantics::{Conversions, Method};
 use crate::typesystem::known::KnownTypeCode;
 use crate::typesystem::members::ConstValue;
+use crate::typesystem::resolve::MethodOrigin;
 use crate::typesystem::types::{TypeData, TypeId};
 
-use super::ast::{AstId, AstNode, BinaryOp, InterpolatedContent, Overflow, Rr};
+use super::ast::{
+    AstId, AstNode, BinaryOp, InterpolatedContent, Overflow, PatternMember, PatternOperator, Rr,
+    SubPattern,
+};
 use super::call_builder::ACCESSOR_SETTER;
 use super::{Builder, TranslatedExpression, Unsupported};
 
@@ -2384,7 +2388,8 @@ impl Builder<'_, '_, '_, '_> {
 
     /// `TranslateArrayInitializer`: `new T[n, ...] { { ... }, ... }` from the stores of an
     /// array initializer block into the new array, nested by the constant dimensions. A block
-    /// converted to a span and arrays of anonymous types are not translated.
+    /// converted to a span is not translated; the host writes an array of anonymous types as
+    /// `new[] { ... }`.
     fn array_initializer(
         &mut self,
         inst: NodeId,
@@ -2406,9 +2411,6 @@ impl Builder<'_, '_, '_, '_> {
             return Err("an array initializer of another shape".to_owned());
         }
         let element_type = ty.ty;
-        if self.may_contain_anonymous_type(element_type) {
-            return Err("an array initializer of anonymous types".to_owned());
-        }
         let mut sizes = Vec::with_capacity(indices.len());
         for &i in &indices {
             let d = self.translate(i, None)?;
@@ -2506,25 +2508,21 @@ impl Builder<'_, '_, '_, '_> {
         })
     }
 
-    /// `VisitMatchInstruction`: `left is pattern` for a type pattern, a declaration pattern or
-    /// `{ }`, without sub-patterns; a boxing cast of the tested value is dropped where the
-    /// managed builder drops it.
+    /// `VisitMatchInstruction`: `left is pattern`; a boxing cast of the tested value is dropped
+    /// where the managed builder drops it.
     fn match_instruction(&mut self, inst: NodeId) -> Result<TranslatedExpression, Unsupported> {
         let Inst::Match {
             variable,
             tested_operand,
-            sub_patterns,
             is_deconstruct_call,
             is_deconstruct_tuple,
-            check_type,
-            check_not_null,
             ..
         } = self.f.inst(inst).clone()
         else {
             unreachable!("a match");
         };
-        if is_deconstruct_call || is_deconstruct_tuple || !sub_patterns.is_empty() {
-            return Err("a recursive or positional pattern".to_owned());
+        if is_deconstruct_call || is_deconstruct_tuple {
+            return Err("a positional pattern".to_owned());
         }
         let mut left = self.translate(tested_operand, None)?;
         if let AstNode::Cast {
@@ -2546,25 +2544,7 @@ impl Builder<'_, '_, '_, '_> {
                 left = self.unwrap_child(left.expression, inner);
             }
         }
-        let v = self.f.var(variable);
-        let has_designator = v.load_count() + v.address_count() > 0;
-        let variable_type = v.ty;
-        let is_var = !check_type && !check_not_null;
-        let pattern = if check_not_null && !check_type {
-            // `{ } designation`
-            self.ast.add(AstNode::RecursivePattern {
-                designator: has_designator.then_some(variable),
-            })
-        } else if has_designator || !check_type {
-            debug_assert!(check_type || is_var);
-            self.ast.add(AstNode::DeclarationPattern {
-                variable,
-                var_keyword: !check_type,
-            })
-        } else {
-            self.ast.add(AstNode::TypeReference { ty: variable_type })
-        };
-        self.ast.with_il(pattern, inst);
+        let pattern = self.translate_pattern(inst, left.ty)?;
         let boolean = self.ts.known_type(KnownTypeCode::Boolean);
         let e = self.ast.add(AstNode::IsPattern {
             left: left.expression,
@@ -2576,6 +2556,147 @@ impl Builder<'_, '_, '_, '_> {
             expression: e,
             ty: boolean,
         })
+    }
+
+    /// `TranslatePattern(pattern, leftHandType)`: a type, declaration or recursive pattern of a
+    /// match, `not`, a relational or a constant pattern of a comparison, or the constant of a
+    /// string or decimal equality. Positional patterns are not translated.
+    fn translate_pattern(
+        &mut self,
+        pattern: NodeId,
+        left_type: TypeId,
+    ) -> Result<AstId, Unsupported> {
+        match self.f.inst(pattern).clone() {
+            Inst::Match {
+                variable,
+                sub_patterns,
+                is_deconstruct_call,
+                is_deconstruct_tuple,
+                check_type,
+                check_not_null,
+                ..
+            } => {
+                if is_deconstruct_call || is_deconstruct_tuple {
+                    return Err("a positional pattern".to_owned());
+                }
+                let v = self.f.var(variable);
+                // `HasDesignator`: the sub-patterns load the variable once each.
+                let has_designator = v.load_count() + v.address_count() > sub_patterns.len() as u32;
+                let variable_type = v.ty;
+                let p = if !sub_patterns.is_empty() || (check_not_null && !check_type) {
+                    let mut subs = Vec::with_capacity(sub_patterns.len());
+                    for sub in sub_patterns {
+                        let tested = self
+                            .pattern_tested_operand(sub)
+                            .ok_or("an invalid sub-pattern")?;
+                        let (member, member_type) = match self.f.inst(tested).clone() {
+                            Inst::Call(c) | Inst::CallVirt(c) => {
+                                let MethodOrigin::Def(id) = c.method.method.origin else {
+                                    return Err("a sub-pattern of an unresolved method".to_owned());
+                                };
+                                if self.ts.accessor_owner(id).is_none() {
+                                    return Err("an invalid sub-pattern".to_owned());
+                                }
+                                let getter = Method::from_resolved(self.ts, &c.method.method)
+                                    .ok_or("a sub-pattern of an unresolved method")?;
+                                (PatternMember::Property(c.method), getter.return_type)
+                            }
+                            _ => {
+                                let (_, field) = self
+                                    .f
+                                    .match_ldfld(self.ts, tested)
+                                    .ok_or("an invalid sub-pattern")?;
+                                let field = field.clone();
+                                let ty = field.field.ty;
+                                (PatternMember::Field(field), ty)
+                            }
+                        };
+                        let pattern = self.translate_pattern(sub, member_type)?;
+                        subs.push(SubPattern { member, pattern });
+                    }
+                    self.ast.add(AstNode::RecursivePattern {
+                        ty: check_type.then_some(variable_type),
+                        sub_patterns: subs,
+                        designator: has_designator.then_some(variable),
+                    })
+                } else if has_designator || !check_type {
+                    self.ast.add(AstNode::DeclarationPattern {
+                        variable,
+                        var_keyword: !check_type,
+                    })
+                } else {
+                    self.ast.add(AstNode::TypeReference { ty: variable_type })
+                };
+                Ok(self.ast.with_il(p, pattern))
+            }
+            Inst::Comp { kind, right, .. } => {
+                if let Some(operand) = self.f.match_logic_not(pattern)
+                    && self.pattern_tested_operand(operand).is_some()
+                {
+                    // `logic.not` as a pattern
+                    let sub = self.translate_pattern(operand, left_type)?;
+                    if let AstNode::PatternUnary {
+                        operator: PatternOperator::Not,
+                        pattern: inner,
+                    } = *self.ast.node(sub)
+                    {
+                        return Ok(self.ast.with_il(inner, pattern));
+                    }
+                    let p = self.ast.add(AstNode::PatternUnary {
+                        operator: PatternOperator::Not,
+                        pattern: sub,
+                    });
+                    return Ok(self.ast.with_il(p, pattern));
+                }
+                let constant = if let Inst::DefaultValue { .. } = self.f.inst(right) {
+                    // Not `(int?)null`: the null literal itself.
+                    let null_type = self.ts.intern(TypeData::Null);
+                    let n = self.ast.add(AstNode::Null);
+                    self.ast.with_rr(
+                        n,
+                        Rr::Constant {
+                            ty: null_type,
+                            value: ConstValue::Null,
+                        },
+                    );
+                    n
+                } else {
+                    self.translate(right, Some(left_type))?.expression
+                };
+                let operator = match kind {
+                    ComparisonKind::Equality => return Ok(self.ast.with_il(constant, pattern)),
+                    ComparisonKind::Inequality => PatternOperator::Not,
+                    ComparisonKind::LessThan => PatternOperator::LessThan,
+                    ComparisonKind::LessThanOrEqual => PatternOperator::LessThanOrEqual,
+                    ComparisonKind::GreaterThan => PatternOperator::GreaterThan,
+                    ComparisonKind::GreaterThanOrEqual => PatternOperator::GreaterThanOrEqual,
+                };
+                let p = self.ast.add(AstNode::PatternUnary {
+                    operator,
+                    pattern: constant,
+                });
+                Ok(self.ast.with_il(p, pattern))
+            }
+            // `IsCallToOpEquality` of string or decimal: the constant.
+            Inst::Call(c) if c.args.len() == 2 => Ok(self.translate(c.args[1], None)?.expression),
+            _ => Err("a pattern of another kind".to_owned()),
+        }
+    }
+
+    /// The tested operand of a sub-pattern (`MatchInstruction.IsPatternMatch`, whose checks the
+    /// pattern matching transform made).
+    fn pattern_tested_operand(&self, pattern: NodeId) -> Option<NodeId> {
+        match *self.f.inst(pattern) {
+            Inst::Match { tested_operand, .. } => Some(tested_operand),
+            Inst::Comp { left, .. } => match self.f.match_logic_not(pattern) {
+                Some(operand) => self.pattern_tested_operand(operand).or(Some(left)),
+                None => Some(left),
+            },
+            Inst::Call(ref c) if c.args.len() == 2 && c.method.method.name == "op_Equality" => {
+                Some(c.args[0])
+            }
+            _ => None,
+        }
     }
 
     /// `VisitDefaultValue`.

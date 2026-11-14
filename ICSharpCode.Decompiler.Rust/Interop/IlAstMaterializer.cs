@@ -888,7 +888,22 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					node.Flag = Bool();
 					break;
 				case RustBodyNode.RecursivePattern:
+					// The designation, the type, then member and pattern per sub-pattern.
 					node.Value = Bool() ? Variable() : null;
+					node.Type = Bool() ? Type() : null;
+					node.Members = new IMember[Len()];
+					node.Children = new RustBodyNode[node.Members.Length];
+					for (int i = 0; i < node.Members.Length; i++)
+					{
+						node.Members[i] = U8() == 0 ? Field() : CallMethod().AccessorOwner
+							?? throw new InvalidOperationException("Sub-pattern of a method that is no accessor");
+						node.Children[i] = BodyNode();
+					}
+					break;
+				case RustBodyNode.PatternUnary:
+					// The operator, then the pattern.
+					node.Value = (int)U8();
+					node.Children = [BodyNode()];
 					break;
 				case RustBodyNode.NullConditional:
 					node.Flag = Bool();

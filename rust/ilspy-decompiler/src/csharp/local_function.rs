@@ -158,43 +158,18 @@ impl Builder<'_, '_, '_, '_> {
         call: &CallData,
     ) -> Result<TranslatedExpression, Unsupported> {
         let operand = &call.method;
-        let reference = operand
-            .local_function
-            .as_ref()
-            .ok_or("a call of no local function")?;
-        let lf = self
-            .resolve_local_function(reference.method)
-            .ok_or("a call of a local function of another function")?;
-        let name = self.local_function_name(lf)?;
         let method = Method::from_resolved(self.ts, &operand.method)
             .ok_or("a call of an unresolved method")?;
-        let generated = reference
-            .reduced
-            .number_of_compiler_generated_type_parameters as usize;
-        if method
-            .method_args
-            .as_ref()
-            .is_some_and(|a| a.len() > generated)
-        {
-            return Err("a call of a generic local function".to_owned());
-        }
         let crate::typesystem::resolve::MethodOrigin::Def(id) = operand.method.origin else {
             return Err("a call of an unresolved method".to_owned());
         };
         let declaring = method.declaring.ok_or("a method without declaring type")?;
+        // The identifier is annotated with the function (`ide.AddAnnotation(localFunction)`).
+        let target = self.local_function_reference(operand, &method, true)?;
         let list = self.argument_list(call, &method, id, 0, declaring, false)?;
         if list.params_candidate.is_some() || list.parameter_map.is_some() {
             return Err("named or params arguments of a local function".to_owned());
         }
-        let target = self.ast.add(AstNode::Identifier { name: name.clone() });
-        self.ast.with_il(target, lf);
-        self.ast.with_rr(
-            target,
-            Rr::LocalFunctionGroup {
-                name,
-                method: Box::new(operand.clone()),
-            },
-        );
         let arguments = self.written_arguments(&list, 0);
         let e = self.ast.add(AstNode::Invocation { target, arguments });
         let target_rr = self.rr_of(target);
@@ -215,5 +190,64 @@ impl Builder<'_, '_, '_, '_> {
             expression: e,
             ty: method.return_type,
         })
+    }
+
+    /// The local function's `IdentifierExpression` with the resolve result of `ToMethodGroup`,
+    /// annotated with the function where `annotate`. Generic local functions are not
+    /// translated.
+    pub(crate) fn local_function_reference(
+        &mut self,
+        operand: &crate::il::ast::MethodOperand,
+        method: &Method,
+        annotate: bool,
+    ) -> Result<AstId, Unsupported> {
+        let reference = operand
+            .local_function
+            .as_ref()
+            .ok_or("a reference of no local function")?;
+        let lf = self
+            .resolve_local_function(reference.method)
+            .ok_or("a reference of a local function of another function")?;
+        let name = self.local_function_name(lf)?;
+        let generated = reference
+            .reduced
+            .number_of_compiler_generated_type_parameters as usize;
+        if method
+            .method_args
+            .as_ref()
+            .is_some_and(|a| a.len() > generated)
+        {
+            return Err("a reference of a generic local function".to_owned());
+        }
+        let declaring = method.declaring.ok_or("a method without declaring type")?;
+        let index = self.ast.method_groups.len();
+        let unknown = self
+            .ts
+            .intern(crate::typesystem::types::TypeData::UnknownSpecial);
+        self.ast
+            .method_groups
+            .push(std::rc::Rc::new(crate::semantics::MethodGroup {
+                target: crate::semantics::ResolveResult::Expression(unknown),
+                name: name.clone(),
+                method_lists: vec![crate::semantics::MethodList {
+                    declaring,
+                    methods: vec![method.clone()],
+                }],
+                type_arguments: Vec::new(),
+                extension_methods: Vec::new(),
+            }));
+        let target = self.ast.add(AstNode::Identifier { name: name.clone() });
+        if annotate {
+            self.ast.with_il(target, lf);
+        }
+        self.ast.with_rr(
+            target,
+            Rr::LocalFunctionGroup {
+                index,
+                name,
+                method: Box::new(operand.clone()),
+            },
+        );
+        Ok(target)
     }
 }

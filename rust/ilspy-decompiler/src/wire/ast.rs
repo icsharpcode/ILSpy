@@ -85,6 +85,7 @@ mod kind {
     pub const HEX_CONSTANT: u8 = 61;
     pub const SWITCH_EXPRESSION: u8 = 62;
     pub const LOCAL_FUNCTION_DECLARATION: u8 = 63;
+    pub const PATTERN_UNARY: u8 = 64;
 }
 
 pub(super) fn write_body(
@@ -269,7 +270,7 @@ fn rr(w: &mut FunctionWriter<'_, '_, '_, '_>, rr: Option<&Rr>) -> Result<(), Str
             w.ty(*ty);
         }
         Some(Rr::Throw) => w.out.u8(27),
-        Some(Rr::LocalFunctionGroup { name, method }) => {
+        Some(Rr::LocalFunctionGroup { name, method, .. }) => {
             w.out.u8(28);
             let name: Vec<u16> = name.encode_utf16().collect();
             utf16(w, &name);
@@ -358,6 +359,7 @@ fn node(w: &mut FunctionWriter<'_, '_, '_, '_>, ast: &Ast, id: AstId) -> Result<
         AstNode::IsPattern { .. } => kind::IS_PATTERN,
         AstNode::DeclarationPattern { .. } => kind::DECLARATION_PATTERN,
         AstNode::RecursivePattern { .. } => kind::RECURSIVE_PATTERN,
+        AstNode::PatternUnary { .. } => kind::PATTERN_UNARY,
         AstNode::IsType { .. } => kind::IS_TYPE,
         AstNode::DefaultValue { .. } => kind::DEFAULT_VALUE,
         AstNode::Foreach { .. } => kind::FOREACH,
@@ -793,12 +795,38 @@ fn node(w: &mut FunctionWriter<'_, '_, '_, '_>, ast: &Ast, id: AstId) -> Result<
             w.out.len(i);
             w.out.bool(var_keyword);
         }
-        AstNode::RecursivePattern { designator } => {
+        AstNode::RecursivePattern {
+            ty,
+            sub_patterns,
+            designator,
+        } => {
             w.out.bool(designator.is_some());
             if let Some(v) = designator {
                 let i = var_index(w, v)?;
                 w.out.len(i);
             }
+            w.out.bool(ty.is_some());
+            if let Some(t) = ty {
+                w.ty(t);
+            }
+            w.out.len(sub_patterns.len());
+            for s in sub_patterns {
+                match &s.member {
+                    crate::csharp::ast::PatternMember::Field(field) => {
+                        w.out.u8(0);
+                        w.member(field.token, field.context);
+                    }
+                    crate::csharp::ast::PatternMember::Property(getter) => {
+                        w.out.u8(1);
+                        w.call_method(getter)?;
+                    }
+                }
+                node(w, ast, s.pattern)?;
+            }
+        }
+        AstNode::PatternUnary { operator, pattern } => {
+            w.out.u8(operator as u8);
+            node(w, ast, pattern)?;
         }
         AstNode::NullConditional { expression, rewrap } => {
             w.out.bool(rewrap);

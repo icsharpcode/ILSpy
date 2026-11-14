@@ -4011,6 +4011,28 @@ walks the local functions too, which are roots of their own beside the body.
 
 The share rose from 93.4 % to 94.1 %.
 
+### 3.166 A batch: local function delegates, anonymous arrays, recursive patterns (item 68y58)
+
+*Local function delegates.* `DisambiguateDelegateReference` of a local function has no target
+and no disambiguation: `new D(Name)`, the name resolved to `ToMethodGroup`. The resolve result
+3.165 introduced now also stands for a method group in the engine's own semantics, so that
+overload resolution and type inference see the method group a local function is passed as
+(`Select(LocalFunction)` needs no cast).
+
+*Anonymous arrays.* An array initializer of an anonymous element type is `new[] { ... }`
+without dimensions. The host decides it with `ContainsAnonymousType` and the
+`AnonymousTypes` setting, as `TranslateArrayInitializer` does; the engine translates the
+elements as for any array.
+
+*Recursive patterns.* `TranslatePattern` is ported whole but for positional patterns: a
+match with sub-patterns (or a null check without type test) is `T { Member: pattern, ... }`,
+each sub-pattern a named argument with the `MemberResolveResult` of its field or property,
+the host naming the member; a comparison is a constant, `not` or relational pattern, a
+`logic.not` of a pattern is `not` (a double `not` cancels); string and decimal equality
+calls give their constant. `HasDesignator` counts the loads beyond one per sub-pattern.
+
+The share rose from 94.1 % to 94.8 %.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

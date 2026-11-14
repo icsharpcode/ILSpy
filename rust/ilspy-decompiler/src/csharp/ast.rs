@@ -229,9 +229,17 @@ pub enum AstNode {
         variable: crate::il::ast::VarId,
         var_keyword: bool,
     },
-    /// `RecursivePatternExpression` without type and sub-patterns: `{ }`, with a designation.
+    /// `RecursivePatternExpression`: `T { Member: pattern, ... } designation`, the type and the
+    /// sub-patterns optional.
     RecursivePattern {
+        ty: Option<TypeId>,
+        sub_patterns: Vec<SubPattern>,
         designator: Option<crate::il::ast::VarId>,
+    },
+    /// `UnaryOperatorExpression` of a pattern operator (`PatternOperator`) over a pattern.
+    PatternUnary {
+        operator: PatternOperator,
+        pattern: AstId,
     },
     /// `IsExpression`: `expression is T`, the tuple type written as its underlying type.
     IsType { expression: AstId, ty: TypeId },
@@ -310,6 +318,32 @@ pub enum BinaryOp {
     NullCoalescing = 20,
 }
 
+/// A sub-pattern of a recursive pattern: `Member: pattern`, as a `NamedArgumentExpression`
+/// with the `MemberResolveResult` of the member without target.
+#[derive(Clone, Debug)]
+pub struct SubPattern {
+    pub member: PatternMember,
+    pub pattern: AstId,
+}
+
+/// The member a sub-pattern tests.
+#[derive(Clone, Debug)]
+pub enum PatternMember {
+    Field(crate::il::ast::FieldOperand),
+    /// The property of this getter.
+    Property(crate::il::ast::MethodOperand),
+}
+
+/// `UnaryOperatorType` of a pattern: `not`, `<`, `<=`, `>`, `>=`.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum PatternOperator {
+    Not,
+    LessThan,
+    LessThanOrEqual,
+    GreaterThan,
+    GreaterThanOrEqual,
+}
+
 /// `ResolveResult` annotations.
 #[derive(Clone, Debug)]
 pub enum Rr {
@@ -338,8 +372,9 @@ pub enum Rr {
     /// string, whose arguments the host takes from the interpolations.
     FormatString { ty: TypeId, format: Vec<u16> },
     /// `ToMethodGroup`: the `MethodGroupResolveResult` of a local function, named `name`, whose
-    /// only method is the reduced method `method`.
+    /// only method is the reduced method `method` (`Ast::method_groups[index]` for the engine).
     LocalFunctionGroup {
+        index: usize,
         name: String,
         method: Box<crate::il::ast::MethodOperand>,
     },

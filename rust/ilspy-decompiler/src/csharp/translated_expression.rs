@@ -60,7 +60,7 @@ impl Builder<'_, '_, '_, '_> {
                 _ => ResolveResult::Expression(ty),
             },
             Some(Rr::Lambda(index)) => self.lambda_rr(*index),
-            Some(Rr::MethodGroup { index, .. }) => {
+            Some(Rr::MethodGroup { index, .. }) | Some(Rr::LocalFunctionGroup { index, .. }) => {
                 ResolveResult::MethodGroup(self.ast.method_groups[*index].clone())
             }
             Some(Rr::FormatString { ty, .. }) => ResolveResult::InterpolatedString(*ty),
