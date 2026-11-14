@@ -1092,13 +1092,13 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					return new TypeResolveResult(Type());
 				case 5:
 				{
-					var target = BodyResolveResult(out _);
+					var target = NestedTargetResolveResult();
 					return new MemberResolveResult(target, Field());
 				}
 				case 24:
 				{
 					// A tuple element: the field with the element type of the target's tuple type.
-					var target = BodyResolveResult(out _);
+					var target = NestedTargetResolveResult();
 					var field = Field();
 					return new MemberResolveResult(target, field, returnTypeOverride: Type());
 				}
@@ -1116,7 +1116,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				}
 				case 10:
 				{
-					var target = BodyResolveResult(out _);
+					var target = NestedTargetResolveResult();
 					var accessor = CallMethod();
 					// RustSeam2 looks the member up again when the name binds to another one.
 					pendingLookUpMember = Bool();
@@ -1191,7 +1191,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				}
 				case 8:
 				{
-					var target = BodyResolveResult(out _);
+					var target = NestedTargetResolveResult();
 					var token = Member(out var memberContext);
 					var ev = mainModule.ResolveEntity(token, memberContext) as IEvent
 						?? throw new InvalidOperationException("Event token does not resolve to an event");

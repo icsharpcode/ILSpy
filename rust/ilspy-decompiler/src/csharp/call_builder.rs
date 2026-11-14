@@ -263,6 +263,16 @@ impl Builder<'_, '_, '_, '_> {
             declaring,
             constrained_to,
         )?;
+        // A boxing conversion of the target to `object` is made implicit, with the boxing kept
+        // in mind for the overload found (`NeedsBoxingConversion`).
+        let mut needs_boxing_conversion = false;
+        if constrained_to.is_none() && !method.is_static {
+            let unboxed = self.unwrap_boxing_conversion(target);
+            if unboxed.expression != target.expression {
+                target = unboxed;
+                needs_boxing_conversion = true;
+            }
+        }
 
         // the arguments
         let is_setter =
@@ -352,9 +362,6 @@ impl Builder<'_, '_, '_, '_> {
                 AstNode::NullConditional { rewrap: false, .. }
             )
         {
-            if self.is_cast_target(target.expression) {
-                return Err("a cast as the target of a member or reference".to_owned());
-            }
             let arguments = self.written_arguments(&list, 0);
             let e = self.ast.add(AstNode::Invocation {
                 target: target.expression,
@@ -403,13 +410,11 @@ impl Builder<'_, '_, '_, '_> {
                 base_needed,
             );
         self.found_override = None;
-        // A cast the target already is (the boxing `NeedsBoxingConversion` unwraps, or a cast of
-        // another kind) is not translated; only the cast `CastTarget` writes is.
-        if self.is_cast_target(target.expression) {
-            return Err("a cast as the target of a member or reference".to_owned());
-        }
-        let (require, require_type_arguments) =
-            self.disambiguate_call(&method, id, op, &mut target, &mut list, require, declaring)?;
+        self.needs_boxing_conversion = needs_boxing_conversion;
+        let disambiguated =
+            self.disambiguate_call(&method, id, op, &mut target, &mut list, require, declaring);
+        self.needs_boxing_conversion = false;
+        let (require, require_type_arguments) = disambiguated?;
         // The managed builder comments a cast target of a `constrained.` call, which is not
         // translated.
         if constrained_to.is_some() && self.is_cast_target(target.expression) {
@@ -2377,8 +2382,14 @@ impl Builder<'_, '_, '_, '_> {
         {
             return Ok(false);
         }
-        // `NeedsBoxingConversion` is false: the engine writes a boxed target as the cast, never
-        // unwrapped, so an override in a value type follows the base member chain as well.
+        // A boxed target does not reach an override in a value type.
+        if self.needs_boxing_conversion
+            && actual
+                .declaring
+                .is_some_and(|d| self.ts.is_reference_type(d) != Some(true))
+        {
+            return Ok(false);
+        }
         // `InheritanceHelper.GetBaseMembers`: the method the override overrides, directly or
         // through further overrides.
         let MethodKey::Def(expected_id) = expected.key else {

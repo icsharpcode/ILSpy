@@ -3937,6 +3937,27 @@ methods are ordinary calls now.
 
 The share rose from 91.9 % to 92.2 %.
 
+### 3.163 Casts in targets (item 68y55)
+
+*Boxed call targets.* `CallBuilder.Build` writes a call on a value boxed to `object` without
+the cast, setting `NeedsBoxingConversion`, which makes `IsAppropriateCallTarget` reject an
+override declared in a value type (the cast is then put back by `CastTarget`, which the
+engine does not translate for value types). The engine unwraps the box the same way and
+keeps the flag for the call's disambiguation.
+
+*Other casts of call targets.* With the box unwrapped, a cast the target already is (a
+`castclass`, for instance) is written as it is, as the managed builder does; the host takes
+the target's resolve result from the built expression (3.142). The guards that kept such
+calls, and delegate invocations, out are gone.
+
+*Casts of member targets.* A field, property, tuple element or event resolve result whose
+target is a cast is decoded with the marker 3.142 introduced for calls; the host rebuilds
+the member resolve result from the built member reference's target, keeping its type,
+constant and virtual call flag. A cast inside a `ref` or an array length's target still
+falls back.
+
+The share rose from 92.2 % to 92.9 %.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

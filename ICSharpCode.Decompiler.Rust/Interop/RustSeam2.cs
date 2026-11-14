@@ -337,6 +337,12 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				case RustBodyNode.MemberReference:
 				{
 					var target = (Expression)Build(node.Children[0], exprBuilder);
+					// A cast target's resolve result is the one of the built target.
+					if (node.ResolveResult is MemberResolveResult pending && ReferenceEquals(pending.TargetResult, PendingTarget))
+					{
+						node.ResolveResult = new MemberResolveResult(target.GetResolveResult(), pending.Member, pending.Type,
+							pending.IsCompileTimeConstant, pending.ConstantValue, pending.IsVirtualCall);
+					}
 					if (node.LookUpMember)
 						node.ResolveResult = LookUpMember(exprBuilder, (MemberResolveResult)node.ResolveResult!, target.GetResolveResult());
 					return Annotate(new MemberReferenceExpression(target, (string)node.Value!), node);

@@ -61,23 +61,18 @@ pub fn convert_body(
         loaded_stack_slots: Vec::new(),
         named_argument_map: None,
         consumed_format_strings: Vec::new(),
+        needs_boxing_conversion: false,
     };
     let stmt = b.convert(body)?;
     b.ast.with_il(stmt, body);
     // A resolve result inside another one is read without a node of its own, so it cannot
-    // be a cast's, which the host computes from the cast's node.
+    // be a cast's, which the host computes from the cast's node; for the target of a member
+    // reference the host takes the built target's.
     let nested_cast = b.ast.nodes.iter().any(|(_, a)| match &a.rr {
         Some(
-            Rr::Field {
-                target: Some(inner),
-                ..
-            }
-            | Rr::Event { target: inner, .. }
-            | Rr::TupleElement { target: inner, .. }
-            | Rr::ByReference(inner)
+            Rr::ByReference(inner)
             | Rr::ByReferenceOut(inner)
-            | Rr::ArrayLength { target: inner, .. }
-            | Rr::Property { target: inner, .. },
+            | Rr::ArrayLength { target: inner, .. },
         ) => matches!(
             **inner,
             Rr::Conversion { .. } | Rr::ImplicitConversion { .. } | Rr::TryCast { .. }
@@ -85,7 +80,7 @@ pub fn convert_body(
         _ => false,
     });
     if nested_cast {
-        return Err("a cast as the target of a member or reference".to_owned());
+        return Err("a cast as the target of a field, property or reference".to_owned());
     }
     // `stmt as BlockStatement ?? new BlockStatement { stmt }`: a container is a block.
     let ast = b.ast;

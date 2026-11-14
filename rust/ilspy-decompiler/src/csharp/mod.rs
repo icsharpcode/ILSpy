@@ -67,6 +67,8 @@ pub(crate) struct Builder<'f, 't, 'c, 'a> {
     pub(crate) named_argument_map: Option<Vec<usize>>,
     /// The format string nodes `string.Format` calls written as interpolated strings consumed.
     pub(crate) consumed_format_strings: Vec<usize>,
+    /// `ExpectedTargetDetails.NeedsBoxingConversion` of the call being disambiguated.
+    pub(crate) needs_boxing_conversion: bool,
 }
 
 /// The variant name of an instruction, for the reasons of untranslated bodies.

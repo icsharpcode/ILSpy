@@ -2653,7 +2653,10 @@ impl Builder<'_, '_, '_, '_> {
 
     /// `UnwrapBoxingConversion`: the value an `object` cast boxes, which `is` and `as` box
     /// implicitly.
-    fn unwrap_boxing_conversion(&mut self, e: TranslatedExpression) -> TranslatedExpression {
+    pub(crate) fn unwrap_boxing_conversion(
+        &mut self,
+        e: TranslatedExpression,
+    ) -> TranslatedExpression {
         let AstNode::Cast {
             expression: inner, ..
         } = *self.ast.node(e.expression)
