@@ -457,6 +457,7 @@ impl Builder<'_, '_, '_, '_> {
             // `VisitIsInst`: `arg as T` for a reference type, a boxing conversion of the argument
             // dropped; a value type, emulated with `is` and a conditional, is not translated.
             Inst::UnboxAny { arg, ty } => self.unbox_any(inst, arg, ty.ty),
+            Inst::Deconstruct { .. } => self.deconstruct(inst),
             // `Build(LdVirtDelegate)`: the delegate construction of a `callvirt`.
             Inst::LdVirtDelegate {
                 arg,

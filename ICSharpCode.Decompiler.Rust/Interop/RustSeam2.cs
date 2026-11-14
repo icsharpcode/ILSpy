@@ -109,6 +109,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		public const byte PatternUnary = 64;
 		public const byte Label = 65;
 		public const byte Goto = 66;
+		public const byte DeconstructionTuple = 67;
 
 		public byte Kind;
 		/// <summary>The instructions the node is annotated with, in order.</summary>
@@ -567,6 +568,12 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					return Annotate(new BreakStatement(), node);
 				case RustBodyNode.Continue:
 					return Annotate(new ContinueStatement(), node);
+				case RustBodyNode.DeconstructionTuple:
+				{
+					var tuple = new TupleExpression();
+					tuple.Elements.AddRange(node.Children.Select(c => (Expression)Build(c, exprBuilder)));
+					return Annotate(tuple, node);
+				}
 				case RustBodyNode.Label:
 					return Annotate(new LabelStatement { Label = (string)node.Value! }, node);
 				case RustBodyNode.Goto:

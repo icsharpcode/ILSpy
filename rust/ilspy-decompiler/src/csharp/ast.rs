@@ -184,6 +184,8 @@ pub enum AstNode {
     Break,
     /// `ContinueStatement`.
     Continue,
+    /// `TupleExpression` of the targets of a deconstruction, without resolve result.
+    DeconstructionTuple { elements: Vec<AstId> },
     /// `LabelStatement` of the label `name`.
     Label { name: String },
     /// `GotoStatement` to the label `name`.

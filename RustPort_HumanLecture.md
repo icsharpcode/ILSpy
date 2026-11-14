@@ -4112,6 +4112,25 @@ branches to their entry, `goto case` and leaves out of nested containers still f
 
 The share rose from 96.8 % to 96.9 %.
 
+### 3.171 Deconstruction (item 68y63)
+
+`VisitDeconstructInstruction` is `(a, (b, _)) = value`: the deconstructed value is the
+pattern's tested operand (a `ref` to a value type unwrapped), converted to the pattern
+variable's type; the left side is `ConstructTuple`, a tuple of the targets without resolve
+result (a new node kind; the managed `TupleExpression` carries only the pattern), with `_`
+for a `var` sub-pattern without designator and a nested tuple for any other sub-pattern.
+Each target is the left side of its assignment (a local store, a setter call or a field
+store), whose value is the deconstructed variable or, through `conversionMapping`, the
+variable its conversion stores to.
+
+Two cases still fall back. Deconstructions with init stores need `ReplaceAssignmentTarget`,
+which moves the init values into the assignments; done on the engine's copy, the host
+failed on the function it was shipped. And in a lambda (an `async` method capturing the
+targets), the call taking the lambda resolved differently from the managed builder's and
+cast the lambda; both are marked in the code as shortcuts to revisit.
+
+The share rose from 96.9 % to 97.0 %.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

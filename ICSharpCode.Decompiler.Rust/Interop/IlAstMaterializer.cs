@@ -916,6 +916,12 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 						node.Children[i] = BodyNode();
 					}
 					break;
+				case RustBodyNode.DeconstructionTuple:
+					// The elements.
+					node.Children = new RustBodyNode[Len()];
+					for (int i = 0; i < node.Children.Length; i++)
+						node.Children[i] = BodyNode();
+					break;
 				case RustBodyNode.PatternUnary:
 					// The operator, then the pattern.
 					node.Value = (int)U8();
