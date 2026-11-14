@@ -3856,6 +3856,26 @@ finds none and fell back to the type hint. It now uses the improved one too.
 
 The share rose from 90.1 % to 90.6 %.
 
+### 3.159 A batch: bool to integer, switch expressions (item 68y51)
+
+*Bool to integer.* `ConvertTo` writes a `bool` converted to an integer or enum type as
+`b ? 1 : 0`, the two constants converted to the target type. The other special conversions
+(to `bool`, of native integers, pointers and references) still fall back.
+
+*Switch expressions.* `VisitSwitchInstruction` in expression context writes
+`value switch { label => body, ..., _ => body }`: the value converted to its governing type
+without implicit conversion, every body converted to the result type (the type hint, else
+the instruction's inferred type), and, where the bodies' best common type is another, the
+first body cast to the result type, then all of them. Switches on strings, lifted ones and
+sections of several labels fall back.
+
+Both together exposed a mistake in the governing type of 3.146: it took the stack type
+through `primitive_type`, which has none for `bool`, and so widened a `bool` value to `int`,
+which now came out as `(b ? 1 : 0) switch`. It takes `GetStackType()` and `GetSign()` of
+the type itself, as the managed code does.
+
+The share rose from 90.6 % to 91.0 %.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

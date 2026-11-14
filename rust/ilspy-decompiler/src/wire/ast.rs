@@ -83,6 +83,7 @@ mod kind {
     pub const BIT_NOT: u8 = 59;
     pub const TUPLE: u8 = 60;
     pub const HEX_CONSTANT: u8 = 61;
+    pub const SWITCH_EXPRESSION: u8 = 62;
 }
 
 pub(super) fn write_body(
@@ -359,6 +360,7 @@ fn node(w: &mut FunctionWriter<'_, '_, '_, '_>, ast: &Ast, id: AstId) -> Result<
         AstNode::BitNot { .. } => kind::BIT_NOT,
         AstNode::Tuple { .. } => kind::TUPLE,
         AstNode::HexConstant { .. } => kind::HEX_CONSTANT,
+        AstNode::SwitchExpression { .. } => kind::SWITCH_EXPRESSION,
     });
     w.out.len(a.il.len());
     for &inst in &a.il {
@@ -468,6 +470,14 @@ fn node(w: &mut FunctionWriter<'_, '_, '_, '_>, ast: &Ast, id: AstId) -> Result<
             w.ty(ty);
             constant(w, &value);
             w.out.bool(allow_implicit_conversion);
+        }
+        AstNode::SwitchExpression { expression, arms } => {
+            node(w, ast, expression)?;
+            w.out.len(arms.len());
+            for (pattern, body) in arms {
+                node(w, ast, pattern)?;
+                node(w, ast, body)?;
+            }
         }
         AstNode::HexConstant {
             ty,

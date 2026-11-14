@@ -282,12 +282,49 @@ impl Builder<'_, '_, '_, '_> {
         let utype = self.ts.nullable_underlying(ty);
         let target_utype = self.ts.nullable_underlying(target);
         let target_ustack = self.ts.stack_type(target_utype);
-        // The special cases of the managed conversion: bool to and from integers, native
-        // integers, enums or chars and pointers, references.
-        if (self.ts.is_known(ty, KnownTypeCode::Boolean)
+        // A `bool` converted to an integer or enum type: `b ? 1 : 0`, the constants converted to
+        // the target type.
+        if self.ts.is_known(ty, KnownTypeCode::Boolean)
             && !self.ts.is_known(target_utype, KnownTypeCode::Boolean)
-            && target_ustack.is_integer())
-            || self.ts.is_known(target, KnownTypeCode::Boolean)
+            && target_ustack.is_integer()
+        {
+            let int = self.ts.known_type(KnownTypeCode::Int32);
+            let branch = |b: &mut Self, v: i32| -> Result<TranslatedExpression, Unsupported> {
+                let c = b.ast.add(AstNode::ConstantValue {
+                    ty: int,
+                    value: ConstValue::Int32(v),
+                    allow_implicit_conversion: false,
+                });
+                b.ast.with_rr(
+                    c,
+                    Rr::Constant {
+                        ty: int,
+                        value: ConstValue::Int32(v),
+                    },
+                );
+                let c = TranslatedExpression {
+                    expression: c,
+                    ty: int,
+                };
+                b.convert_to(c, target, false)
+            };
+            let one = branch(self, 1)?;
+            let zero = branch(self, 0)?;
+            let c = self.ast.add(AstNode::Conditional {
+                condition: e.expression,
+                true_expression: one.expression,
+                false_expression: zero.expression,
+                resolve: false,
+            });
+            self.ast.with_rr(c, Rr::Plain(target));
+            return Ok(TranslatedExpression {
+                expression: c,
+                ty: target,
+            });
+        }
+        // The other special cases of the managed conversion: bool from integers, native
+        // integers, enums or chars and pointers, references.
+        if self.ts.is_known(target, KnownTypeCode::Boolean)
             || self.ts.is_known(ty, KnownTypeCode::IntPtr)
             || self.ts.is_known(ty, KnownTypeCode::UIntPtr)
             || ((self.ts.is_known(target_utype, KnownTypeCode::IntPtr)

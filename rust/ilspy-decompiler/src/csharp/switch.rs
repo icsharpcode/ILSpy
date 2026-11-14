@@ -4,6 +4,7 @@
 use crate::il::ast::{BranchTarget, Flags, Inst, NodeId};
 use crate::il::types::{Sign, StackType};
 use crate::semantics::types::TypeKind;
+use crate::typesystem::fnptr::Normalization;
 use crate::typesystem::known::KnownTypeCode;
 use crate::typesystem::members::ConstValue;
 use crate::typesystem::types::TypeId;
@@ -62,7 +63,7 @@ impl Builder<'_, '_, '_, '_> {
                 _ => unreachable!("a switch section"),
             })
             .collect();
-        let (value, case_type) = self.translate_switch_value(value, ty, &section_parts)?;
+        let (value, case_type) = self.translate_switch_value(value, ty, &section_parts, false)?;
 
         let default = default_section(&section_parts);
 
@@ -140,20 +141,23 @@ impl Builder<'_, '_, '_, '_> {
         value: NodeId,
         ty: Option<TypeId>,
         sections: &[(crate::util::long_set::LongSet, NodeId)],
+        is_expression_context: bool,
     ) -> Result<(TranslatedExpression, TypeId), Unsupported> {
         let translated = self.translate(value, None)?;
         let mut governing = ty.unwrap_or(translated.ty);
         let value_stack = self.f.result_type(self.ts, value);
-        let primitive = self.ts.primitive_type(governing);
+        // `GetStackType()` and `GetSign()` of the type (a `bool` or `char` is of stack type I4).
+        let (governing_stack, governing_sign) =
+            (self.ts.stack_type(governing), self.ts.type_sign(governing));
         match value_stack {
             StackType::I8 => {
-                if primitive.stack_type() != StackType::I8 {
-                    governing = self.find_type(StackType::I8, primitive.sign());
+                if governing_stack != StackType::I8 {
+                    governing = self.find_type(StackType::I8, governing_sign);
                 }
             }
             StackType::I4 => {
-                if primitive.stack_type() != StackType::I4 {
-                    governing = self.find_type(StackType::I4, primitive.sign());
+                if governing_stack != StackType::I4 {
+                    governing = self.find_type(StackType::I4, governing_sign);
                 }
                 let p = self.ts.primitive_type(governing);
                 let size = self.ts.type_size(governing);
@@ -180,6 +184,11 @@ impl Builder<'_, '_, '_, '_> {
             }
             _ => return Err("a switch on a value type".to_owned()),
         }
+        // A switch expression does not convert implicitly.
+        if is_expression_context {
+            let value = self.convert_to(translated, governing, false)?;
+            return Ok((value, governing));
+        }
         let mut value = self.convert_to(translated, governing, true)?;
         // `GetCSharpSwitchGoverningType`: a type that is no switch type is governed through its
         // implicit conversion operators, which are not translated (an enum declares none).
@@ -190,6 +199,142 @@ impl Builder<'_, '_, '_, '_> {
             value = self.convert_to(value, governing, false)?;
         }
         Ok((value, governing))
+    }
+
+    /// `VisitSwitchInstruction` as an expression: `value switch { label => body, ..., _ => body }`,
+    /// the bodies converted to the result type and cast where their best common type is
+    /// another. Switches on strings and lifted switches are not translated.
+    pub(super) fn switch_expression(
+        &mut self,
+        inst: NodeId,
+        hint: TypeId,
+    ) -> Result<TranslatedExpression, Unsupported> {
+        let Inst::Switch {
+            value,
+            sections,
+            ty,
+            is_lifted,
+            ..
+        } = self.f.inst(inst).clone()
+        else {
+            unreachable!("a switch");
+        };
+        if is_lifted || matches!(self.f.inst(value), Inst::StringToInt { .. }) {
+            return Err("a lifted switch expression or one on strings".to_owned());
+        }
+        let parts: Vec<_> = sections
+            .iter()
+            .map(|&s| match self.f.inst(s) {
+                Inst::SwitchSection {
+                    labels,
+                    body,
+                    is_compiler_generated_default_section,
+                    ..
+                } => (
+                    labels.clone(),
+                    *body,
+                    *is_compiler_generated_default_section,
+                ),
+                _ => unreachable!("a switch section"),
+            })
+            .collect();
+        let label_sets: Vec<_> = parts.iter().map(|(l, b, _)| (l.clone(), *b)).collect();
+        let (value, case_type) = self.translate_switch_value(value, ty, &label_sets, true)?;
+        let default = default_section(&label_sets);
+        let result_stack = self.f.result_type(self.ts, inst);
+        let result_type = if self.ts.kind(hint) != TypeKind::Unknown
+            && self.ts.stack_type(hint) == result_stack
+        {
+            hint
+        } else {
+            self.f.infer_type(self.ts, inst)
+        };
+        let mut arms = Vec::with_capacity(parts.len());
+        // The bodies type inference sees (not the throw expressions), as indices into `arms`.
+        let mut inferred = Vec::new();
+        for (i, (labels, body, _)) in parts.iter().enumerate() {
+            if i == default {
+                continue;
+            }
+            let mut values = labels.values();
+            let (Some(v), None) = (values.next(), values.next()) else {
+                return Err("a switch expression section of several labels".to_owned());
+            };
+            let pattern = self.case_label(v, case_type)?;
+            let body = self.switch_expression_body(*body, result_type)?;
+            if !matches!(
+                self.ast.node(body.expression),
+                AstNode::ThrowExpression { .. }
+            ) {
+                inferred.push(arms.len());
+            }
+            arms.push((pattern, body));
+        }
+        if !parts[default].2 {
+            let pattern = self.ast.add(AstNode::Identifier {
+                name: "_".to_owned(),
+            });
+            let body = self.switch_expression_body(parts[default].1, result_type)?;
+            if !matches!(
+                self.ast.node(body.expression),
+                AstNode::ThrowExpression { .. }
+            ) {
+                inferred.push(arms.len());
+            }
+            arms.push((pattern, body));
+        }
+        if inferred.is_empty() {
+            return Err("a switch expression without a typed body".to_owned());
+        }
+        // `GetBestCommonType` of the bodies (with the C# algorithm); where it is not the result
+        // type, the first body is cast to it, then all of them.
+        let n = Normalization::TYPE_ERASURE;
+        let mut ty = None;
+        for attempt in 0..2 {
+            if attempt == 1 {
+                let i = inferred[0];
+                arms[i].1 = self.convert_to(arms[i].1, result_type, false)?;
+            }
+            let rrs: Vec<_> = inferred
+                .iter()
+                .map(|&i| self.semantic_rr(arms[i].1.expression, arms[i].1.ty))
+                .collect();
+            let mut conversions = crate::semantics::Conversions::new(self.ts);
+            let (common, success) =
+                crate::semantics::TypeInference::new(&mut conversions).best_common_type(&rrs);
+            if success
+                && self.ts.normalize_with(common, n) == self.ts.normalize_with(result_type, n)
+            {
+                ty = Some(common);
+                break;
+            }
+        }
+        let ty = match ty {
+            Some(t) => t,
+            None => {
+                for &i in &inferred[1..] {
+                    arms[i].1 = self.convert_to(arms[i].1, result_type, false)?;
+                }
+                result_type
+            }
+        };
+        let e = self.ast.add(AstNode::SwitchExpression {
+            expression: value.expression,
+            arms: arms.into_iter().map(|(p, b)| (p, b.expression)).collect(),
+        });
+        self.ast.with_il(e, inst);
+        self.ast.with_rr(e, Rr::Plain(ty));
+        Ok(TranslatedExpression { expression: e, ty })
+    }
+
+    /// `TranslateSectionBody`: the body converted to the result type, implicitly where it can.
+    fn switch_expression_body(
+        &mut self,
+        body: NodeId,
+        result_type: TypeId,
+    ) -> Result<TranslatedExpression, Unsupported> {
+        let b = self.translate(body, Some(result_type))?;
+        self.convert_to(b, result_type, true)
     }
 
     /// `IsCompatibleWithSwitch`.

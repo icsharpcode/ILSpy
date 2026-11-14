@@ -696,6 +696,17 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					for (int i = 0; i < node.Children.Length; i++)
 						node.Children[i] = BodyNode();
 					break;
+				case RustBodyNode.SwitchExpression:
+				{
+					// The value, then pattern and body per section.
+					var switchValue = BodyNode();
+					int arms = Len();
+					node.Children = new RustBodyNode[1 + 2 * arms];
+					node.Children[0] = switchValue;
+					for (int i = 1; i < node.Children.Length; i++)
+						node.Children[i] = BodyNode();
+					break;
+				}
 				case RustBodyNode.Switch:
 				{
 					// The value, then the sections.

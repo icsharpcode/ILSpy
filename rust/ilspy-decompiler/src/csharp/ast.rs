@@ -94,6 +94,11 @@ pub enum AstNode {
         /// Whether the resolve result carries the names (a converted literal's does not).
         names_in_rr: bool,
     },
+    /// `SwitchExpression`: the value and the (pattern, body) arms.
+    SwitchExpression {
+        expression: AstId,
+        arms: Vec<(AstId, AstId)>,
+    },
     /// `ConvertConstantValue(rr, allowImplicitConversion: false, displayAsHex)`: a constant
     /// operand of a bitwise operator.
     HexConstant {

@@ -104,6 +104,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		public const byte BitNot = 59;
 		public const byte Tuple = 60;
 		public const byte HexConstant = 61;
+		public const byte SwitchExpression = 62;
 
 		public byte Kind;
 		/// <summary>The instructions the node is annotated with, in order.</summary>
@@ -298,6 +299,19 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					foreach (var inst in node.IL)
 						expression.AddAnnotation(inst);
 					return expression;
+				}
+				case RustBodyNode.SwitchExpression:
+				{
+					// The value, then pattern and body per section.
+					var switchExpression = new SwitchExpression { Expression = (Expression)Build(node.Children[0], exprBuilder) };
+					for (int i = 1; i + 1 < node.Children.Length; i += 2)
+					{
+						switchExpression.SwitchSections.Add(new SwitchExpressionSection {
+							Pattern = (Expression)Build(node.Children[i], exprBuilder),
+							Body = (Expression)Build(node.Children[i + 1], exprBuilder)
+						});
+					}
+					return Annotate(switchExpression, node);
 				}
 				case RustBodyNode.HexConstant:
 				{
