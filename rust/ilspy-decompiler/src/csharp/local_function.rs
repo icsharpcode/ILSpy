@@ -112,6 +112,8 @@ impl Builder<'_, '_, '_, '_> {
             std::mem::take(&mut self.continue_count),
             self.break_target.take(),
             std::mem::take(&mut self.return_statements),
+            std::mem::take(&mut self.labels),
+            std::mem::take(&mut self.duplicate_labels),
             std::mem::replace(&mut self.is_iterator, false),
             std::mem::replace(&mut self.in_lambda, false),
             std::mem::replace(&mut self.in_local_function, true),
@@ -121,10 +123,12 @@ impl Builder<'_, '_, '_, '_> {
         self.result_type = return_type;
         let block = self.convert_as_block(body);
         self.return_statements = saved.6;
-        self.is_iterator = saved.7;
-        self.in_lambda = saved.8;
-        self.in_local_function = saved.9;
-        self.local_functions = saved.10;
+        self.labels = saved.7;
+        self.duplicate_labels = saved.8;
+        self.is_iterator = saved.9;
+        self.in_lambda = saved.10;
+        self.in_local_function = saved.11;
+        self.local_functions = saved.12;
         self.return_container = saved.0;
         self.result_type = saved.1;
         self.variable_names = saved.2;

@@ -86,6 +86,8 @@ mod kind {
     pub const SWITCH_EXPRESSION: u8 = 62;
     pub const LOCAL_FUNCTION_DECLARATION: u8 = 63;
     pub const PATTERN_UNARY: u8 = 64;
+    pub const LABEL: u8 = 65;
+    pub const GOTO: u8 = 66;
 }
 
 pub(super) fn write_body(
@@ -352,6 +354,8 @@ fn node(w: &mut FunctionWriter<'_, '_, '_, '_>, ast: &Ast, id: AstId) -> Result<
         AstNode::While { .. } => kind::WHILE,
         AstNode::Break => kind::BREAK,
         AstNode::Continue => kind::CONTINUE,
+        AstNode::Label { .. } => kind::LABEL,
+        AstNode::Goto { .. } => kind::GOTO,
         AstNode::DoWhile { .. } => kind::DO_WHILE,
         AstNode::For { .. } => kind::FOR,
         AstNode::Indexer { .. } => kind::INDEXER,
@@ -514,6 +518,7 @@ fn node(w: &mut FunctionWriter<'_, '_, '_, '_>, ast: &Ast, id: AstId) -> Result<
         }
         AstNode::StringLiteral { value } => utf16(w, &value),
         AstNode::Identifier { name } => w.string(&name),
+        AstNode::Label { name } | AstNode::Goto { name } => w.string(&name),
         AstNode::MemberReference { target, name } => {
             node(w, ast, target)?;
             w.string(&name);

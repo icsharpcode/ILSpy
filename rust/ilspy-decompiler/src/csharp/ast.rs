@@ -184,6 +184,10 @@ pub enum AstNode {
     Break,
     /// `ContinueStatement`.
     Continue,
+    /// `LabelStatement` of the label `name`.
+    Label { name: String },
+    /// `GotoStatement` to the label `name`.
+    Goto { name: String },
     /// `IndexerExpression` over an array: `target[indices]`.
     Indexer { target: AstId, indices: Vec<AstId> },
     /// `UsingStatement`: `using (resource) body`, with a declaration of `declaration` (of its

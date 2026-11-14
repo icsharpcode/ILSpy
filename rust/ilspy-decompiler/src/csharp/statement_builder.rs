@@ -62,6 +62,8 @@ pub fn convert_body(
         local_functions: Vec::new(),
         declared_local_functions: 0,
         in_local_function: false,
+        labels: Vec::new(),
+        duplicate_labels: std::collections::HashMap::new(),
     };
     b.begin_local_functions()?;
     let stmt = b.convert(body)?;
@@ -166,12 +168,19 @@ impl Builder<'_, '_, '_, '_> {
                 is_ref_struct,
             ),
             Inst::YieldReturn { value } => self.visit_yield_return(inst, value),
-            // `VisitBranch`: `continue` for the loop's continue target; a goto is not translated.
+            // `VisitBranch`: `continue` for the loop's continue target, else `goto`.
             Inst::Branch {
                 target: BranchTarget::Block(target),
             } if Some(target) == self.continue_target => {
                 self.continue_count += 1;
                 let s = self.ast.add(AstNode::Continue);
+                Ok(self.ast.with_il(s, inst))
+            }
+            Inst::Branch {
+                target: BranchTarget::Block(target),
+            } => {
+                let name = self.ensure_unique_label(target);
+                let s = self.ast.add(AstNode::Goto { name });
                 Ok(self.ast.with_il(s, inst))
             }
             Inst::Switch { .. }
@@ -509,8 +518,15 @@ impl Builder<'_, '_, '_, '_> {
             statements: Vec::new(),
         });
         for (index, &block) in blocks.iter().enumerate() {
+            // A block with incoming branches gets a label; that of a loop's entry, which
+            // `ConvertLoop` would remove, is not written.
             if index != 0 || (self.f.node(block).incoming_edge_count > 1 && !is_loop) {
-                return Err("a labeled block".to_owned());
+                let name = self.ensure_unique_label(block);
+                let label = self.ast.add(AstNode::Label { name });
+                let AstNode::Block { statements } = self.ast.node_mut(block_statement) else {
+                    unreachable!("a block statement");
+                };
+                statements.push(label);
             }
             let Inst::Block {
                 instructions,
@@ -568,6 +584,26 @@ impl Builder<'_, '_, '_, '_> {
             }
         }
         Ok(block_statement)
+    }
+
+    /// `EnsureUniqueLabel(block)`: `Block.Label`, with a counter where blocks share it.
+    fn ensure_unique_label(&mut self, block: NodeId) -> String {
+        if let Some((_, label)) = self.labels.iter().find(|(b, _)| *b == block) {
+            return label.clone();
+        }
+        let base = format!("IL_{:04x}", self.f.il_range(block).start);
+        let label = match self.duplicate_labels.get_mut(&base) {
+            None => {
+                self.duplicate_labels.insert(base.clone(), 1);
+                base
+            }
+            Some(count) => {
+                *count += 1;
+                format!("{base}_{count}")
+            }
+        };
+        self.labels.push((block, label.clone()));
+        label
     }
 
     /// `ConvertLoop` for `while (true)` and `while (condition)` loops whose jumps are all

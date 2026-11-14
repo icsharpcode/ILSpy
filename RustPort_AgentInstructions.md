@@ -641,7 +641,9 @@ the reasons. This file holds only the ordered steps, their gates and their rules
     operators of bool. Subject: `Translate formattable strings and conversions to bool in the engine`.
   - [x] 68y61. Enum arithmetic and comparison operators (lecture 3.169). Subject:
     `Translate enum operators in the engine`.
-  - [ ] 68y62-. Further construct groups (numbered on from 68y1), in the order of the fallback reasons the ratchet test
+  - [x] 68y62. Labels and goto statements (lecture 3.170). Subject:
+    `Translate labels and goto statements in the engine`.
+  - [ ] 68y63-. Further construct groups (numbered on from 68y1), in the order of the fallback reasons the ratchet test
     prints, until no body of the corpus falls back. Subject pattern:
     `Translate <construct group> to C# in the engine`.
   - [ ] 68z. Request-level seam 2. Subject: `Add the Rust C# AST builders and the AST materializer`.

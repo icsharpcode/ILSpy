@@ -762,6 +762,8 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					node.Value = String();
 					break;
 				case RustBodyNode.Identifier:
+				case RustBodyNode.Label:
+				case RustBodyNode.Goto:
 					node.Value = Str();
 					break;
 				case RustBodyNode.MemberReference:

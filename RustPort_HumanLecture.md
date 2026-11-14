@@ -4099,6 +4099,19 @@ arguments from those a discarded translation left behind, so it keeps falling ba
 
 The share rose from 96.5 % to 96.8 %.
 
+### 3.170 Labels and goto (item 68y62)
+
+`ConvertBlockContainer` writes a `LabelStatement` before every block of a container but its
+entry point, and before an entry point with more than one incoming branch; a branch that
+is no `continue` is `goto` (`VisitBranch`). `EnsureUniqueLabel` names a block by
+`Block.Label` (`IL_` and its start offset in four hex digits), counting blocks that share
+the name (`IL_0012_2`); like the managed statement builder, each nested function (lambda or
+local function) has its own label table. The label of a loop's entry, which `ConvertLoop`
+removes when every branch to it became `continue`, is not written; loops with other
+branches to their entry, `goto case` and leaves out of nested containers still fall back.
+
+The share rose from 96.8 % to 96.9 %.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

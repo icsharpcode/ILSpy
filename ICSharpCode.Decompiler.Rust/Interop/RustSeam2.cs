@@ -107,6 +107,8 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		public const byte SwitchExpression = 62;
 		public const byte LocalFunctionDeclaration = 63;
 		public const byte PatternUnary = 64;
+		public const byte Label = 65;
+		public const byte Goto = 66;
 
 		public byte Kind;
 		/// <summary>The instructions the node is annotated with, in order.</summary>
@@ -565,6 +567,10 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					return Annotate(new BreakStatement(), node);
 				case RustBodyNode.Continue:
 					return Annotate(new ContinueStatement(), node);
+				case RustBodyNode.Label:
+					return Annotate(new LabelStatement { Label = (string)node.Value! }, node);
+				case RustBodyNode.Goto:
+					return Annotate(new GotoStatement((string)node.Value!), node);
 				case RustBodyNode.DelegateCreate:
 				{
 					// `HandleDelegateConstruction`
