@@ -614,7 +614,10 @@ the reasons. This file holds only the ordered steps, their gates and their rules
   - [x] 68y49. A batch (lecture 3.157): binary numeric promotion for arithmetic and relational
     operators, and implicit constant conversions in the promotion. Subject: `Promote the
     operands of binary operators in the engine`.
-  - [ ] 68y50-. Further construct groups (numbered on from 68y1), in the order of the fallback reasons the ratchet test
+  - [x] 68y50. A batch (lecture 3.158): bitwise operators on enums and with constants
+    (written in hexadecimal where `ShouldDisplayAsHex` says so). Subject: `Translate enum and
+    constant bitwise operations in the engine`.
+  - [ ] 68y51-. Further construct groups (numbered on from 68y1), in the order of the fallback reasons the ratchet test
     prints, until no body of the corpus falls back. Subject pattern:
     `Translate <construct group> to C# in the engine`.
   - [ ] 68z. Request-level seam 2. Subject: `Add the Rust C# AST builders and the AST materializer`.

@@ -82,6 +82,7 @@ mod kind {
     pub const THROW_EXPRESSION: u8 = 58;
     pub const BIT_NOT: u8 = 59;
     pub const TUPLE: u8 = 60;
+    pub const HEX_CONSTANT: u8 = 61;
 }
 
 pub(super) fn write_body(
@@ -357,6 +358,7 @@ fn node(w: &mut FunctionWriter<'_, '_, '_, '_>, ast: &Ast, id: AstId) -> Result<
         AstNode::ThrowExpression { .. } => kind::THROW_EXPRESSION,
         AstNode::BitNot { .. } => kind::BIT_NOT,
         AstNode::Tuple { .. } => kind::TUPLE,
+        AstNode::HexConstant { .. } => kind::HEX_CONSTANT,
     });
     w.out.len(a.il.len());
     for &inst in &a.il {
@@ -466,6 +468,15 @@ fn node(w: &mut FunctionWriter<'_, '_, '_, '_>, ast: &Ast, id: AstId) -> Result<
             w.ty(ty);
             constant(w, &value);
             w.out.bool(allow_implicit_conversion);
+        }
+        AstNode::HexConstant {
+            ty,
+            value,
+            display_as_hex,
+        } => {
+            w.ty(ty);
+            constant(w, &value);
+            w.out.bool(display_as_hex);
         }
         AstNode::StringLiteral { value } => utf16(w, &value),
         AstNode::Identifier { name } => w.string(&name),

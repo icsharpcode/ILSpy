@@ -728,6 +728,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					node.Children = Bool() ? [BodyNode()] : [];
 					break;
 				case RustBodyNode.ConstantValue:
+				case RustBodyNode.HexConstant:
 					node.Type = Type();
 					node.Value = Constant();
 					node.Flag = Bool();

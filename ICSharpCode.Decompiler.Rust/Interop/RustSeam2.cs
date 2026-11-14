@@ -103,6 +103,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		public const byte ThrowExpression = 58;
 		public const byte BitNot = 59;
 		public const byte Tuple = 60;
+		public const byte HexConstant = 61;
 
 		public byte Kind;
 		/// <summary>The instructions the node is annotated with, in order.</summary>
@@ -294,6 +295,15 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				{
 					// The AST builder annotates the constant itself.
 					var expression = exprBuilder.ConvertConstantValue(new ConstantResolveResult(node.Type!, node.Value), node.Flag).Expression;
+					foreach (var inst in node.IL)
+						expression.AddAnnotation(inst);
+					return expression;
+				}
+				case RustBodyNode.HexConstant:
+				{
+					// A bitwise operator's constant operand, in hexadecimal where the flag says so.
+					var expression = exprBuilder.ConvertConstantValue(new ConstantResolveResult(node.Type!, node.Value),
+						allowImplicitConversion: false, displayAsHex: node.Flag).Expression;
 					foreach (var inst in node.IL)
 						expression.AddAnnotation(inst);
 					return expression;

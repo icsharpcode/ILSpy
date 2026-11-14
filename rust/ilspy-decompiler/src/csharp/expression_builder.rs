@@ -568,6 +568,43 @@ impl Builder<'_, '_, '_, '_> {
         Ok(TranslatedExpression { expression: e, ty })
     }
 
+    /// A constant operand of a bitwise operator: `ConvertConstantValue(rr, allowImplicitConversion:
+    /// false, ShouldDisplayAsHex(value, type))`, with the operand's instructions.
+    fn bitwise_constant(
+        &mut self,
+        e: TranslatedExpression,
+    ) -> Result<TranslatedExpression, Unsupported> {
+        let Rr::Constant { ty, value } = self.rr_of(e.expression) else {
+            return Ok(e);
+        };
+        let v = super::translated_expression::integral_value(&value)
+            .ok_or("a bitwise operation with a constant of another kind")?;
+        // `CSharpPrimitiveCast.Cast(TypeCode.Int64, value)`, unchecked.
+        let v = v as i64;
+        let display_as_hex =
+            !((0..=9).contains(&v) || (v < 0 && self.ts.type_sign(ty) == Sign::Signed));
+        let n = self.ast.add(AstNode::HexConstant {
+            ty,
+            value: value.clone(),
+            display_as_hex,
+        });
+        let (rr_ty, rr_value) = self.constant_value_rr(ty, value, false)?;
+        self.ast.with_rr(
+            n,
+            Rr::Constant {
+                ty: rr_ty,
+                value: rr_value,
+            },
+        );
+        for inst in self.ast.annotations(e.expression).il.clone() {
+            self.ast.with_il(n, inst);
+        }
+        Ok(TranslatedExpression {
+            expression: n,
+            ty: e.ty,
+        })
+    }
+
     /// `VisitLdcI8`: the `long` (or, for an unsigned hint, `ulong`) constant, adjusted to the hint.
     fn ldc_i8(
         &mut self,
@@ -1335,9 +1372,11 @@ impl Builder<'_, '_, '_, '_> {
         let result = self.f.result_type(self.ts, inst);
         let t_rr = self.semantic_rr(t.expression, t.ty);
         let f_rr = self.semantic_rr(f.expression, f.ty);
+        // The expression builder's `typeInference`, with the improved algorithm.
         let mut conversions = Conversions::new(self.ts);
-        let (common, success) =
-            crate::semantics::TypeInference::new(&mut conversions).best_common_type(&[t_rr, f_rr]);
+        let mut ti = crate::semantics::TypeInference::new(&mut conversions);
+        ti.algorithm = crate::semantics::TypeInferenceAlgorithm::Improved;
+        let (common, success) = ti.best_common_type(&[t_rr, f_rr]);
         if success && self.ts.stack_type(common) == result {
             return Ok(common);
         }
@@ -1678,12 +1717,12 @@ impl Builder<'_, '_, '_, '_> {
             if matches!(
                 k,
                 TypeKind::Pointer
-                    | TypeKind::Enum
                     | TypeKind::Dynamic
                     | TypeKind::NInt
                     | TypeKind::NUInt
                     | TypeKind::TypeParameter
-            ) || self.ts.is_known(t, KnownTypeCode::NullableOfT)
+            ) || (k == TypeKind::Enum && !bitwise)
+                || self.ts.is_known(t, KnownTypeCode::NullableOfT)
             {
                 return Err("arithmetic on these types".to_owned());
             }
@@ -1706,13 +1745,27 @@ impl Builder<'_, '_, '_, '_> {
         // `ResolveBinaryOperator`: the operator over the promoted type of two numeric operands
         // (`None` where no predefined operator applies); a constant of another type converts
         // implicitly in ways the promotion does not model.
-        let (lc, rc) = (self.ts.type_code(l.ty), self.ts.type_code(r.ty));
-        if !(4..=14).contains(&lc) || !(4..=14).contains(&rc) {
-            return Err("arithmetic on these types".to_owned());
-        }
-        let promoted = self
-            .operator_promotion(&l, &r, lc, rc)?
-            .map(|p| self.ts.known_type(known_of_type_code(p)));
+        // A bitwise operator with an enum operand: the constants adjusted to the other operand's
+        // type, the enum's operator where both are of the enum type.
+        let enum_operands = bitwise
+            && (self.ts.kind(l.ty) == TypeKind::Enum || self.ts.kind(r.ty) == TypeKind::Enum);
+        let (l, r) = if enum_operands {
+            let l = self.adjust_constant_expression_to_type(l, r.ty)?;
+            let r = self.adjust_constant_expression_to_type(r, l.ty)?;
+            (l, r)
+        } else {
+            (l, r)
+        };
+        let promoted = if enum_operands {
+            (l.ty == r.ty).then_some(l.ty)
+        } else {
+            let (lc, rc) = (self.ts.type_code(l.ty), self.ts.type_code(r.ty));
+            if !(4..=14).contains(&lc) || !(4..=14).contains(&rc) {
+                return Err("arithmetic on these types".to_owned());
+            }
+            self.operator_promotion(&l, &r, lc, rc)?
+                .map(|p| self.ts.known_type(known_of_type_code(p)))
+        };
         let result_stack = crate::il::ast::binary_result_type(operator, left_input, right_input);
         let compatible = |b: &mut Self, t: TypeId| sign == Sign::None || b.ts.type_sign(t) == sign;
         let fits =
@@ -1746,14 +1799,13 @@ impl Builder<'_, '_, '_, '_> {
             let r = self.convert_to(r, target, false)?;
             (l, r)
         };
-        // Constant operands of bitwise operators are written anew (in hexadecimal where that
-        // reads better), which is not translated.
-        if bitwise
-            && (matches!(self.rr_of(l.expression), Rr::Constant { .. })
-                || matches!(self.rr_of(r.expression), Rr::Constant { .. }))
-        {
-            return Err("a bitwise operation with a constant".to_owned());
-        }
+        // Constant operands of bitwise operators are written anew, without implicit conversion
+        // and in hexadecimal where `ShouldDisplayAsHex` says so.
+        let (l, r) = if bitwise {
+            (self.bitwise_constant(l)?, self.bitwise_constant(r)?)
+        } else {
+            (l, r)
+        };
         let overflow = if bitwise || matches!(result_stack, StackType::F4 | StackType::F8) {
             Overflow::None
         } else if check_overflow {

@@ -94,6 +94,13 @@ pub enum AstNode {
         /// Whether the resolve result carries the names (a converted literal's does not).
         names_in_rr: bool,
     },
+    /// `ConvertConstantValue(rr, allowImplicitConversion: false, displayAsHex)`: a constant
+    /// operand of a bitwise operator.
+    HexConstant {
+        ty: TypeId,
+        value: ConstValue,
+        display_as_hex: bool,
+    },
     /// `UnaryOperatorExpression` of `BitNot`, whose operator the host resolves.
     BitNot { expression: AstId },
     /// `ThrowExpression`: `throw expression`.

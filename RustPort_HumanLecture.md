@@ -3837,6 +3837,25 @@ better candidate. With that, a constant of another type no longer falls back.
 
 The share rose from 89.6 % to 90.1 %.
 
+### 3.158 A batch: enum and constant bitwise operations (item 68y50)
+
+*Constants.* `HandleBinaryNumeric` writes a constant operand of `& | ^` anew with
+`ConvertConstantValue(rr, allowImplicitConversion: false, displayAsHex)`, in hexadecimal
+unless `ShouldDisplayAsHex` (a value from 0 to 9, or a negative value of a signed type)
+says otherwise. The host's constant node has no such flag, so a hexadecimal constant is a
+node kind of its own, which the host builds with the flag and the operand's instructions.
+
+*Enums.* A bitwise operator with an enum operand adjusts the constants to the other
+operand's type; two operands of the enum type use the enum's operator, typed as the enum,
+and anything else is cast to the arithmetic type, as the managed builder does.
+
+This reached an F# conditional whose branches are two closure classes: `VisitIfInstruction`
+casts them to their best common type with the expression builder's improved type
+inference, which finds their base class, and the engine had used the C# algorithm, which
+finds none and fell back to the type hint. It now uses the improved one too.
+
+The share rose from 90.1 % to 90.6 %.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |
