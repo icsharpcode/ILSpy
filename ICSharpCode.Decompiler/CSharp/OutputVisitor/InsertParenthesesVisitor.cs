@@ -60,6 +60,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			Range,          // ..
 			Unary,
 			QueryOrLambda,
+			PostUnary,      // post ++/--
 			NullableRewrap,
 			Primary
 		}
@@ -82,6 +83,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				{
 					case UnaryOperatorType.PostDecrement:
 					case UnaryOperatorType.PostIncrement:
+						return PrecedenceLevel.PostUnary;
 					case UnaryOperatorType.NullConditional:
 					case UnaryOperatorType.SuppressNullableWarning:
 						return PrecedenceLevel.Primary;
@@ -575,9 +577,14 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 
 		public override void VisitSwitchExpression(SwitchExpression switchExpression)
 		{
-			ParenthesizeIfRequired(switchExpression.Expression, PrecedenceLevel.Switch + 1);
-			if (InsertParenthesesForReadability && switchExpression.Expression is UnaryOperatorExpression)
-				Parenthesize(switchExpression.Expression);
+			if (InsertParenthesesForReadability)
+			{
+				ParenthesizeIfRequired(switchExpression.Expression, PrecedenceLevel.PostUnary + 1);
+			}
+			else
+			{
+				ParenthesizeIfRequired(switchExpression.Expression, PrecedenceLevel.Switch);
+			}
 			base.VisitSwitchExpression(switchExpression);
 		}
 	}

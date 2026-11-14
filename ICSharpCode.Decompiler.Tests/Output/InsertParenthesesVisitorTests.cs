@@ -597,6 +597,22 @@ namespace ICSharpCode.Decompiler.Tests.Output
 			Assert.That(InsertReadable(expr), Is.EqualTo("(a with { Value = value }) switch { }"));
 		}
 
+		[Test]
+		public void NullConditionalExpressionAsSwitchExpressionInput()
+		{
+			Expression expr = new SwitchExpression {
+				Expression = new InvocationExpression {
+					Target = new MemberReferenceExpression {
+						Target = new UnaryOperatorExpression(UnaryOperatorType.NullConditional, new IdentifierExpression("azureCloud")),
+						MemberName = "ToLowerInvariant"
+					}
+				}
+			};
+
+			Assert.That(InsertRequired(expr), Is.EqualTo("azureCloud?.ToLowerInvariant () switch { }"));
+			Assert.That(InsertReadable(expr), Is.EqualTo("azureCloud?.ToLowerInvariant () switch { }"));
+		}
+
 		[TestCase(UnaryOperatorType.Not, "!i", "(!i)")]
 		[TestCase(UnaryOperatorType.Minus, "-i", "(-i)")]
 		[TestCase(UnaryOperatorType.PostIncrement, "i++", "(i++)")]
