@@ -927,6 +927,10 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					node.Children = children.ToArray();
 					break;
 				}
+				case RustBodyNode.LocalFunctionDeclaration:
+					// The body.
+					node.Children = [BodyNode()];
+					break;
 				case RustBodyNode.Lambda:
 					// The delegate type, the inferred return type, the type mismatch and implicit typing
 					// flags, then the body.
@@ -1141,6 +1145,15 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					return new InitializedObjectResolveResult(Type());
 				case 27:
 					return new ThrowResolveResult();
+				case 28:
+				{
+					// `CallBuilder.ToMethodGroup` of a local function.
+					string name = String();
+					var method = CallMethod();
+					return new MethodGroupResolveResult(null, name,
+						new[] { new MethodListWithDeclaringType(method.DeclaringType, new IParameterizedMember[] { method }) },
+						method.TypeArguments);
+				}
 				case 26:
 				{
 					// RustSeam2 adds the arguments, the interpolations' resolve results.

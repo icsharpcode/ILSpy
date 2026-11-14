@@ -10,6 +10,7 @@ mod delegate;
 mod expression_builder;
 mod foreach;
 mod lambda;
+mod local_function;
 mod member_access;
 mod statement_builder;
 mod switch;
@@ -69,6 +70,12 @@ pub(crate) struct Builder<'f, 't, 'c, 'a> {
     pub(crate) consumed_format_strings: Vec<usize>,
     /// `ExpectedTargetDetails.NeedsBoxingConversion` of the call being disambiguated.
     pub(crate) needs_boxing_conversion: bool,
+    /// `currentFunction.LocalFunctions`: the local functions `DeclareLocalFunctions` declares.
+    pub(crate) local_functions: Vec<NodeId>,
+    /// How many local functions have been declared.
+    pub(crate) declared_local_functions: usize,
+    /// Whether the current function is a local function.
+    pub(crate) in_local_function: bool,
 }
 
 /// The variant name of an instruction, for the reasons of untranslated bodies.

@@ -259,8 +259,11 @@ impl Builder<'_, '_, '_, '_> {
             // `IntroduceNewVariable`: a new variable stores the value as the body's first
             // statement, and its load replaces the value.
             None => {
-                if self.in_lambda {
-                    return Err("a foreach in a lambda that introduces a variable".to_owned());
+                if self.in_lambda || self.in_local_function {
+                    return Err(
+                        "a foreach in a lambda or local function that introduces a variable"
+                            .to_owned(),
+                    );
                 }
                 let v = self.f.register_variable_named(
                     self.ts,
@@ -612,8 +615,15 @@ impl Builder<'_, '_, '_, '_> {
         // other variables of every function.
         let mut reserved: HashMap<String, i32> = HashMap::new();
         let mut functions = vec![self.root_variables.clone()];
-        if let Some(body) = self.f.body {
-            for n in self.f.descendants_post(body) {
+        // The local functions are roots of their own, beside the body.
+        let roots: Vec<NodeId> = self
+            .f
+            .body
+            .into_iter()
+            .chain(self.f.local_functions.iter().copied())
+            .collect();
+        for root in roots {
+            for n in self.f.descendants_post(root) {
                 if let Inst::Function { variables, .. } = self.f.inst(n) {
                     functions.push(variables.clone());
                 }

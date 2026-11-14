@@ -25,9 +25,6 @@ pub fn convert_body(
     if read.kind != FunctionKind::TopLevelFunction {
         return Err("a nested function".to_owned());
     }
-    if !f.local_functions.is_empty() {
-        return Err("a function with local functions".to_owned());
-    }
     let method = ts
         .method_definition(read.method)
         .map_err(|e| e.to_string())?;
@@ -62,8 +59,15 @@ pub fn convert_body(
         named_argument_map: None,
         consumed_format_strings: Vec::new(),
         needs_boxing_conversion: false,
+        local_functions: Vec::new(),
+        declared_local_functions: 0,
+        in_local_function: false,
     };
+    b.begin_local_functions()?;
     let stmt = b.convert(body)?;
+    if b.declared_local_functions != b.local_functions.len() {
+        return Err("a local function declared in a loop or switch".to_owned());
+    }
     b.ast.with_il(stmt, body);
     // A resolve result inside another one is read without a node of its own, so it cannot
     // be a cast's, which the host computes from the cast's node; for the target of a member
@@ -489,6 +493,7 @@ impl Builder<'_, '_, '_, '_> {
             return self.translate_switch(container, blocks, switch);
         }
         let block = self.convert_block_container(container, blocks, false)?;
+        self.declare_local_functions(container, block)?;
         Ok(self.ast.with_il(block, container))
     }
 

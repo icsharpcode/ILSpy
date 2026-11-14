@@ -105,6 +105,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		public const byte Tuple = 60;
 		public const byte HexConstant = 61;
 		public const byte SwitchExpression = 62;
+		public const byte LocalFunctionDeclaration = 63;
 
 		public byte Kind;
 		/// <summary>The instructions the node is annotated with, in order.</summary>
@@ -693,6 +694,37 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 							content.OfType<Interpolation>().Select(i => i.Expression.GetResolveResult()).ToArray());
 					}
 					return Annotate(new InterpolatedStringExpression(content), node);
+				}
+				case RustBodyNode.LocalFunctionDeclaration:
+				{
+					// `DeclareLocalFunctions.TranslateFunction`: the declaration of the reduced method
+					// with the parameters named after the function's, around the translated body.
+					var function = (ILFunction)node.IL[0];
+					var method = (MethodDeclaration)exprBuilder.astBuilder.ConvertEntity(function.ReducedMethod!);
+					var variables = function.Variables.Where(v => v.Kind == VariableKind.Parameter).ToDictionary(v => v.Index!.Value);
+					foreach (var (i, p) in method.Parameters.WithIndex())
+					{
+						if (variables.TryGetValue(i, out var v))
+							p.Name = v.Name!;
+					}
+					method.Body = (BlockStatement)Build(node.Children[0], exprBuilder);
+					var warningAnchor = method.Body.Statements.FirstOrDefault();
+					foreach (string warning in function.Warnings)
+					{
+						var warningStatement = new EmptyStatement();
+						warningStatement.AddTrailingTrivia(new Comment(warning));
+						if (warningAnchor != null)
+							method.Body.Statements.InsertBefore(warningAnchor, warningStatement);
+						else
+							method.Body.Statements.Add(warningStatement);
+					}
+					CSharpDecompiler.AddAnnotationsToDeclaration(function.ReducedMethod!, method, function);
+					CSharpDecompiler.CleanUpMethodDeclaration(method, method.Body, function, function.Method!.HasBody);
+					CSharpDecompiler.RemoveAttribute(method, KnownAttribute.CompilerGenerated);
+					var stmt = new LocalFunctionDeclarationStatement(method);
+					stmt.AddAnnotation(new MemberResolveResult(null, function.ReducedMethod));
+					stmt.AddAnnotation(function);
+					return stmt;
 				}
 				case RustBodyNode.Lambda:
 				{

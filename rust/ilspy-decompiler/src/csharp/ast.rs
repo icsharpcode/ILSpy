@@ -94,6 +94,9 @@ pub enum AstNode {
         /// Whether the resolve result carries the names (a converted literal's does not).
         names_in_rr: bool,
     },
+    /// `LocalFunctionDeclarationStatement` of the local function its IL instruction is, with
+    /// this body; the host writes the declaration of the function's reduced method.
+    LocalFunctionDeclaration { body: AstId },
     /// `SwitchExpression`: the value and the (pattern, body) arms.
     SwitchExpression {
         expression: AstId,
@@ -334,6 +337,12 @@ pub enum Rr {
     /// `InterpolatedStringResolveResult` of a `string.Format` call written as an interpolated
     /// string, whose arguments the host takes from the interpolations.
     FormatString { ty: TypeId, format: Vec<u16> },
+    /// `ToMethodGroup`: the `MethodGroupResolveResult` of a local function, named `name`, whose
+    /// only method is the reduced method `method`.
+    LocalFunctionGroup {
+        name: String,
+        method: Box<crate::il::ast::MethodOperand>,
+    },
     /// `ThrowResolveResult`, of no type.
     Throw,
     /// `ConversionResolveResult` of `Conversion.TryCast` to `ty`, which the host computes from

@@ -3982,6 +3982,35 @@ where the call it saw was not marked as an extension call. It stays a fallback.
 
 The share rose from 92.9 % to 93.4 %.
 
+### 3.165 A batch: cast member targets, local functions (item 68y57)
+
+*Cast member targets.* `Target.ConvertTo(declaringType)`, which the call disambiguation
+already wrote, is shared with the field and property disambiguation: where no spelling binds
+back, the target is cast to the declaring type and the lookup asks again from the cast's
+type. The guards stay those of calls (no value-type, `this`, `base` or null-conditional
+target). Indexers keep the fallback: the engine's probe of an indexer with optional
+parameters reaches the cast where the managed one resolves without it.
+
+*Local function declarations.* `DeclareLocalFunctions` runs at the end of a plain block
+container, in the ordinal order of the names, for the functions whose `DeclarationScope` it
+is. The engine translates the body with a statement builder state of its own, like a
+lambda's, and emits a declaration node annotated with the function. The host writes the
+declaration as `TranslateFunction` does: `ConvertEntity` of the reduced method, parameter
+names from the function's variables, warnings, `AddAnnotationsToDeclaration`,
+`CleanUpMethodDeclaration`. Functions declared in loops or switch sections, async and
+iterator functions, functions without a body and nested local functions fall back.
+
+*Local function calls.* `ResolveLocalFunction` finds the function read from the call's
+method; the call is `Name(arguments)` with the argument list of the reduced method and no
+disambiguation, the identifier annotated with the function and resolved to `ToMethodGroup`,
+a new resolve result kind whose name the host reads inline. Generic local functions, named
+and expanded `params` arguments and delegates of local functions fall back.
+
+*Reserved names.* `CollectReservedVariableNames` for a variable a `foreach` introduces
+walks the local functions too, which are roots of their own beside the body.
+
+The share rose from 93.4 % to 94.1 %.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

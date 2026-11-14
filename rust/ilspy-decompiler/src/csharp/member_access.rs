@@ -47,9 +47,11 @@ impl Builder<'_, '_, '_, '_> {
             | Rr::FormatString { ty, .. } => *ty,
             Rr::Field { field, .. } => field.field.ty,
             Rr::Event { ty, .. } => *ty,
-            Rr::Lambda(_) | Rr::DefaultLiteral { .. } | Rr::MethodGroup { .. } | Rr::Throw => {
-                self.ts.intern(TypeData::NoType)
-            }
+            Rr::Lambda(_)
+            | Rr::DefaultLiteral { .. }
+            | Rr::MethodGroup { .. }
+            | Rr::LocalFunctionGroup { .. }
+            | Rr::Throw => self.ts.intern(TypeData::NoType),
             Rr::TypeIs { .. } => self
                 .ts
                 .known_type(crate::typesystem::known::KnownTypeCode::Boolean),
@@ -312,7 +314,7 @@ impl Builder<'_, '_, '_, '_> {
         if matches!(self.ts.data(field.field.ty), TypeData::ByRef(_)) {
             return Err("a ref field".to_owned());
         }
-        let target = self.translate_target(target_inst, true, is_static, declaring)?;
+        let mut target = self.translate_target(target_inst, true, is_static, declaring)?;
         let require = match kind {
             // The backing field of an automatic property needs a qualifier when its property
             // would, because PatternStatementTransform turns the reference into one to the
@@ -330,7 +332,7 @@ impl Builder<'_, '_, '_, '_> {
             FieldKind::NamedFieldInAccessor => true,
             _ => self.requires_qualifier(&name, is_static, declaring_def, target.expression),
         };
-        let require = self.disambiguate_field(field, &target, require, declaring)?;
+        let require = self.disambiguate_field(field, &mut target, require, declaring)?;
         let target_rr = self.rr_of(target.expression);
         let mrr = Rr::Field {
             target: Some(Box::new(target_rr)),
@@ -636,19 +638,18 @@ impl Builder<'_, '_, '_, '_> {
 
     /// `Disambiguator.ForField`: whether the field is written with its target, after asking
     /// the host's resolver whether each spelling binds back to the field (unqualified, then
-    /// qualified, then with the target cast to the declaring type, which is only translated
-    /// when the cast is an identity).
+    /// qualified, then with the target cast to the declaring type).
     fn disambiguate_field(
         &mut self,
         field: &FieldOperand,
-        target: &TranslatedExpression,
+        target: &mut TranslatedExpression,
         require: bool,
         declaring: TypeId,
     ) -> Result<bool, Unsupported> {
         let resolver = self
             .resolver
             .ok_or("a member reference without the host's resolver")?;
-        let lookup_target = match self.rr_of(target.expression) {
+        let mut lookup_target = match self.rr_of(target.expression) {
             Rr::This {
                 ty,
                 causes_non_virtual_invocation,
@@ -676,10 +677,7 @@ impl Builder<'_, '_, '_, '_> {
             if !spent_cast {
                 spent_cast = true;
                 // `Target.ConvertTo(declaringType)`
-                // A cast of the target is not translated.
-                if self.convert_to(*target, declaring, false)?.expression != target.expression {
-                    return Err("a reference that needs a cast of its target".to_owned());
-                }
+                lookup_target = self.cast_target_to(target, declaring)?;
                 continue;
             }
             // No spelling resolves; the most explicit one is emitted anyway.

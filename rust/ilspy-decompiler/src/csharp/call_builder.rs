@@ -37,7 +37,7 @@ pub(crate) enum CallOp {
 }
 
 /// `ArgumentList` for calls without `params`, optional arguments or names of their own.
-struct ArgumentList {
+pub(crate) struct ArgumentList {
     arguments: Vec<TranslatedExpression>,
     parameter_names: Vec<String>,
     is_primitive_value: Vec<bool>,
@@ -50,7 +50,7 @@ struct ArgumentList {
     /// `UseImplicitlyTypedOut`: `out` arguments are written and resolved as `out var`.
     use_implicitly_typed_out: bool,
     /// `ArgumentToParameterMap` of a call with named arguments: the parameter of each argument.
-    parameter_map: Option<Vec<usize>>,
+    pub(crate) parameter_map: Option<Vec<usize>>,
     /// `ArgumentNames`: the names written from the first argument out of its place on.
     explicit_names: Option<Vec<Option<String>>>,
     /// `IsExpandedForm`: the elements of a `params` array are the last arguments.
@@ -60,7 +60,7 @@ struct ArgumentList {
     expanded_parameters: Option<Vec<crate::semantics::Parameter>>,
     /// The elements `TransformParamsArgument` would expand the `params` argument into, and
     /// their type; `call` probes the expanded form before it takes it.
-    params_candidate: Option<(Vec<TranslatedExpression>, TypeId)>,
+    pub(crate) params_candidate: Option<(Vec<TranslatedExpression>, TypeId)>,
 }
 
 impl ArgumentList {
@@ -158,6 +158,13 @@ impl Builder<'_, '_, '_, '_> {
             return Err("a tail call".to_owned());
         }
         let operand = &call.method;
+        if operand.local_function.is_some()
+            && operand.specialized_by.is_none()
+            && operand.range_accessor.is_none()
+            && !operand.lifted
+        {
+            return self.local_function_call(inst, call);
+        }
         if operand.local_function.is_some()
             || operand.specialized_by.is_some()
             || operand.range_accessor.is_some()
@@ -644,7 +651,7 @@ impl Builder<'_, '_, '_, '_> {
 
     /// `BuildArgumentList` for by-value arguments without expanded `params`, optional or
     /// dynamic parameters, each translated and converted to its parameter type.
-    fn argument_list(
+    pub(crate) fn argument_list(
         &mut self,
         call: &CallData,
         method: &Method,
@@ -653,7 +660,11 @@ impl Builder<'_, '_, '_, '_> {
         declaring: TypeId,
         is_setter: bool,
     ) -> Result<ArgumentList, Unsupported> {
-        let infos = self.ts.method_signature(id).1;
+        let mut infos = self.ts.method_signature(id).1;
+        // A local function's reduced method has no closure parameters.
+        if call.method.local_function.is_some() {
+            infos.truncate(method.parameters.len());
+        }
         if infos.len() != method.parameters.len() {
             return Err("a call with mismatched parameters".to_owned());
         }
@@ -770,7 +781,7 @@ impl Builder<'_, '_, '_, '_> {
     /// `GetArgumentExpressions(skipCount)`: the written arguments from `skip` on, named where
     /// the list names them, with `out` arguments marked as `out var` while the list writes
     /// them so.
-    fn written_arguments(&mut self, list: &ArgumentList, skip: usize) -> Vec<AstId> {
+    pub(crate) fn written_arguments(&mut self, list: &ArgumentList, skip: usize) -> Vec<AstId> {
         let names = list.argument_names();
         let mut written = Vec::with_capacity(list.actual_count());
         for (i, a) in list.arguments[..list.actual_count()]
@@ -1082,7 +1093,7 @@ impl Builder<'_, '_, '_, '_> {
         operand: &MethodOperand,
         method: &Method,
         op: CallOp,
-        target: TranslatedExpression,
+        mut target: TranslatedExpression,
         list: ArgumentList,
         name: String,
         declaring: TypeId,
@@ -1097,7 +1108,7 @@ impl Builder<'_, '_, '_, '_> {
             op != CallOp::CallVirt && method.is_overridable,
         );
         let (require, found_by_lookup) =
-            self.disambiguate_accessor(operand, op, &target, require, declaring)?;
+            self.disambiguate_accessor(operand, op, &mut target, require, declaring)?;
         // A setter's only argument is the value, which is not part of the member reference.
         let value = list.arguments.first().copied();
         let ty = match value {
@@ -1149,8 +1160,7 @@ impl Builder<'_, '_, '_, '_> {
 
     /// `HandleAccessorCall` for an indexer: `target[indices]`, or `target[indices] = value` for
     /// its setter, written once the indexer the indices resolve to from the target is the
-    /// accessor's (`Disambiguator.ForAccessor`). Arguments or a target that would need casts are
-    /// not translated.
+    /// accessor's (`Disambiguator.ForAccessor`).
     #[allow(clippy::too_many_arguments)]
     fn indexer_access(
         &mut self,
@@ -1226,6 +1236,9 @@ impl Builder<'_, '_, '_, '_> {
             }
             if !spent_cast_target {
                 spent_cast_target = true;
+                // The engine's probe of indexers with optional parameters falls through to the
+                // cast where the managed one resolves without it; a cast of the target is not
+                // translated.
                 if self.convert_to(target, declaring, false)?.expression != target.expression {
                     return Err("a reference that needs a cast of its target".to_owned());
                 }
@@ -1334,14 +1347,14 @@ impl Builder<'_, '_, '_, '_> {
         &mut self,
         accessor: &MethodOperand,
         op: CallOp,
-        target: &TranslatedExpression,
+        target: &mut TranslatedExpression,
         require: bool,
         declaring: TypeId,
     ) -> Result<(bool, bool), Unsupported> {
         let resolver = self
             .resolver
             .ok_or("a member reference without the host's resolver")?;
-        let lookup_target = match self.rr_of(target.expression) {
+        let mut lookup_target = match self.rr_of(target.expression) {
             Rr::This {
                 ty,
                 causes_non_virtual_invocation,
@@ -1377,10 +1390,7 @@ impl Builder<'_, '_, '_, '_> {
             if !spent_cast {
                 spent_cast = true;
                 // `Target.ConvertTo(declaringType)`
-                // A cast of the target is not translated.
-                if self.convert_to(*target, declaring, false)?.expression != target.expression {
-                    return Err("a reference that needs a cast of its target".to_owned());
-                }
+                lookup_target = self.cast_target_to(target, declaring)?;
                 continue;
             }
             // No spelling resolves; the most explicit one is emitted anyway.
@@ -1586,22 +1596,8 @@ impl Builder<'_, '_, '_, '_> {
                 if skip_target_cast && require != initially_required {
                     require = false;
                 } else {
-                    // `Target.ConvertTo(declaringType)`: the target cast to the declaring type. A
-                    // value-type target, which the managed probe resolves without the cast where
-                    // the engine's does not, is not translated.
-                    // A `this` or `base` target, which the managed probe resolves without the
-                    // cast (a constructor initializer), is not translated either; nor is a
-                    // null-conditional target, which would be cast inside its `?`.
-                    if self.ts.is_reference_type(target.ty) != Some(true)
-                        || matches!(
-                            self.ast.node(target.expression),
-                            AstNode::This | AstNode::Base | AstNode::NullConditional { .. }
-                        )
-                    {
-                        return Err("a reference that needs a cast of its target".to_owned());
-                    }
-                    *target = self.convert_to(*target, declaring, false)?;
-                    lookup_target = LookupTarget::Expression(target.ty);
+                    // `Target.ConvertTo(declaringType)`: the target cast to the declaring type.
+                    lookup_target = self.cast_target_to(target, declaring)?;
                 }
                 continue;
             }
@@ -1645,6 +1641,28 @@ impl Builder<'_, '_, '_, '_> {
             TypeData::FnPtr(_) | TypeData::Intersection(_) => true,
             _ => false,
         }
+    }
+
+    /// `Target.ConvertTo(declaringType)` of a member reference's target, and the lookup target
+    /// of the cast. A value-type target, which the managed probe resolves without the cast
+    /// where the engine's does not, is not translated; nor is a `this` or `base` target, which
+    /// the managed probe resolves without the cast (a constructor initializer), nor a
+    /// null-conditional target, which would be cast inside its `?`.
+    pub(crate) fn cast_target_to(
+        &mut self,
+        target: &mut TranslatedExpression,
+        declaring: TypeId,
+    ) -> Result<LookupTarget, Unsupported> {
+        if self.ts.is_reference_type(target.ty) != Some(true)
+            || matches!(
+                self.ast.node(target.expression),
+                AstNode::This | AstNode::Base | AstNode::NullConditional { .. }
+            )
+        {
+            return Err("a reference that needs a cast of its target".to_owned());
+        }
+        *target = self.convert_to(*target, declaring, false)?;
+        Ok(LookupTarget::Expression(target.ty))
     }
 
     /// Whether `e` is a cast other than a lambda's, which a call's target is not written as.

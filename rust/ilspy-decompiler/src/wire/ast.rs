@@ -84,6 +84,7 @@ mod kind {
     pub const TUPLE: u8 = 60;
     pub const HEX_CONSTANT: u8 = 61;
     pub const SWITCH_EXPRESSION: u8 = 62;
+    pub const LOCAL_FUNCTION_DECLARATION: u8 = 63;
 }
 
 pub(super) fn write_body(
@@ -268,6 +269,12 @@ fn rr(w: &mut FunctionWriter<'_, '_, '_, '_>, rr: Option<&Rr>) -> Result<(), Str
             w.ty(*ty);
         }
         Some(Rr::Throw) => w.out.u8(27),
+        Some(Rr::LocalFunctionGroup { name, method }) => {
+            w.out.u8(28);
+            let name: Vec<u16> = name.encode_utf16().collect();
+            utf16(w, &name);
+            w.call_method(method)?;
+        }
         Some(Rr::TryCast { ty }) => {
             w.out.u8(25);
             w.ty(*ty);
@@ -366,6 +373,7 @@ fn node(w: &mut FunctionWriter<'_, '_, '_, '_>, ast: &Ast, id: AstId) -> Result<
         AstNode::Tuple { .. } => kind::TUPLE,
         AstNode::HexConstant { .. } => kind::HEX_CONSTANT,
         AstNode::SwitchExpression { .. } => kind::SWITCH_EXPRESSION,
+        AstNode::LocalFunctionDeclaration { .. } => kind::LOCAL_FUNCTION_DECLARATION,
     });
     w.out.len(a.il.len());
     for &inst in &a.il {
@@ -476,6 +484,7 @@ fn node(w: &mut FunctionWriter<'_, '_, '_, '_>, ast: &Ast, id: AstId) -> Result<
             constant(w, &value);
             w.out.bool(allow_implicit_conversion);
         }
+        AstNode::LocalFunctionDeclaration { body } => node(w, ast, body)?,
         AstNode::SwitchExpression { expression, arms } => {
             node(w, ast, expression)?;
             w.out.len(arms.len());
