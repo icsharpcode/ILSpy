@@ -77,6 +77,8 @@ pub(crate) struct Builder<'f, 't, 'c, 'a> {
     pub(crate) declared_local_functions: usize,
     /// Whether the current function is a local function.
     pub(crate) in_local_function: bool,
+    /// `currentFunction` where it is a nested function (a lambda or local function).
+    pub(crate) current_function: Option<NodeId>,
     /// `labels`: the label `EnsureUniqueLabel` gave each block of the current function.
     pub(crate) labels: Vec<(NodeId, String)>,
     /// `duplicateLabels`: how many blocks share each `Block.Label`.

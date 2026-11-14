@@ -126,7 +126,9 @@ impl Builder<'_, '_, '_, '_> {
         self.return_container = body;
         self.result_type = return_type;
         let first_node = self.ast.nodes.len();
+        let saved_function = self.current_function.replace(function);
         let block = self.convert_as_block(body);
+        self.current_function = saved_function;
         let returns = std::mem::replace(&mut self.return_statements, saved.6);
         self.labels = saved.7;
         self.duplicate_labels = saved.8;

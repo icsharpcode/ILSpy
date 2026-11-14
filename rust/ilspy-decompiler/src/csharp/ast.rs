@@ -198,6 +198,8 @@ pub enum AstNode {
         declaration: Option<crate::il::ast::VarId>,
         resource: AstId,
         body: AstId,
+        /// `IsAsync`: `await using`.
+        is_async: bool,
     },
     /// `LambdaExpression` with the parameters of the function its IL instruction is, with
     /// an expression body or a block; `lambda` indexes `Ast::lambdas`.

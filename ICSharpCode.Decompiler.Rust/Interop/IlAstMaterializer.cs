@@ -980,7 +980,8 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					node.Children = [BodyNode()];
 					break;
 				case RustBodyNode.Using:
-					// The declared variable, the resource and the body.
+					// Whether it is `await using`, the declared variable, the resource and the body.
+					node.Flag = Bool();
 					node.Value = Bool() ? Variable() : null;
 					node.Children = [BodyNode(), BodyNode()];
 					break;

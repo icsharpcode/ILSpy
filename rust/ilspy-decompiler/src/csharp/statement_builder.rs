@@ -62,6 +62,7 @@ pub fn convert_body(
         local_functions: Vec::new(),
         declared_local_functions: 0,
         in_local_function: false,
+        current_function: None,
         labels: Vec::new(),
         duplicate_labels: std::collections::HashMap::new(),
     };
@@ -363,8 +364,8 @@ impl Builder<'_, '_, '_, '_> {
         Ok(self.ast.with_il(s, inst))
     }
 
-    /// `VisitUsingInstruction` for a synchronous `using` of a resource whose type implements
-    /// `IDisposable`, declared where the body uses the variable.
+    /// `VisitUsingInstruction` for a `using` (or `await using`) of a resource whose type
+    /// implements `IDisposable` (`IAsyncDisposable`), declared where the body uses the variable.
     fn visit_using(
         &mut self,
         inst: NodeId,
@@ -374,16 +375,26 @@ impl Builder<'_, '_, '_, '_> {
         is_async: bool,
         is_ref_struct: bool,
     ) -> Result<AstId, Unsupported> {
-        if is_async {
-            return Err("an await using".to_owned());
-        }
         let resource = self.translate(resource_expression, None)?;
-        if let Some(foreach) =
+        if is_async {
+            // `await foreach` is not translated.
+            if self
+                .match_get_enumerator_pattern(&resource)?
+                .is_some_and(|(_, enumerator_is_async)| enumerator_is_async)
+            {
+                return Err("an await foreach".to_owned());
+            }
+        } else if let Some(foreach) =
             self.transform_to_foreach(variable, resource_expression, &resource, body)?
         {
             return Ok(self.ast.with_il(foreach, inst));
         }
         // `IsValidInCSharp`; else the managed builder writes the try/finally out.
+        let disposable_code = if is_async {
+            KnownTypeCode::IAsyncDisposable
+        } else {
+            KnownTypeCode::IDisposable
+        };
         let v = self.f.var(variable);
         let (ty, used) = (v.ty, v.load_count() > 0 || v.address_count() > 0);
         if !matches!(self.f.inst(resource_expression), Inst::LdNull) && !is_ref_struct {
@@ -396,7 +407,7 @@ impl Builder<'_, '_, '_, '_> {
                     self.ts
                         .comp
                         .type_def(d)
-                        .is_ok_and(|i| i.known == KnownTypeCode::IDisposable)
+                        .is_ok_and(|i| i.known == disposable_code)
                 });
             if !disposable {
                 return Err("a using of a type that does not implement IDisposable".to_owned());
@@ -416,6 +427,7 @@ impl Builder<'_, '_, '_, '_> {
             declaration,
             resource: resource.expression,
             body,
+            is_async,
         });
         Ok(self.ast.with_il(s, inst))
     }

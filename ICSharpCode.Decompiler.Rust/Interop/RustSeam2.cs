@@ -810,6 +810,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					}
 					return Annotate(new UsingStatement {
 						ResourceAcquisition = resourceAcquisition,
+						IsAsync = node.Flag,
 						EmbeddedStatement = (Statement)Build(node.Children[1], exprBuilder)
 					}, node);
 				}

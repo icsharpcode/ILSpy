@@ -121,7 +121,9 @@ impl Builder<'_, '_, '_, '_> {
         );
         self.return_container = body;
         self.result_type = return_type;
+        let saved_function = self.current_function.replace(lf);
         let block = self.convert_as_block(body);
+        self.current_function = saved_function;
         self.return_statements = saved.6;
         self.labels = saved.7;
         self.duplicate_labels = saved.8;

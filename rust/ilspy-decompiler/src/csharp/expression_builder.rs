@@ -1224,8 +1224,17 @@ impl Builder<'_, '_, '_, '_> {
         if lt == rt && self.ts.kind(lt) == TypeKind::Enum {
             return Ok(Some(false));
         }
+        // An enum and another operand: the enum's operator where the other is a constant zero
+        // (which converts implicitly to every enum), else no operator applies.
         if self.ts.kind(lt) == TypeKind::Enum || self.ts.kind(rt) == TypeKind::Enum {
-            return Err("an enum comparison that needs conversions".to_owned());
+            let other = if self.ts.kind(lt) == TypeKind::Enum {
+                r
+            } else {
+                l
+            };
+            let zero = matches!(self.rr_of(other.expression), Rr::Constant { value, .. }
+                if super::translated_expression::integral_value(&value) == Some(0));
+            return Ok(zero.then_some(true));
         }
         let (lc, rc) = (self.ts.type_code(lt), self.ts.type_code(rt));
         if (4..=15).contains(&lc) && (4..=15).contains(&rc) {

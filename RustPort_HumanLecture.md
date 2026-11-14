@@ -4131,6 +4131,25 @@ cast the lambda; both are marked in the code as shortcuts to revisit.
 
 The share rose from 96.9 % to 97.0 %.
 
+### 3.172 A batch: await using, enum equality with other operands, foreach variables of nested functions (item 68y64)
+
+*`await using`.* `VisitUsingInstruction` of an async using is the `using` statement with
+`IsAsync`, valid where the resource's type implements `IAsyncDisposable`; a resource that
+matches the async enumerator pattern would be `await foreach`, which still falls back.
+
+*Enum equality.* `==` and `!=` of an enum and another operand resolve to the enum's
+operator where the other operand is a constant zero (which converts implicitly to every
+enum); otherwise no operator applies, and the operands are cast to the comparison's type as
+for any comparison without operator.
+
+*Foreach variables of nested functions.* A `foreach` that introduces its variable
+(`IntroduceNewVariable`) registers it with the current function, as
+`currentFunction.RegisterVariable` does: the engine now tracks the lambda or local function
+it translates and adds the variable to that function's variables, which the host
+materializes with it.
+
+The share rose from 97.0 % to 97.1 %.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

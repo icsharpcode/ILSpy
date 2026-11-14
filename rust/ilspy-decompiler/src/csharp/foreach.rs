@@ -66,7 +66,7 @@ impl Builder<'_, '_, '_, '_> {
     /// `MatchGetEnumeratorPattern`: `collection.GetEnumerator()` (or `GetAsyncEnumerator`),
     /// the collection and whether it is asynchronous; the static spelling of an extension
     /// method is not translated.
-    fn match_get_enumerator_pattern(
+    pub(super) fn match_get_enumerator_pattern(
         &self,
         resource: &TranslatedExpression,
     ) -> Result<Option<(AstId, bool)>, Unsupported> {
@@ -259,19 +259,20 @@ impl Builder<'_, '_, '_, '_> {
             // `IntroduceNewVariable`: a new variable stores the value as the body's first
             // statement, and its load replaces the value.
             None => {
-                if self.in_lambda || self.in_local_function {
-                    return Err(
-                        "a foreach in a lambda or local function that introduces a variable"
-                            .to_owned(),
-                    );
-                }
                 let v = self.f.register_variable_named(
                     self.ts,
                     VariableKind::ForeachLocal,
                     getter_type,
                     Some(&name),
                 );
-                self.root_variables.push(v);
+                // `currentFunction.RegisterVariable`
+                match self.current_function {
+                    Some(function) => match self.f.inst_mut(function) {
+                        Inst::Function { variables, .. } => variables.push(v),
+                        _ => unreachable!("a function"),
+                    },
+                    None => self.root_variables.push(v),
+                }
                 self.variable_names.push(name);
                 let replaced = get_current.replaced;
                 let load = self.f.add(Inst::LdLoc { var: v });

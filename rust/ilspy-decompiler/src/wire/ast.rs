@@ -666,7 +666,9 @@ fn node(w: &mut FunctionWriter<'_, '_, '_, '_>, ast: &Ast, id: AstId) -> Result<
             declaration,
             resource,
             body,
+            is_async,
         } => {
+            w.out.bool(is_async);
             w.out.bool(declaration.is_some());
             if let Some(v) = declaration {
                 let i = var_index(w, v)?;
