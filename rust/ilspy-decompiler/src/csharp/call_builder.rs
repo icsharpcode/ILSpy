@@ -1400,7 +1400,13 @@ impl Builder<'_, '_, '_, '_> {
             || ts.is_known(declaring, KnownTypeCode::ReadOnlySpanOfT)
             || ts.is_known(declaring, KnownTypeCode::SpanOfT)
             || in_namespace("", "<PrivateImplementationDetails>")
-            || ts.is_known(declaring, KnownTypeCode::NullableOfT)
+            // `bool?.GetValueOrDefault()` is `b == true`; other nullable methods are ordinary.
+            || (ts.is_known(declaring, KnownTypeCode::NullableOfT)
+                && method.name == "GetValueOrDefault"
+                && method.parameters.is_empty()
+                && ts
+                    .first_type_argument(declaring)
+                    .is_some_and(|a| ts.is_known(a, KnownTypeCode::Boolean)))
             || ts.is_known(declaring, KnownTypeCode::Delegate);
         if special {
             return Err(format!("a call of {} with its own syntax", method.name));

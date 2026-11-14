@@ -3922,6 +3922,21 @@ the call as it is. With the array literal itself the call still falls back.
 
 The share rose from 91.4 % to 91.9 %.
 
+### 3.162 A batch: shifts, nullable method calls (item 68y54)
+
+*Shifts.* `HandleShift` writes `<<` and `>>` with the right operand converted to `int`. A
+small integer on the left needs no cast, C# promoting it to `int`; an unsigned shift right
+of it, or of a signed operand of the result's width, is the C# 11 `>>>` where the setting
+allows; any other left operand is cast to the arithmetic type. The host resolves the
+operator. Lifted shifts and native integers fall back. The operator enumeration gained the
+three shift values of `BinaryOperatorType`.
+
+*Nullable method calls.* The engine treated every method of `Nullable<T>` as a call with
+syntax of its own; only `bool?.GetValueOrDefault()` is one (`b == true`), and the other
+methods are ordinary calls now.
+
+The share rose from 91.9 % to 92.2 %.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

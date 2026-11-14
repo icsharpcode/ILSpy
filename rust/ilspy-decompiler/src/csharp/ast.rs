@@ -301,6 +301,9 @@ pub enum BinaryOp {
     Multiply = 14,
     Divide = 15,
     Modulus = 16,
+    ShiftLeft = 17,
+    ShiftRight = 18,
+    UnsignedShiftRight = 19,
     NullCoalescing = 20,
 }
 

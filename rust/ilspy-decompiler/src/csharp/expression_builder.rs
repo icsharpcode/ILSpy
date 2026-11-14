@@ -1728,7 +1728,19 @@ impl Builder<'_, '_, '_, '_> {
             BinaryNumericOperator::BitAnd => BinaryOp::BitwiseAnd,
             BinaryNumericOperator::BitOr => BinaryOp::BitwiseOr,
             BinaryNumericOperator::BitXor => BinaryOp::ExclusiveOr,
-            _ => return Err("a shift".to_owned()),
+            BinaryNumericOperator::ShiftLeft | BinaryNumericOperator::ShiftRight => {
+                return self.shift(
+                    inst,
+                    operator == BinaryNumericOperator::ShiftLeft,
+                    sign,
+                    left_input,
+                    left,
+                    right,
+                    is_lifted,
+                    type_hint,
+                );
+            }
+            BinaryNumericOperator::None => return Err("a binary operator of no kind".to_owned()),
         };
         if is_lifted {
             return Err("a lifted arithmetic operation".to_owned());
@@ -2034,6 +2046,88 @@ impl Builder<'_, '_, '_, '_> {
         });
         self.ast.with_il(e, inst);
         self.ast.with_rr(e, Rr::Conversion { ty });
+        Ok(TranslatedExpression { expression: e, ty })
+    }
+
+    /// `HandleShift` without lifting: `left << right` or `left >> right` (`>>>` for an unsigned
+    /// shift where C# 11 has it), the left operand cast to the arithmetic type unless it is a
+    /// small integer C# promotes, the right one converted to `int`.
+    #[allow(clippy::too_many_arguments)]
+    fn shift(
+        &mut self,
+        inst: NodeId,
+        is_left: bool,
+        sign: Sign,
+        left_input: StackType,
+        left: NodeId,
+        right: NodeId,
+        is_lifted: bool,
+        type_hint: Option<TypeId>,
+    ) -> Result<TranslatedExpression, Unsupported> {
+        if is_lifted {
+            return Err("a lifted shift".to_owned());
+        }
+        let l = self.translate(left, None)?;
+        let r = self.translate(right, None)?;
+        let mut l = self.prepare_arithmetic_argument(l, left_input, sign)?;
+        let result_stack = self.f.result_type(self.ts, inst);
+        if matches!(self.ts.kind(l.ty), TypeKind::NInt | TypeKind::NUInt)
+            || result_stack == StackType::I
+            || self.ts.is_known(l.ty, KnownTypeCode::NullableOfT)
+        {
+            return Err("a shift of a native integer or nullable value".to_owned());
+        }
+        let code = self.ts.type_code(l.ty);
+        let primitive_integer = (5..=12).contains(&code);
+        let small = (5..=8).contains(&code);
+        let hint_sign = type_hint.map_or(Sign::None, |t| self.ts.type_sign(t));
+        let could_use_unsigned_right_shift = sign == Sign::Unsigned
+            && !is_left
+            && self.settings.unsigned_right_shift
+            && primitive_integer
+            && hint_sign != Sign::Unsigned;
+        let mut op = if is_left {
+            BinaryOp::ShiftLeft
+        } else {
+            BinaryOp::ShiftRight
+        };
+        if small
+            && result_stack == StackType::I4
+            && (sign != Sign::Unsigned || could_use_unsigned_right_shift)
+        {
+            // C# promotes a small integer to `int`; `>>>` shifts it unsigned.
+            if sign == Sign::Unsigned {
+                op = BinaryOp::UnsignedShiftRight;
+            }
+        } else if could_use_unsigned_right_shift
+            && self.ts.type_size(l.ty) == stack_size(result_stack)
+            && self.ts.type_sign(l.ty) == Sign::Signed
+        {
+            op = BinaryOp::UnsignedShiftRight;
+        } else {
+            let mut s = sign;
+            if s == Sign::None {
+                s = self.ts.type_sign(l.ty);
+            }
+            let target = self.find_integer_type(result_stack, s)?;
+            l = self.convert_to(l, target, false)?;
+        }
+        let int = self.ts.known_type(KnownTypeCode::Int32);
+        let r = self.convert_to(r, int, false)?;
+        // The type of the predefined shift: the left operand's, `int` for a small integer.
+        let ty = match self.ts.type_code(l.ty) {
+            5..=9 => int,
+            10..=12 => l.ty,
+            _ => return Err("a shift of these types".to_owned()),
+        };
+        let e = self.ast.add(AstNode::BinaryOperator {
+            op,
+            left: l.expression,
+            right: r.expression,
+            overflow: Overflow::None,
+        });
+        self.ast.with_il(e, inst);
+        self.ast.with_rr(e, Rr::ResolvedOperator { ty });
         Ok(TranslatedExpression { expression: e, ty })
     }
 
