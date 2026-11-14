@@ -3876,6 +3876,27 @@ the type itself, as the managed code does.
 
 The share rose from 90.6 % to 91.0 %.
 
+### 3.160 A batch: lifted comparisons, type parameter unboxing, value type overrides (item 68y52)
+
+*Lifted comparisons.* `==` and `!=` with a nullable operand resolve to the lifted form of
+the predefined operator over the underlying types (the same enum, `bool`, or the promoted
+numeric type), which the host resolves, its resolve result being a lifted operator; a
+nullable value compared with the null literal is the plain operator. A lifted comparison
+that needs casts, which `TranslateCeq` makes to the nullable of the comparison's type,
+falls back.
+
+*Unboxing to a type parameter.* `unbox.any T` casts the argument as it is, through the
+type parameter's effective base class where that cast would be an error. From `object` the
+cast is always valid and its conversion the unboxing one, which is what the host computes
+from the cast's node; any other argument falls back.
+
+*Value type overrides.* A call whose name binds to an override fell back where the override
+is declared in a value type, for `NeedsBoxingConversion`. That flag is only set where the
+managed builder unwraps a boxing cast of the target, which the engine never does (a cast
+target falls back), so such a call follows the base member chain like any other.
+
+The share rose from 91.0 % to 91.4 %.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

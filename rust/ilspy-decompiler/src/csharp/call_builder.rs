@@ -2178,12 +2178,8 @@ impl Builder<'_, '_, '_, '_> {
         {
             return Ok(false);
         }
-        // `NeedsBoxingConversion` is not tracked: an override in a value type is not translated.
-        if let Some(d) = actual.declaring
-            && self.ts.is_reference_type(d) != Some(true)
-        {
-            return Err("a call whose name binds to a value type's override".to_owned());
-        }
+        // `NeedsBoxingConversion` is false: the engine writes a boxed target as the cast, never
+        // unwrapped, so an override in a value type follows the base member chain as well.
         // `InheritanceHelper.GetBaseMembers`: the method the override overrides, directly or
         // through further overrides.
         let MethodKey::Def(expected_id) = expected.key else {

@@ -866,6 +866,12 @@ impl Builder<'_, '_, '_, '_> {
         // and both where one is not enough.
         let mut converts_operands = resolved.unwrap_or(false);
         let mut operator_built = false;
+        let lifted = self.ts.is_known(l.ty, KnownTypeCode::NullableOfT)
+            || self.ts.is_known(r.ty, KnownTypeCode::NullableOfT);
+        if lifted && !self.fits_comparison(resolved, &l, &r, input) {
+            // The cast would be to the nullable of the comparison's type.
+            return Err("a lifted comparison that needs casts".to_owned());
+        }
         if !self.fits_comparison(resolved, &l, &r, input) {
             let target = self.comparison_target_type(input, l.ty, r.ty);
             if target == l.ty {
@@ -1117,9 +1123,34 @@ impl Builder<'_, '_, '_, '_> {
                 }
                 _ => {}
             }
-            if self.ts.is_known(t, KnownTypeCode::NullableOfT) {
-                return Err("a lifted comparison".to_owned());
+        }
+        // A lifted operator: a nullable value compared with the null literal is the plain
+        // operator; otherwise the predefined operator over the underlying types (the same enum,
+        // `bool`, or the promoted numeric type), which the host resolves, since its resolve
+        // result is a lifted operator.
+        if self.ts.is_known(lt, KnownTypeCode::NullableOfT)
+            || self.ts.is_known(rt, KnownTypeCode::NullableOfT)
+        {
+            if self.ts.kind(lt) == TypeKind::Null || self.ts.kind(rt) == TypeKind::Null {
+                return Ok(Some(false));
             }
+            let lu = self.ts.nullable_underlying(lt);
+            let ru = self.ts.nullable_underlying(rt);
+            if self.ts.kind(lu) == TypeKind::Enum || self.ts.kind(ru) == TypeKind::Enum {
+                return if lu == ru {
+                    Ok(Some(true))
+                } else {
+                    Err("a lifted enum comparison that needs conversions".to_owned())
+                };
+            }
+            let (lc, rc) = (self.ts.type_code(lu), self.ts.type_code(ru));
+            if lc == 3 && rc == 3 {
+                return Ok(Some(true));
+            }
+            if (4..=14).contains(&lc) && (4..=14).contains(&rc) {
+                return Ok(self.operator_promotion(l, r, lc, rc)?.map(|_| true));
+            }
+            return Err("a lifted comparison".to_owned());
         }
         // `GetUserDefinedOperatorCandidates`, which skips the primitive types (Boolean to
         // Decimal).
@@ -1983,12 +2014,19 @@ impl Builder<'_, '_, '_, '_> {
             self.ast.with_rr(e, Rr::TryCast { ty });
             return Ok(TranslatedExpression { expression: e, ty });
         }
-        if self.ts.kind(ty) == TypeKind::TypeParameter {
-            return Err("an unboxing to a type parameter".to_owned());
-        }
         let a = self.translate(arg, None)?;
         let object = self.ts.known_type(KnownTypeCode::Object);
-        let a = self.convert_to(a, object, false)?;
+        // A type parameter target is cast from the argument as it is, through the effective base
+        // class where that cast is an error; only an `object` argument, whose cast is always
+        // the unboxing conversion, is translated.
+        let a = if self.ts.kind(ty) == TypeKind::TypeParameter {
+            if !self.ts.is_known(a.ty, KnownTypeCode::Object) {
+                return Err("an unboxing to a type parameter".to_owned());
+            }
+            a
+        } else {
+            self.convert_to(a, object, false)?
+        };
         let e = self.ast.add(AstNode::Cast {
             ty,
             expression: a.expression,
