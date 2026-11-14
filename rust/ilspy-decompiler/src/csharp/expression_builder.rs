@@ -753,11 +753,7 @@ impl Builder<'_, '_, '_, '_> {
     ) -> Result<TranslatedExpression, Unsupported> {
         let boolean = self.ts.known_type(KnownTypeCode::Boolean);
         let e = self.translate(condition, Some(boolean))?;
-        // `ConvertToBoolean` returns a bool unchanged.
-        if !self.ts.is_known(e.ty, KnownTypeCode::Boolean) {
-            return Err("a condition that is no bool".to_owned());
-        }
-        Ok(e)
+        self.convert_to_boolean(e)
     }
 
     /// `VisitComp` for the equality of a bool with 0 or 1, which `TranslateCeq` writes as the
@@ -1792,7 +1788,12 @@ impl Builder<'_, '_, '_, '_> {
             ) || (k == TypeKind::Enum && !bitwise)
                 || self.ts.is_known(t, KnownTypeCode::NullableOfT)
             {
-                return Err("arithmetic on these types".to_owned());
+                let nullable = if self.ts.is_known(t, KnownTypeCode::NullableOfT) {
+                    "nullable "
+                } else {
+                    ""
+                };
+                return Err(format!("arithmetic on {nullable}{k:?} operands"));
             }
         }
         let l = self.prepare_arithmetic_argument(l, left_input, sign)?;
@@ -1828,11 +1829,16 @@ impl Builder<'_, '_, '_, '_> {
             (l.ty == r.ty).then_some(l.ty)
         } else {
             let (lc, rc) = (self.ts.type_code(l.ty), self.ts.type_code(r.ty));
-            if !(4..=14).contains(&lc) || !(4..=14).contains(&rc) {
-                return Err("arithmetic on these types".to_owned());
+            // The predefined logical operators of `bool`.
+            if bitwise && lc == 3 && rc == 3 {
+                Some(l.ty)
+            } else {
+                if !(4..=14).contains(&lc) || !(4..=14).contains(&rc) {
+                    return Err(format!("arithmetic on the type codes {lc} and {rc}"));
+                }
+                self.operator_promotion(&l, &r, lc, rc)?
+                    .map(|p| self.ts.known_type(known_of_type_code(p)))
             }
-            self.operator_promotion(&l, &r, lc, rc)?
-                .map(|p| self.ts.known_type(known_of_type_code(p)))
         };
         let result_stack = crate::il::ast::binary_result_type(operator, left_input, right_input);
         let compatible = |b: &mut Self, t: TypeId| sign == Sign::None || b.ts.type_sign(t) == sign;

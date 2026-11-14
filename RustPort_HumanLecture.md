@@ -4056,6 +4056,29 @@ definition still falls back.
 
 The share rose from 94.8 % to 96.1 %.
 
+### 3.168 A batch: formattable strings, conversions to bool, bool logic (item 68y60)
+
+*Formattable strings.* `FormattableStringFactory.Create(format, ...)` takes the path of
+`string.Format` (`IsInterpolatedStringCreation`): where its format tokenizes it is the
+interpolated string cast to `FormattableString`, the cast carrying the call's instruction
+and the `ImplicitInterpolatedStringConversion` the host's `ResolveCast` gives it; otherwise
+it still falls back. `CastCanBeMadeImplicit` of an interpolated string conversion is ported
+(the cast goes where the result becomes a `FormattableString` or `IFormattable` anyway);
+span conversions there still fall back.
+
+*Conversions to bool.* `ConvertTo(bool)` goes through `byte`, then `ConvertToBoolean`: a
+bool stays, an `int` or `byte` constant is the bool literal, another integer `e != 0`;
+pointers and enums fall back. `TranslateCondition` uses the same conversion. A throw
+expression converts implicitly to any type, which `ConvertTo` checks before the tuple
+literal case.
+
+*Bool logic.* `&`, `|` and `^` of two bools are the predefined operators of `bool`.
+
+*Fallback reasons.* The reasons of arithmetic and of conversions that need a cast name the
+operand kinds now, so that the remaining groups can be told apart.
+
+The share rose from 96.1 % to 96.5 %.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

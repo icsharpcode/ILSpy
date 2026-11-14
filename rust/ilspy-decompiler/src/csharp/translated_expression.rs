@@ -247,6 +247,12 @@ impl Builder<'_, '_, '_, '_> {
             };
             return self.convert_to(cast, target, allow_implicit_conversion);
         }
+        // Throw expressions have no type and convert implicitly to any type.
+        if allow_implicit_conversion
+            && matches!(self.ast.node(e.expression), AstNode::ThrowExpression { .. })
+        {
+            return Ok(e);
+        }
         // A tuple literal converted to a tuple type: element-wise, with the target's names written.
         if let AstNode::Tuple { elements, .. } = self.ast.node(e.expression).clone()
             && let TypeData::Tuple {
@@ -336,17 +342,28 @@ impl Builder<'_, '_, '_, '_> {
         }
         // The other special cases of the managed conversion: bool from integers, native
         // integers, enums or chars and pointers, references.
-        if self.ts.is_known(target, KnownTypeCode::Boolean)
-            || self.ts.is_known(ty, KnownTypeCode::IntPtr)
+        // To bool through byte, to simulate the truncation to 8 bits.
+        if self.ts.is_known(target, KnownTypeCode::Boolean) {
+            let byte = self.ts.known_type(KnownTypeCode::Byte);
+            let b = self.convert_to(e, byte, false)?;
+            return self.convert_to_boolean(b);
+        }
+        let special = if self.ts.is_known(ty, KnownTypeCode::IntPtr)
             || self.ts.is_known(ty, KnownTypeCode::UIntPtr)
             || ((self.ts.is_known(target_utype, KnownTypeCode::IntPtr)
                 || self.ts.is_known(target_utype, KnownTypeCode::UIntPtr))
                 && self.ts.stack_type(utype).is_integer())
-            || self.ts.kind(target).is_any_pointer()
-            || self.ts.kind(ty).is_any_pointer()
-            || self.ts.kind(target) == TypeKind::ByReference
         {
-            return Err("a conversion that needs a cast".to_owned());
+            Some("of native integers")
+        } else if self.ts.kind(target).is_any_pointer() || self.ts.kind(ty).is_any_pointer() {
+            Some("of pointers")
+        } else if self.ts.kind(target) == TypeKind::ByReference {
+            Some("to a reference")
+        } else {
+            None
+        };
+        if let Some(special) = special {
+            return Err(format!("a conversion {special} that needs a cast"));
         }
         let rr = self.semantic_rr(e.expression, ty);
         if let ResolveResult::Constant { value, .. } = &rr
@@ -467,6 +484,86 @@ impl Builder<'_, '_, '_, '_> {
         Ok(CastResult::Conversion)
     }
 
+    /// `TranslatedExpression.ConvertToBoolean` without negation: a bool as it is, an `int` or
+    /// `byte` constant as the bool literal, another integer as `e != 0`. Pointers and enums are
+    /// not translated.
+    pub(crate) fn convert_to_boolean(
+        &mut self,
+        e: TranslatedExpression,
+    ) -> Result<TranslatedExpression, Unsupported> {
+        let boolean = self.ts.known_type(KnownTypeCode::Boolean);
+        if self.ts.is_known(e.ty, KnownTypeCode::Boolean) {
+            return Ok(e);
+        }
+        if !self.ts.stack_type(e.ty).is_integer() {
+            return Err("a conversion to bool of no integer".to_owned());
+        }
+        if let Rr::Constant {
+            value: ConstValue::Int32(v),
+            ..
+        } = self.rr_of(e.expression)
+        {
+            return Ok(self.bool_literal(e.expression, v != 0, boolean));
+        }
+        if let Rr::Constant {
+            value: ConstValue::Byte(v),
+            ..
+        } = self.rr_of(e.expression)
+        {
+            return Ok(self.bool_literal(e.expression, v != 0, boolean));
+        }
+        if matches!(self.ts.kind(e.ty), TypeKind::Pointer | TypeKind::Enum) {
+            return Err("a conversion to bool of a pointer or enum".to_owned());
+        }
+        let int = self.ts.known_type(KnownTypeCode::Int32);
+        let zero = self.ast.add(AstNode::ConstantValue {
+            ty: int,
+            value: ConstValue::Int32(0),
+            allow_implicit_conversion: false,
+        });
+        self.ast.with_rr(
+            zero,
+            Rr::Constant {
+                ty: int,
+                value: ConstValue::Int32(0),
+            },
+        );
+        let c = self.ast.add(AstNode::BinaryOperator {
+            overflow: super::ast::Overflow::None,
+            op: super::ast::BinaryOp::InEquality,
+            left: e.expression,
+            right: zero,
+        });
+        self.ast.with_rr(c, Rr::Operator { ty: boolean });
+        Ok(TranslatedExpression {
+            expression: c,
+            ty: boolean,
+        })
+    }
+
+    /// The bool literal `value`, with the instructions of `of`.
+    fn bool_literal(&mut self, of: AstId, value: bool, boolean: TypeId) -> TranslatedExpression {
+        let e = self.ast.add(AstNode::ConstantValue {
+            ty: boolean,
+            value: ConstValue::Boolean(value),
+            allow_implicit_conversion: false,
+        });
+        for inst in self.ast.annotations(of).il.clone() {
+            self.ast.with_il(e, inst);
+        }
+        self.ast.with_rr(
+            e,
+            Rr::Constant {
+                ty: boolean,
+                value: ConstValue::Boolean(value),
+            },
+        );
+        TranslatedExpression {
+            expression: e,
+            ty: boolean,
+        }
+    }
+
     /// `TranslatedExpression.CastCanBeMadeImplicit`: whether the cast of `input` to `old` with
     /// `conversion` can be left out when the result is converted to `new` anyway.
     fn cast_can_be_made_implicit(
@@ -485,8 +582,12 @@ impl Builder<'_, '_, '_, '_> {
         if native(self, old) || native(self, new) {
             return Ok(false);
         }
-        if conversion.is_interpolated_string() || conversion.is_implicit_span() {
-            return Err("a cast of an interpolated string or span".to_owned());
+        if conversion.is_interpolated_string() {
+            return Ok(self.ts.is_known(new, KnownTypeCode::FormattableString)
+                || self.ts.is_known(new, KnownTypeCode::IFormattable));
+        }
+        if conversion.is_implicit_span() {
+            return Err("a cast of a span".to_owned());
         }
         let mut conversions = Conversions::new(self.ts);
         if conversion.is_boxing() {

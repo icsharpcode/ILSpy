@@ -342,16 +342,47 @@ impl Builder<'_, '_, '_, '_> {
         // `IsInterpolatedStringCreation` for `string.Format`: an interpolated string where the
         // format string tokenizes, else an ordinary call. A `params` overload is one in the
         // expanded form; with the array literal itself it is not translated.
+        // `FormattableStringFactory.Create` is the interpolated string cast to
+        // `FormattableString`; where it does not tokenize it is not translated.
+        let formattable = method.is_static
+            && method.name == "Create"
+            && self.ts.definition(declaring).is_some_and(|d| {
+                self.ts.comp.type_def(d).is_ok_and(|i| {
+                    i.full_name.top.ns == "System.Runtime.CompilerServices"
+                        && i.full_name.name() == "FormattableStringFactory"
+                })
+            });
+        if formattable && !self.settings.string_interpolation {
+            return Err("a call of Create with its own syntax".to_owned());
+        }
         if self.settings.string_interpolation
             && method.is_static
-            && method.name == "Format"
-            && self.ts.is_known(declaring, KnownTypeCode::String)
+            && (formattable
+                || (method.name == "Format" && self.ts.is_known(declaring, KnownTypeCode::String)))
         {
             if method.parameters.last().is_some_and(|p| p.is_params) && !list.is_expanded_form {
                 return Err("a string.Format call of a params overload".to_owned());
             }
-            if let Some(e) = self.format_interpolation(inst, &list, first_argument_node)? {
-                return Ok(e);
+            match self.format_interpolation(inst, &list, first_argument_node)? {
+                Some(e) if formattable => {
+                    let ty = self.ts.known_type(KnownTypeCode::FormattableString);
+                    let c = self.ast.add(AstNode::Cast {
+                        ty,
+                        expression: e.expression,
+                        unchecked: false,
+                    });
+                    // The cast is the call's expression, the interpolated string inside it is not.
+                    self.ast.annotations_mut(e.expression).il.clear();
+                    self.ast.with_il(c, inst);
+                    // `ImplicitInterpolatedStringConversion`, as `ResolveCast` gives it.
+                    self.ast.with_rr(c, Rr::Conversion { ty });
+                    return Ok(TranslatedExpression { expression: c, ty });
+                }
+                Some(e) => return Ok(e),
+                None if formattable => {
+                    return Err("a call of Create with its own syntax".to_owned());
+                }
+                None => {}
             }
         }
 
@@ -1508,10 +1539,12 @@ impl Builder<'_, '_, '_, '_> {
                         .is_some_and(|a| ts.is_known(a, KnownTypeCode::Char))
             });
         let special = (ts.is_known(declaring, KnownTypeCode::String) && span_concat)
-            || in_namespace(
+            // `FormattableStringFactory.Create` is an interpolated string where its format
+            // tokenizes.
+            || (in_namespace(
                 "System.Runtime.CompilerServices",
                 "FormattableStringFactory",
-            )
+            ) && method.name != "Create")
             || ts.is_known(declaring, KnownTypeCode::Range)
             || ts.is_known(declaring, KnownTypeCode::Index)
             || in_namespace("System", "MemoryExtensions")
