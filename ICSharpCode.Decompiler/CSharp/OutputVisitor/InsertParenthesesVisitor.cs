@@ -260,7 +260,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			// Even in readability mode, don't parenthesize casts of casts.
 			if (!(castExpression.Expression is CastExpression))
 			{
-				ParenthesizeIfRequired(castExpression.Expression, InsertParenthesesForReadability ? PrecedenceLevel.NullableRewrap : PrecedenceLevel.Unary);
+				ParenthesizeIfRequired(castExpression.Expression, InsertParenthesesForReadability ? PrecedenceLevel.PostUnary : PrecedenceLevel.Unary);
 			}
 			// There's a nasty issue in the C# grammar: cast expressions including certain operators are ambiguous in some cases
 			// "(int)-1" is fine, but "(A)-b" is not a cast.
@@ -332,14 +332,14 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			{
 				if (InsertParenthesesForReadability)
 				{
-					ParenthesizeIfRequired(binaryOperatorExpression.Left, PrecedenceLevel.NullableRewrap);
+					ParenthesizeIfRequired(binaryOperatorExpression.Left, PrecedenceLevel.PostUnary);
 					if (GetBinaryOperatorType(binaryOperatorExpression.Right) == BinaryOperatorType.NullCoalescing)
 					{
 						ParenthesizeIfRequired(binaryOperatorExpression.Right, precedence);
 					}
 					else
 					{
-						ParenthesizeIfRequired(binaryOperatorExpression.Right, PrecedenceLevel.NullableRewrap);
+						ParenthesizeIfRequired(binaryOperatorExpression.Right, PrecedenceLevel.PostUnary);
 					}
 				}
 				else
@@ -397,7 +397,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			if (InsertParenthesesForReadability)
 			{
 				// few people know the precedence of 'is', so always put parentheses in nice-looking mode.
-				ParenthesizeIfRequired(isExpression.Expression, PrecedenceLevel.NullableRewrap);
+				ParenthesizeIfRequired(isExpression.Expression, PrecedenceLevel.PostUnary);
 			}
 			else
 			{
