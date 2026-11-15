@@ -17,24 +17,28 @@
 // DEALINGS IN THE SOFTWARE.
 
 using Redecomp.Core.Reconstruction;
+using Redecomp.Core.Verification;
 
 namespace Redecomp.Cli;
 
 public static class Program
 {
-	const string Usage = "usage: redecomp <assembly.dll | publish-directory> -o <output-directory> [--offline]";
+	const string Usage = "usage: redecomp <assembly.dll | publish-directory> -o <output-directory> [--offline] [--verify]";
 
 	public static int Main(string[] args)
 	{
 		string? assembly = null;
 		string? output = null;
 		var options = ReconstructionOptions.Default;
+		bool verify = false;
 		for (int i = 0; i < args.Length; i++)
 		{
 			if ((args[i] == "-o" || args[i] == "--output") && i + 1 < args.Length)
 				output = args[++i];
 			else if (args[i] == "--offline")
 				options = options with { SourceDownloader = null };
+			else if (args[i] == "--verify")
+				verify = true;
 			else if (assembly == null && !args[i].StartsWith('-'))
 				assembly = args[i];
 			else
@@ -46,15 +50,41 @@ public static class Program
 		{
 			var solution = SolutionReconstructor.Reconstruct(assembly, output, options);
 			Console.WriteLine($"Solution:    {solution.SolutionFile}");
+			bool allIdentical = true;
 			foreach (var project in solution.Projects)
+			{
 				Print(project.Result);
-			return 0;
+				if (verify)
+					allIdentical &= Verify(Path.Combine(assembly, project.AssemblyFileName), project.Result.ProjectFile);
+			}
+			return allIdentical ? 0 : 1;
 		}
 		if (!File.Exists(assembly))
 			return Fail($"assembly or publish directory not found: {assembly}");
 
-		Print(ProjectReconstructor.Reconstruct(assembly, output, options));
-		return 0;
+		var result = ProjectReconstructor.Reconstruct(assembly, output, options);
+		Print(result);
+		return !verify || Verify(assembly, result.ProjectFile) ? 0 : 1;
+	}
+
+	/// <summary>Builds the project, compares its IL with the original and prints the outcome.</summary>
+	static bool Verify(string originalAssembly, string projectFile)
+	{
+		IlComparison comparison;
+		try
+		{
+			comparison = FidelityVerifier.Verify(originalAssembly, projectFile);
+		}
+		catch (InvalidOperationException ex)
+		{
+			Console.WriteLine($"  IL code:     the project does not build");
+			Console.Error.WriteLine(ex.Message);
+			return false;
+		}
+		Console.WriteLine($"  IL code:     {comparison} of the methods identical to the original");
+		foreach (string method in comparison.Differing.Concat(comparison.Missing).Take(10))
+			Console.WriteLine($"    differs: {method.ReplaceLineEndings(" ")}");
+		return comparison.IsIdentical;
 	}
 
 	static void Print(ReconstructionResult result)

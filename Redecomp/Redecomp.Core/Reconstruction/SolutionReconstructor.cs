@@ -24,8 +24,9 @@ namespace Redecomp.Core.Reconstruction;
 
 /// <summary>A project of a reconstructed solution.</summary>
 /// <param name="Name">Project name, as recorded in the dependency manifest.</param>
+/// <param name="AssemblyFileName">File name of the project's assembly in the publish directory.</param>
 /// <param name="Result">Outcome of the project reconstruction.</param>
-public sealed record SolutionProject(string Name, ReconstructionResult Result);
+public sealed record SolutionProject(string Name, string AssemblyFileName, ReconstructionResult Result);
 
 /// <summary>Outcome of a solution reconstruction.</summary>
 /// <param name="SolutionFile">Path of the generated <c>.slnx</c> file.</param>
@@ -69,7 +70,7 @@ public static class SolutionReconstructor
 				File.Move(result.ProjectFile, expected);
 				result = result with { ProjectFile = expected };
 			}
-			results.Add(new SolutionProject(project.Name, result));
+			results.Add(new SolutionProject(project.Name, Path.GetFileName(assembly), result));
 		}
 
 		string solutionFile = Path.Combine(outputDirectory, deps.Root.Name + ".slnx");

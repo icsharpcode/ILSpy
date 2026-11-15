@@ -60,6 +60,13 @@ public static class SampleBuilder
 			.Select(d => Path.GetFileName(d))
 			.Order(StringComparer.Ordinal);
 
+	/// <summary>Samples made of several projects, i.e. with a solution file at their root.</summary>
+	public static IEnumerable<string> SolutionSamples()
+		=> Directory.EnumerateDirectories(SamplesDirectory)
+			.Where(d => Directory.EnumerateFiles(d, "*.slnx").Any())
+			.Select(d => Path.GetFileName(d))
+			.Order(StringComparer.Ordinal);
+
 	/// <summary>Builds the sample and returns the path of its main assembly.</summary>
 	public static string Build(string sample, BuildVariant variant)
 	{
