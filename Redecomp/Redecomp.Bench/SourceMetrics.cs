@@ -56,6 +56,16 @@ public static partial class SourceMetrics
 		}
 	}
 
+	/// <summary>
+	/// Number of declared locals whose name says nothing about their role: the fallback names the
+	/// decompiler derives from a type or a usage slot (<c>num</c>, <c>flag</c>, <c>result</c>, ...).
+	/// </summary>
+	public static int GenericLocalCount(string code)
+		=> DeclaredLocals(code).Count(name => GenericName().IsMatch(name));
+
+	[GeneratedRegex(@"^(num|flag|text|obj|value|array|result|val|item|list|s|b|c)\d*$")]
+	private static partial Regex GenericName();
+
 	/// <summary>Text of every <c>//</c> and <c>///</c> comment, trimmed, one entry per line.</summary>
 	public static IReadOnlyList<string> CommentLines(string code) => Lex(code).Comments;
 

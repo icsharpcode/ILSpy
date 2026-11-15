@@ -59,4 +59,19 @@ public static class SourceMetricsTests
 		var comments = SourceMetrics.CommentLines(Code);
 		Assert.AreEqual("<summary>Computes.</summary>|sum first|discount|after the string", string.Join("|", comments), "comments");
 	}
+
+	[Test]
+	public static void CountsGenericLocalNames()
+	{
+		const string code = """
+			int num = 1;
+			int num2 = 2;
+			bool flag = true;
+			object result = null;
+			string value = "";
+			decimal totalTtc = 0m;
+			int numeroLigne = 3;
+			""";
+		Assert.AreEqual(5, SourceMetrics.GenericLocalCount(code), "generic locals");
+	}
 }

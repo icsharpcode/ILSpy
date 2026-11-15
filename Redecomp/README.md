@@ -17,7 +17,7 @@ Un compilateur jette de l'information : les commentaires, souvent les noms des v
 | 0 | Base du projet, build hors ligne | fait |
 | 1 | Banc d'essai : corpus d'applis avec sources connues et score automatique | fait (1 appli, à enrichir) |
 | 2 | Récupération : sources embarquées ✅, PDB, chemins d'origine ✅, fichiers de publication ✅, SourceLink, `deps.json` → NuGet, `Nullable`/`ImplicitUsings`, constantes | en cours |
-| 3 | Moteur de nommage déterministe (règles classées par niveau de confiance) | à faire |
+| 3 | Moteur de nommage déterministe (règles classées par niveau de confiance) | en cours |
 | 4 | Couche IA : renommage et commentaires, IL vérifié identique après chaque changement | à faire |
 | 5 | Cas spéciaux : Razor, Blazor, BAML, single-file, ReadyToRun, obfuscation | à faire |
 | 6 | Diffusion : CLI, puis interface | à faire |
@@ -33,14 +33,15 @@ Une version est meilleure qu'une autre si elle améliore le score du banc d'essa
 
 ### Moteur de nommage déterministe (phase 3)
 
-Pour chaque variable locale, on applique la règle de plus haute confiance qui s'applique :
+`Redecomp.Core/Naming/DeterministicVariableNames.cs` s'insère dans le pipeline d'ILSpy juste avant son propre nommage. Il ne touche qu'aux variables sans nom d'origine (pas de PDB, pas de champ async ou lambda) et applique la première règle qui s'applique :
 
-1. nom d'origine (PDB, variable capturée par une méthode async ou une lambda) ;
-2. variable passée en argument → nom du paramètre qui la reçoit ;
-3. résultat d'un appel de méthode → nom dérivé de la méthode (`CalculerTotalTtc()` → `totalTtc`) ;
-4. assignée à un champ ou une propriété → nom de ce membre (`_remise` → `remise`) ;
-5. variable de boucle sur une collection → singulier de la collection (`Lignes` → `ligne`) ;
-6. à défaut, nom dérivé du type.
+1. variable retournée (ou son `ToString()`) → nom dérivé de la méthode (`CompterRuptures` → `ruptures`) ;
+2. résultat d'une méthode de l'assembly → nom dérivé de cette méthode (`CalculerTotalTtc()` → `totalTtc`, `bool` de `SauvegarderAsync()` → `sauvegarde`) ;
+3. agrégat LINQ → agrégat + membre sélectionné ou collection (`Max(a => a.Quantite)` → `maxQuantite`, `Lignes.Sum(...)` → `totalLignes`).
+
+Les règles d'ILSpy prennent le relais ensuite (paramètre qui reçoit la variable, membre assigné, singulier de la collection pour un `foreach`, type). Le verbe de tête est retiré à partir d'une liste anglais/français (`MethodNameRules.cs`).
+
+Les noms restants (`num2 = totalLignes > 1000000m ? ... : 0m`) décrivent un calcul, pas une provenance : aucun fait du code ne donne leur sens. Ils relèvent de la couche IA (phase 4).
 
 ## Banc d'essai
 

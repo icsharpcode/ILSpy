@@ -25,7 +25,7 @@ namespace Redecomp.Bench;
 /// <summary>Scores of one reconstruction against the original sources of a sample.</summary>
 public sealed record BenchResult(
 	string Sample, BuildVariant Variant, SourceOrigin Origin, bool Rebuilds, bool SameBehavior,
-	Ratio FilesAtOriginalPath, Ratio LocalNames, Ratio Comments);
+	Ratio FilesAtOriginalPath, Ratio LocalNames, int GenericNamesWithoutRedecompNaming, int GenericNames, Ratio Comments);
 
 public readonly record struct Ratio(int Found, int Total)
 {
@@ -86,11 +86,19 @@ public static class Program
 		var originalComments = originals.SelectMany(f => SourceMetrics.CommentLines(File.ReadAllText(Path.Combine(sourceDir, f)))).ToList();
 		var outputComments = reconstructed.SelectMany(f => SourceMetrics.CommentLines(File.ReadAllText(Path.Combine(output, f)))).ToHashSet();
 
+		// The same reconstruction without Redecomp's naming shows what the decompiler alone produces.
+		string baselineOutput = ProjectBuilder.NewTempDirectory();
+		ProjectReconstructor.Reconstruct(assembly, baselineOutput, new ReconstructionOptions(DeterministicNaming: false));
+
 		return new BenchResult(sample, variant, reconstruction.Origin, rebuilds, sameBehavior,
 			new Ratio(atPath, originals.Count),
 			new Ratio(originalLocals.Count(outputLocals.Contains), originalLocals.Count),
+			GenericNames(baselineOutput), GenericNames(output),
 			new Ratio(originalComments.Count(outputComments.Contains), originalComments.Count));
 	}
+
+	static int GenericNames(string root)
+		=> SourceFiles(root).Sum(f => SourceMetrics.GenericLocalCount(File.ReadAllText(Path.Combine(root, f))));
 
 	static List<string> SourceFiles(string root)
 		=> Directory.EnumerateFiles(root, "*.cs", SearchOption.AllDirectories)
@@ -101,11 +109,11 @@ public static class Program
 	public static string Format(IEnumerable<BenchResult> results)
 	{
 		var sb = new StringBuilder();
-		sb.AppendLine("| Sample | Variant | Sources | Rebuilds | Same behavior | Files at original path | Local names | Comments |");
-		sb.AppendLine("|---|---|---|---|---|---|---|---|");
+		sb.AppendLine("| Sample | Variant | Sources | Rebuilds | Same behavior | Files at original path | Original local names | Generic local names (ILSpy alone -> Redecomp) | Comments |");
+		sb.AppendLine("|---|---|---|---|---|---|---|---|---|");
 		foreach (var r in results)
 		{
-			sb.AppendLine($"| {r.Sample} | {r.Variant} | {r.Origin} | {YesNo(r.Rebuilds)} | {YesNo(r.SameBehavior)} | {r.FilesAtOriginalPath} | {r.LocalNames} | {r.Comments} |");
+			sb.AppendLine($"| {r.Sample} | {r.Variant} | {r.Origin} | {YesNo(r.Rebuilds)} | {YesNo(r.SameBehavior)} | {r.FilesAtOriginalPath} | {r.LocalNames} | {r.GenericNamesWithoutRedecompNaming} -> {r.GenericNames} | {r.Comments} |");
 		}
 		return sb.ToString();
 
