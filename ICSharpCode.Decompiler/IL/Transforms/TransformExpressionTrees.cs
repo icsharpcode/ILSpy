@@ -385,6 +385,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				{
 					if (result.ResultType != typeHint.GetStackType())
 					{
+						// A value passed to a by-reference parameter, such as a constant or a computed
+						// value for an 'in' parameter, is passed by the address of a temporary.
+						if (typeHint.SkipModifiers() is ByReferenceType byRef && result.ResultType != StackType.Unknown)
+						{
+							return new AddressOf(result, byRef.ElementType);
+						}
 						return new Conv(result, typeHint.GetStackType().ToPrimitiveType(), false, typeHint.GetSign());
 					}
 				}
