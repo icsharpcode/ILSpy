@@ -4349,6 +4349,16 @@ synchronous, as in the managed builder.
 
 The share rose from 98.6 % to 98.7 %.
 
+### 3.187 Ref-returning calls (item 68y79)
+
+`VisitCall` and `VisitCallVirt` wrap the call of a method returning a reference in `ref`
+(`WrapInRef`), with the `ByReferenceResolveResult` of the call's; a load through it strips the
+`ref` again, as for any other reference. The call itself is of the referenced type, so that
+the stripped call needs no cast. The host takes a nested invocation's resolve result, which it
+completes on the invocation's own node, from that node, as it does for nested casts (3.179).
+
+The share rose from 98.7 % to 98.8 %.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

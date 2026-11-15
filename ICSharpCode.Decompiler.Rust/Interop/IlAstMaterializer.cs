@@ -1101,6 +1101,13 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				pendingResolveCast = pendingImplicitConversion = pendingLambdaConversion = false;
 				return RustSeam2.PendingTarget;
 			}
+			// A nested invocation's resolve result is completed on its own node; the one taking it
+			// takes it from there.
+			if (result == null && pendingInvocation != null)
+			{
+				pendingInvocation = null;
+				return RustSeam2.PendingTarget;
+			}
 			return result;
 		}
 

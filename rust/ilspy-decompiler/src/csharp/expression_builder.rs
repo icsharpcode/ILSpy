@@ -129,8 +129,14 @@ impl Builder<'_, '_, '_, '_> {
                 ..
             } => self.st_obj(inst, target, value, ty.ty, unaligned),
             Inst::StLoc { var, value, .. } => self.st_loc(inst, var, value),
-            Inst::Call(c) => self.call(inst, &c, super::call_builder::CallOp::Call),
-            Inst::CallVirt(c) => self.call(inst, &c, super::call_builder::CallOp::CallVirt),
+            Inst::Call(c) => {
+                let e = self.call(inst, &c, super::call_builder::CallOp::Call)?;
+                Ok(self.wrap_in_ref(e, c.method.method.ret))
+            }
+            Inst::CallVirt(c) => {
+                let e = self.call(inst, &c, super::call_builder::CallOp::CallVirt)?;
+                Ok(self.wrap_in_ref(e, c.method.method.ret))
+            }
             Inst::NewObj(c) => self.new_obj(inst, &c, hint),
             Inst::BinaryNumeric {
                 op,
@@ -2693,6 +2699,26 @@ impl Builder<'_, '_, '_, '_> {
             expression: e,
             ty: array_type,
         })
+    }
+
+    /// `WrapInRef`: a call returning a reference is `ref call(...)`, with the
+    /// `ByReferenceResolveResult` of the call's.
+    fn wrap_in_ref(&mut self, e: TranslatedExpression, ty: TypeId) -> TranslatedExpression {
+        let TypeData::ByRef(element) = *self.ts.data(ty) else {
+            return e;
+        };
+        // The call itself is of the referenced type.
+        if let Some(Rr::Invocation { ty, .. } | Rr::Property { ty, .. }) =
+            &mut self.ast.annotations_mut(e.expression).rr
+        {
+            *ty = element;
+        }
+        let rr = self.rr_of(e.expression);
+        let d = self.ast.add(AstNode::RefDirection {
+            expression: e.expression,
+        });
+        self.ast.with_rr(d, Rr::ByReference(Box::new(rr)));
+        TranslatedExpression { expression: d, ty }
     }
 
     /// `VisitMatchInstruction`: `left is pattern`; a boxing cast of the tested value is dropped
