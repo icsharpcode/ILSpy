@@ -32,3 +32,10 @@ public enum SourceOrigin
 /// <param name="DebugInfo">Description of the debug information used, or null when none was found.</param>
 /// <param name="ProjectFile">Path of the generated project file.</param>
 public sealed record ReconstructionResult(SourceOrigin Origin, string? DebugInfo, string ProjectFile);
+
+/// <summary>Options controlling a reconstruction.</summary>
+/// <param name="DeterministicNaming">Whether locals without a name from the debug symbols are named by <see cref="Naming.DeterministicVariableNames"/>.</param>
+public sealed record ReconstructionOptions(bool DeterministicNaming = true)
+{
+	public static ReconstructionOptions Default { get; } = new();
+}

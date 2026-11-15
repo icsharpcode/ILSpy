@@ -31,8 +31,9 @@ namespace Redecomp.Core.Reconstruction;
 /// <summary>Rebuilds a complete project directory from a compiled assembly.</summary>
 public static class ProjectReconstructor
 {
-	public static ReconstructionResult Reconstruct(string assemblyPath, string outputDirectory)
+	public static ReconstructionResult Reconstruct(string assemblyPath, string outputDirectory, ReconstructionOptions? options = null)
 	{
+		options ??= ReconstructionOptions.Default;
 		assemblyPath = Path.GetFullPath(assemblyPath);
 		Directory.CreateDirectory(outputDirectory);
 
@@ -46,7 +47,7 @@ public static class ProjectReconstructor
 		var settings = new DecompilerSettings(ICSharpCode.Decompiler.CSharp.LanguageVersion.Latest) {
 			UseSdkStyleProjectFormat = true,
 		};
-		var decompiler = new WholeProjectDecompiler(settings, resolver, null, null, debugInfo);
+		var decompiler = new RedecompProjectDecompiler(settings, resolver, debugInfo, options);
 		decompiler.DecompileProject(module, outputDirectory);
 		string projectFile = Directory.EnumerateFiles(outputDirectory, "*.csproj").Single();
 
