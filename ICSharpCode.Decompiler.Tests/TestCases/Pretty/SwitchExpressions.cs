@@ -176,7 +176,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static string Issue2222()
 		{
-			return (string)new ImplicitlyCastToString() switch {
+			return ((string)new ImplicitlyCastToString()) switch {
 				"foo" => "foo",
 				"bar" => "bar",
 				"quux" => "quux",
