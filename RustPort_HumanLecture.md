@@ -4359,6 +4359,20 @@ completes on the invocation's own node, from that node, as it does for nested ca
 
 The share rose from 98.7 % to 98.8 %.
 
+### 3.188 Deconstructing foreach loops (item 68y80)
+
+`DetectGetCurrentTransformation` returns `Deconstruction` where the loop body starts with a
+deconstruction that `CanBeDeconstructedInForeach` accepts: of the getter's value (or its
+address), without init stores or conversions, of the element type, storing into distinct
+locals used in the loop only (distinct by `ILVariableEqualityComparer`, so two locals of one
+slot count as one, which keeps `foreach (var tuple in tuples)` where both targets share a
+name). Such a loop declares `foreach (var (a, (b, _)) in collection)`:
+`TranslateDeconstructionDesignation` turns the pattern into a parenthesized designation of
+the targets, which become foreach locals, and the translated deconstruction, the body's
+first statement, goes. The host writes the designation (a new pair of node kinds) with `var`.
+
+The share rose from 98.8 % to 98.9 %.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

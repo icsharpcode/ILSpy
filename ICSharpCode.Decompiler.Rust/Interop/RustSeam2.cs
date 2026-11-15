@@ -111,6 +111,8 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		public const byte Goto = 66;
 		public const byte DeconstructionTuple = 67;
 		public const byte InDirection = 68;
+		public const byte ParenthesizedDesignation = 69;
+		public const byte SingleDesignation = 70;
 
 		public byte Kind;
 		/// <summary>The instructions the node is annotated with, in order.</summary>
@@ -364,6 +366,19 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				}
 				case RustBodyNode.TypeReference:
 					return Annotate(new TypeReferenceExpression(exprBuilder.ConvertType(node.Type!)), node);
+				case RustBodyNode.ParenthesizedDesignation:
+				{
+					var designations = new ParenthesizedVariableDesignation();
+					designations.VariableDesignations.AddRange(node.Children.Select(c => (VariableDesignation)Build(c, exprBuilder)));
+					return Annotate(designations, node);
+				}
+				case RustBodyNode.SingleDesignation:
+				{
+					var single = new SingleVariableDesignation { Identifier = node.Value is ILVariable v ? v.Name! : "_" };
+					if (node.Value is ILVariable designated)
+						single.AddAnnotation(new ILVariableResolveResult(designated));
+					return single;
+				}
 				case RustBodyNode.InDirection:
 				{
 					var element = (Expression)Build(node.Children[0], exprBuilder);
@@ -618,10 +633,20 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				{
 					// `TransformToForeach`: the variable as the ILAst names and types it now.
 					var variable = (ILVariable)node.Value!;
-					var designation = new SingleVariableDesignation { Identifier = variable.Name! };
-					designation.AddAnnotation(new ILVariableResolveResult(variable, variable.Type));
-					// `var` for a variable of an anonymous type.
-					bool useVar = exprBuilder.settings.AnonymousTypes && variable.Type.ContainsAnonymousType();
+					// A deconstructing foreach declares its targets with `var`.
+					VariableDesignation designation;
+					bool useVar = node.Children.Length == 3;
+					if (useVar)
+					{
+						designation = (VariableDesignation)Build(node.Children[2], exprBuilder);
+					}
+					else
+					{
+						designation = new SingleVariableDesignation { Identifier = variable.Name! };
+						designation.AddAnnotation(new ILVariableResolveResult(variable, variable.Type));
+						// `var` for a variable of an anonymous type.
+						useVar = exprBuilder.settings.AnonymousTypes && variable.Type.ContainsAnonymousType();
+					}
 					var statement = new ForeachStatement {
 						IsAsync = node.Flag,
 						VariableType = useVar ? new SimpleType("var") : exprBuilder.ConvertType(variable.Type),

@@ -896,9 +896,10 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					// Whether it is `await foreach`, the variable, the three instructions of the annotation,
 					// the collection and the body.
 					node.Flag = Bool();
+					bool hasDesignation = Bool();
 					node.Value = Variable();
 					node.ForeachInstructions = [materialized[Len()], materialized[Len()], materialized[Len()]];
-					node.Children = [BodyNode(), BodyNode()];
+					node.Children = hasDesignation ? [BodyNode(), BodyNode(), BodyNode()] : [BodyNode(), BodyNode()];
 					break;
 				case RustBodyNode.DefaultValue:
 					node.Type = Bool() ? Type() : null;
@@ -926,6 +927,14 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 							?? throw new InvalidOperationException("Sub-pattern of a method that is no accessor");
 						node.Children[i] = BodyNode();
 					}
+					break;
+				case RustBodyNode.ParenthesizedDesignation:
+					node.Children = new RustBodyNode[Len()];
+					for (int i = 0; i < node.Children.Length; i++)
+						node.Children[i] = BodyNode();
+					break;
+				case RustBodyNode.SingleDesignation:
+					node.Value = Bool() ? Variable() : null;
 					break;
 				case RustBodyNode.InDirection:
 					node.Children = [BodyNode()];

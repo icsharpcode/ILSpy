@@ -90,6 +90,8 @@ mod kind {
     pub const GOTO: u8 = 66;
     pub const DECONSTRUCTION_TUPLE: u8 = 67;
     pub const IN_DIRECTION: u8 = 68;
+    pub const PARENTHESIZED_DESIGNATION: u8 = 69;
+    pub const SINGLE_DESIGNATION: u8 = 70;
 }
 
 pub(super) fn write_body(
@@ -362,6 +364,8 @@ fn node(w: &mut FunctionWriter<'_, '_, '_, '_>, ast: &Ast, id: AstId) -> Result<
         AstNode::Break => kind::BREAK,
         AstNode::Continue => kind::CONTINUE,
         AstNode::Label { .. } => kind::LABEL,
+        AstNode::ParenthesizedDesignation { .. } => kind::PARENTHESIZED_DESIGNATION,
+        AstNode::SingleDesignation { .. } => kind::SINGLE_DESIGNATION,
         AstNode::InDirection { .. } => kind::IN_DIRECTION,
         AstNode::DeconstructionTuple { .. } => kind::DECONSTRUCTION_TUPLE,
         AstNode::Goto { .. } => kind::GOTO,
@@ -529,6 +533,19 @@ fn node(w: &mut FunctionWriter<'_, '_, '_, '_>, ast: &Ast, id: AstId) -> Result<
         AstNode::Identifier { name } => w.string(&name),
         AstNode::Label { name } | AstNode::Goto { name } => w.string(&name),
         AstNode::InDirection { expression } => node(w, ast, expression)?,
+        AstNode::ParenthesizedDesignation { elements } => {
+            w.out.len(elements.len());
+            for e in elements {
+                node(w, ast, e)?;
+            }
+        }
+        AstNode::SingleDesignation { variable } => {
+            w.out.bool(variable.is_some());
+            if let Some(v) = variable {
+                let i = var_index(w, v)?;
+                w.out.len(i);
+            }
+        }
         AstNode::DeconstructionTuple { elements } => {
             w.out.len(elements.len());
             for e in elements {
@@ -795,8 +812,10 @@ fn node(w: &mut FunctionWriter<'_, '_, '_, '_>, ast: &Ast, id: AstId) -> Result<
             move_next,
             get_current,
             is_async,
+            designation,
         } => {
             w.out.bool(is_async);
+            w.out.bool(designation.is_some());
             let v = var_index(w, variable)?;
             w.out.len(v);
             for inst in [get_enumerator, move_next, get_current] {
@@ -805,6 +824,9 @@ fn node(w: &mut FunctionWriter<'_, '_, '_, '_>, ast: &Ast, id: AstId) -> Result<
             }
             node(w, ast, collection)?;
             node(w, ast, body)?;
+            if let Some(d) = designation {
+                node(w, ast, d)?;
+            }
         }
         AstNode::DefaultValue { ty } => {
             w.out.bool(ty.is_some());

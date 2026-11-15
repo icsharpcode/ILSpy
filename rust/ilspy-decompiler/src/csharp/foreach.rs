@@ -27,6 +27,8 @@ struct GetCurrent {
     existing: Option<VarId>,
     ty: TypeId,
     replaced: NodeId,
+    /// The deconstruction the loop body starts with, which declares the loop's variables.
+    deconstruction: Option<NodeId>,
 }
 
 impl Builder<'_, '_, '_, '_> {
@@ -157,6 +159,7 @@ impl Builder<'_, '_, '_, '_> {
     /// `TransformToForeach(BlockContainer, ...)` where the loop variable is the existing
     /// variable the first statement of the loop body stores `enumerator.Current` (cast to
     /// its type) in (`RequiredGetCurrentTransformation.UseExistingVariable`).
+    #[allow(clippy::too_many_arguments)]
     fn transform_to_foreach_loop(
         &mut self,
         container: NodeId,
@@ -234,63 +237,71 @@ impl Builder<'_, '_, '_, '_> {
                 return Err("a foreach over a dynamic collection".to_owned());
             }
         }
-        if matches!(self.ts.data(getter_type), TypeData::Tuple { .. })
-            || self.ts.tuple_element_types(getter_type).is_some()
+        let (foreach_variable, designation) = if let Some(deconstruction) =
+            get_current.deconstruction
         {
-            return Err("a foreach variable of a tuple type".to_owned());
-        }
+            let (variable, designation) = self.foreach_designation(deconstruction)?;
+            (variable, Some(designation))
+        } else {
+            if matches!(self.ts.data(getter_type), TypeData::Tuple { .. })
+                || self.ts.tuple_element_types(getter_type).is_some()
+            {
+                return Err("a foreach variable of a tuple type".to_owned());
+            }
 
-        let value_context = self.ast.annotations(collection).il.first().copied();
-        let name = self.generate_foreach_variable_name(value_context, get_current.existing)?;
-        let foreach_variable = match get_current.existing {
-            // `UseExistingVariable`: the variable becomes the foreach variable.
-            Some(existing) => {
-                let old_name = self.f.var(existing).name.clone();
-                {
-                    let v = self.f.var_mut(existing);
-                    v.kind = VariableKind::ForeachLocal;
-                    v.name = name.clone();
+            let value_context = self.ast.annotations(collection).il.first().copied();
+            let name = self.generate_foreach_variable_name(value_context, get_current.existing)?;
+            let foreach_variable = match get_current.existing {
+                // `UseExistingVariable`: the variable becomes the foreach variable.
+                Some(existing) => {
+                    let old_name = self.f.var(existing).name.clone();
+                    {
+                        let v = self.f.var_mut(existing);
+                        v.kind = VariableKind::ForeachLocal;
+                        v.name = name.clone();
+                    }
+                    if self.ts.kind(self.f.var(existing).ty)
+                        != crate::semantics::types::TypeKind::Dynamic
+                    {
+                        self.f.var_mut(existing).ty = getter_type;
+                    }
+                    if let Some(n) = self.variable_names.iter_mut().find(|n| **n == old_name) {
+                        *n = name;
+                    }
+                    existing
                 }
-                if self.ts.kind(self.f.var(existing).ty)
-                    != crate::semantics::types::TypeKind::Dynamic
-                {
-                    self.f.var_mut(existing).ty = getter_type;
+                // `IntroduceNewVariable`: a new variable stores the value as the body's first
+                // statement, and its load replaces the value.
+                None => {
+                    let v = self.f.register_variable_named(
+                        self.ts,
+                        VariableKind::ForeachLocal,
+                        getter_type,
+                        Some(&name),
+                    );
+                    // `currentFunction.RegisterVariable`
+                    match self.current_function {
+                        Some(function) => match self.f.inst_mut(function) {
+                            Inst::Function { variables, .. } => variables.push(v),
+                            _ => unreachable!("a function"),
+                        },
+                        None => self.root_variables.push(v),
+                    }
+                    self.variable_names.push(name);
+                    let replaced = get_current.replaced;
+                    let load = self.f.add(Inst::LdLoc { var: v });
+                    self.f.replace(replaced, load);
+                    let store = self.f.add(Inst::StLoc {
+                        var: v,
+                        value: replaced,
+                        il_stack_was_empty: false,
+                        is_stack_adjustment: false,
+                    });
+                    self.f.insert(body_block, 0, store);
+                    v
                 }
-                if let Some(n) = self.variable_names.iter_mut().find(|n| **n == old_name) {
-                    *n = name;
-                }
-                existing
-            }
-            // `IntroduceNewVariable`: a new variable stores the value as the body's first
-            // statement, and its load replaces the value.
-            None => {
-                let v = self.f.register_variable_named(
-                    self.ts,
-                    VariableKind::ForeachLocal,
-                    getter_type,
-                    Some(&name),
-                );
-                // `currentFunction.RegisterVariable`
-                match self.current_function {
-                    Some(function) => match self.f.inst_mut(function) {
-                        Inst::Function { variables, .. } => variables.push(v),
-                        _ => unreachable!("a function"),
-                    },
-                    None => self.root_variables.push(v),
-                }
-                self.variable_names.push(name);
-                let replaced = get_current.replaced;
-                let load = self.f.add(Inst::LdLoc { var: v });
-                self.f.replace(replaced, load);
-                let store = self.f.add(Inst::StLoc {
-                    var: v,
-                    value: replaced,
-                    il_stack_was_empty: false,
-                    is_stack_adjustment: false,
-                });
-                self.f.insert(body_block, 0, store);
-                v
-            }
+            };
+            (foreach_variable, None)
         };
 
         // The modified body as C#: the while loop, without the store to the foreach variable.
@@ -318,6 +329,7 @@ impl Builder<'_, '_, '_, '_> {
             move_next: condition_inst,
             get_current: single_getter,
             is_async,
+            designation,
         });
         for inst in self.ast.annotations(while_loop).il.clone() {
             self.ast.with_il(foreach, inst);
@@ -383,8 +395,17 @@ impl Builder<'_, '_, '_, '_> {
         {
             return Ok(None);
         }
-        if matches!(self.f.inst(first), Inst::Deconstruct { .. }) {
-            return Err("a foreach with a deconstruction".to_owned());
+        // `RequiredGetCurrentTransformation.Deconstruction`
+        if matches!(self.f.inst(first), Inst::Deconstruct { .. })
+            && self.can_be_deconstructed_in_foreach(first, getter, using_container, loop_container)
+        {
+            return Ok(Some(GetCurrent {
+                getter,
+                existing: None,
+                ty: getter_type,
+                replaced: getter,
+                deconstruction: Some(first),
+            }));
         }
         // The value of the first statement: the getter, cast where the variable is of another type.
         let mut inst = getter;
@@ -414,6 +435,7 @@ impl Builder<'_, '_, '_, '_> {
                 existing: Some(var),
                 ty,
                 replaced: inst,
+                deconstruction: None,
             }));
         }
         // `CurrentIsStructSetterTarget`: a struct's setter called on `Current` needs a local copy.
@@ -428,7 +450,176 @@ impl Builder<'_, '_, '_, '_> {
             existing: None,
             ty,
             replaced: inst,
+            deconstruction: None,
         }))
+    }
+
+    /// `CanBeDeconstructedInForeach`: the deconstruction takes the getter's value (or its
+    /// address) without init stores or conversions, and stores into distinct locals of the
+    /// element types that are used in the loop only.
+    fn can_be_deconstructed_in_foreach(
+        &mut self,
+        deconstruction: NodeId,
+        getter: NodeId,
+        using_container: NodeId,
+        loop_container: NodeId,
+    ) -> bool {
+        let Inst::Deconstruct {
+            init,
+            pattern,
+            conversions,
+            assignments,
+        } = self.f.inst(deconstruction).clone()
+        else {
+            return false;
+        };
+        let instructions = |b: &Self, block: NodeId| match b.f.inst(block) {
+            Inst::Block { instructions, .. } => instructions.clone(),
+            _ => Vec::new(),
+        };
+        if !init.is_empty() || !instructions(self, conversions).is_empty() {
+            return false;
+        }
+        let Inst::Match {
+            tested_operand,
+            variable,
+            ..
+        } = *self.f.inst(pattern)
+        else {
+            return false;
+        };
+        if tested_operand != getter
+            && !matches!(*self.f.inst(tested_operand), Inst::AddressOf { value, .. } if value == getter)
+        {
+            return false;
+        }
+        let n = crate::typesystem::fnptr::Normalization::TYPE_ERASURE;
+        let operand_type = self.f.infer_type(self.ts, getter);
+        let expected = self.f.var(variable).ty;
+        if self.ts.normalize_with(operand_type, n) != self.ts.normalize_with(expected, n) {
+            return false;
+        }
+        let mut used = Vec::new();
+        for item in instructions(self, assignments) {
+            let Inst::StLoc { var, value, .. } = *self.f.inst(item) else {
+                return false;
+            };
+            let Inst::LdLoc { var: source } = *self.f.inst(value) else {
+                return false;
+            };
+            let (vt, st) = (self.f.var(var).ty, self.f.var(source).ty);
+            if self.ts.normalize_with(vt, n) != self.ts.normalize_with(st, n) {
+                return false;
+            }
+            if !matches!(
+                self.f.var(var).kind,
+                VariableKind::StackSlot | VariableKind::Local
+            ) {
+                return false;
+            }
+            if !self.variable_is_only_used_in_block(var, item, using_container, loop_container) {
+                return false;
+            }
+            let scope = self.f.var(var).capture_scope;
+            if !(scope.is_none() || scope == Some(using_container)) {
+                return false;
+            }
+            // `ILVariableEqualityComparer`: locals of one slot are one variable.
+            let same = |b: &Self, u: VarId| {
+                let (x, y) = (b.f.var(u), b.f.var(var));
+                u == var
+                    || (x.kind == y.kind
+                        && !matches!(x.kind, VariableKind::StackSlot | VariableKind::PatternLocal)
+                        && x.index.is_some()
+                        && x.index == y.index)
+            };
+            if used.iter().any(|&u| same(self, u)) {
+                return false;
+            }
+            used.push(var);
+        }
+        true
+    }
+
+    /// `TranslateDeconstructionDesignation(inst, isForeach: true)`: the designation of the
+    /// deconstruction's targets, which become foreach locals, and the pattern's variable.
+    fn foreach_designation(
+        &mut self,
+        deconstruction: NodeId,
+    ) -> Result<(VarId, AstId), Unsupported> {
+        let Inst::Deconstruct {
+            pattern,
+            assignments,
+            ..
+        } = self.f.inst(deconstruction).clone()
+        else {
+            unreachable!("a deconstruction");
+        };
+        let Inst::Match { variable, .. } = *self.f.inst(pattern) else {
+            return Err("a deconstruction of another pattern".to_owned());
+        };
+        let stores = match self.f.inst(assignments) {
+            Inst::Block { instructions, .. } => instructions.clone(),
+            _ => Vec::new(),
+        };
+        let mut position = 0;
+        let designation = self.construct_designation(pattern, &stores, &mut position)?;
+        Ok((variable, designation))
+    }
+
+    /// `ConstructDesignation(matchInstruction)`
+    fn construct_designation(
+        &mut self,
+        pattern: NodeId,
+        stores: &[NodeId],
+        position: &mut usize,
+    ) -> Result<AstId, Unsupported> {
+        let Inst::Match { sub_patterns, .. } = self.f.inst(pattern).clone() else {
+            return Err("a deconstruction of another pattern".to_owned());
+        };
+        let mut elements = Vec::with_capacity(sub_patterns.len());
+        for sub in sub_patterns {
+            let Inst::Match {
+                variable,
+                sub_patterns: nested,
+                is_deconstruct_call,
+                is_deconstruct_tuple,
+                check_type,
+                check_not_null,
+                ..
+            } = self.f.inst(sub).clone()
+            else {
+                return Err("a deconstruction of another sub-pattern".to_owned());
+            };
+            let is_var = !check_type
+                && !check_not_null
+                && !is_deconstruct_call
+                && !is_deconstruct_tuple
+                && nested.is_empty();
+            if !is_var {
+                elements.push(self.construct_designation(sub, stores, position)?);
+                continue;
+            }
+            let v = self.f.var(variable);
+            let designated = if v.load_count() + v.address_count() > 0 {
+                let store = *stores
+                    .get(*position)
+                    .ok_or("a deconstruction with fewer assignments than variables")?;
+                *position += 1;
+                let Inst::StLoc { var, .. } = *self.f.inst(store) else {
+                    return Err("a deconstruction assignment of another kind".to_owned());
+                };
+                self.f.var_mut(var).kind = VariableKind::ForeachLocal;
+                Some(var)
+            } else {
+                None
+            };
+            elements.push(self.ast.add(AstNode::SingleDesignation {
+                variable: designated,
+            }));
+        }
+        let d = self.ast.add(AstNode::ParenthesizedDesignation { elements });
+        Ok(self.ast.with_il(d, pattern))
     }
 
     /// `VariableIsOnlyUsedInBlock`: `var` is loaded only inside `using_container`, its

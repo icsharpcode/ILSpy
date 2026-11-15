@@ -678,7 +678,9 @@ the reasons. This file holds only the ordered steps, their gates and their rules
     `Translate await foreach in the engine`.
   - [x] 68y79. Ref-returning calls (lecture 3.187). Subject:
     `Translate ref-returning calls in the engine`.
-  - [ ] 68y80-. Further construct groups (numbered on from 68y1), in the order of the fallback reasons the ratchet test
+  - [x] 68y80. Deconstructing foreach loops (lecture 3.188). Subject:
+    `Translate deconstructing foreach loops in the engine`.
+  - [ ] 68y81-. Further construct groups (numbered on from 68y1), in the order of the fallback reasons the ratchet test
     prints, until no body of the corpus falls back. Subject pattern:
     `Translate <construct group> to C# in the engine`.
   - [ ] 68z. Request-level seam 2. Subject: `Add the Rust C# AST builders and the AST materializer`.

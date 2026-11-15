@@ -188,6 +188,12 @@ pub enum AstNode {
     Continue,
     /// `TupleExpression` of the targets of a deconstruction, without resolve result.
     DeconstructionTuple { elements: Vec<AstId> },
+    /// `ParenthesizedVariableDesignation` of a deconstruction's targets.
+    ParenthesizedDesignation { elements: Vec<AstId> },
+    /// `SingleVariableDesignation` of a variable, or `_`.
+    SingleDesignation {
+        variable: Option<crate::il::ast::VarId>,
+    },
     /// `LabelStatement` of the label `name`.
     Label { name: String },
     /// `GotoStatement` to the label `name`.
@@ -266,6 +272,9 @@ pub enum AstNode {
         get_current: NodeId,
         /// `IsAsync`: `await foreach`.
         is_async: bool,
+        /// The designation of a deconstructing foreach (`var (a, b)`), whose `variable` is the
+        /// pattern's.
+        designation: Option<AstId>,
     },
     /// `ObjectCreateExpression` of a delegate from a method reference, with the
     /// `ConversionResolveResult` of the method group conversion the host computes.
