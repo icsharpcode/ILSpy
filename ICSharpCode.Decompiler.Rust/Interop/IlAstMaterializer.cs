@@ -423,6 +423,15 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 			{
 				var method = CallMethod();
 				byte targetKind = U8();
+				if (targetKind == 4)
+				{
+					// `CallBuilder.ToMethodGroup` of a local function.
+					string name = Str();
+					Len();
+					return new MethodGroupResolveResult(null, name,
+						new[] { new MethodListWithDeclaringType(method.DeclaringType, new IParameterizedMember[] { method }) },
+						method.TypeArguments);
+				}
 				bool nonVirtual = targetKind == 1 && Bool();
 				var target = targetKind == 0 ? null : Type();
 				var typeArguments = new IType[Len()];

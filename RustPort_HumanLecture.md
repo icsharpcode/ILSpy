@@ -4253,6 +4253,16 @@ already did. The body-wide refusal is gone.
 
 The share rose from 97.9 % to 98.0 %.
 
+### 3.180 Local function groups in extension method questions (item 68y72)
+
+A local function passed to an extension method (`items.Select(Local)`) is a method group the
+host cannot find by looking its name up, so the question 3.167 sends could not carry it. The
+operand now has a fourth kind of target for it: the local function's name with its reduced
+method, from which the host builds the method group as `CallBuilder.ToMethodGroup` does,
+without lookup.
+
+The share rose from 98.0 % to 98.1 %.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

@@ -1858,6 +1858,11 @@ pub fn extension_method_syntax_query(
                 w.out.u8(5);
                 w.call_method(group.method)?;
                 match group.target {
+                    // 4: a local function's group, by its name.
+                    None if group.local_function.is_some() => {
+                        w.out.u8(4);
+                        w.string(group.local_function.unwrap_or_default());
+                    }
                     None => w.out.u8(0),
                     Some(LookupTarget::This {
                         ty,

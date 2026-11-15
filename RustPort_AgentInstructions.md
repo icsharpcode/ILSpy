@@ -662,7 +662,9 @@ the reasons. This file holds only the ordered steps, their gates and their rules
     Subject: `Translate conditional refs and named arguments of found overloads in the engine`.
   - [x] 68y71. Casts inside references and array lengths (lecture 3.179). Subject:
     `Translate casts inside references and array lengths in the engine`.
-  - [ ] 68y72-. Further construct groups (numbered on from 68y1), in the order of the fallback reasons the ratchet test
+  - [x] 68y72. Local function groups in extension method questions (lecture 3.180). Subject:
+    `Pass local function groups to the host in extension method questions`.
+  - [ ] 68y73-. Further construct groups (numbered on from 68y1), in the order of the fallback reasons the ratchet test
     prints, until no body of the corpus falls back. Subject pattern:
     `Translate <construct group> to C# in the engine`.
   - [ ] 68z. Request-level seam 2. Subject: `Add the Rust C# AST builders and the AST materializer`.

@@ -486,6 +486,9 @@ pub struct MethodGroupOperand<'a> {
     pub method: &'a super::ast::MethodOperand,
     pub target: Option<LookupTarget>,
     pub type_arguments: &'a [TypeId],
+    /// The name of a local function's method group (`ToMethodGroup`), which the host builds
+    /// without lookup.
+    pub local_function: Option<&'a str>,
 }
 
 /// A `CanTransformToExtensionMethodCall` question.

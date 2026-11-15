@@ -720,7 +720,10 @@ impl Builder<'_, '_, '_, '_> {
                         Some(&Rr::Type(ty)) => Some(LookupTarget::Type(ty)),
                         Some(rr) => Some(LookupTarget::Expression(self.rr_type(rr))),
                     };
-                    Some((*method, target, type_arguments))
+                    Some((*method, target, type_arguments, None))
+                }
+                Rr::LocalFunctionGroup { name, method, .. } => {
+                    Some((*method, None, Vec::new(), Some(name)))
                 }
                 _ => None,
             });
@@ -732,11 +735,14 @@ impl Builder<'_, '_, '_, '_> {
             .iter()
             .map(|g| {
                 g.as_ref()
-                    .map(|(method, target, type_arguments)| MethodGroupOperand {
-                        method,
-                        target: *target,
-                        type_arguments,
-                    })
+                    .map(
+                        |(method, target, type_arguments, local_function)| MethodGroupOperand {
+                            method,
+                            target: *target,
+                            type_arguments,
+                            local_function: local_function.as_deref(),
+                        },
+                    )
             })
             .collect();
         // The question carries expressions, constants, references, `out var`, lambdas and
