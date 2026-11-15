@@ -4211,6 +4211,22 @@ types still fall back.
 
 The share rose from 97.6 % to 97.7 %.
 
+### 3.177 A batch: inline setter assignments, leaves out of nested containers (item 68y69)
+
+*Inline setter assignments.* A `CallInlineAssign` block (a setter called with the store of a
+temporary that the block then yields) is `TranslateSetterCallAssignment`: the setter call
+built with the stored value as its last argument, written as the property assignment.
+
+*Leaves out of nested containers.* `VisitLeave` of a leave that neither breaks nor returns
+is `continue` where the container is the try block of a block that branches to the continue
+target next, and otherwise `goto` a label at the end of the container (`endContainerLabels`):
+`end_` with the label of the container's entry point, counted with the block labels where
+it repeats. `ConvertBlockContainer` writes the label after the container's blocks, a loop
+continuing before it and breaking after it. Each nested function has its own table, as the
+managed statement builder does.
+
+The share rose from 97.7 % to 97.8 %.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

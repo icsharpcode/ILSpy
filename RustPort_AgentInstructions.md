@@ -656,7 +656,9 @@ the reasons. This file holds only the ordered steps, their gates and their rules
     `Translate initializers of other creations and anonymous foreach variables in the engine`.
   - [x] 68y68. Reference comparisons past user-defined operators (lecture 3.176). Subject:
     `Translate reference comparisons of types with equality operators in the engine`.
-  - [ ] 68y69-. Further construct groups (numbered on from 68y1), in the order of the fallback reasons the ratchet test
+  - [x] 68y69. A batch (lecture 3.177): inline setter assignments and leaves out of nested
+    containers. Subject: `Translate inline setter assignments and container end labels in the engine`.
+  - [ ] 68y70-. Further construct groups (numbered on from 68y1), in the order of the fallback reasons the ratchet test
     prints, until no body of the corpus falls back. Subject pattern:
     `Translate <construct group> to C# in the engine`.
   - [ ] 68z. Request-level seam 2. Subject: `Add the Rust C# AST builders and the AST materializer`.

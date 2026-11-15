@@ -1340,7 +1340,7 @@ fn match_assignment(
 
 /// `Block.MatchInlineAssignBlock`: `Block CallInlineAssign { call set_P(..., stloc tmp(value));
 /// final: ldloc tmp }`; the call and the value.
-fn match_inline_assign_block(f: &Function, block: NodeId) -> Option<(NodeId, NodeId)> {
+pub(crate) fn match_inline_assign_block(f: &Function, block: NodeId) -> Option<(NodeId, NodeId)> {
     let Inst::Block {
         kind: BlockKind::CallInlineAssign,
         ref instructions,

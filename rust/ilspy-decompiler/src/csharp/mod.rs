@@ -81,6 +81,8 @@ pub(crate) struct Builder<'f, 't, 'c, 'a> {
     pub(crate) current_function: Option<NodeId>,
     /// `labels`: the label `EnsureUniqueLabel` gave each block of the current function.
     pub(crate) labels: Vec<(NodeId, String)>,
+    /// `endContainerLabels`: the label `goto` of a leave out of each container targets.
+    pub(crate) end_container_labels: Vec<(NodeId, String)>,
     /// `duplicateLabels`: how many blocks share each `Block.Label`.
     pub(crate) duplicate_labels: std::collections::HashMap<String, u32>,
 }

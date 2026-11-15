@@ -430,6 +430,24 @@ impl Builder<'_, '_, '_, '_> {
                 instructions,
                 final_inst,
             } => self.call_with_named_args(inst, &instructions, final_inst),
+            // `TranslateSetterCallAssignment`: the setter call with the stored value as its value.
+            Inst::Block {
+                kind: BlockKind::CallInlineAssign,
+                ..
+            } => {
+                let (call, value) =
+                    crate::il::transforms::deconstruction_transform::match_inline_assign_block(
+                        self.f, inst,
+                    )
+                    .ok_or("an inline assign block of another shape")?;
+                let (mut data, op) = match self.f.inst(call).clone() {
+                    Inst::Call(c) => (c, super::call_builder::CallOp::Call),
+                    Inst::CallVirt(c) => (c, super::call_builder::CallOp::CallVirt),
+                    _ => return Err("an inline assign block of another call".to_owned()),
+                };
+                *data.args.last_mut().expect("a setter value") = value;
+                self.call(call, &data, op)
+            }
             Inst::Block { kind, .. } => Err(format!("a block of kind {kind:?}")),
             Inst::Conv {
                 arg,

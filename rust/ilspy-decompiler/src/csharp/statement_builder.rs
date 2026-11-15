@@ -64,6 +64,7 @@ pub fn convert_body(
         in_local_function: false,
         current_function: None,
         labels: Vec::new(),
+        end_container_labels: Vec::new(),
         duplicate_labels: std::collections::HashMap::new(),
     };
     b.begin_local_functions()?;
@@ -595,7 +596,77 @@ impl Builder<'_, '_, '_, '_> {
                 statements.push(stmt);
             }
         }
+        // The label of the leaves out of the container, after its blocks; a loop goes on with
+        // `continue` before it and ends with `break` after it.
+        if let Some(label) = self
+            .end_container_labels
+            .iter()
+            .find(|(c, _)| *c == container)
+            .map(|(_, l)| l.clone())
+        {
+            let last_is_continue = matches!(self.ast.node(block_statement), AstNode::Block { statements } if statements.last().is_some_and(|&s| matches!(self.ast.node(s), AstNode::Continue)));
+            let mut added = Vec::new();
+            if is_loop && !last_is_continue {
+                added.push(self.ast.add(AstNode::Continue));
+            }
+            added.push(self.ast.add(AstNode::Label { name: label }));
+            if is_loop {
+                added.push(self.ast.add(AstNode::Break));
+            }
+            let AstNode::Block { statements } = self.ast.node_mut(block_statement) else {
+                unreachable!("a block statement");
+            };
+            statements.extend(added);
+        }
         Ok(block_statement)
+    }
+
+    /// `VisitLeave` of a leave out of a nested container: `continue` where the container is
+    /// the try block of a block that branches to the continue target next, else `goto` the
+    /// label at the end of the container, `end_` and its entry point's label (counted with
+    /// the block labels where it repeats).
+    fn leave_to_label(&mut self, inst: NodeId, target: NodeId) -> AstId {
+        if let Some(continue_target) = self.continue_target
+            && let Some(try_inst) = self.f.node(target).parent
+            && matches!(
+                self.f.inst(try_inst),
+                Inst::TryCatch { .. } | Inst::TryFinally { .. } | Inst::TryFault { .. }
+            )
+            && let Some(block) = self.f.node(try_inst).parent
+            && let Inst::Block { instructions, .. } = self.f.inst(block)
+            && instructions.last().is_some_and(|&l| {
+                matches!(*self.f.inst(l), Inst::Branch { target: BranchTarget::Block(t) } if t == continue_target)
+            })
+        {
+            let s = self.ast.add(AstNode::Continue);
+            return self.ast.with_il(s, inst);
+        }
+        let label = match self.end_container_labels.iter().find(|(c, _)| *c == target) {
+            Some((_, label)) => label.clone(),
+            None => {
+                let entry = match self.f.inst(target) {
+                    Inst::BlockContainer { blocks, .. } => blocks.first().copied(),
+                    _ => None,
+                };
+                let target_label = entry.map_or(String::new(), |b| {
+                    format!("IL_{:04x}", self.f.il_range(b).start)
+                });
+                let mut label = format!("end_{target_label}");
+                match self.duplicate_labels.get_mut(&label) {
+                    None => {
+                        self.duplicate_labels.insert(label.clone(), 1);
+                    }
+                    Some(count) => {
+                        *count += 1;
+                        label = format!("{label}_{count}");
+                    }
+                }
+                self.end_container_labels.push((target, label.clone()));
+                label
+            }
+        };
+        let s = self.ast.add(AstNode::Goto { name: label });
+        self.ast.with_il(s, inst)
     }
 
     /// `EnsureUniqueLabel(block)`: `Block.Label`, with a counter where blocks share it.
@@ -837,7 +908,8 @@ impl Builder<'_, '_, '_, '_> {
             return Ok(self.ast.with_il(s, inst));
         }
         if target != Some(self.return_container) {
-            return Err("a leave out of a nested container".to_owned());
+            let target = target.ok_or("a leave without target")?;
+            return Ok(self.leave_to_label(inst, target));
         }
         if self.is_iterator {
             let s = self.ast.add(AstNode::YieldBreak);
