@@ -604,6 +604,8 @@ namespace ICSharpCode.ILSpyX
 
 		sealed class MyAssemblyResolver : IAssemblyResolver, IReferenceLoadInfoProvider
 		{
+			static readonly char[] invalidModuleNameCharacters = { '/', '\\', ':' };
+
 			readonly LoadedAssembly parent;
 			readonly bool loadOnDemand;
 			readonly bool applyWinRTProjections;
@@ -745,6 +747,9 @@ namespace ICSharpCode.ILSpyX
 
 			public async Task<MetadataFile?> ResolveModuleAsync(MetadataFile mainModule, string moduleName)
 			{
+				if (moduleName.IndexOfAny(invalidModuleNameCharacters) >= 0)
+					return null;
+
 				if (providedAssemblyResolver != null)
 				{
 					var module = await providedAssemblyResolver.ResolveModuleAsync(mainModule, moduleName).ConfigureAwait(false);

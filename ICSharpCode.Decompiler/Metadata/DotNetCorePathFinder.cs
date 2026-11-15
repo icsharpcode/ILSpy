@@ -231,14 +231,21 @@ namespace ICSharpCode.Decompiler.Metadata
 
 		static bool IsWithinDirectory(string directory, string path)
 		{
-			string fullDirectory = Path.GetFullPath(directory);
-			if (!fullDirectory.EndsWith(Path.DirectorySeparatorChar.ToString(), StringComparison.Ordinal))
-				fullDirectory += Path.DirectorySeparatorChar;
-			string fullPath = Path.GetFullPath(path);
-			var comparison = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
-				? StringComparison.OrdinalIgnoreCase
-				: StringComparison.Ordinal;
-			return fullPath.StartsWith(fullDirectory, comparison);
+			try
+			{
+				string fullDirectory = Path.GetFullPath(directory);
+				if (!fullDirectory.EndsWith(Path.DirectorySeparatorChar.ToString(), StringComparison.Ordinal))
+					fullDirectory += Path.DirectorySeparatorChar;
+				string fullPath = Path.GetFullPath(path);
+				var comparison = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+					? StringComparison.OrdinalIgnoreCase
+					: StringComparison.Ordinal;
+				return fullPath.StartsWith(fullDirectory, comparison);
+			}
+			catch (Exception ex) when (ex is ArgumentException or NotSupportedException or PathTooLongException)
+			{
+				return false;
+			}
 		}
 
 		public string TryResolveDotNetCoreShared(IAssemblyReference name, out string runtimePack)
