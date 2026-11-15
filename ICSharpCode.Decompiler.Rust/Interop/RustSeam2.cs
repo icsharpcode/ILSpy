@@ -686,7 +686,16 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				case RustBodyNode.YieldBreak:
 					return Annotate(new YieldBreakStatement(), node);
 				case RustBodyNode.ArrayInitializer:
-					return Annotate(new ArrayInitializerExpression(node.Children.Select(c => (Expression)Build(c, exprBuilder))), node);
+				{
+					var elements = node.Children.Select(c => (Expression)Build(c, exprBuilder)).ToList();
+					// A collection initializer's `Add` call with several arguments.
+					if (node.Call is var (callTarget, callMethod, isExtension, _, _, isExpanded))
+					{
+						node.ResolveResult = new CSharpInvocationResolveResult(callTarget!, callMethod,
+							elements.Select(e => e.GetResolveResult()).ToArray(), isExtensionMethodInvocation: isExtension, isExpandedForm: isExpanded);
+					}
+					return Annotate(new ArrayInitializerExpression(elements), node);
+				}
 				case RustBodyNode.ArrayCreate:
 				{
 					// `TranslateArrayInitializer`, or `VisitNewArr` without initializer.

@@ -416,7 +416,7 @@ impl Builder<'_, '_, '_, '_> {
                 ..
             } => self.interpolated_string(inst, &instructions),
             Inst::Block {
-                kind: BlockKind::ObjectInitializer,
+                kind: BlockKind::ObjectInitializer | BlockKind::CollectionInitializer,
                 instructions,
                 final_inst,
             } => self.object_initializer(inst, &instructions, final_inst),
@@ -2474,6 +2474,28 @@ impl Builder<'_, '_, '_, '_> {
         let is_target = |b: &Self, n: NodeId| matches!(*b.f.inst(n), Inst::LdLoc { var: v } | Inst::LdLoca { var: v } if v == var);
         let mut elements = Vec::with_capacity(rest.len());
         for &element in rest {
+            // `AccessPathKind.Adder`: an `Add` call on the object itself.
+            if let Inst::Call(c) | Inst::CallVirt(c) = self.f.inst(element).clone()
+                && c.method.method.accessor_kind != ACCESSOR_SETTER
+                && c.args.first().is_some_and(|&a| is_target(self, a))
+            {
+                if c.args[1..].iter().any(|&a| {
+                    self.f
+                        .descendants_post(a)
+                        .into_iter()
+                        .any(|n| is_target(self, n))
+                }) {
+                    return Err("an initializer value that uses the object".to_owned());
+                }
+                let op = if matches!(self.f.inst(element), Inst::CallVirt(_)) {
+                    super::call_builder::CallOp::CallVirt
+                } else {
+                    super::call_builder::CallOp::Call
+                };
+                let e = self.collection_initializer_element(element, &c, op, creation)?;
+                elements.push(e);
+                continue;
+            }
             // `GetAccessPath` of a setter on the object itself.
             let (name, member_type, value, member) = match self.f.inst(element).clone() {
                 Inst::StObj { target, value, .. } => {

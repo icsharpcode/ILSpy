@@ -4299,6 +4299,21 @@ needs it still falls back.
 
 The share rose from 98.1 % to 98.3 %.
 
+### 3.183 Collection initializers (item 68y75)
+
+A `CollectionInitializer` block takes the path of the object initializer
+(`TranslateObjectAndCollectionInitializer`); an `Add` call on the initialized object itself
+(`AccessPathKind.Adder`) is `BuildCollectionInitializerExpression`: the argument list without
+names, resolved against the `Add` method group of the initialized object's type, then with
+optional arguments spelled out and with cast arguments where it resolves to another method
+(the `NoOptionalArgumentAllowed` and `CastArguments` steps, the only ones collection
+initializer syntax has room for). A single argument is the element itself; several are
+`{ a, b }` with the `CSharpInvocationResolveResult` of the call over the
+`InitializedObjectResolveResult`, which the host now completes on an initializer node.
+Extension `Add` methods, expanded `params` and nested paths still fall back.
+
+The share rose from 98.3 % to 98.4 %.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

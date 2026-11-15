@@ -2061,6 +2061,82 @@ impl Builder<'_, '_, '_, '_> {
         })
     }
 
+    /// `BuildCollectionInitializerExpression`: an element of a collection initializer, the
+    /// argument of a one-argument `Add` or `{ a, b }`, its arguments cast where the `Add` group of
+    /// the initialized object would resolve to another method (`CastArguments`, after
+    /// `NoOptionalArgumentAllowed`). Extension methods and expanded `params` are not translated.
+    pub(crate) fn collection_initializer_element(
+        &mut self,
+        element: NodeId,
+        call: &CallData,
+        op: CallOp,
+        object: TranslatedExpression,
+    ) -> Result<AstId, Unsupported> {
+        let operand = &call.method;
+        let MethodOrigin::Def(id) = operand.method.origin else {
+            return Err("a collection initializer of an unresolved method".to_owned());
+        };
+        if self.ts.method_flags(id, None).extension {
+            return Err("a collection initializer of an extension method".to_owned());
+        }
+        let method = Method::from_resolved(self.ts, &operand.method)
+            .ok_or("a collection initializer of an unresolved method")?;
+        let declaring = method.declaring.ok_or("a method without declaring type")?;
+        let mut list = self.argument_list(call, &method, id, 1, declaring, false)?;
+        if list.params_candidate.is_some() {
+            return Err("a collection initializer of a params method".to_owned());
+        }
+        list.add_names_to_primitive_values = false;
+        list.use_implicitly_typed_out = false;
+        let resolver = self
+            .resolver
+            .ok_or("a member reference without the host's resolver")?;
+        let lookup = Some(LookupTarget::Expression(object.ty));
+        let mut spent_optional = false;
+        let mut spent_cast = false;
+        loop {
+            let errors = self.probe_call(resolver, &method, op, lookup, &object, &list, &[])?;
+            self.found_override = None;
+            if errors == OverloadResolutionErrors::NONE {
+                break;
+            }
+            if !spent_optional && list.first_optional >= 0 {
+                spent_optional = true;
+                list.first_optional = -1;
+                continue;
+            }
+            if !spent_cast {
+                spent_cast = true;
+                let expected = list.expected_parameters(&method);
+                self.cast_arguments(&mut list.arguments, &expected)?;
+                continue;
+            }
+            break;
+        }
+        // One argument needs no braces; the first optional argument is ignored then.
+        if let [argument] = list.arguments[..] {
+            return Ok(self.ast.with_il(argument.expression, element));
+        }
+        let arguments = self.written_arguments(&list, 0);
+        let e = self.ast.add(AstNode::ArrayInitializer {
+            elements: arguments,
+        });
+        self.ast.with_rr(
+            e,
+            Rr::Invocation {
+                target: Box::new(Rr::InitializedObject(object.ty)),
+                method: Box::new(operand.clone()),
+                ty: method.return_type,
+                extension: false,
+                delegate: false,
+                found_by_lookup: false,
+                expanded: list.is_expanded_form,
+                method_args: None,
+            },
+        );
+        Ok(self.ast.with_il(e, element))
+    }
+
     /// `CallWithNamedArgs`: the call with the arguments the block stores in temporaries first,
     /// in their order, then the others, each with the index of its parameter.
     pub(crate) fn call_with_named_args(
