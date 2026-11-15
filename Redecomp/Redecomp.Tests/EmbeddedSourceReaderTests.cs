@@ -18,6 +18,8 @@
 
 using Redecomp.Core.Recovery;
 
+using Redecomp.Bench;
+
 namespace Redecomp.Tests;
 
 public static class EmbeddedSourceReaderTests

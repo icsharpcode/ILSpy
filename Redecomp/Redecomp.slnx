@@ -1,5 +1,6 @@
 <Solution>
   <Project Path="Redecomp.Core/Redecomp.Core.csproj" />
   <Project Path="Redecomp.Cli/Redecomp.Cli.csproj" />
+  <Project Path="Redecomp.Bench/Redecomp.Bench.csproj" />
   <Project Path="Redecomp.Tests/Redecomp.Tests.csproj" />
 </Solution>

@@ -18,6 +18,8 @@
 
 using Redecomp.Core.Reconstruction;
 
+using Redecomp.Bench;
+
 namespace Redecomp.Tests;
 
 public static class ProjectReconstructorTests

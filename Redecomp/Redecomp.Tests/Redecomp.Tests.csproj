@@ -5,6 +5,6 @@
     <RedecompReferencesDecompiler>true</RedecompReferencesDecompiler>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="../Redecomp.Core/Redecomp.Core.csproj" />
+    <ProjectReference Include="../Redecomp.Bench/Redecomp.Bench.csproj" />
   </ItemGroup>
 </Project>

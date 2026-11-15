@@ -18,7 +18,7 @@
 
 using System.Diagnostics;
 
-namespace Redecomp.Tests;
+namespace Redecomp.Bench;
 
 /// <summary>How a sample is compiled; each variant ships a different amount of debug information.</summary>
 public enum BuildVariant

@@ -14,9 +14,9 @@ Un compilateur jette de l'information : les commentaires, souvent les noms des v
 
 | Phase | Contenu | Statut |
 |---|---|---|
-| 0 | Base du projet, build hors ligne, CI | en cours |
-| 1 | Banc d'essai : corpus d'applis avec sources connues et score automatique | à faire |
-| 2 | Récupération : sources embarquées, PDB, SourceLink, chemins d'origine, `deps.json` → NuGet, fichiers de publication, `Nullable`/`ImplicitUsings`, constantes | à faire |
+| 0 | Base du projet, build hors ligne | fait |
+| 1 | Banc d'essai : corpus d'applis avec sources connues et score automatique | fait (1 appli, à enrichir) |
+| 2 | Récupération : sources embarquées ✅, PDB, SourceLink, chemins d'origine, `deps.json` → NuGet, fichiers de publication, `Nullable`/`ImplicitUsings`, constantes | à faire |
 | 3 | Moteur de nommage déterministe (règles classées par niveau de confiance) | à faire |
 | 4 | Couche IA : renommage et commentaires, IL vérifié identique après chaque changement | à faire |
 | 5 | Cas spéciaux : Razor, Blazor, BAML, single-file, ReadyToRun, obfuscation | à faire |
@@ -42,6 +42,16 @@ Pour chaque variable locale, on applique la règle de plus haute confiance qui s
 5. variable de boucle sur une collection → singulier de la collection (`Lignes` → `ligne`) ;
 6. à défaut, nom dérivé du type.
 
+## Banc d'essai
+
+`Redecomp.Bench` compile chaque appli de `samples/` en trois variantes (sans PDB, avec PDB et doc XML, avec sources embarquées), la reconstruit, puis compare le résultat aux sources d'origine. Le dernier score est dans [`bench/results.md`](bench/results.md). Pour le mettre à jour :
+
+```
+dotnet run --project Redecomp.Bench -- --out bench/results.md
+```
+
+Les tests se lancent avec `dotnet run --project Redecomp.Tests` (un filtre optionnel en argument).
+
 ## Build
 
 Avec accès à NuGet, depuis ce dossier :
@@ -60,5 +70,7 @@ dotnet build Redecomp.slnx -p:RedecompDecompilerAssembly=/chemin/vers/ICSharpCod
 
 - `Redecomp.Core/` : la bibliothèque (récupération, reconstruction)
 - `Redecomp.Cli/` : l'outil en ligne de commande `redecomp`
+- `Redecomp.Bench/` : le banc d'essai
 - `Redecomp.Tests/` : les tests, exécutables sans package NuGet
+- `bench/` : les derniers scores du banc d'essai
 - `samples/` : les applis témoins du banc d'essai, avec leurs sources d'origine
