@@ -4327,6 +4327,17 @@ knows whether the current function (the method or a local function) is async.
 
 The share rose from 98.4 % to 98.5 %.
 
+### 3.185 Tuple elements of call results (item 68y77)
+
+A tuple element (`ItemN` or its name) on the result of a call or property is now translated
+where the member is a non-generic method of a non-generic type: its return type is the one of
+its signature, with the element names of the return's `[TupleElementNames]`, which the engine
+reads as the managed type system does. A member of a generic type, or a generic method, is
+substituted from the IL reference without the names the target's type gives its type
+arguments, and still falls back.
+
+The share rose from 98.5 % to 98.6 %.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

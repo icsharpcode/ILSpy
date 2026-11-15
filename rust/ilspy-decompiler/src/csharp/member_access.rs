@@ -223,6 +223,20 @@ impl Builder<'_, '_, '_, '_> {
                 .field
                 .declaring
                 .is_some_and(|d| !matches!(self.ts.data(d), TypeData::Inst { .. })),
+            // A non-generic method of a non-generic type returns the type of its signature,
+            // with the names of its return's `[TupleElementNames]`.
+            Rr::Invocation { method, .. }
+            | Rr::Property {
+                accessor: method, ..
+            } => {
+                let declared = method
+                    .method
+                    .declaring
+                    .is_some_and(|d| !matches!(self.ts.data(d), TypeData::Inst { .. }));
+                declared
+                    && crate::semantics::Method::from_resolved(self.ts, &method.method)
+                        .is_some_and(|m| m.method_args.is_none_or(|a| a.is_empty()))
+            }
             _ => false,
         };
         if !names_known || !matches!(self.ts.data(translated.ty), TypeData::Tuple { .. }) {

@@ -672,7 +672,9 @@ the reasons. This file holds only the ordered steps, their gates and their rules
     `Translate collection initializers in the engine`.
   - [x] 68y76. A batch (lecture 3.184): unboxing to type parameters and async iterators. Subject:
     `Translate type parameter unboxing and async iterators in the engine`.
-  - [ ] 68y77-. Further construct groups (numbered on from 68y1), in the order of the fallback reasons the ratchet test
+  - [x] 68y77. Tuple elements of call and property results (lecture 3.185). Subject:
+    `Translate tuple elements of call results in the engine`.
+  - [ ] 68y78-. Further construct groups (numbered on from 68y1), in the order of the fallback reasons the ratchet test
     prints, until no body of the corpus falls back. Subject pattern:
     `Translate <construct group> to C# in the engine`.
   - [ ] 68z. Request-level seam 2. Subject: `Add the Rust C# AST builders and the AST materializer`.
