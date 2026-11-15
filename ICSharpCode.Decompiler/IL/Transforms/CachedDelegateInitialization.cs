@@ -179,6 +179,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			if (!stobj.Target.MatchLdsFlda(out var field1) || !ldobj.Target.MatchLdsFlda(out var field2) || !field1.Equals(field2))
 				return false;
+			// A user-declared field caching a delegate is user code, not a compiler-generated cache.
+			if (!field1.IsCompilerGeneratedOrIsInCompilerGeneratedClass())
+				return false;
 			if (!DelegateConstruction.MatchDelegateConstruction((NewObj)stobj.Value, out _, out _, out _, true))
 				return false;
 			context.Step("CachedDelegateInitializationRoslynInStaticWithLocal", inst);
@@ -210,6 +213,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (!(stobj.Value is NewObj))
 				return false;
 			if (!stobj.Target.MatchLdFlda(out var _, out var field1) || !ldobj.Target.MatchLdFlda(out var __, out var field2) || !field1.Equals(field2))
+				return false;
+			// A user-declared field caching a delegate is user code, not a compiler-generated cache.
+			if (!field1.IsCompilerGeneratedOrIsInCompilerGeneratedClass())
 				return false;
 			if (!DelegateConstruction.MatchDelegateConstruction((NewObj)stobj.Value, out _, out _, out _, true))
 				return false;

@@ -704,6 +704,31 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction
 		}
 	}
 
+	internal class Issue4349
+	{
+		private Action instanceDelegate;
+
+		private static Action staticDelegate;
+
+		public Action GetInstanceDelegate()
+		{
+			return instanceDelegate ?? (instanceDelegate = Method);
+		}
+
+		public static Action GetStaticDelegate()
+		{
+			return staticDelegate ?? (staticDelegate = StaticMethod);
+		}
+
+		private void Method()
+		{
+		}
+
+		private static void StaticMethod()
+		{
+		}
+	}
+
 	[AttributeUsage(AttributeTargets.All)]
 	internal class MyAttribute : Attribute
 	{
