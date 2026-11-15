@@ -1461,8 +1461,21 @@ impl Builder<'_, '_, '_, '_> {
                 }
             };
         let (resolve, rr) = rr;
-        if matches!(self.ts.kind(ty), TypeKind::ByReference) {
-            return Err("a ref conditional expression".to_owned());
+        // A conditional ref: `ref (condition ? ref a : ref b)`, the conditional of the element
+        // type.
+        if let TypeData::ByRef(element) = *self.ts.data(ty) {
+            let e = self.ast.add(AstNode::Conditional {
+                condition: condition.expression,
+                true_expression: true_branch.expression,
+                false_expression: false_branch.expression,
+                resolve: false,
+            });
+            self.ast.with_il(e, inst);
+            self.ast.with_rr(e, Rr::Plain(element));
+            let r = self.ast.add(AstNode::RefDirection { expression: e });
+            self.ast
+                .with_rr(r, Rr::ByReference(Box::new(Rr::Plain(element))));
+            return Ok(TranslatedExpression { expression: r, ty });
         }
         let constant = |b: &Self, e: AstId| matches!(b.rr_of(e), Rr::Constant { .. });
         if constant(self, condition.expression)

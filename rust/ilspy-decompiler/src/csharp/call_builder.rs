@@ -513,9 +513,6 @@ impl Builder<'_, '_, '_, '_> {
         // names, and the call its return type.
         let found_override = self.found_override.take();
         if let Some(found) = &found_override {
-            if list.parameter_map.is_some() {
-                return Err("named arguments of a call that resolves to another method".to_owned());
-            }
             // An extension call resolves to the method with other type arguments, which the
             // invocation and its extension method question take.
             if is_extension && found.key != method.key {

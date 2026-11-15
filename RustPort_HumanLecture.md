@@ -4227,6 +4227,20 @@ managed statement builder does.
 
 The share rose from 97.7 % to 97.8 %.
 
+### 3.178 A batch: conditional refs, named arguments of found overloads (item 68y70)
+
+*Conditional refs.* A conditional of a by-reference type is C#'s conditional ref,
+`ref (condition ? ref a : ref b)`: the conditional, of the element type and annotated with
+the instruction, inside a `ref` direction with the `ByReferenceResolveResult` of it, as
+`VisitIfInstruction` builds it; a load through it is the conditional itself.
+
+*Named arguments of found overloads.* Where the call resolves to an override or another
+instantiation, `Build` takes the found method's parameter names as `ParameterNames` and keeps
+the written argument names (`ArgumentNames`, taken from the called method); named arguments
+are therefore no reason to fall back, and the engine now does the same.
+
+The share rose from 97.8 % to 97.9 %.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |
