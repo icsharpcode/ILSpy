@@ -1,0 +1,3 @@
+<Project>
+  <!-- Stops the upward search so samples do not pick up the repo's central package versions. -->
+</Project>

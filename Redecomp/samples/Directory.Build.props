@@ -1,0 +1,7 @@
+<Project>
+  <!-- Samples stand in for arbitrary third-party applications: they must not inherit the repo's
+       build settings (warnings as errors, lock files, central package management). -->
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>false</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+</Project>
