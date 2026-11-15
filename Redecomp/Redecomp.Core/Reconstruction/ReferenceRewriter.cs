@@ -44,12 +44,17 @@ public static class ReferenceRewriter
 	{
 		var doc = XDocument.Load(projectFile);
 		var references = doc.Descendants("Reference").ToList();
+		var sharedFrameworks = new SortedSet<string>(StringComparer.Ordinal);
 		foreach (var reference in references)
 		{
 			string name = reference.Attribute("Include")?.Value ?? "";
 			string? hintPath = reference.Element("HintPath")?.Value;
-			if (hintPath != null && IsFrameworkAssembly(Path.GetDirectoryName(Path.GetFullPath(projectFile))!, hintPath))
+			string? framework = hintPath == null ? null : SharedFrameworkOf(Path.GetDirectoryName(Path.GetFullPath(projectFile))!, hintPath);
+			if (framework != null)
 			{
+				// Microsoft.NETCore.App is implied by the SDK; other shared frameworks must be requested.
+				if (framework != "Microsoft.NETCore.App")
+					sharedFrameworks.Add(framework);
 				reference.Remove();
 				continue;
 			}
@@ -59,6 +64,12 @@ public static class ReferenceRewriter
 			{
 				reference.Remove();
 			}
+		}
+
+		if (sharedFrameworks.Count > 0)
+		{
+			doc.Root!.Add(new XElement("ItemGroup",
+				sharedFrameworks.Select(f => new XElement("FrameworkReference", new XAttribute("Include", f)))));
 		}
 
 		if (dependencies != null)
@@ -86,11 +97,24 @@ public static class ReferenceRewriter
 		doc.Save(projectFile);
 	}
 
-	// The decompiler writes hint paths relative to the project directory when it can.
-	static bool IsFrameworkAssembly(string projectDirectory, string hintPath)
+	/// <summary>
+	/// Name of the shared framework an assembly belongs to, read from its location under the dotnet
+	/// root (<c>shared/&lt;framework&gt;/</c> or <c>packs/&lt;framework&gt;.Ref/</c>); null for any other assembly.
+	/// The decompiler writes hint paths relative to the project directory when it can.
+	/// </summary>
+	static string? SharedFrameworkOf(string projectDirectory, string hintPath)
 	{
 		string full = Path.GetFullPath(hintPath, projectDirectory);
-		return full.StartsWith(DotnetRoot, StringComparison.OrdinalIgnoreCase);
+		if (!full.StartsWith(DotnetRoot, StringComparison.OrdinalIgnoreCase))
+			return null;
+		var segments = full[DotnetRoot.Length..].Split(Path.DirectorySeparatorChar, StringSplitOptions.RemoveEmptyEntries);
+		if (segments.Length < 2)
+			return null;
+		return segments[0] switch {
+			"shared" => segments[1],
+			"packs" when segments[1].EndsWith(".Ref", StringComparison.Ordinal) => segments[1][..^4],
+			_ => null,
+		};
 	}
 
 	// The shared framework lives in <dotnet root>/shared/<framework>/<version>/.
