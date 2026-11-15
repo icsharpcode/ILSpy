@@ -226,6 +226,9 @@
     <Compile Remove="TestCases\ILPretty\Issue3729.cs" />
     <None Include="TestCases\ILPretty\Issue3729.cs" />
     <None Include="TestCases\ILPretty\Issue3729.il" />
+    <Compile Remove="TestCases\ILPretty\Issue4295.cs" />
+    <None Include="TestCases\ILPretty\Issue4295.cs" />
+    <None Include="TestCases\ILPretty\Issue4295.il" />
     <Compile Remove="TestCases\ILPretty\NegativeParamsArrayLength.cs" />
     <None Include="TestCases\ILPretty\NegativeParamsArrayLength.cs" />
     <Compile Remove="TestCases\VBPretty\Issue3659.cs" />
