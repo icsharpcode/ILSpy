@@ -38,6 +38,7 @@ impl Builder<'_, '_, '_, '_> {
         resource_expression: NodeId,
         resource: &TranslatedExpression,
         body: NodeId,
+        using_is_async: bool,
     ) -> Result<Option<AstId>, Unsupported> {
         if !self.settings.foreach_statement {
             return Ok(None);
@@ -45,8 +46,8 @@ impl Builder<'_, '_, '_, '_> {
         let Some((collection, is_async)) = self.match_get_enumerator_pattern(resource)? else {
             return Ok(None);
         };
-        // `isAsync != inst.IsAsync`: this using is synchronous.
-        if is_async {
+        // `isAsync != inst.IsAsync`
+        if is_async != using_is_async {
             return Ok(None);
         }
         if !matches!(self.f.inst(body), Inst::BlockContainer { .. }) {
@@ -60,6 +61,7 @@ impl Builder<'_, '_, '_, '_> {
             variable,
             collection,
             resource_expression,
+            is_async,
         )
     }
 
@@ -163,6 +165,7 @@ impl Builder<'_, '_, '_, '_> {
         enumerator: VarId,
         collection: AstId,
         resource_expression: NodeId,
+        is_async: bool,
     ) -> Result<Option<AstId>, Unsupported> {
         let Inst::BlockContainer {
             kind: ContainerKind::While,
@@ -177,12 +180,17 @@ impl Builder<'_, '_, '_, '_> {
         else {
             return Ok(None);
         };
-        // The loop condition is `enumerator.MoveNext()`.
+        // The loop condition is `enumerator.MoveNext()`, or `await enumerator.MoveNextAsync()`.
         let condition = self.translate_condition(condition_inst)?;
-        let moves_next = match self.ast.node(condition.expression) {
+        let (call, move_next_name) = match *self.ast.node(condition.expression) {
+            AstNode::Await { expression } if is_async => (expression, "MoveNextAsync"),
+            _ if is_async => return Ok(None),
+            _ => (condition.expression, "MoveNext"),
+        };
+        let moves_next = match self.ast.node(call) {
             AstNode::Invocation { target, arguments } if arguments.is_empty() => {
                 match self.ast.node(*target) {
-                    AstNode::MemberReference { target, name } if name == "MoveNext" => {
+                    AstNode::MemberReference { target, name } if name == move_next_name => {
                         matches!(self.ast.node(*target), AstNode::Identifier { .. })
                             && matches!(
                                 self.ast.annotations(*target).rr,
@@ -309,6 +317,7 @@ impl Builder<'_, '_, '_, '_> {
             get_enumerator: resource_expression,
             move_next: condition_inst,
             get_current: single_getter,
+            is_async,
         });
         for inst in self.ast.annotations(while_loop).il.clone() {
             self.ast.with_il(foreach, inst);
@@ -556,6 +565,7 @@ impl Builder<'_, '_, '_, '_> {
             var,
             collection,
             value,
+            false,
         )?;
         Ok(transformed.map(|s| self.ast.with_il(s, loop_container)))
     }

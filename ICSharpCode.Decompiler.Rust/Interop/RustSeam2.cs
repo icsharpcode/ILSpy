@@ -623,6 +623,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					// `var` for a variable of an anonymous type.
 					bool useVar = exprBuilder.settings.AnonymousTypes && variable.Type.ContainsAnonymousType();
 					var statement = new ForeachStatement {
+						IsAsync = node.Flag,
 						VariableType = useVar ? new SimpleType("var") : exprBuilder.ConvertType(variable.Type),
 						VariableDesignation = designation,
 						InExpression = (Expression)Build(node.Children[0], exprBuilder),

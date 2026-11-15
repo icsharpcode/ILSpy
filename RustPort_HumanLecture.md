@@ -4338,6 +4338,17 @@ arguments, and still falls back.
 
 The share rose from 98.5 % to 98.6 %.
 
+### 3.186 `await foreach` (item 68y78)
+
+`TransformToForeach` of an `await using` whose resource is `collection.GetAsyncEnumerator()`
+is `await foreach`: the asynchronous using now takes the same path as the synchronous one,
+with `isAsync` compared with the using's, the loop condition matched as
+`await enumerator.MoveNextAsync()` (`moveNextConditionPattern`) and the foreach statement
+marked `IsAsync` for the host. A foreach recognized without a using's dispose stays
+synchronous, as in the managed builder.
+
+The share rose from 98.6 % to 98.7 %.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

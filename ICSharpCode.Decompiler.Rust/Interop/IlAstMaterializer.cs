@@ -893,7 +893,9 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					node.Children = [BodyNode()];
 					break;
 				case RustBodyNode.Foreach:
-					// The variable, the three instructions of the annotation, the collection and the body.
+					// Whether it is `await foreach`, the variable, the three instructions of the annotation,
+					// the collection and the body.
+					node.Flag = Bool();
 					node.Value = Variable();
 					node.ForeachInstructions = [materialized[Len()], materialized[Len()], materialized[Len()]];
 					node.Children = [BodyNode(), BodyNode()];

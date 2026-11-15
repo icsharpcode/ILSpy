@@ -794,7 +794,9 @@ fn node(w: &mut FunctionWriter<'_, '_, '_, '_>, ast: &Ast, id: AstId) -> Result<
             get_enumerator,
             move_next,
             get_current,
+            is_async,
         } => {
+            w.out.bool(is_async);
             let v = var_index(w, variable)?;
             w.out.len(v);
             for inst in [get_enumerator, move_next, get_current] {

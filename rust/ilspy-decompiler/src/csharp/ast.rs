@@ -264,6 +264,8 @@ pub enum AstNode {
         get_enumerator: NodeId,
         move_next: NodeId,
         get_current: NodeId,
+        /// `IsAsync`: `await foreach`.
+        is_async: bool,
     },
     /// `ObjectCreateExpression` of a delegate from a method reference, with the
     /// `ConversionResolveResult` of the method group conversion the host computes.

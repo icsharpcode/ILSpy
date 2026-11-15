@@ -371,16 +371,8 @@ impl Builder<'_, '_, '_, '_> {
         is_ref_struct: bool,
     ) -> Result<AstId, Unsupported> {
         let resource = self.translate(resource_expression, None)?;
-        if is_async {
-            // `await foreach` is not translated.
-            if self
-                .match_get_enumerator_pattern(&resource)?
-                .is_some_and(|(_, enumerator_is_async)| enumerator_is_async)
-            {
-                return Err("an await foreach".to_owned());
-            }
-        } else if let Some(foreach) =
-            self.transform_to_foreach(variable, resource_expression, &resource, body)?
+        if let Some(foreach) =
+            self.transform_to_foreach(variable, resource_expression, &resource, body, is_async)?
         {
             return Ok(self.ast.with_il(foreach, inst));
         }
