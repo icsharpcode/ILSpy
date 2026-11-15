@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="Redecomp.Core/Redecomp.Core.csproj" />
+  <Project Path="Redecomp.Tests/Redecomp.Tests.csproj" />
+</Solution>

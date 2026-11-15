@@ -1,0 +1,7 @@
+<Project>
+  <!-- Redecomp has no package dependencies. Stopping the upward search keeps the repo-wide global
+       analyzer packages (which target ILSpy's MEF composition) out of these projects. -->
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>false</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+</Project>
