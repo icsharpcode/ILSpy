@@ -16,7 +16,7 @@ Un compilateur jette de l'information : les commentaires, souvent les noms des v
 |---|---|---|
 | 0 | Base du projet, build hors ligne | fait |
 | 1 | Banc d'essai : corpus d'applis avec sources connues et score automatique | fait (1 appli, à enrichir) |
-| 2 | Récupération : sources embarquées ✅, PDB, SourceLink, chemins d'origine, `deps.json` → NuGet, fichiers de publication, `Nullable`/`ImplicitUsings`, constantes | à faire |
+| 2 | Récupération : sources embarquées ✅, PDB, chemins d'origine ✅, fichiers de publication ✅, SourceLink, `deps.json` → NuGet, `Nullable`/`ImplicitUsings`, constantes | à faire |
 | 3 | Moteur de nommage déterministe (règles classées par niveau de confiance) | à faire |
 | 4 | Couche IA : renommage et commentaires, IL vérifié identique après chaque changement | à faire |
 | 5 | Cas spéciaux : Razor, Blazor, BAML, single-file, ReadyToRun, obfuscation | à faire |

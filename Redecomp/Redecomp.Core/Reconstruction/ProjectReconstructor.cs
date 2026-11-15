@@ -60,6 +60,10 @@ public static class ProjectReconstructor
 				SetProjectProperty(projectFile, "ImplicitUsings", "enable");
 			origin = SourceOrigin.EmbeddedSources;
 		}
+		else if (pdb != null)
+		{
+			SourceRelocator.Apply(module.Metadata, pdb.Provider.GetMetadataReader(), outputDirectory, settings.UseNestedDirectoriesForNamespaces);
+		}
 
 		CopyContentFiles(assemblyPath, outputDirectory, projectFile);
 

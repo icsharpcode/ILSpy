@@ -39,37 +39,10 @@ public sealed class EmbeddedSourceLayout
 
 	public static EmbeddedSourceLayout Create(IReadOnlyList<EmbeddedSourceFile> files)
 	{
-		var user = new List<(string[] Segments, byte[] Content)>();
-		bool implicitUsings = false;
-		foreach (var file in files)
-		{
-			string[] segments = file.OriginalPath.Replace('\\', '/').Split('/', StringSplitOptions.RemoveEmptyEntries);
-			if (IsGenerated(segments))
-			{
-				if (segments[^1].EndsWith(".GlobalUsings.g.cs", StringComparison.OrdinalIgnoreCase))
-					implicitUsings = true;
-				continue;
-			}
-			user.Add((segments, file.Content));
-		}
-		if (user.Count == 0)
-			return new EmbeddedSourceLayout([], implicitUsings);
-
-		// The project directory is the deepest directory containing every user file.
-		int common = user[0].Segments.Length - 1;
-		foreach (var (segments, _) in user)
-		{
-			int i = 0;
-			while (i < common && i < segments.Length - 1 && segments[i] == user[0].Segments[i])
-				i++;
-			common = i;
-		}
-		var mapped = user
-			.Select(u => (string.Join(Path.DirectorySeparatorChar, u.Segments[common..]), u.Content))
-			.ToList();
-		return new EmbeddedSourceLayout(mapped, implicitUsings);
+		bool implicitUsings = files.Any(f => ProjectPaths.IsGenerated(f.OriginalPath)
+			&& f.OriginalPath.EndsWith(".GlobalUsings.g.cs", StringComparison.OrdinalIgnoreCase));
+		var user = files.Where(f => !ProjectPaths.IsGenerated(f.OriginalPath)).ToList();
+		var relative = ProjectPaths.ToProjectRelative(user.Select(f => f.OriginalPath));
+		return new EmbeddedSourceLayout(user.Select(f => (relative[f.OriginalPath], f.Content)).ToList(), implicitUsings);
 	}
-
-	static bool IsGenerated(string[] segments)
-		=> segments.Take(segments.Length - 1).Any(s => s.Equals("obj", StringComparison.OrdinalIgnoreCase));
 }
