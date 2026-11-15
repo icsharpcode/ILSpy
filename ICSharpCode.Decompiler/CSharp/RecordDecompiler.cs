@@ -200,7 +200,9 @@ namespace ICSharpCode.Decompiler.CSharp
 				IMethod? chainedCtor = (IMethod?)FindChainedCtor(body)?.MemberDefinition;
 				ctorChainMap[method] = chainedCtor;
 
-				if (chainedCtor != null && chainedCtor.DeclaringTypeDefinition!.Equals(recordTypeDef))
+				// The declaring type definition of a base constructor is null when the base
+				// record's assembly cannot be resolved.
+				if (chainedCtor != null && recordTypeDef.Equals(chainedCtor.DeclaringTypeDefinition))
 				{
 					continue;
 				}
@@ -233,7 +235,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					// follow this rule.
 					// we don't have to check the full chain, because the C# compiler enforces that
 					// there are no loops in the ctor call graph.
-					if (target == null || !target.DeclaringTypeDefinition!.Equals(recordTypeDef))
+					if (target == null || !recordTypeDef.Equals(target.DeclaringTypeDefinition))
 					{
 						guessedPrimaryCtor = null;
 						break;
