@@ -41,6 +41,13 @@ public static class SampleBuilder
 
 	public static string SourceDirectory(string sample) => Path.Combine(SamplesDirectory, sample);
 
+	/// <summary>Samples made of a single project, i.e. with a project file at their root.</summary>
+	public static IEnumerable<string> SingleProjectSamples()
+		=> Directory.EnumerateDirectories(SamplesDirectory)
+			.Where(d => Directory.EnumerateFiles(d, "*.csproj").Any())
+			.Select(d => Path.GetFileName(d))
+			.Order(StringComparer.Ordinal);
+
 	/// <summary>Builds the sample and returns the path of its main assembly.</summary>
 	public static string Build(string sample, BuildVariant variant)
 	{

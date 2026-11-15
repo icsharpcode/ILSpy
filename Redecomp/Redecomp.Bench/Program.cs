@@ -42,7 +42,7 @@ public static class Program
 	{
 		string? outFile = args.Length == 2 && args[0] == "--out" ? args[1] : null;
 		var results = new List<BenchResult>();
-		foreach (string sample in Directory.EnumerateDirectories(SampleBuilder.SamplesDirectory).Select(d => Path.GetFileName(d)).Order())
+		foreach (string sample in SampleBuilder.SingleProjectSamples())
 		{
 			foreach (var variant in Enum.GetValues<BuildVariant>())
 			{
