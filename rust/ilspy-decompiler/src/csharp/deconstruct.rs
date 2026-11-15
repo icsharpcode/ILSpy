@@ -43,7 +43,10 @@ impl Builder<'_, '_, '_, '_> {
             return Err("a deconstruction with init stores".to_owned());
         }
         // shortcut: in a lambda the enclosing call's overload resolution then needs a cast of
-        // the lambda the managed builder does without; find the difference before lifting it.
+        // the lambda the managed builder does without (`Task.Run(() => { (a, b) = ...; })`: the
+        // engine's best candidate is `Run<?>(Func<?>)`, the void lambda's unknown inferred
+        // return type fixing `TResult`, where the managed one picks `Run(Action)`); find the
+        // difference in betterness or applicability before lifting it.
         if self.in_lambda {
             return Err("a deconstruction in a lambda".to_owned());
         }
