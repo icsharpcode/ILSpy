@@ -396,7 +396,9 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					var argumentResults = arguments
 						.Select(a => (a is NamedArgumentExpression named ? named.Expression : a).GetResolveResult())
 						.ToArray();
-					node.ResolveResult = new CSharpInvocationResolveResult(null!, node.Call!.Value.Method, argumentResults, isExpandedForm: node.Call!.Value.IsExpanded);
+					// A creation of `default(T)` or `Activator.CreateInstance<T>()` keeps its type's resolve result.
+					if (node.Call is { } call)
+						node.ResolveResult = new CSharpInvocationResolveResult(null!, call.Method, argumentResults, isExpandedForm: call.IsExpanded);
 					var creation = new ObjectCreateExpression(exprBuilder.ConvertType(node.Type!), arguments);
 					if (node.Initializer != null)
 						creation.Initializer = new ArrayInitializerExpression(node.Initializer.Select(e => (Expression)Build(e, exprBuilder)));
@@ -600,8 +602,10 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					var variable = (ILVariable)node.Value!;
 					var designation = new SingleVariableDesignation { Identifier = variable.Name! };
 					designation.AddAnnotation(new ILVariableResolveResult(variable, variable.Type));
+					// `var` for a variable of an anonymous type.
+					bool useVar = exprBuilder.settings.AnonymousTypes && variable.Type.ContainsAnonymousType();
 					var statement = new ForeachStatement {
-						VariableType = exprBuilder.ConvertType(variable.Type),
+						VariableType = useVar ? new SimpleType("var") : exprBuilder.ConvertType(variable.Type),
 						VariableDesignation = designation,
 						InExpression = (Expression)Build(node.Children[0], exprBuilder),
 						EmbeddedStatement = (Statement)Build(node.Children[1], exprBuilder)

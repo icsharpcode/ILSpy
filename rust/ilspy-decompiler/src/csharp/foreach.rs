@@ -226,9 +226,6 @@ impl Builder<'_, '_, '_, '_> {
                 return Err("a foreach over a dynamic collection".to_owned());
             }
         }
-        if self.may_contain_anonymous_type(getter_type) {
-            return Err("a foreach variable of an anonymous type".to_owned());
-        }
         if matches!(self.ts.data(getter_type), TypeData::Tuple { .. })
             || self.ts.tuple_element_types(getter_type).is_some()
         {

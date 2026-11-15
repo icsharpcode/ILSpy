@@ -2353,7 +2353,7 @@ impl Builder<'_, '_, '_, '_> {
 
     /// `TranslateObjectAndCollectionInitializer` for `new T(...) { Member = value, ... }`: an
     /// object creation whose initializer sets fields and properties of the new object itself.
-    /// Nested members, indexers, `Add` calls and other creations are not translated.
+    /// Nested members, indexers and `Add` calls are not translated.
     fn object_initializer(
         &mut self,
         inst: NodeId,
@@ -2371,10 +2371,49 @@ impl Builder<'_, '_, '_, '_> {
         if var != final_var || self.f.var(var).kind != VariableKind::InitializerTarget {
             return Err("an initializer of another shape".to_owned());
         }
-        if !matches!(self.f.inst(value), Inst::NewObj(_)) {
+        // `new T()` of a `default(T)` or `Activator.CreateInstance<T>()`, with the type's
+        // resolve result.
+        let created_type = match self.f.inst(value).clone() {
+            Inst::DefaultValue { ty, .. } => Some(ty.ty),
+            Inst::Call(c)
+                if c.method.method.name == "CreateInstance"
+                    && c.args.is_empty()
+                    && c.method.method.declaring.is_some_and(|d| {
+                        self.ts.definition(d).is_some_and(|def| {
+                            self.ts.comp.type_def(def).is_ok_and(|i| {
+                                i.full_name.top.ns == "System" && i.full_name.name() == "Activator"
+                            })
+                        })
+                    }) =>
+            {
+                Method::from_resolved(self.ts, &c.method.method)
+                    .and_then(|m| m.method_args)
+                    .and_then(|a| (a.len() == 1).then(|| a[0]))
+            }
+            _ => None,
+        };
+        let creation = if let Some(ty) = created_type {
+            let e = self.ast.add(AstNode::ObjectCreate {
+                ty,
+                arguments: Vec::new(),
+                initializer: None,
+            });
+            self.ast.with_il(e, value);
+            self.ast.with_rr(e, Rr::Type(ty));
+            TranslatedExpression { expression: e, ty }
+        } else if matches!(self.f.inst(value), Inst::NewObj(_))
+            || matches!(
+                self.f.inst(value),
+                Inst::Block {
+                    kind: BlockKind::CallWithNamedArgs,
+                    ..
+                }
+            )
+        {
+            self.translate(value, None)?
+        } else {
             return Err("an initializer of another creation".to_owned());
-        }
-        let creation = self.translate(value, None)?;
+        };
         if !matches!(
             self.ast.node(creation.expression),
             AstNode::ObjectCreate { .. }

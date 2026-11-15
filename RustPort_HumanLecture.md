@@ -4183,6 +4183,20 @@ managed builder.
 
 The share stayed at 97.5 % (the bodies gained are below its rounding).
 
+### 3.175 A batch: other initialized objects, anonymous foreach variables (item 68y67)
+
+*Initialized objects.* `TranslateObjectAndCollectionInitializer` also initializes a
+`default(T)` and an `Activator.CreateInstance<T>()`, each written `new T()` with the
+`TypeResolveResult` of `T` as the creation's resolve result, and the result of a call with
+named arguments. The host completes an object creation's invocation resolve result only
+where the creation is a constructor call.
+
+*Anonymous foreach variables.* A foreach variable of a type that contains an anonymous type
+is declared `var` (with `AnonymousTypes`), which the host decides from the variable's type as
+`TransformToForeach` does; the engine no longer refuses it.
+
+The share rose from 97.5 % to 97.6 %.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |
