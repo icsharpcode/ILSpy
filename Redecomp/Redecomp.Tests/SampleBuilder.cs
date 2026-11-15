@@ -65,11 +65,13 @@ public static class SampleBuilder
 		}
 	}
 
-	static void Run(string fileName, string arguments)
+	/// <summary>Runs a process to completion and returns its standard output; throws when it fails.</summary>
+	public static string Run(string fileName, string arguments, string? workingDirectory = null)
 	{
 		var psi = new ProcessStartInfo(fileName, arguments) {
 			RedirectStandardOutput = true,
 			RedirectStandardError = true,
+			WorkingDirectory = workingDirectory ?? Environment.CurrentDirectory,
 		};
 		using var process = Process.Start(psi)!;
 		string stdout = process.StandardOutput.ReadToEnd();
@@ -77,6 +79,7 @@ public static class SampleBuilder
 		process.WaitForExit();
 		if (process.ExitCode != 0)
 			throw new InvalidOperationException($"'{fileName} {arguments}' failed:\n{stdout}\n{stderr}");
+		return stdout;
 	}
 
 	static void CopyDirectory(string source, string target)

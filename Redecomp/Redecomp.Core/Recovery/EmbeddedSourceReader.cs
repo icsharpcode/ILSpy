@@ -32,10 +32,10 @@ public static class EmbeddedSourceReader
 
 	public static IReadOnlyList<EmbeddedSourceFile> Read(string assemblyPath)
 	{
-		using var provider = PortablePdbLocator.Open(assemblyPath);
-		if (provider == null)
+		using var portablePdb = PortablePdbLocator.Open(assemblyPath);
+		if (portablePdb == null)
 			return [];
-		var pdb = provider.GetMetadataReader();
+		var pdb = portablePdb.Provider.GetMetadataReader();
 		var files = new List<EmbeddedSourceFile>();
 		foreach (var documentHandle in pdb.Documents)
 		{

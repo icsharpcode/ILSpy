@@ -21,18 +21,26 @@ using System.Reflection.PortableExecutable;
 
 namespace Redecomp.Core.Recovery;
 
+/// <summary>An opened portable PDB.</summary>
+/// <param name="Provider">Reader provider over the PDB metadata.</param>
+/// <param name="FilePath">Path of the PDB file, or null when the PDB is embedded in the assembly.</param>
+public sealed record PortablePdb(MetadataReaderProvider Provider, string? FilePath) : IDisposable
+{
+	public void Dispose() => Provider.Dispose();
+}
+
 /// <summary>Finds the portable PDB of an assembly: embedded in it, or as a file referenced by or next to it.</summary>
 public static class PortablePdbLocator
 {
-	/// <summary>Returns a provider for the PDB, or null when the assembly has no portable PDB.</summary>
-	public static MetadataReaderProvider? Open(string assemblyPath)
+	/// <summary>Opens the PDB, or returns null when the assembly has no portable PDB.</summary>
+	public static PortablePdb? Open(string assemblyPath)
 	{
 		using var stream = File.OpenRead(assemblyPath);
 		using var pe = new PEReader(stream);
 		foreach (var entry in pe.ReadDebugDirectory())
 		{
 			if (entry.Type == DebugDirectoryEntryType.EmbeddedPortablePdb)
-				return pe.ReadEmbeddedPortablePdbDebugDirectoryData(entry);
+				return new PortablePdb(pe.ReadEmbeddedPortablePdbDebugDirectoryData(entry), null);
 		}
 		foreach (var entry in pe.ReadDebugDirectory())
 		{
@@ -42,7 +50,7 @@ public static class PortablePdbLocator
 			foreach (string candidate in Candidates(assemblyPath, recordedPath))
 			{
 				if (File.Exists(candidate) && IsPortablePdb(candidate))
-					return MetadataReaderProvider.FromPortablePdbStream(File.OpenRead(candidate));
+					return new PortablePdb(MetadataReaderProvider.FromPortablePdbStream(File.OpenRead(candidate)), Path.GetFullPath(candidate));
 			}
 		}
 		return null;
