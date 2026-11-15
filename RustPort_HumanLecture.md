@@ -4314,6 +4314,19 @@ Extension `Add` methods, expanded `params` and nested paths still fall back.
 
 The share rose from 98.3 % to 98.4 %.
 
+### 3.184 A batch: unboxing to type parameters, async iterators (item 68y76)
+
+*Unboxing to type parameters.* `VisitUnboxAny` to a type parameter casts the argument as it
+is where `ResolveCast` allows it, else through the type parameter's effective base class
+(C# 6.2.7); the type system's `EffectiveBaseClass` is now reachable for a type parameter
+type.
+
+*Async iterators.* `VisitYieldReturn` takes the element type of an async iterator from
+`AsyncReturnType` instead of the `IEnumerable` bases of the return type; the builder now
+knows whether the current function (the method or a local function) is async.
+
+The share rose from 98.4 % to 98.5 %.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

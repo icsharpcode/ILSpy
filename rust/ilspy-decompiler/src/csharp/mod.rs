@@ -56,6 +56,9 @@ pub(crate) struct Builder<'f, 't, 'c, 'a> {
     pub(crate) return_statements: Vec<ast::AstId>,
     /// `currentIsIterator`: a leave of the return container is `yield break`.
     pub(crate) is_iterator: bool,
+    /// Whether the current function is async (`AsyncReturnType` set), whose `yield return`
+    /// values are of the result type itself.
+    pub(crate) is_async: bool,
     /// Whether the current function is a lambda, whose returns can keep their type with a cast.
     pub(crate) in_lambda: bool,
     /// The variables of the top-level function (`ReadFunction::variables`).

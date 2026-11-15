@@ -52,6 +52,7 @@ pub fn convert_body(
         break_target: None,
         return_statements: Vec::new(),
         is_iterator: read.is_iterator,
+        is_async: read.async_return_type.is_some(),
         in_lambda: false,
         root_variables: read.variables.clone(),
         found_override: None,
@@ -314,6 +315,16 @@ impl Builder<'_, '_, '_, '_> {
 
     /// `VisitYieldReturn`: the value converted to the element type of the iterator.
     fn visit_yield_return(&mut self, inst: NodeId, value: NodeId) -> Result<AstId, Unsupported> {
+        // `AsyncReturnType` of an async iterator.
+        if self.is_async {
+            let element_type = self.result_type;
+            let e = self.translate(value, Some(element_type))?;
+            let e = self.convert_to(e, element_type, true)?;
+            let s = self.ast.add(AstNode::YieldReturn {
+                expression: e.expression,
+            });
+            return Ok(self.ast.with_il(s, inst));
+        }
         // `GetElementTypeFromIEnumerable(allowIEnumerator: true)`
         let mut element_type = None;
         let mut non_generic = false;

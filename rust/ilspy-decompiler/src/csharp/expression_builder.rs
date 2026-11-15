@@ -2171,13 +2171,18 @@ impl Builder<'_, '_, '_, '_> {
         let a = self.translate(arg, None)?;
         let object = self.ts.known_type(KnownTypeCode::Object);
         // A type parameter target is cast from the argument as it is, through the effective base
-        // class where that cast is an error; only an `object` argument, whose cast is always
-        // the unboxing conversion, is translated.
+        // class where that cast is an error (C# 6.2.7).
         let a = if self.ts.kind(ty) == TypeKind::TypeParameter {
-            if !self.ts.is_known(a.ty, KnownTypeCode::Object) {
-                return Err("an unboxing to a type parameter".to_owned());
+            let rr = self.semantic_rr(a.expression, a.ty);
+            if Conversions::new(self.ts).explicit(&rr, ty).is_valid() {
+                a
+            } else {
+                let base = self
+                    .ts
+                    .type_parameter_effective_base_class(ty)
+                    .ok_or("an unboxing to a type parameter without base class")?;
+                self.convert_to(a, base, false)?
             }
-            a
         } else {
             self.convert_to(a, object, false)?
         };

@@ -132,6 +132,14 @@ impl TypeSystem<'_, '_> {
             .is_ok_and(|all| all.iter().any(|&b| self.definition(b) == Some(base)))
     }
 
+    /// `ITypeParameter.EffectiveBaseClass` of a type parameter type; `None` for other types.
+    pub fn type_parameter_effective_base_class(&mut self, t: TypeId) -> Option<TypeId> {
+        let TypeData::TypeParam { owner, index } = *self.data(self.without_annotation(t)) else {
+            return None;
+        };
+        Some(self.effective_base_class(owner, index, &mut Vec::new()))
+    }
+
     /// `ITypeParameter.EffectiveBaseClass`; `busy` guards cyclic constraints.
     fn effective_base_class(
         &mut self,

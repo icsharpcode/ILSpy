@@ -127,10 +127,12 @@ impl Builder<'_, '_, '_, '_> {
         self.result_type = return_type;
         let first_node = self.ast.nodes.len();
         let saved_function = self.current_function.replace(function);
+        let saved_async = std::mem::replace(&mut self.is_async, false);
         let saved_end_labels = std::mem::take(&mut self.end_container_labels);
         let block = self.convert_as_block(body);
         self.end_container_labels = saved_end_labels;
         self.current_function = saved_function;
+        self.is_async = saved_async;
         let returns = std::mem::replace(&mut self.return_statements, saved.6);
         self.labels = saved.7;
         self.duplicate_labels = saved.8;
