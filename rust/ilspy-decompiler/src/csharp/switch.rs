@@ -38,9 +38,6 @@ impl Builder<'_, '_, '_, '_> {
         if is_lifted {
             return Err("a lifted switch".to_owned());
         }
-        if matches!(self.f.inst(value), Inst::StringToInt { .. }) {
-            return Err("a switch on strings".to_owned());
-        }
         // 'break' within a switch leaves the switch.
         let saved = self.break_target.replace(container);
         let result = self.switch_statement(container, blocks, value, &sections, ty);
@@ -63,6 +60,11 @@ impl Builder<'_, '_, '_, '_> {
                 _ => unreachable!("a switch section"),
             })
             .collect();
+        // A switch on strings: `StringToInt`'s map gives the string labels of each value.
+        let string_map = match self.f.inst(value) {
+            Inst::StringToInt { map, .. } => Some(map.clone()),
+            _ => None,
+        };
         let (value, case_type) = self.translate_switch_value(value, ty, &section_parts, false)?;
 
         let default = default_section(&section_parts);
@@ -79,7 +81,21 @@ impl Builder<'_, '_, '_, '_> {
                 }
                 let mut case_labels = Vec::new();
                 for v in labels.values() {
-                    case_labels.push(Some(self.case_label(v, case_type)?));
+                    match &string_map {
+                        // `CreateTypedCaseLabel` of a string: every key mapped to the value.
+                        Some(map) => {
+                            for (key, _) in map.iter().filter(|(_, mapped)| i64::from(*mapped) == v)
+                            {
+                                let constant = match key {
+                                    Some(s) => ConstValue::String(s.clone()),
+                                    None => ConstValue::Null,
+                                };
+                                case_labels
+                                    .push(Some(self.string_case_label(case_type, constant)?));
+                            }
+                        }
+                        None => case_labels.push(Some(self.case_label(v, case_type)?)),
+                    }
                 }
                 case_labels
             };
@@ -143,6 +159,25 @@ impl Builder<'_, '_, '_, '_> {
         sections: &[(crate::util::long_set::LongSet, NodeId)],
         is_expression_context: bool,
     ) -> Result<(TranslatedExpression, TypeId), Unsupported> {
+        // `StringToInt`: the string (or span of chars) itself, of its expected type.
+        if let Inst::StringToInt {
+            arg, ty: expected, ..
+        } = *self.f.inst(value)
+        {
+            if is_expression_context {
+                return Err("a switch expression on strings".to_owned());
+            }
+            let translated = self.translate(arg, None)?;
+            let mut value = self.convert_to(translated, expected, true)?;
+            if !self.is_compatible_with_switch(value.ty) {
+                return Err("a switch governed through a conversion operator".to_owned());
+            }
+            if value.ty != expected {
+                value = self.convert_to(value, expected, false)?;
+            }
+            let string = self.ts.known_type(KnownTypeCode::String);
+            return Ok((value, string));
+        }
         let translated = self.translate(value, None)?;
         let mut governing = ty.unwrap_or(translated.ty);
         let value_stack = self.f.result_type(self.ts, value);
@@ -365,6 +400,18 @@ impl Builder<'_, '_, '_, '_> {
 
     /// `CreateTypedCaseLabel(i, type)` without a string map, written with
     /// `ConvertConstantValue(label, allowImplicitConversion: true)`.
+    /// The case label of a string constant (or `null`) of a switch on strings.
+    fn string_case_label(&mut self, ty: TypeId, value: ConstValue) -> Result<AstId, Unsupported> {
+        let e = self.ast.add(AstNode::ConstantValue {
+            ty,
+            value: value.clone(),
+            allow_implicit_conversion: true,
+        });
+        let (ty, value) = self.constant_value_rr(ty, value, true)?;
+        self.ast.with_rr(e, Rr::Constant { ty, value });
+        Ok(e)
+    }
+
     fn case_label(&mut self, i: i64, ty: TypeId) -> Result<AstId, Unsupported> {
         let ty = self.ts.nullable_underlying(ty);
         let value = if self.ts.is_known(ty, KnownTypeCode::Boolean) {

@@ -4385,6 +4385,15 @@ bit pattern.
 
 The share rose from 98.9 % to 99.0 %.
 
+### 3.190 Switches on strings (item 68y82)
+
+`TranslateSwitchValue` of a `StringToInt` switches on the string (or span of chars) itself,
+converted to the instruction's expected type, and `CreateTypedCaseLabel` takes the case
+labels from its map: every string key (or `null`) mapped to a section's value, of type
+`string`. Switch expressions on strings still fall back.
+
+The share stayed at 99.0 % (the body gained is below its rounding).
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |
