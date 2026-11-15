@@ -391,6 +391,50 @@ impl Builder<'_, '_, '_, '_> {
             }
         }
 
+        // `bool?.GetValueOrDefault()` is `b == true` (with `LiftNullables`), the binary operator
+        // carrying the call's resolve result; the literal has none.
+        if self.settings.lift_nullables
+            && method.name == "GetValueOrDefault"
+            && self.ts.is_known(declaring, KnownTypeCode::NullableOfT)
+            && self
+                .ts
+                .first_type_argument(declaring)
+                .is_some_and(|a| self.ts.is_known(a, KnownTypeCode::Boolean))
+            && list.arguments.is_empty()
+            && !self.is_null_conditional(target.expression)
+        {
+            let boolean = self.ts.known_type(KnownTypeCode::Boolean);
+            let literal = self.ast.add(AstNode::ConstantValue {
+                ty: boolean,
+                value: ConstValue::Boolean(true),
+                allow_implicit_conversion: false,
+            });
+            let e = self.ast.add(AstNode::BinaryOperator {
+                overflow: super::ast::Overflow::None,
+                op: super::ast::BinaryOp::Equality,
+                left: target.expression,
+                right: literal,
+            });
+            let target_rr = self.rr_of(target.expression);
+            self.ast.with_rr(
+                e,
+                Rr::Invocation {
+                    target: Box::new(target_rr),
+                    method: Box::new(operand.clone()),
+                    ty: method.return_type,
+                    extension: false,
+                    delegate: false,
+                    found_by_lookup: false,
+                    expanded: list.is_expanded_form,
+                    method_args: None,
+                },
+            );
+            self.ast.with_il(e, inst);
+            return Ok(TranslatedExpression {
+                expression: e,
+                ty: method.return_type,
+            });
+        }
         // `HandleImplicitConversion`: an implicit conversion operator is written as the conversion.
         if method.is_operator && method.name == "op_Implicit" && list.arguments.len() == 1 {
             return self.implicit_conversion_call(inst, &method, &list);
@@ -1552,17 +1596,16 @@ impl Builder<'_, '_, '_, '_> {
             ) && method.name != "Create")
             || ts.is_known(declaring, KnownTypeCode::Range)
             || ts.is_known(declaring, KnownTypeCode::Index)
-            || in_namespace("System", "MemoryExtensions")
+            // `IsStringToReadOnlySpanCharAsSpan`, which C# 14 folds into the implicit span
+            // conversion; any other `MemoryExtensions` call is ordinary.
+            || (in_namespace("System", "MemoryExtensions")
+                && self.settings.first_class_span_types
+                && method.name == "AsSpan"
+                && method.parameters.len() == 1
+                && ts.is_known(method.parameters[0].ty, KnownTypeCode::String))
             || ts.is_known(declaring, KnownTypeCode::ReadOnlySpanOfT)
             || ts.is_known(declaring, KnownTypeCode::SpanOfT)
             || in_namespace("", "<PrivateImplementationDetails>")
-            // `bool?.GetValueOrDefault()` is `b == true`; other nullable methods are ordinary.
-            || (ts.is_known(declaring, KnownTypeCode::NullableOfT)
-                && method.name == "GetValueOrDefault"
-                && method.parameters.is_empty()
-                && ts
-                    .first_type_argument(declaring)
-                    .is_some_and(|a| ts.is_known(a, KnownTypeCode::Boolean)))
             || ts.is_known(declaring, KnownTypeCode::Delegate);
         if special {
             return Err(format!("a call of {} with its own syntax", method.name));
@@ -1788,6 +1831,19 @@ impl Builder<'_, '_, '_, '_> {
         }
         *target = self.convert_to(*target, declaring, false)?;
         Ok(LookupTarget::Expression(target.ty))
+    }
+
+    /// `IntroduceQueryExpressions.IsNullConditional`: whether `e` is a null-conditional access
+    /// chain (`a?.b.c()`).
+    pub(crate) fn is_null_conditional(&self, e: AstId) -> bool {
+        match *self.ast.node(e) {
+            AstNode::NullConditional { rewrap: false, .. } => true,
+            AstNode::MemberReference { target, .. }
+            | AstNode::GenericMemberReference { target, .. }
+            | AstNode::Invocation { target, .. }
+            | AstNode::Indexer { target, .. } => self.is_null_conditional(target),
+            _ => false,
+        }
     }
 
     /// Whether `e` is a cast other than a lambda's, which a call's target is not written as.

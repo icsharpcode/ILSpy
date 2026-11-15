@@ -4165,6 +4165,24 @@ interpolation off, is an ordinary call too.
 
 The share rose from 97.1 % to 97.5 %.
 
+### 3.174 A batch: MemoryExtensions calls, `bool?.GetValueOrDefault()` (item 68y66)
+
+*MemoryExtensions.* Only `MemoryExtensions.AsSpan(string)` has syntax of its own, and only
+with `FirstClassSpanTypes`, where C# 14 folds it into the implicit span conversion; every
+other `MemoryExtensions` call is an ordinary (extension) call. `FirstClassSpanTypes` joins the
+settings the host passes (bit 67); the test that pins the setting names and their bit
+layout lists it.
+
+*`GetValueOrDefault`.* With `LiftNullables`, `bool?.GetValueOrDefault()` without arguments is
+`b == true`, unless the target is a null-conditional access chain
+(`IntroduceQueryExpressions.IsNullConditional`, which looks through member references,
+invocations and indexers to a `?.` but not to the rewrap around a whole chain). The binary
+operator carries the call's `CSharpInvocationResolveResult`, which the host now completes on
+an operator node as on an invocation; the `true` literal has no resolve result, as in the
+managed builder.
+
+The share stayed at 97.5 % (the bodies gained are below its rounding).
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

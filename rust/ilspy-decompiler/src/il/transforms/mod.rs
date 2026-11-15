@@ -129,6 +129,7 @@ pub const SETTING_NAMES: &[&str] = &[
     "TupleTypes",
     "RefExtensionMethods",
     "ExpandParamsArguments",
+    "FirstClassSpanTypes",
 ];
 
 /// The values of `SETTING_NAMES`.
@@ -201,6 +202,7 @@ pub struct Settings {
     pub tuple_types: bool,
     pub ref_extension_methods: bool,
     pub expand_params_arguments: bool,
+    pub first_class_span_types: bool,
 }
 
 impl Settings {
@@ -278,6 +280,7 @@ impl Settings {
             tuple_types: bit(64),
             ref_extension_methods: bit(65),
             expand_params_arguments: bit(66),
+            first_class_span_types: bit(67),
         }
     }
 }

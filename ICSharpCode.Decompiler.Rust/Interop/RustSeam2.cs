@@ -506,6 +506,13 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					}
 					if (node.ResolveOperator)
 						node.ResolveResult = exprBuilder.resolver.ResolveBinaryOperator(op, left.GetResolveResult(), right.GetResolveResult());
+					// A call written as an operator (`b == true` of `GetValueOrDefault`) keeps its resolve result.
+					if (node.Call is var (callTarget, callMethod, _, _, _, isExpanded))
+					{
+						if (ReferenceEquals(callTarget, PendingTarget))
+							callTarget = left.GetResolveResult();
+						node.ResolveResult = new CSharpInvocationResolveResult(callTarget!, callMethod, [], isExpandedForm: isExpanded);
+					}
 					var binary = Annotate(new BinaryOperatorExpression(left, op, right), node);
 					if (node.Overflow != 0)
 					{

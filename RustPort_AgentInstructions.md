@@ -649,7 +649,9 @@ the reasons. This file holds only the ordered steps, their gates and their rules
     variables of nested functions. Subject: `Translate await using and nested foreach variables in the engine`.
   - [x] 68y65. Format and formattable string calls that stay ordinary calls (lecture 3.173). Subject:
     `Write declined string interpolations as ordinary calls in the engine`.
-  - [ ] 68y66-. Further construct groups (numbered on from 68y1), in the order of the fallback reasons the ratchet test
+  - [x] 68y66. A batch (lecture 3.174): MemoryExtensions calls and bool?.GetValueOrDefault(). Subject:
+    `Translate MemoryExtensions calls and nullable bool defaults in the engine`.
+  - [ ] 68y67-. Further construct groups (numbered on from 68y1), in the order of the fallback reasons the ratchet test
     prints, until no body of the corpus falls back. Subject pattern:
     `Translate <construct group> to C# in the engine`.
   - [ ] 68z. Request-level seam 2. Subject: `Add the Rust C# AST builders and the AST materializer`.
