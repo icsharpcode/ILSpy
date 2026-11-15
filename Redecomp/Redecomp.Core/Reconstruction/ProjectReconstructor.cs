@@ -61,7 +61,33 @@ public static class ProjectReconstructor
 			origin = SourceOrigin.EmbeddedSources;
 		}
 
+		CopyContentFiles(assemblyPath, outputDirectory, projectFile);
+
 		return new ReconstructionResult(origin, debugInfo?.Description, projectFile);
+	}
+
+	static void CopyContentFiles(string assemblyPath, string outputDirectory, string projectFile)
+	{
+		string assemblyDirectory = Path.GetDirectoryName(assemblyPath)!;
+		var copied = new List<string>();
+		foreach (string relative in ContentFileCollector.Collect(assemblyPath))
+		{
+			string target = Path.Combine(outputDirectory, relative);
+			if (File.Exists(target))
+				continue;
+			Directory.CreateDirectory(Path.GetDirectoryName(target)!);
+			File.Copy(Path.Combine(assemblyDirectory, relative), target);
+			copied.Add(relative);
+		}
+		if (copied.Count == 0)
+			return;
+		// The files were found in the output directory, so the original project copied them there.
+		var doc = XDocument.Load(projectFile);
+		doc.Root!.Add(new XElement("ItemGroup",
+			copied.Select(f => new XElement("None",
+				new XAttribute("Update", f.Replace('/', '\\')),
+				new XAttribute("CopyToOutputDirectory", "PreserveNewest")))));
+		doc.Save(projectFile);
 	}
 
 	static void ReplaceDecompiledSources(string outputDirectory, EmbeddedSourceLayout layout)
