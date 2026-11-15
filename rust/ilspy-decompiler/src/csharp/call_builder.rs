@@ -343,7 +343,7 @@ impl Builder<'_, '_, '_, '_> {
         // format string tokenizes, else an ordinary call. A `params` overload is one in the
         // expanded form; with the array literal itself it is not translated.
         // `FormattableStringFactory.Create` is the interpolated string cast to
-        // `FormattableString`; where it does not tokenize it is not translated.
+        // `FormattableString`; where it does not tokenize, an ordinary call.
         let formattable = method.is_static
             && method.name == "Create"
             && self.ts.definition(declaring).is_some_and(|d| {
@@ -352,17 +352,25 @@ impl Builder<'_, '_, '_, '_> {
                         && i.full_name.name() == "FormattableStringFactory"
                 })
             });
-        if formattable && !self.settings.string_interpolation {
-            return Err("a call of Create with its own syntax".to_owned());
-        }
-        if self.settings.string_interpolation
+        // A `params` overload in the unexpanded form is an interpolated string only with the
+        // array literal as its argument, which is not translated; else an ordinary call.
+        let unexpanded_params =
+            method.parameters.last().is_some_and(|p| p.is_params) && !list.is_expanded_form;
+        let creation = self.settings.string_interpolation
             && method.is_static
             && (formattable
-                || (method.name == "Format" && self.ts.is_known(declaring, KnownTypeCode::String)))
+                || (method.name == "Format" && self.ts.is_known(declaring, KnownTypeCode::String)));
+        if creation
+            && unexpanded_params
+            && list.arguments.len() == 2
+            && matches!(
+                self.ast.node(list.arguments[1].expression),
+                AstNode::ArrayCreate { .. }
+            )
         {
-            if method.parameters.last().is_some_and(|p| p.is_params) && !list.is_expanded_form {
-                return Err("a string.Format call of a params overload".to_owned());
-            }
+            return Err("a string.Format call of a params overload".to_owned());
+        }
+        if creation && !unexpanded_params {
             match self.format_interpolation(inst, &list, first_argument_node)? {
                 Some(e) if formattable => {
                     let ty = self.ts.known_type(KnownTypeCode::FormattableString);
@@ -379,9 +387,6 @@ impl Builder<'_, '_, '_, '_> {
                     return Ok(TranslatedExpression { expression: c, ty });
                 }
                 Some(e) => return Ok(e),
-                None if formattable => {
-                    return Err("a call of Create with its own syntax".to_owned());
-                }
                 None => {}
             }
         }
@@ -2180,9 +2185,11 @@ impl Builder<'_, '_, '_, '_> {
             } if self.ts.is_known(ty, KnownTypeCode::String) => s,
             _ => return Ok(None),
         };
-        // No other argument may contain a string literal. The nodes made for the arguments are
-        // scanned, without the format strings nested interpolations consumed; a literal among
-        // them that may not be part of the arguments is not translated.
+        // No other argument may contain a string literal, else the call is an ordinary one. The
+        // nodes made for the arguments are scanned, without the format strings nested
+        // interpolations consumed.
+        // shortcut: the scan also sees nodes a discarded translation left behind; walk the
+        // written arguments once the AST has a child iterator.
         let format_node = format_arg.expression.0 as usize;
         let has_string_literal = self.ast.nodes[first_argument_node..]
             .iter()
@@ -2201,9 +2208,7 @@ impl Builder<'_, '_, '_, '_> {
                     )
             });
         if has_string_literal {
-            return Err(
-                "a string.Format call whose arguments may contain a string literal".to_owned(),
-            );
+            return Ok(None);
         }
         let Some(tokens) = format_tokens(&format) else {
             return Ok(None);

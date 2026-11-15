@@ -647,7 +647,9 @@ the reasons. This file holds only the ordered steps, their gates and their rules
     `Translate deconstruction assignments in the engine`.
   - [x] 68y64. A batch (lecture 3.172): await using, enum equality with other operands, and foreach
     variables of nested functions. Subject: `Translate await using and nested foreach variables in the engine`.
-  - [ ] 68y65-. Further construct groups (numbered on from 68y1), in the order of the fallback reasons the ratchet test
+  - [x] 68y65. Format and formattable string calls that stay ordinary calls (lecture 3.173). Subject:
+    `Write declined string interpolations as ordinary calls in the engine`.
+  - [ ] 68y66-. Further construct groups (numbered on from 68y1), in the order of the fallback reasons the ratchet test
     prints, until no body of the corpus falls back. Subject pattern:
     `Translate <construct group> to C# in the engine`.
   - [ ] 68z. Request-level seam 2. Subject: `Add the Rust C# AST builders and the AST materializer`.

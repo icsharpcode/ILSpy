@@ -4150,6 +4150,21 @@ materializes with it.
 
 The share rose from 97.0 % to 97.1 %.
 
+### 3.173 Format calls that stay calls (item 68y65)
+
+`IsInterpolatedStringCreation` and `TryGetStringInterpolationTokens` decline in three ways,
+and in each the managed builder writes the ordinary call; the engine used to fall back
+instead. A `params` overload in its unexpanded form is a creation only with the array
+literal as its argument (that case still falls back, since its single-element array would
+be unpacked); any other unexpanded call is ordinary. Arguments with a string literal make an
+ordinary call, which the engine decides by scanning the nodes made for the arguments; the
+scan may also see nodes a discarded translation left behind, marked as a shortcut until the
+AST has a child iterator, and the corpus shows no such case. A
+`FormattableStringFactory.Create` whose format does not tokenize, or with string
+interpolation off, is an ordinary call too.
+
+The share rose from 97.1 % to 97.5 %.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |
