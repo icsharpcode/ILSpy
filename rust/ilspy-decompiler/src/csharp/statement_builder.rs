@@ -904,10 +904,19 @@ impl Builder<'_, '_, '_, '_> {
             let result_type = self.result_type;
             let e = self.translate(value, Some(result_type))?;
             let e = self.convert_to(e, result_type, true)?;
+            // A lambda's return keeps the result type with an identity cast (`IdentityConversion`,
+            // as the host's `ResolveCast` gives it), lest the lambda infer another type.
             if self.in_lambda && self.possible_loss_of_type_information(e.ty, result_type) {
-                return Err("a lambda return cast to keep its type".to_owned());
+                let c = self.ast.add(AstNode::Cast {
+                    ty: result_type,
+                    expression: e.expression,
+                    unchecked: false,
+                });
+                self.ast.with_rr(c, Rr::Conversion { ty: result_type });
+                Some(c)
+            } else {
+                Some(e.expression)
             }
-            Some(e.expression)
         };
         let s = self.ast.add(AstNode::Return { expression });
         self.return_statements.push(s);

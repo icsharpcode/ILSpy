@@ -75,9 +75,8 @@ impl Builder<'_, '_, '_, '_> {
     }
 
     /// `TranslateFunction(function)`: the body of the local function, by a statement builder
-    /// of its own; the host writes the declaration of the reduced method around it. Async and
-    /// iterator functions, functions without a body and functions with local functions of
-    /// their own are not translated.
+    /// of its own; the host writes the declaration of the reduced method around it. Functions
+    /// without a body and functions with local functions of their own are not translated.
     fn translate_local_function(&mut self, lf: NodeId) -> Result<AstId, Unsupported> {
         let Inst::Function {
             return_type,
@@ -91,9 +90,6 @@ impl Builder<'_, '_, '_, '_> {
         else {
             return Err("a local function without reduced method".to_owned());
         };
-        if read.async_return_type.is_some() || read.is_iterator {
-            return Err("an async or iterator local function".to_owned());
-        }
         if read.method_operand.is_some() {
             return Err("a local function without body".to_owned());
         }
@@ -114,13 +110,14 @@ impl Builder<'_, '_, '_, '_> {
             std::mem::take(&mut self.return_statements),
             std::mem::take(&mut self.labels),
             std::mem::take(&mut self.duplicate_labels),
-            std::mem::replace(&mut self.is_iterator, false),
+            std::mem::replace(&mut self.is_iterator, read.is_iterator),
             std::mem::replace(&mut self.in_lambda, false),
             std::mem::replace(&mut self.in_local_function, true),
             std::mem::take(&mut self.local_functions),
         );
         self.return_container = body;
-        self.result_type = return_type;
+        // `currentResultType`: an async function returns the result of its task.
+        self.result_type = read.async_return_type.unwrap_or(return_type);
         let saved_function = self.current_function.replace(lf);
         let saved_end_labels = std::mem::take(&mut self.end_container_labels);
         let block = self.convert_as_block(body);

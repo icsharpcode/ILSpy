@@ -4263,6 +4263,25 @@ without lookup.
 
 The share rose from 98.0 % to 98.1 %.
 
+### 3.181 Async and iterator local functions, lambda return casts (item 68y73)
+
+*Async and iterator local functions.* A local function's statement builder takes the
+function's own `currentIsIterator` and `currentResultType` (the task's result type for an
+async function), as the managed constructor does, so `yield return`, `yield break` and the
+returns of async local functions translate; the host's `CleanUpMethodDeclaration` writes the
+`async` modifier.
+
+*Lambda return casts.* A lambda's return that would lose type information
+(`IsPossibleLossOfTypeInformation`: a value of another type than a tuple or `dynamic` result
+type, or `null`) is cast to the result type, which keeps the lambda's inferred return type,
+instead of falling back.
+
+*Still open.* A deconstruction inside a lambda keeps falling back: with it translated, the
+call taking the lambda cast it to `Action` where the managed builder does not, and the
+difference is not found yet (3.171).
+
+The share stayed at 98.1 % (the bodies gained are below its rounding).
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |
