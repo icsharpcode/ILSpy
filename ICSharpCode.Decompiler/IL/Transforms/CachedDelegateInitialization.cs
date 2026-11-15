@@ -177,7 +177,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			if (!(stobj.Value is NewObj))
 				return false;
-			if (!stobj.Target.MatchLdsFlda(out var field1) || !ldobj.Target.MatchLdsFlda(out var field2) || !field1.Equals(field2))
+			if (!stobj.Target.MatchLdsFlda(out var field1)
+				|| !ldobj.Target.MatchLdsFlda(out var field2)
+				|| !field1.Equals(field2)
+				|| !field1.IsCompilerGeneratedOrIsInCompilerGeneratedClass())
 				return false;
 			if (!DelegateConstruction.MatchDelegateConstruction((NewObj)stobj.Value, out _, out _, out _, true))
 				return false;
@@ -209,7 +212,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			if (!(stobj.Value is NewObj))
 				return false;
-			if (!stobj.Target.MatchLdFlda(out var _, out var field1) || !ldobj.Target.MatchLdFlda(out var __, out var field2) || !field1.Equals(field2))
+			if (!stobj.Target.MatchLdFlda(out var _, out var field1)
+				|| !ldobj.Target.MatchLdFlda(out var __, out var field2)
+				|| !field1.Equals(field2)
+				|| !field1.IsCompilerGeneratedOrIsInCompilerGeneratedClass())
 				return false;
 			if (!DelegateConstruction.MatchDelegateConstruction((NewObj)stobj.Value, out _, out _, out _, true))
 				return false;
@@ -250,6 +256,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			{
 				return false;
 			}
+			if (!field1.IsCompilerGeneratedOrIsInCompilerGeneratedClass())
+				return false;
 			if (!inst.Condition.MatchCompEquals(out ILInstruction left, out ILInstruction right) || !right.MatchLdNull())
 				return false;
 			if (!ldobj.Match(left).Success)
@@ -274,6 +282,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		bool CachedDelegateInitializationVBWithReturn(IfInstruction inst)
 		{
 			if (!inst.Condition.MatchCompNotEqualsNull(out var arg) || !arg.MatchLdsFld(out var field))
+				return false;
+			if (!field.IsCompilerGeneratedOrIsInCompilerGeneratedClass())
 				return false;
 			if (!inst.FalseInst.MatchNop())
 				return false;
@@ -323,6 +333,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			{
 				return false;
 			}
+			if (!field1.IsCompilerGeneratedOrIsInCompilerGeneratedClass())
+				return false;
 			if (!inst.Condition.MatchCompNotEqualsNull(out ILInstruction left))
 				return false;
 			if (!ldobj.Match(left).Success)
