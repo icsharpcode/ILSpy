@@ -89,6 +89,7 @@ mod kind {
     pub const LABEL: u8 = 65;
     pub const GOTO: u8 = 66;
     pub const DECONSTRUCTION_TUPLE: u8 = 67;
+    pub const IN_DIRECTION: u8 = 68;
 }
 
 pub(super) fn write_body(
@@ -205,6 +206,11 @@ fn rr(w: &mut FunctionWriter<'_, '_, '_, '_>, rr: Option<&Rr>) -> Result<(), Str
             w.out.u8(16);
             self::rr(w, Some(target))?;
             w.out.bool(*long);
+        }
+        Some(Rr::ByReferenceIn(element, ref_readonly)) => {
+            w.out.u8(29);
+            w.out.bool(*ref_readonly);
+            self::rr(w, Some(element))?;
         }
         Some(Rr::ByReferenceOut(element)) => {
             w.out.u8(15);
@@ -356,6 +362,7 @@ fn node(w: &mut FunctionWriter<'_, '_, '_, '_>, ast: &Ast, id: AstId) -> Result<
         AstNode::Break => kind::BREAK,
         AstNode::Continue => kind::CONTINUE,
         AstNode::Label { .. } => kind::LABEL,
+        AstNode::InDirection { .. } => kind::IN_DIRECTION,
         AstNode::DeconstructionTuple { .. } => kind::DECONSTRUCTION_TUPLE,
         AstNode::Goto { .. } => kind::GOTO,
         AstNode::DoWhile { .. } => kind::DO_WHILE,
@@ -521,6 +528,7 @@ fn node(w: &mut FunctionWriter<'_, '_, '_, '_>, ast: &Ast, id: AstId) -> Result<
         AstNode::StringLiteral { value } => utf16(w, &value),
         AstNode::Identifier { name } => w.string(&name),
         AstNode::Label { name } | AstNode::Goto { name } => w.string(&name),
+        AstNode::InDirection { expression } => node(w, ast, expression)?,
         AstNode::DeconstructionTuple { elements } => {
             w.out.len(elements.len());
             for e in elements {

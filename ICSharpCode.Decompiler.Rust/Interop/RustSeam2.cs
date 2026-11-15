@@ -110,6 +110,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		public const byte Label = 65;
 		public const byte Goto = 66;
 		public const byte DeconstructionTuple = 67;
+		public const byte InDirection = 68;
 
 		public byte Kind;
 		/// <summary>The instructions the node is annotated with, in order.</summary>
@@ -363,6 +364,12 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				}
 				case RustBodyNode.TypeReference:
 					return Annotate(new TypeReferenceExpression(exprBuilder.ConvertType(node.Type!)), node);
+				case RustBodyNode.InDirection:
+				{
+					var element = (Expression)Build(node.Children[0], exprBuilder);
+					CompletePendingElement(node, element);
+					return Annotate(new DirectionExpression(FieldDirection.In, element), node);
+				}
 				case RustBodyNode.RefDirection:
 				{
 					var element = (Expression)Build(node.Children[0], exprBuilder);

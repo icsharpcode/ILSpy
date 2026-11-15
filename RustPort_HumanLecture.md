@@ -4282,6 +4282,23 @@ difference is not found yet (3.171).
 
 The share stayed at 98.1 % (the bodies gained are below its rounding).
 
+### 3.182 `in` arguments (item 68y74)
+
+`BuildArgumentList` passes the argument of an `in` or `ref readonly` parameter through
+`ChangeDirectionExpressionTo`: the `ref x` the address translates to becomes `in x` (a new
+direction node), or the value itself where the address is a temporary's (`AddressOf`) or
+`this`. Its `ByReferenceResolveResult` has the parameter's reference kind, `In` or
+`RefReadOnly`, which overload resolution compares with the parameter's, as the managed one
+does. An `in this` extension method takes the referenced expression as its target, as a
+`ref this` one does, and an implicit conversion operator's cast drops the `in`, since
+`(T)(in x)` is no valid syntax.
+
+`EnforceExplicitIn`, the last disambiguation step, wraps an argument in
+`in ILSpyHelper_AsRefReadOnly(x)` and declares that helper as a local function; a call that
+needs it still falls back.
+
+The share rose from 98.1 % to 98.3 %.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

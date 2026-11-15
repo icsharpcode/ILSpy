@@ -626,6 +626,10 @@ impl Builder<'_, '_, '_, '_> {
             let parameter = method.parameters[0].ty;
             argument = self.convert_to(argument, parameter, false)?;
         }
+        // `(T)(in arg)` is invalid syntax.
+        if let AstNode::InDirection { expression } = *self.ast.node(argument.expression) {
+            argument = self.unwrap_child(argument.expression, expression);
+        }
         let c = self.ast.add(AstNode::Cast {
             ty: target,
             expression: argument.expression,
@@ -676,7 +680,9 @@ impl Builder<'_, '_, '_, '_> {
         // A `ref this` extension method takes the referenced expression as its target, which
         // carries the reference implicitly; an `out` argument is no target.
         match *self.ast.node(first.expression) {
-            AstNode::RefDirection { expression } if self.settings.ref_extension_methods => {
+            AstNode::RefDirection { expression } | AstNode::InDirection { expression }
+                if self.settings.ref_extension_methods =>
+            {
                 target_rr = self.rr_of(expression);
                 first = TranslatedExpression {
                     expression,
@@ -890,14 +896,6 @@ impl Builder<'_, '_, '_, '_> {
         let declaring_is_nullable = self.ts.is_known(declaring, KnownTypeCode::NullableOfT);
         for (i, &pi) in order.iter().enumerate() {
             let parameter = &method.parameters[pi];
-            // `out` arguments resolve as `OutVarResolveResult`s and `in` arguments may be made
-            // explicit, which is not translated.
-            if !matches!(
-                parameter.ref_kind,
-                RefKind::None | RefKind::Ref | RefKind::Out
-            ) {
-                return Err("an in argument".to_owned());
-            }
             if self.ts.kind(parameter.ty) == TypeKind::Dynamic {
                 return Err("an argument of a dynamic parameter".to_owned());
             }
@@ -937,6 +935,17 @@ impl Builder<'_, '_, '_, '_> {
             }
             if parameter.ref_kind == RefKind::Out {
                 arg = self.change_direction_to_out(arg);
+            }
+            if matches!(parameter.ref_kind, RefKind::In | RefKind::RefReadOnly) {
+                let is_address_of = matches!(
+                    self.f.inst(call.args[first_param + i]),
+                    Inst::AddressOf { .. }
+                );
+                arg = self.change_direction_to_in(
+                    arg,
+                    is_address_of,
+                    parameter.ref_kind == RefKind::RefReadOnly,
+                );
             }
             list.arguments.push(arg);
         }
@@ -994,6 +1003,35 @@ impl Builder<'_, '_, '_, '_> {
             self.ast.with_il(d, inst);
         }
         self.ast.with_rr(d, Rr::ByReferenceOut(element));
+        TranslatedExpression {
+            expression: d,
+            ty: arg.ty,
+        }
+    }
+
+    /// `ChangeDirectionExpressionTo(input, In, isAddressOf)`: `in x` of a `ref x` argument, or
+    /// the value itself where the reference is a temporary's address or `this`.
+    fn change_direction_to_in(
+        &mut self,
+        arg: TranslatedExpression,
+        is_address_of: bool,
+        ref_readonly: bool,
+    ) -> TranslatedExpression {
+        let AstNode::RefDirection { expression } = *self.ast.node(arg.expression) else {
+            return arg;
+        };
+        let Some(Rr::ByReference(element)) = self.ast.annotations(arg.expression).rr.clone() else {
+            return arg;
+        };
+        if is_address_of || matches!(self.ast.node(expression), AstNode::This) {
+            return self.unwrap_child(arg.expression, expression);
+        }
+        let d = self.ast.add(AstNode::InDirection { expression });
+        for inst in self.ast.annotations(arg.expression).il.clone() {
+            self.ast.with_il(d, inst);
+        }
+        self.ast
+            .with_rr(d, Rr::ByReferenceIn(element, ref_readonly));
         TranslatedExpression {
             expression: d,
             ty: arg.ty,
@@ -1778,7 +1816,18 @@ impl Builder<'_, '_, '_, '_> {
                 continue;
             }
             if !spent_explicit_in {
-                // No `in` parameter to make explicit.
+                // `EnforceExplicitIn`, which writes `in ILSpyHelper_AsRefReadOnly(x)` and its local
+                // function, is not translated.
+                let expected = list.expected_parameters(method);
+                if expected.iter().zip(&list.arguments).any(|(p, a)| {
+                    p.ref_kind == RefKind::In
+                        && !matches!(
+                            self.ast.node(a.expression),
+                            AstNode::InDirection { .. } | AstNode::RefDirection { .. }
+                        )
+                }) {
+                    return Err("an in argument made explicit".to_owned());
+                }
                 spent_explicit_in = true;
                 continue;
             }

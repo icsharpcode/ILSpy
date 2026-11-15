@@ -151,6 +151,8 @@ pub enum AstNode {
         expression: AstId,
         implicitly_typed: bool,
     },
+    /// `DirectionExpression` of `in`: `in expression`.
+    InDirection { expression: AstId },
     /// `TypeOfExpression` of `ExpressionBuilder.ConvertType(ty)`.
     TypeOf { ty: TypeId },
     /// `TryCatchStatement`.
@@ -409,6 +411,9 @@ pub enum Rr {
     ByReference(Box<Rr>),
     /// `ByReferenceResolveResult` with `ReferenceKind.Out` of the element's resolve result.
     ByReferenceOut(Box<Rr>),
+    /// `ByReferenceResolveResult` of an `in` argument, with the element's resolve result, of
+    /// the parameter's reference kind (`In`, or `RefReadOnly` where `true`).
+    ByReferenceIn(Box<Rr>, bool),
     /// `OperatorResolveResult` of the node's operator (an assignment, `!`, a binary or the conditional
     /// operator), of
     /// the given

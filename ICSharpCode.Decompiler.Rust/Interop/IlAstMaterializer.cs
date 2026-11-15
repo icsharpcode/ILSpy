@@ -925,6 +925,9 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 						node.Children[i] = BodyNode();
 					}
 					break;
+				case RustBodyNode.InDirection:
+					node.Children = [BodyNode()];
+					break;
 				case RustBodyNode.DeconstructionTuple:
 					// The elements.
 					node.Children = new RustBodyNode[Len()];
@@ -1247,6 +1250,11 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				}
 				case 15:
 					return new ByReferenceResolveResult(NestedTargetResolveResult()!, ReferenceKind.Out);
+				case 29:
+				{
+					var kind = Bool() ? ReferenceKind.RefReadOnly : ReferenceKind.In;
+					return new ByReferenceResolveResult(NestedTargetResolveResult()!, kind);
+				}
 				case 16:
 				{
 					// `VisitLdLen`: the Length or LongLength property of System.Array.

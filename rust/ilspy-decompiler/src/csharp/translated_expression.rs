@@ -47,18 +47,23 @@ impl Builder<'_, '_, '_, '_> {
                 value: value.clone(),
             },
             // `ByReferenceResolveResult` of a `ref` or `out` expression.
-            Some(rr @ (Rr::ByReference(_) | Rr::ByReferenceOut(_))) => match *self.ts.data(ty) {
-                TypeData::ByRef(element) => ResolveResult::ByReference {
-                    ty,
-                    element,
-                    ref_kind: if matches!(rr, Rr::ByReferenceOut(_)) {
-                        crate::typesystem::members::RefKind::Out
-                    } else {
-                        crate::typesystem::members::RefKind::Ref
+            Some(rr @ (Rr::ByReference(_) | Rr::ByReferenceOut(_) | Rr::ByReferenceIn(..))) => {
+                match *self.ts.data(ty) {
+                    TypeData::ByRef(element) => ResolveResult::ByReference {
+                        ty,
+                        element,
+                        ref_kind: match rr {
+                            Rr::ByReferenceOut(_) => crate::typesystem::members::RefKind::Out,
+                            Rr::ByReferenceIn(_, true) => {
+                                crate::typesystem::members::RefKind::RefReadOnly
+                            }
+                            Rr::ByReferenceIn(_, false) => crate::typesystem::members::RefKind::In,
+                            _ => crate::typesystem::members::RefKind::Ref,
+                        },
                     },
-                },
-                _ => ResolveResult::Expression(ty),
-            },
+                    _ => ResolveResult::Expression(ty),
+                }
+            }
             Some(Rr::Lambda(index)) => self.lambda_rr(*index),
             Some(Rr::MethodGroup { index, .. }) | Some(Rr::LocalFunctionGroup { index, .. }) => {
                 ResolveResult::MethodGroup(self.ast.method_groups[*index].clone())

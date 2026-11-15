@@ -55,7 +55,9 @@ impl Builder<'_, '_, '_, '_> {
             Rr::TypeIs { .. } => self
                 .ts
                 .known_type(crate::typesystem::known::KnownTypeCode::Boolean),
-            Rr::ByReference(element) | Rr::ByReferenceOut(element) => {
+            Rr::ByReference(element)
+            | Rr::ByReferenceOut(element)
+            | Rr::ByReferenceIn(element, _) => {
                 let e = self.rr_type(element);
                 self.ts.intern(TypeData::ByRef(e))
             }
