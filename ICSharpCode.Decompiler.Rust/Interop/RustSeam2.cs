@@ -250,6 +250,13 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		/// <summary>A call target's resolve result that is the one of its built target expression.</summary>
 		internal static readonly ResolveResult PendingTarget = new ResolveResult(SpecialType.UnknownType);
 
+		/// <summary>A by-reference resolve result of a cast element: the built element's resolve result.</summary>
+		static void CompletePendingElement(RustBodyNode node, Expression element)
+		{
+			if (node.ResolveResult is ByReferenceResolveResult pending && ReferenceEquals(pending.ElementResult, PendingTarget))
+				node.ResolveResult = new ByReferenceResolveResult(element.GetResolveResult(), pending.ReferenceKind);
+		}
+
 		static AstNode Build(RustBodyNode node, ExpressionBuilder exprBuilder)
 		{
 			var syntax = BuildNode(node, exprBuilder);
@@ -357,7 +364,11 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				case RustBodyNode.TypeReference:
 					return Annotate(new TypeReferenceExpression(exprBuilder.ConvertType(node.Type!)), node);
 				case RustBodyNode.RefDirection:
-					return Annotate(new DirectionExpression(FieldDirection.Ref, (Expression)Build(node.Children[0], exprBuilder)), node);
+				{
+					var element = (Expression)Build(node.Children[0], exprBuilder);
+					CompletePendingElement(node, element);
+					return Annotate(new DirectionExpression(FieldDirection.Ref, element), node);
+				}
 				case RustBodyNode.ExpressionStatement:
 					return Annotate(new ExpressionStatement((Expression)Build(node.Children[0], exprBuilder)), node);
 				case RustBodyNode.Assignment:
@@ -832,7 +843,9 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					}, node);
 				case RustBodyNode.OutDirection:
 				{
-					var direction = Annotate(new DirectionExpression(FieldDirection.Out, (Expression)Build(node.Children[0], exprBuilder)), node);
+					var element = (Expression)Build(node.Children[0], exprBuilder);
+					CompletePendingElement(node, element);
+					var direction = Annotate(new DirectionExpression(FieldDirection.Out, element), node);
 					// `GetArgumentExpressions` marks an `out` argument written as `out var`.
 					if (node.Flag)
 						direction.AddAnnotation(UseImplicitlyTypedOutAnnotation.Instance);

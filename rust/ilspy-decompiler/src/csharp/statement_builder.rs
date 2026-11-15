@@ -73,23 +73,6 @@ pub fn convert_body(
         return Err("a local function declared in a loop or switch".to_owned());
     }
     b.ast.with_il(stmt, body);
-    // A resolve result inside another one is read without a node of its own, so it cannot
-    // be a cast's, which the host computes from the cast's node; for the target of a member
-    // reference the host takes the built target's.
-    let nested_cast = b.ast.nodes.iter().any(|(_, a)| match &a.rr {
-        Some(
-            Rr::ByReference(inner)
-            | Rr::ByReferenceOut(inner)
-            | Rr::ArrayLength { target: inner, .. },
-        ) => matches!(
-            **inner,
-            Rr::Conversion { .. } | Rr::ImplicitConversion { .. } | Rr::TryCast { .. }
-        ),
-        _ => false,
-    });
-    if nested_cast {
-        return Err("a cast as the target of a field, property or reference".to_owned());
-    }
     // `stmt as BlockStatement ?? new BlockStatement { stmt }`: a container is a block.
     let ast = b.ast;
     Ok((ast, stmt, function))

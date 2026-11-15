@@ -4241,6 +4241,18 @@ are therefore no reason to fall back, and the engine now does the same.
 
 The share rose from 97.8 % to 97.9 %.
 
+### 3.179 Casts inside references and array lengths (item 68y71)
+
+A resolve result nested in another one (the element of a `ByReferenceResolveResult`, the
+target of an array length's `MemberResolveResult`) is read without a node of its own, so
+the host could not compute a cast's resolve result there, and the engine refused every body
+with one. Such a nested cast is now decoded as the pending marker 3.142 introduced for call
+targets: the host completes the by-reference resolve result of a `ref` or `out` direction
+from the built element, and an array length takes its target's, as member references
+already did. The body-wide refusal is gone.
+
+The share rose from 97.9 % to 98.0 %.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

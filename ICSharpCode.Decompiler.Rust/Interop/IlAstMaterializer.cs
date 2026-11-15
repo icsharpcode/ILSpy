@@ -1149,7 +1149,8 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					return new MemberResolveResult(target, field, returnTypeOverride: Type());
 				}
 				case 6:
-					return new ByReferenceResolveResult(BodyResolveResult(out _)!, ReferenceKind.Ref);
+					// RustSeam2 takes a cast element's resolve result from the built element.
+					return new ByReferenceResolveResult(NestedTargetResolveResult()!, ReferenceKind.Ref);
 				case 7:
 					operatorType = Type();
 					return null;
@@ -1236,11 +1237,11 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					return new TypeOfResolveResult(type, Type());
 				}
 				case 15:
-					return new ByReferenceResolveResult(BodyResolveResult(out _)!, ReferenceKind.Out);
+					return new ByReferenceResolveResult(NestedTargetResolveResult()!, ReferenceKind.Out);
 				case 16:
 				{
 					// `VisitLdLen`: the Length or LongLength property of System.Array.
-					var target = BodyResolveResult(out _);
+					var target = NestedTargetResolveResult();
 					bool isLong = Bool();
 					string name = isLong ? "LongLength" : "Length";
 					var arrayType = compilation.FindType(KnownTypeCode.Array);
