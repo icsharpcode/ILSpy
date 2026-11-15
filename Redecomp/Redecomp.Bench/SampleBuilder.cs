@@ -29,6 +29,11 @@ public enum BuildVariant
 	PortablePdbWithDocs,
 	/// <summary>Release build with the PDB embedded in the assembly and all sources embedded in the PDB.</summary>
 	EmbeddedSources,
+	/// <summary>
+	/// Release build with a portable PDB whose SourceLink map points at the samples on GitHub,
+	/// as packages built in CI usually ship.
+	/// </summary>
+	SourceLink,
 }
 
 /// <summary>Compiles the sample applications under <c>samples/</c> and caches the outputs per test run.</summary>
@@ -38,6 +43,13 @@ public static class SampleBuilder
 	static readonly string workRoot = Path.Combine(Path.GetTempPath(), "redecomp-tests", Guid.NewGuid().ToString("N"));
 
 	public static string SamplesDirectory { get; } = FindSamplesDirectory();
+
+	/// <summary>
+	/// Raw-content URL of the samples directory at a commit where the samples are identical to the
+	/// working tree; SourceLink builds point their documents there. The PDB checksums guarantee that
+	/// a stale commit can only make the recovery fail, never return different sources.
+	/// </summary>
+	public const string SourceLinkBaseUrl = "https://raw.githubusercontent.com/franck00/ilspy/617bcbf74b60e795b714acf51bd0d4b16783e6d2/Redecomp/samples";
 
 	public static string SourceDirectory(string sample) => Path.Combine(SamplesDirectory, sample);
 
@@ -59,7 +71,7 @@ public static class SampleBuilder
 			string copy = Path.Combine(workRoot, variant.ToString(), sample);
 			CopyDirectory(SourceDirectory(sample), copy);
 			string output = Path.Combine(workRoot, variant.ToString(), "out");
-			Run("dotnet", $"build \"{copy}\" -c Release -o \"{output}\" {Properties(variant)}");
+			Run("dotnet", $"build \"{copy}\" -c Release -o \"{output}\" {Properties(variant, copy, sample)}");
 			string assembly = Path.Combine(output, sample + ".dll");
 			cache[(sample, variant)] = assembly;
 			return assembly;
@@ -107,7 +119,7 @@ public static class SampleBuilder
 			CopyDirectory(SourceDirectory(sample), copy);
 			string app = FindExecutableProject(copy);
 			string output = Path.Combine(workRoot, variant.ToString(), "publish", sample);
-			Run("dotnet", $"publish \"{app}\" -c Release -o \"{output}\" -p:RestoreSources=\"{feed}\" {Properties(variant)}");
+			Run("dotnet", $"publish \"{app}\" -c Release -o \"{output}\" -p:RestoreSources=\"{feed}\" {Properties(variant, copy, sample)}");
 			publishCache[(sample, variant)] = output;
 			return output;
 		}
@@ -118,12 +130,24 @@ public static class SampleBuilder
 		=> Directory.EnumerateFiles(directory, "*.csproj", SearchOption.AllDirectories)
 			.Single(p => File.ReadAllText(p).Contains("<OutputType>Exe</OutputType>", StringComparison.OrdinalIgnoreCase));
 
-	static string Properties(BuildVariant variant) => variant switch {
+	static string Properties(BuildVariant variant, string copy, string sample) => variant switch {
 		BuildVariant.NoPdb => "-p:DebugType=none",
 		BuildVariant.PortablePdbWithDocs => "-p:DebugType=portable -p:GenerateDocumentationFile=true -p:NoWarn=CS1591",
 		BuildVariant.EmbeddedSources => "-p:DebugType=embedded -p:EmbedAllSources=true",
+		BuildVariant.SourceLink => $"-p:DebugType=portable -p:SourceLink=\"{WriteSourceLinkMap(copy, sample)}\"",
 		_ => throw new ArgumentOutOfRangeException(nameof(variant)),
 	};
+
+	static string WriteSourceLinkMap(string copy, string sample)
+	{
+		string root = Path.GetFullPath(copy).TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar;
+		string json = System.Text.Json.JsonSerializer.Serialize(new Dictionary<string, Dictionary<string, string>> {
+			["documents"] = new() { [root + "*"] = $"{SourceLinkBaseUrl}/{sample}/*" },
+		});
+		string path = Path.Combine(copy, "sourcelink.json");
+		File.WriteAllText(path, json);
+		return path;
+	}
 
 	/// <summary>Runs a process to completion and returns its standard output; throws when it fails.</summary>
 	public static string Run(string fileName, string arguments, string? workingDirectory = null)

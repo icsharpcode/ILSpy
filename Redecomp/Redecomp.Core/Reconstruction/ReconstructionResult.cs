@@ -23,6 +23,8 @@ public enum SourceOrigin
 {
 	/// <summary>The original files, read from the sources embedded in the PDB.</summary>
 	EmbeddedSources,
+	/// <summary>The original files, downloaded from the locations the PDB's SourceLink map gives and checked against the PDB checksums.</summary>
+	SourceLink,
 	/// <summary>Decompiled from IL, using PDB symbols when they are available.</summary>
 	Decompiled,
 }
@@ -38,5 +40,8 @@ public sealed record ReconstructionResult(SourceOrigin Origin, string? DebugInfo
 /// <param name="IncludeContentFiles">Whether files deployed next to the assembly are copied into the project.</param>
 public sealed record ReconstructionOptions(bool DeterministicNaming = true, bool IncludeContentFiles = true)
 {
+	/// <summary>Fetches sources from SourceLink locations; null disables SourceLink recovery.</summary>
+	public Recovery.ISourceDownloader? SourceDownloader { get; init; } = Recovery.HttpSourceDownloader.Shared;
+
 	public static ReconstructionOptions Default { get; } = new();
 }

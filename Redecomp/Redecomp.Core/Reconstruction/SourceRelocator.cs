@@ -33,7 +33,11 @@ public static class SourceRelocator
 	public static void Apply(MetadataReader module, MetadataReader pdb, string outputDirectory, bool useNestedDirectoriesForNamespaces)
 	{
 		var documents = TypeDocumentMap.Build(module, pdb);
-		var relative = ProjectPaths.ToProjectRelative(documents.Values.Where(d => !ProjectPaths.IsGenerated(d)));
+		// The project directory is computed from every source document, as SourceLink recovery does,
+		// so relocated and recovered files agree on their paths.
+		var relative = ProjectPaths.ToProjectRelative(pdb.Documents
+			.Select(h => pdb.GetString(pdb.GetDocument(h).Name))
+			.Where(d => !ProjectPaths.IsGenerated(d)));
 
 		// Each top-level type: decompiled file, original file (empty when unknown), namespace.
 		var moves = new List<(string From, string To, string Namespace)>();

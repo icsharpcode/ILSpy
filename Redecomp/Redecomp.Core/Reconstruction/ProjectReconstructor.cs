@@ -66,7 +66,10 @@ public static class ProjectReconstructor
 		}
 		else if (pdb != null)
 		{
-			SourceRelocator.Apply(module.Metadata, pdb.Provider.GetMetadataReader(), outputDirectory, settings.UseNestedDirectoriesForNamespaces);
+			var pdbReader = pdb.Provider.GetMetadataReader();
+			SourceRelocator.Apply(module.Metadata, pdbReader, outputDirectory, settings.UseNestedDirectoriesForNamespaces);
+			if (options.SourceDownloader != null && ApplySourceLink(pdbReader, options.SourceDownloader, outputDirectory, projectFile))
+				origin = SourceOrigin.SourceLink;
 		}
 
 		ReferenceRewriter.Apply(projectFile, dependencies);
@@ -74,6 +77,30 @@ public static class ProjectReconstructor
 			CopyContentFiles(assemblyPath, outputDirectory, projectFile);
 
 		return new ReconstructionResult(origin, debugInfo?.Description, projectFile);
+	}
+
+	/// <summary>
+	/// Overwrites the relocated decompiled files with the originals SourceLink can recover.
+	/// Returns true when every source file of the project was recovered.
+	/// </summary>
+	static bool ApplySourceLink(MetadataReader pdb, ISourceDownloader downloader, string outputDirectory, string projectFile)
+	{
+		var recovered = SourceLinkRecovery.Download(pdb, downloader);
+		if (recovered.Count == 0)
+			return false;
+		var documents = pdb.Documents.Select(h => pdb.GetString(pdb.GetDocument(h).Name)).ToList();
+		var userDocuments = documents.Where(d => !ProjectPaths.IsGenerated(d)).ToList();
+		var relative = ProjectPaths.ToProjectRelative(userDocuments);
+		foreach (var file in recovered)
+		{
+			string target = Path.Combine(outputDirectory, relative[file.OriginalPath]);
+			Directory.CreateDirectory(Path.GetDirectoryName(target)!);
+			File.WriteAllBytes(target, file.Content);
+		}
+		// Original files rely on the global usings the SDK generated for them.
+		if (documents.Any(d => ProjectPaths.IsGenerated(d) && d.EndsWith(".GlobalUsings.g.cs", StringComparison.OrdinalIgnoreCase)))
+			SetProjectProperty(projectFile, "ImplicitUsings", "enable");
+		return recovered.Count == userDocuments.Count;
 	}
 
 	/// <summary>The manifest entry of a standalone assembly, from the .deps.json deployed next to it.</summary>

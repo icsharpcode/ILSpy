@@ -22,16 +22,19 @@ namespace Redecomp.Cli;
 
 public static class Program
 {
-	const string Usage = "usage: redecomp <assembly.dll | publish-directory> -o <output-directory>";
+	const string Usage = "usage: redecomp <assembly.dll | publish-directory> -o <output-directory> [--offline]";
 
 	public static int Main(string[] args)
 	{
 		string? assembly = null;
 		string? output = null;
+		var options = ReconstructionOptions.Default;
 		for (int i = 0; i < args.Length; i++)
 		{
 			if ((args[i] == "-o" || args[i] == "--output") && i + 1 < args.Length)
 				output = args[++i];
+			else if (args[i] == "--offline")
+				options = options with { SourceDownloader = null };
 			else if (assembly == null && !args[i].StartsWith('-'))
 				assembly = args[i];
 			else
@@ -41,7 +44,7 @@ public static class Program
 			return Fail("missing assembly or output directory");
 		if (Directory.Exists(assembly))
 		{
-			var solution = SolutionReconstructor.Reconstruct(assembly, output);
+			var solution = SolutionReconstructor.Reconstruct(assembly, output, options);
 			Console.WriteLine($"Solution:    {solution.SolutionFile}");
 			foreach (var project in solution.Projects)
 				Print(project.Result);
@@ -50,7 +53,7 @@ public static class Program
 		if (!File.Exists(assembly))
 			return Fail($"assembly or publish directory not found: {assembly}");
 
-		Print(ProjectReconstructor.Reconstruct(assembly, output));
+		Print(ProjectReconstructor.Reconstruct(assembly, output, options));
 		return 0;
 	}
 
@@ -59,6 +62,7 @@ public static class Program
 		Console.WriteLine($"Project:     {result.ProjectFile}");
 		Console.WriteLine($"  Sources:     {result.Origin switch {
 			SourceOrigin.EmbeddedSources => "original files embedded in the PDB",
+			SourceOrigin.SourceLink => "original files downloaded through SourceLink, checksums verified",
 			_ => "decompiled from IL",
 		}}");
 		Console.WriteLine($"  Debug info:  {result.DebugInfo ?? "none"}");
