@@ -59,18 +59,71 @@ public static class SampleBuilder
 			string copy = Path.Combine(workRoot, variant.ToString(), sample);
 			CopyDirectory(SourceDirectory(sample), copy);
 			string output = Path.Combine(workRoot, variant.ToString(), "out");
-			string properties = variant switch {
-				BuildVariant.NoPdb => "-p:DebugType=none",
-				BuildVariant.PortablePdbWithDocs => "-p:DebugType=portable -p:GenerateDocumentationFile=true -p:NoWarn=CS1591",
-				BuildVariant.EmbeddedSources => "-p:DebugType=embedded -p:EmbedAllSources=true",
-				_ => throw new ArgumentOutOfRangeException(nameof(variant)),
-			};
-			Run("dotnet", $"build \"{copy}\" -c Release -o \"{output}\" {properties}");
+			Run("dotnet", $"build \"{copy}\" -c Release -o \"{output}\" {Properties(variant)}");
 			string assembly = Path.Combine(output, sample + ".dll");
 			cache[(sample, variant)] = assembly;
 			return assembly;
 		}
 	}
+
+	static readonly Dictionary<(string, BuildVariant), string> publishCache = new();
+	static string? localFeed;
+
+	/// <summary>
+	/// Directory holding the NuGet packages built from <c>samples/_packages</c>; samples restore
+	/// from it instead of nuget.org.
+	/// </summary>
+	public static string LocalFeed
+	{
+		get {
+			lock (publishCache)
+			{
+				if (localFeed != null)
+					return localFeed;
+				string feed = Path.Combine(workRoot, "feed");
+				foreach (string project in Directory.EnumerateFiles(Path.Combine(SamplesDirectory, "_packages"), "*.csproj", SearchOption.AllDirectories))
+				{
+					string copy = Path.Combine(workRoot, "packages", Path.GetFileNameWithoutExtension(project));
+					CopyDirectory(Path.GetDirectoryName(project)!, copy);
+					Run("dotnet", $"pack \"{copy}\" -c Release -o \"{feed}\"");
+				}
+				return localFeed = feed;
+			}
+		}
+	}
+
+	/// <summary>
+	/// Publishes the executable project of a multi-project sample and returns the publish directory,
+	/// as a deployed application would look.
+	/// </summary>
+	public static string Publish(string sample, BuildVariant variant)
+	{
+		string feed = LocalFeed;
+		lock (publishCache)
+		{
+			if (publishCache.TryGetValue((sample, variant), out var cached))
+				return cached;
+			string copy = Path.Combine(workRoot, variant.ToString(), "publish-src", sample);
+			CopyDirectory(SourceDirectory(sample), copy);
+			string app = FindExecutableProject(copy);
+			string output = Path.Combine(workRoot, variant.ToString(), "publish", sample);
+			Run("dotnet", $"publish \"{app}\" -c Release -o \"{output}\" -p:RestoreSources=\"{feed}\" {Properties(variant)}");
+			publishCache[(sample, variant)] = output;
+			return output;
+		}
+	}
+
+	/// <summary>The project of a solution directory whose output is an executable.</summary>
+	public static string FindExecutableProject(string directory)
+		=> Directory.EnumerateFiles(directory, "*.csproj", SearchOption.AllDirectories)
+			.Single(p => File.ReadAllText(p).Contains("<OutputType>Exe</OutputType>", StringComparison.OrdinalIgnoreCase));
+
+	static string Properties(BuildVariant variant) => variant switch {
+		BuildVariant.NoPdb => "-p:DebugType=none",
+		BuildVariant.PortablePdbWithDocs => "-p:DebugType=portable -p:GenerateDocumentationFile=true -p:NoWarn=CS1591",
+		BuildVariant.EmbeddedSources => "-p:DebugType=embedded -p:EmbedAllSources=true",
+		_ => throw new ArgumentOutOfRangeException(nameof(variant)),
+	};
 
 	/// <summary>Runs a process to completion and returns its standard output; throws when it fails.</summary>
 	public static string Run(string fileName, string arguments, string? workingDirectory = null)

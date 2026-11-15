@@ -21,10 +21,11 @@ namespace Redecomp.Bench;
 public static class ProjectBuilder
 {
 	/// <summary>Builds a project directory and returns the path of the produced assembly.</summary>
-	public static string BuildProject(string projectDirectory, string assemblyName)
+	public static string BuildProject(string projectDirectory, string assemblyName, string? restoreSources = null)
 	{
 		string output = Path.Combine(projectDirectory, "bin-redecomp");
-		SampleBuilder.Run("dotnet", $"build \"{projectDirectory}\" -c Release -o \"{output}\"");
+		string restore = restoreSources == null ? "" : $" -p:RestoreSources=\"{restoreSources}\"";
+		SampleBuilder.Run("dotnet", $"build \"{projectDirectory}\" -c Release -o \"{output}\"{restore}");
 		return Path.Combine(output, assemblyName + ".dll");
 	}
 

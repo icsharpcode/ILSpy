@@ -22,7 +22,7 @@ namespace Redecomp.Cli;
 
 public static class Program
 {
-	const string Usage = "usage: redecomp <assembly.dll> -o <output-directory>";
+	const string Usage = "usage: redecomp <assembly.dll | publish-directory> -o <output-directory>";
 
 	public static int Main(string[] args)
 	{
@@ -39,14 +39,29 @@ public static class Program
 		}
 		if (assembly == null || output == null)
 			return Fail("missing assembly or output directory");
+		if (Directory.Exists(assembly))
+		{
+			var solution = SolutionReconstructor.Reconstruct(assembly, output);
+			Console.WriteLine($"Solution:    {solution.SolutionFile}");
+			foreach (var project in solution.Projects)
+				Print(project.Result);
+			return 0;
+		}
 		if (!File.Exists(assembly))
-			return Fail($"assembly not found: {assembly}");
+			return Fail($"assembly or publish directory not found: {assembly}");
 
-		var result = ProjectReconstructor.Reconstruct(assembly, output);
-		Console.WriteLine($"Project:     {result.ProjectFile}");
-		Console.WriteLine($"Sources:     {(result.Origin == SourceOrigin.EmbeddedSources ? "original files embedded in the PDB" : "decompiled from IL")}");
-		Console.WriteLine($"Debug info:  {result.DebugInfo ?? "none"}");
+		Print(ProjectReconstructor.Reconstruct(assembly, output));
 		return 0;
+	}
+
+	static void Print(ReconstructionResult result)
+	{
+		Console.WriteLine($"Project:     {result.ProjectFile}");
+		Console.WriteLine($"  Sources:     {result.Origin switch {
+			SourceOrigin.EmbeddedSources => "original files embedded in the PDB",
+			_ => "decompiled from IL",
+		}}");
+		Console.WriteLine($"  Debug info:  {result.DebugInfo ?? "none"}");
 	}
 
 	static int Fail(string message)
