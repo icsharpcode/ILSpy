@@ -158,6 +158,14 @@ if (help)
 	Console.WriteLine("  -h, --help         Show this help");
 	return 0;
 }
+reportDir ??= "decompdiff-report";
+if (Directory.Exists(reportDir)
+	&& !File.Exists(Path.Combine(reportDir, "summary.md"))
+	&& Directory.EnumerateFileSystemEntries(reportDir).Any())
+{
+	Console.Error.WriteLine($"refusing to reuse {reportDir}: exists, non-empty, and not a decompdiff report");
+	return 1;
+}
 if (packageList == null && corpus.Count == 1 && File.Exists(corpus[0])
 	&& Path.GetExtension(corpus[0]).Equals(".txt", StringComparison.OrdinalIgnoreCase))
 {
@@ -205,7 +213,7 @@ if (packageList != null)
 	var corpusFile = Path.Combine(Path.GetTempPath(), $"decompdiff-{Guid.NewGuid():N}.corpus.txt");
 	try
 	{
-		Side.Run("dotnet", $"run \"{nugetfuzz}\" -- --download-only --corpus-out \"{corpusFile}\" \"@{Path.GetFullPath(listPath)}\"");
+		Side.Run("dotnet", $"run \"{nugetfuzz}\" -- --download-only --jobs {jobs} --corpus-out \"{corpusFile}\" \"@{Path.GetFullPath(listPath)}\"");
 		corpus.AddRange(File.ReadAllLines(corpusFile)
 			.Select(l => l.Trim())
 			.Where(l => l.Length > 0 && !l.StartsWith('#')));
@@ -225,16 +233,9 @@ if (corpus.Count == 0)
 	Console.Error.WriteLine("usage: decompdiff [--old <commit-ish|ILSpy-checkout|Decompiler.dll>] --new <...> [-o report-dir] [--build|--no-build] [--refs <dir>]... [--packages <@list>] <dll|dir|@list>...");
 	return 1;
 }
-reportDir ??= "decompdiff-report";
+Side.WarnIfDirtyWorktreeIgnored("new", newSpec);
 if (Directory.Exists(reportDir))
-{
-	if (!File.Exists(Path.Combine(reportDir, "summary.md")) && Directory.EnumerateFileSystemEntries(reportDir).Any())
-	{
-		Console.Error.WriteLine($"refusing to reuse {reportDir}: exists, non-empty, and not a decompdiff report");
-		return 1;
-	}
 	Directory.Delete(reportDir, true);
-}
 Directory.CreateDirectory(reportDir);
 
 Side oldSide, newSide;
@@ -281,11 +282,25 @@ var newTotals = default(Metrics);
 var results = new AsmResult[assemblies.Count];
 var progressLock = new object();
 int completedAssemblies = 0;
+var activeAssemblies = new Dictionary<string, string>();
+int renderedProgressLines = 0;
+var lastProgressRender = DateTime.MinValue;
+var processingOrder = assemblies
+	.Select((dll, index) => (dll, index, size: new FileInfo(dll).Length))
+	.OrderByDescending(item => item.size)
+	.ThenBy(item => item.index)
+	.ToArray();
 Parallel.For(0, assemblies.Count, new ParallelOptions { MaxDegreeOfParallelism = jobs }, idx => {
-	results[idx] = ProcessAssembly(assemblies[idx]);
+	var item = processingOrder[idx];
+	results[item.index] = ProcessAssembly(item.dll);
 	lock (progressLock)
 		RenderProgress(++completedAssemblies, assemblies.Count);
 });
+lock (progressLock)
+{
+	activeAssemblies.Clear();
+	RenderProgress(completedAssemblies, assemblies.Count);
+}
 Console.WriteLine();
 
 // Merged in corpus order so the report does not depend on scheduling.
@@ -376,16 +391,64 @@ void RenderProgress(int completed, int total)
 	const int width = 30;
 	int filled = total == 0 ? width : completed * width / total;
 	string bar = new string('#', filled) + new string('-', width - filled);
-	Console.Write($"\rdecompiling [{bar}] {completed}/{total}");
+	var lines = new List<string> { $"decompiling [{bar}] {completed}/{total}" };
+	lines.AddRange(activeAssemblies.Values.Take(jobs).Select(name => $"  {name}"));
+	while (lines.Count < jobs + 1)
+		lines.Add("");
+	if (renderedProgressLines > 0)
+		Console.Write($"\x1b[{renderedProgressLines}A");
+	foreach (var line in lines)
+		Console.Write($"\x1b[2K\r{line}\n");
+	renderedProgressLines = lines.Count;
+}
+
+void UpdateActiveTypeProgress(string dll, string side, int completedTypes, int totalTypes)
+{
+	lock (progressLock)
+	{
+		if (activeAssemblies.TryGetValue(dll, out var name))
+		{
+			var baseName = name.Split(" (", 2)[0];
+			activeAssemblies[dll] = $"{baseName} ({completedTypes}/{totalTypes} types, {side})";
+			if ((DateTime.UtcNow - lastProgressRender).TotalMilliseconds >= 500)
+			{
+				RenderProgress(completedAssemblies, assemblies.Count);
+				lastProgressRender = DateTime.UtcNow;
+			}
+		}
+	}
 }
 
 AsmResult ProcessAssembly(string dll)
+{
+	var progressName = ProgressAssemblyName(dll);
+	lock (progressLock)
+	{
+		activeAssemblies[dll] = progressName;
+		RenderProgress(completedAssemblies, assemblies.Count);
+	}
+	try
+	{
+		return ProcessAssemblyCore(dll);
+	}
+	finally
+	{
+		lock (progressLock)
+		{
+			activeAssemblies.Remove(dll);
+			RenderProgress(completedAssemblies, assemblies.Count);
+		}
+	}
+}
+
+AsmResult ProcessAssemblyCore(string dll)
 {
 	var asmName = Path.GetFileNameWithoutExtension(dll);
 	var r = new AsmResult(asmName);
 	var (staged, missing) = RefIndex.Stage(dll, stageRoot, refIndex);
 	r.Missing = missing;
-	var (oldTypes, oldError) = oldSide.DecompileAssembly(staged);
+	var (oldTypes, oldError) = oldSide.DecompileAssembly(staged,
+		(done, total) => UpdateActiveTypeProgress(dll, "old", done, total));
 	if (oldTypes == null)
 	{
 		var why = missing.Count > 0 ? $"; unresolved refs: {string.Join(", ", missing.Take(5))}" : "";
@@ -393,7 +456,8 @@ AsmResult ProcessAssembly(string dll)
 		r.Skipped = $"{asmName}: {oldError}{why}";
 		return r;
 	}
-	var (newTypes, newError) = newSide.DecompileAssembly(staged);
+	var (newTypes, newError) = newSide.DecompileAssembly(staged,
+		(done, total) => UpdateActiveTypeProgress(dll, "new", done, total));
 	if (newTypes == null)
 	{
 		r.Log = $"  NEW-ERROR {asmName}: whole assembly failed only with new version ({newError})";
@@ -465,6 +529,13 @@ AsmResult ProcessAssembly(string dll)
 	}
 	r.Log = $"  {asmName}: {oldTypes.Count} types, {r.Changed.Count} changed";
 	return r;
+}
+
+string ProgressAssemblyName(string dll)
+{
+	var directory = new DirectoryInfo(Path.GetDirectoryName(dll)!);
+	var version = directory.Parent?.Parent?.Name;
+	return version == null ? Path.GetFileNameWithoutExtension(dll) : $"{Path.GetFileNameWithoutExtension(dll)} [{version}/{directory.Name}]";
 }
 
 string DumpPair(string dll, string location, string oldCode, string newCode)
@@ -1157,6 +1228,24 @@ class Side
 		return mergeBase;
 	}
 
+	public static void WarnIfDirtyWorktreeIgnored(string name, string spec)
+	{
+		if (!TryResolveCommit(spec, out _, out var repoRoot))
+			return;
+		if (string.IsNullOrEmpty(Git(repoRoot, "status", "--porcelain", "--untracked-files=all")))
+			return;
+		var previousColor = Console.ForegroundColor;
+		try
+		{
+			Console.ForegroundColor = ConsoleColor.Yellow;
+			Console.Error.WriteLine($"warning: --{name} {spec} uses a commit and ignores uncommitted changes in {repoRoot}; use --{name} . to include the working tree");
+		}
+		finally
+		{
+			Console.ForegroundColor = previousColor;
+		}
+	}
+
 	static string BuildCheckout(string checkout, bool build)
 	{
 		var csproj = Path.Combine(checkout, "ICSharpCode.Decompiler", "ICSharpCode.Decompiler.csproj");
@@ -1259,7 +1348,8 @@ class Side
 
 	// Decompiles every top-level type; null when the assembly itself cannot be
 	// opened (not managed, type system init failed), with the reason in Error.
-	public (Dictionary<string, TypeResult>? Types, string? Error) DecompileAssembly(string dllPath)
+	public (Dictionary<string, TypeResult>? Types, string? Error) DecompileAssembly(string dllPath,
+		Action<int, int>? progress = null)
 	{
 		dynamic decompiler;
 		try
@@ -1274,8 +1364,11 @@ class Side
 			return (null, Unwrap(ex).Message);
 		}
 		var results = new Dictionary<string, TypeResult>();
-		foreach (object type in (IEnumerable)decompiler.TypeSystem.MainModule.TopLevelTypeDefinitions)
+		var types = ((IEnumerable)decompiler.TypeSystem.MainModule.TopLevelTypeDefinitions).Cast<object>().ToList();
+		progress?.Invoke(0, types.Count);
+		for (int i = 0; i < types.Count; i++)
 		{
+			object type = types[i];
 			// The type definition's runtime type is internal, so dynamic cannot bind
 			// its members; go through the public interface property via reflection.
 			object fullTypeName = GetProperty(type, "FullTypeName");
@@ -1295,6 +1388,7 @@ class Side
 					: $"{inner.GetType().Name}: {FirstLine(inner.Message)}";
 				results[name] = new TypeResult(null, error, default, new Dictionary<string, string>());
 			}
+			progress?.Invoke(i + 1, types.Count);
 		}
 		return (results, null);
 	}
