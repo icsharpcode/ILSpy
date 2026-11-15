@@ -4197,6 +4197,20 @@ is declared `var` (with `AnonymousTypes`), which the host decides from the varia
 
 The share rose from 97.5 % to 97.6 %.
 
+### 3.176 Reference equality past user-defined operators (item 68y68)
+
+`TranslateCeq` does not take an operator `ResolveBinaryOperator` resolves to a user-defined
+method: no built-in operator fits, an operand is cast (to `object` for a reference
+comparison) and the operator resolved again, both operands where one cast is not enough.
+The engine models the user-defined candidate of a reference type as applicable where both
+operands convert implicitly to the declaring type; then it reports no fitting operator, and
+the casts follow as for any other comparison. A cast `null` keeps the resolve result of the
+null constant, which converts to every reference type, so `null == oo` is
+`(object)null == (object)oo`, as in the managed output. User-defined operators of value
+types still fall back.
+
+The share rose from 97.6 % to 97.7 %.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

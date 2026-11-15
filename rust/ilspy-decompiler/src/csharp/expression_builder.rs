@@ -1206,9 +1206,28 @@ impl Builder<'_, '_, '_, '_> {
         } else {
             "op_Inequality"
         };
+        // A user-defined operator `TranslateCeq` does not take: where both operands convert
+        // implicitly to the declaring type, no built-in operator fits, and an operand is cast
+        // (to `object` for references), after which the operator no longer applies.
         for t in [lt, rt] {
             if !(3..=15).contains(&self.ts.type_code(t)) && self.declares_method(t, name) {
-                return Err("a comparison with user-defined operators".to_owned());
+                if self.ts.is_reference_type(t) != Some(true) {
+                    return Err("a comparison with user-defined operators".to_owned());
+                }
+                // A cast null stays the null constant, which converts to every reference type.
+                let applies = [l, r].into_iter().all(|e| {
+                    let mut node = e.expression;
+                    while let AstNode::Cast { expression, .. } = *self.ast.node(node) {
+                        node = expression;
+                    }
+                    matches!(self.ast.node(node), AstNode::Null) || {
+                        let rr = self.semantic_rr(e.expression, e.ty);
+                        Conversions::new(self.ts).implicit(&rr, t).is_valid()
+                    }
+                });
+                if applies {
+                    return Ok(None);
+                }
             }
         }
         let l_null = self.ts.kind(lt) == TypeKind::Null;
