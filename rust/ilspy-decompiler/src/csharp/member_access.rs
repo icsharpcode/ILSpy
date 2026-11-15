@@ -44,7 +44,8 @@ impl Builder<'_, '_, '_, '_> {
             | Rr::ArrayLength { ty, .. }
             | Rr::TupleElement { ty, .. }
             | Rr::TryCast { ty }
-            | Rr::FormatString { ty, .. } => *ty,
+            | Rr::FormatString { ty, .. }
+            | Rr::MethodMember { ty, .. } => *ty,
             Rr::Field { field, .. } => field.field.ty,
             Rr::Event { ty, .. } => *ty,
             Rr::Lambda(_)

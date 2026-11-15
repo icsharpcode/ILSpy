@@ -425,6 +425,11 @@ pub enum Rr {
     /// `ByReferenceResolveResult` of an `in` argument, with the element's resolve result, of
     /// the parameter's reference kind (`In`, or `RefReadOnly` where `true`).
     ByReferenceIn(Box<Rr>, bool),
+    /// `MemberResolveResult` of a method without target, of the method's return type.
+    MethodMember {
+        method: Box<crate::il::ast::MethodOperand>,
+        ty: TypeId,
+    },
     /// `OperatorResolveResult` of the node's operator (an assignment, `!`, a binary or the conditional
     /// operator), of
     /// the given

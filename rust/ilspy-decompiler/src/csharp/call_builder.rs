@@ -157,6 +157,11 @@ impl Builder<'_, '_, '_, '_> {
         if call.is_tail {
             return Err("a tail call".to_owned());
         }
+        if self.settings.string_concat
+            && let Some(operands) = self.span_based_string_concat(call)
+        {
+            return self.build_string_concat(inst, call, &operands);
+        }
         let operand = &call.method;
         if operand.local_function.is_some()
             && operand.specialized_by.is_none()
@@ -2059,6 +2064,103 @@ impl Builder<'_, '_, '_, '_> {
             expression: e,
             ty: result.return_type,
         })
+    }
+
+    /// `IsSpanBasedStringConcat`: a `string.Concat` of `ReadOnlySpan<char>` arguments, each the
+    /// implicit conversion of a string or the span of a single char; the strings and chars.
+    fn span_based_string_concat(
+        &mut self,
+        call: &CallData,
+    ) -> Option<Vec<(NodeId, KnownTypeCode)>> {
+        let m = &call.method.method;
+        let ros_char = |b: &Self, t: TypeId| {
+            b.ts.is_known(t, KnownTypeCode::ReadOnlySpanOfT)
+                && b.ts
+                    .first_type_argument(t)
+                    .is_some_and(|a| b.ts.is_known(a, KnownTypeCode::Char))
+        };
+        if m.name != "Concat"
+            || !m.is_static
+            || !m
+                .declaring
+                .is_some_and(|d| self.ts.is_known(d, KnownTypeCode::String))
+        {
+            return None;
+        }
+        let params = m.params().ok()?;
+        if !params.iter().all(|&p| ros_char(self, p)) {
+            return None;
+        }
+        let mut first_string = None;
+        let mut operands = Vec::with_capacity(call.args.len());
+        for (i, &arg) in call.args.iter().enumerate() {
+            match self.f.inst(arg).clone() {
+                // `IsStringToReadOnlySpanCharImplicitConversion`
+                Inst::Call(c)
+                    if c.method.method.name == "op_Implicit"
+                        && c.args.len() == 1
+                        && ros_char(self, c.method.method.ret) =>
+                {
+                    first_string.get_or_insert(i);
+                    operands.push((c.args[0], KnownTypeCode::String));
+                }
+                // `IsReadOnlySpanCharCtor`: `new ReadOnlySpan<char>(ref c)`
+                Inst::NewObj(c)
+                    if c.method.method.name == ".ctor"
+                        && c.method.method.declaring.is_some_and(|d| ros_char(self, d))
+                        && c.args.len() == 1 =>
+                {
+                    let Inst::AddressOf { value, .. } = *self.f.inst(c.args[0]) else {
+                        return None;
+                    };
+                    operands.push((value, KnownTypeCode::Char));
+                }
+                _ => return None,
+            }
+        }
+        (call.args.len() >= 2 && first_string.is_some_and(|i| i <= 1)).then_some(operands)
+    }
+
+    /// `BuildStringConcat`: `a + b + ...` of the operands, each operator with the
+    /// `MemberResolveResult` of the `Concat` method.
+    fn build_string_concat(
+        &mut self,
+        inst: NodeId,
+        call: &CallData,
+        operands: &[(NodeId, KnownTypeCode)],
+    ) -> Result<TranslatedExpression, Unsupported> {
+        let string = self.ts.known_type(KnownTypeCode::String);
+        let mut result: Option<TranslatedExpression> = None;
+        for &(operand, code) in operands {
+            let ty = self.ts.known_type(code);
+            let e = self.translate(operand, Some(ty))?;
+            let e = self.convert_to(e, ty, false)?;
+            result = Some(match result {
+                None => e,
+                Some(left) => {
+                    let b = self.ast.add(AstNode::BinaryOperator {
+                        overflow: super::ast::Overflow::None,
+                        op: super::ast::BinaryOp::Add,
+                        left: left.expression,
+                        right: e.expression,
+                    });
+                    self.ast.with_rr(
+                        b,
+                        Rr::MethodMember {
+                            method: Box::new(call.method.clone()),
+                            ty: string,
+                        },
+                    );
+                    TranslatedExpression {
+                        expression: b,
+                        ty: string,
+                    }
+                }
+            });
+        }
+        let result = result.ok_or("a string concatenation without operands")?;
+        self.ast.with_il(result.expression, inst);
+        Ok(result)
     }
 
     /// `BuildCollectionInitializerExpression`: an element of a collection initializer, the

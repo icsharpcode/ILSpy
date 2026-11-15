@@ -1268,6 +1268,8 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				}
 				case 15:
 					return new ByReferenceResolveResult(NestedTargetResolveResult()!, ReferenceKind.Out);
+				case 30:
+					return new MemberResolveResult(null, CallMethod());
 				case 29:
 				{
 					var kind = Bool() ? ReferenceKind.RefReadOnly : ReferenceKind.In;

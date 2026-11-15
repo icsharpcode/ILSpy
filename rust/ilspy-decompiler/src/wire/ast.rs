@@ -209,6 +209,10 @@ fn rr(w: &mut FunctionWriter<'_, '_, '_, '_>, rr: Option<&Rr>) -> Result<(), Str
             self::rr(w, Some(target))?;
             w.out.bool(*long);
         }
+        Some(Rr::MethodMember { method, .. }) => {
+            w.out.u8(30);
+            w.call_method(method)?;
+        }
         Some(Rr::ByReferenceIn(element, ref_readonly)) => {
             w.out.u8(29);
             w.out.bool(*ref_readonly);

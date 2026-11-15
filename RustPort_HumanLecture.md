@@ -4373,6 +4373,18 @@ first statement, goes. The host writes the designation (a new pair of node kinds
 
 The share rose from 98.8 % to 98.9 %.
 
+### 3.189 Span-based string concatenation (item 68y81)
+
+With `StringConcat` (a new engine setting, bit 68), `CallBuilder.Build` writes a
+`string.Concat` of `ReadOnlySpan<char>` arguments (`IsSpanBasedStringConcat`) as `a + b + ...`:
+each argument is the implicit conversion of a string or the span of a single char
+(`new ReadOnlySpan<char>(ref c)`), with a string among the first two, and each operator has
+the `MemberResolveResult` of the `Concat` method without target (a new resolve-result kind).
+The pinned settings test lists the new name and sets it explicitly, keeping its alternating
+bit pattern.
+
+The share rose from 98.9 % to 99.0 %.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

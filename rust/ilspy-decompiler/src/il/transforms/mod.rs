@@ -130,6 +130,7 @@ pub const SETTING_NAMES: &[&str] = &[
     "RefExtensionMethods",
     "ExpandParamsArguments",
     "FirstClassSpanTypes",
+    "StringConcat",
 ];
 
 /// The values of `SETTING_NAMES`.
@@ -203,6 +204,7 @@ pub struct Settings {
     pub ref_extension_methods: bool,
     pub expand_params_arguments: bool,
     pub first_class_span_types: bool,
+    pub string_concat: bool,
 }
 
 impl Settings {
@@ -281,6 +283,7 @@ impl Settings {
             ref_extension_methods: bit(65),
             expand_params_arguments: bit(66),
             first_class_span_types: bit(67),
+            string_concat: bit(68),
         }
     }
 }
