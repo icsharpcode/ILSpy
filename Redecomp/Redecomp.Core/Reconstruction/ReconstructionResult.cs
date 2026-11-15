@@ -35,7 +35,8 @@ public sealed record ReconstructionResult(SourceOrigin Origin, string? DebugInfo
 
 /// <summary>Options controlling a reconstruction.</summary>
 /// <param name="DeterministicNaming">Whether locals without a name from the debug symbols are named by <see cref="Naming.DeterministicVariableNames"/>.</param>
-public sealed record ReconstructionOptions(bool DeterministicNaming = true)
+/// <param name="IncludeContentFiles">Whether files deployed next to the assembly are copied into the project.</param>
+public sealed record ReconstructionOptions(bool DeterministicNaming = true, bool IncludeContentFiles = true)
 {
 	public static ReconstructionOptions Default { get; } = new();
 }

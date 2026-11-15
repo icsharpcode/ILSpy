@@ -38,14 +38,19 @@ public static class ContentFileCollector
 			name + ".deps.json",
 			name + ".runtimeconfig.json",
 			name + ".runtimeconfig.dev.json",
-			name + ".xml", // documentation file, consumed by the decompiler
 			"createdump",
 		};
 		return Directory.EnumerateFiles(directory, "*", SearchOption.AllDirectories)
 			.Select(f => Path.GetRelativePath(directory, f))
 			.Where(f => !BinaryExtensions.Contains(Path.GetExtension(f)))
 			.Where(f => !(Path.GetDirectoryName(f) == "" && artifacts.Contains(f)))
+			.Where(f => !IsDocumentationOfAnAssembly(directory, f))
 			.Order(StringComparer.Ordinal)
 			.ToList();
 	}
+
+	// XML documentation files sit next to the assembly they document and are read by the decompiler.
+	static bool IsDocumentationOfAnAssembly(string directory, string relativePath)
+		=> Path.GetExtension(relativePath).Equals(".xml", StringComparison.OrdinalIgnoreCase)
+			&& File.Exists(Path.Combine(directory, Path.ChangeExtension(relativePath, ".dll")));
 }

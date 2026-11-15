@@ -76,4 +76,12 @@ public static class ProjectReconstructorTests
 		Assert.That(File.Exists(rebuilt), $"rebuilt assembly missing for {variant}");
 		return output;
 	}
+
+	[Test]
+	public static void DropsFrameworkReferencesThatTheSdkProvides()
+	{
+		string output = ProjectBuilder.NewTempDirectory();
+		var result = ProjectReconstructor.Reconstruct(SampleBuilder.Build("Facturation", BuildVariant.NoPdb), output);
+		Assert.That(!File.ReadAllText(result.ProjectFile).Contains("<HintPath>"), "framework assemblies referenced by absolute path");
+	}
 }

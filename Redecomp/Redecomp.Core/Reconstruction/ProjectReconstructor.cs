@@ -32,8 +32,11 @@ namespace Redecomp.Core.Reconstruction;
 public static class ProjectReconstructor
 {
 	public static ReconstructionResult Reconstruct(string assemblyPath, string outputDirectory, ReconstructionOptions? options = null)
+		=> Reconstruct(assemblyPath, outputDirectory, options ?? ReconstructionOptions.Default, FindDependencies(assemblyPath));
+
+	/// <summary>Reconstructs one project, with the dependency information of the application it belongs to.</summary>
+	public static ReconstructionResult Reconstruct(string assemblyPath, string outputDirectory, ReconstructionOptions options, DependencyContext? dependencies)
 	{
-		options ??= ReconstructionOptions.Default;
 		assemblyPath = Path.GetFullPath(assemblyPath);
 		Directory.CreateDirectory(outputDirectory);
 
@@ -66,9 +69,23 @@ public static class ProjectReconstructor
 			SourceRelocator.Apply(module.Metadata, pdb.Provider.GetMetadataReader(), outputDirectory, settings.UseNestedDirectoriesForNamespaces);
 		}
 
-		CopyContentFiles(assemblyPath, outputDirectory, projectFile);
+		ReferenceRewriter.Apply(projectFile, dependencies);
+		if (options.IncludeContentFiles)
+			CopyContentFiles(assemblyPath, outputDirectory, projectFile);
 
 		return new ReconstructionResult(origin, debugInfo?.Description, projectFile);
+	}
+
+	/// <summary>The manifest entry of a standalone assembly, from the .deps.json deployed next to it.</summary>
+	static DependencyContext? FindDependencies(string assemblyPath)
+	{
+		string depsPath = Path.ChangeExtension(Path.GetFullPath(assemblyPath), ".deps.json");
+		if (!File.Exists(depsPath))
+			return null;
+		var deps = DepsFile.Load(depsPath);
+		string fileName = Path.GetFileName(assemblyPath);
+		var library = deps.Libraries.FirstOrDefault(l => l.RuntimeAssemblies.Contains(fileName, StringComparer.OrdinalIgnoreCase));
+		return library == null ? null : new DependencyContext(deps, library, null);
 	}
 
 	static void CopyContentFiles(string assemblyPath, string outputDirectory, string projectFile)
