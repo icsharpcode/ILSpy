@@ -2162,6 +2162,13 @@ pub fn method_syntax(
                     }
                 }
             }
+            match m.private_implementation_type {
+                Some(t) => {
+                    w.out.u8(1);
+                    w.ty(t);
+                }
+                None => w.out.u8(0),
+            }
         },
     )
 }

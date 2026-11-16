@@ -330,6 +330,8 @@ pub struct MethodSyntax {
     /// `HasThisModifier` of the first parameter of an extension method.
     pub this_modifier: bool,
     pub constraints: Vec<ConstraintSyntax>,
+    /// The interface of an explicit implementation.
+    pub private_implementation_type: Option<TypeId>,
 }
 
 /// `IsObjectOrValueType`.
@@ -424,6 +426,7 @@ fn method_modifiers(
     m: crate::typesystem::members::MethodDefId,
     kind: crate::typesystem::members::SymbolKind,
     options: EntityOptions,
+    is_explicit: bool,
 ) -> Result<u32, Unsupported> {
     use crate::typesystem::members::SymbolKind as S;
     let md = &ts.comp.module(m.module).md;
@@ -442,6 +445,7 @@ fn method_modifiers(
     let access = def.flags & 7;
     let public = access == 6;
     let needs_accessibility = match kind {
+        _ if is_explicit => false,
         S::Constructor => !modifiers.is_static,
         S::Destructor => false,
         _ if info_kind == TypeKind::Interface => !public,
@@ -482,10 +486,10 @@ fn method_modifiers(
         } else if modifiers.is_virtual && !modifiers.is_override {
             r |= modifiers::VIRTUAL;
         }
-        if modifiers.is_override {
+        if modifiers.is_override && !is_explicit {
             r |= modifiers::OVERRIDE;
         }
-        if modifiers.is_sealed {
+        if modifiers.is_sealed && !is_explicit {
             r |= modifiers::SEALED;
         }
     }
@@ -502,16 +506,12 @@ pub fn convert_method(
     use crate::typesystem::members::{MethodDefId, SymbolKind as S};
     let m = MethodDefId { module, row };
     let kind = ts.method_symbol_kind(m, None).map_err(|e| e.to_string())?;
-    if !ts
-        .explicit_implementations(m)
-        .map_err(|e| e.to_string())?
-        .is_empty()
-    {
-        return Err("an explicit interface implementation".to_owned());
-    }
     let md = &ts.comp.module(module).md;
     let def = md.get::<rows::MethodDef>(row).map_err(|e| e.to_string())?;
     let name = md.string(def.name).map_err(|e| e.to_string())?.into_owned();
+    // `IsExplicitInterfaceImplementation`: a dotted name with a MethodImpl.
+    let implemented = ts.explicit_implementations(m).map_err(|e| e.to_string())?;
+    let is_explicit = name.contains('.') && !implemented.is_empty();
     let declaring_row = md.method_declaring_type(row).map_err(|e| e.to_string())?;
     let declaring = crate::typesystem::compilation::TypeDefId {
         module,
@@ -556,7 +556,27 @@ pub fn convert_method(
     let modifiers = if matches!(kind, S::Destructor) {
         0
     } else {
-        method_modifiers(ts, m, kind, options)?
+        method_modifiers(ts, m, kind, options, is_explicit)?
+    };
+    // `GetExplicitInterfaceType`: the interface of the first member implemented, as the
+    // declaring type implements it (`GetInterfaceAsImplementedBy`).
+    let private_implementation_type = match implemented.first().filter(|_| is_explicit) {
+        Some(first) => {
+            let interface = first
+                .declaring
+                .ok_or("an implemented member without declaring type")?;
+            let this_type = ts.intern_def(declaring);
+            let n = crate::typesystem::fnptr::Normalization::IGNORE_NULLABILITY_AND_TUPLES;
+            let wanted = ts.normalize_with(interface, n);
+            let bases = ts.all_base_types(this_type).map_err(|e| e.to_string())?;
+            Some(
+                bases
+                    .into_iter()
+                    .find(|&b| ts.is_interface(b) && ts.normalize_with(b, n) == wanted)
+                    .unwrap_or(interface),
+            )
+        }
+        None => None,
     };
     let modifiers_info = ts.method_modifiers_of(m).map_err(|e| e.to_string())?;
     let flags = ts.method_flags(m, None);
@@ -579,9 +599,10 @@ pub fn convert_method(
         .md
         .generic_params(TableId::MethodDef, row)
         .collect();
-    if (modifiers_info.is_override) && !type_params.is_empty() {
-        // shortcut: an override restates only the constraints that disambiguate `T?`
-        // (`AddNullabilityDisambiguatingConstraints`); generic overrides stay with the host.
+    if (modifiers_info.is_override || is_explicit) && !type_params.is_empty() {
+        // shortcut: an override or explicit implementation restates only the constraints that
+        // disambiguate `T?` (`AddNullabilityDisambiguatingConstraints`); generic ones stay with
+        // the host.
         return Err("constraints of a generic override".to_owned());
     }
     let mut type_parameters = Vec::with_capacity(type_params.len());
@@ -650,5 +671,6 @@ pub fn convert_method(
         this_modifier: flags.extension && !parameters.is_empty(),
         parameters,
         constraints,
+        private_implementation_type,
     })
 }

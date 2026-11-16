@@ -4643,6 +4643,21 @@ declarations of the ratchet corpus.
 
 The share stayed at 100.0 %.
 
+### 3.204 Explicit interface implementations (item 68z3b)
+
+`IsExplicitInterfaceImplementation` is a dotted method name with a MethodImpl in the declaring
+type; a MethodImpl alone (a covariant return override) is none. An explicit implementation has
+no accessibility and no `override` or `sealed`, and `GetExplicitInterfaceType` writes its
+interface as the declaring type implements it (`GetInterfaceAsImplementedBy`): the first of the
+declaring type's base types that is that interface up to nullability and tuple names, which
+keeps the declaring type's own nullability and names, else the interface of the member
+implemented. A generic explicit implementation restates only the constraints that disambiguate
+`T?`, like a generic override, and stays with the host (`shortcut:`). The engine writes 1491
+declarations of the ratchet corpus; the 30 members of types with extension blocks still fall
+back.
+
+The share stayed at 100.0 %.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

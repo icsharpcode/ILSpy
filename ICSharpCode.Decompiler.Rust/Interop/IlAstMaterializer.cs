@@ -647,6 +647,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				}
 				constraints.Add(c);
 			}
+			CSharp.Syntax.AstType? privateImplementationType = Bool() ? SyntaxOf(Type(), ref complete) : null;
 			if (!complete)
 			{
 				unsupportedReason = "a type without syntax";
@@ -666,6 +667,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				case 1 when operatorType != null:
 				{
 					var op = new CSharp.Syntax.OperatorDeclaration { Modifiers = modifiers, OperatorType = operatorType.Value, ReturnType = returnType! };
+					op.PrivateImplementationType = privateImplementationType!;
 					op.Parameters.AddRange(parameters);
 					op.Attributes.AddRange(attributes);
 					op.Attributes.AddRange(returnAttributes);
@@ -697,6 +699,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					if (thisModifier && method.ReducedFrom == null && m.Parameters.Any())
 						m.Parameters.First().HasThisModifier = true;
 					m.Constraints.AddRange(constraints);
+					m.PrivateImplementationType = privateImplementationType!;
 					decl = m;
 					break;
 				}
