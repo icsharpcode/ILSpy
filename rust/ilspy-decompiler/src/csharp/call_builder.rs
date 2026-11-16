@@ -1870,14 +1870,29 @@ impl Builder<'_, '_, '_, '_> {
 
     /// `Target.ConvertTo(declaringType)` of a member reference's target, and the lookup target
     /// of the cast. A value-type target, which the managed probe resolves without the cast
-    /// where the engine's does not, is not translated; nor is a `this` or `base` target, which
-    /// the managed probe resolves without the cast (a constructor initializer), nor a
-    /// null-conditional target, which would be cast inside its `?`.
+    /// where the engine's does not, is not translated; nor is a `this` or `base` target that
+    /// would be cast, nor a null-conditional target, which would be cast inside its `?`.
     pub(crate) fn cast_target_to(
         &mut self,
         target: &mut TranslatedExpression,
         declaring: TypeId,
     ) -> Result<LookupTarget, Unsupported> {
+        // `this` or `base` of the declaring type itself converts without a cast, and stays the
+        // lookup target it was (a constructor initializer whose lookup finds no constructor).
+        if let Rr::This {
+            ty,
+            causes_non_virtual_invocation,
+            ..
+        } = self.rr_of(target.expression)
+        {
+            let n = Normalization::IGNORE_NULLABILITY_AND_TUPLES;
+            if self.ts.normalize_with(target.ty, n) == self.ts.normalize_with(declaring, n) {
+                return Ok(LookupTarget::This {
+                    ty,
+                    causes_non_virtual_invocation,
+                });
+            }
+        }
         if self.ts.is_reference_type(target.ty) != Some(true)
             || matches!(
                 self.ast.node(target.expression),

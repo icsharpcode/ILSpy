@@ -4455,6 +4455,19 @@ on its own, as the managed one does.
 
 The share rose from 99.4 % to 99.5 %.
 
+### 3.195 Constructor initializers no lookup finds (item 68y87)
+
+`MemberLookup` of `.ctor` on `base` finds only the constructors its member filter lets through,
+and for `ObservableCollection<LoadedAssembly>` that is `object()`: the probe of the implicit
+constructor's `base()` resolves to another constructor in either engine. The managed
+`Disambiguator` then reaches `Target.ConvertTo(declaringType)`, which on `base` of the
+declaring type itself is a no-op, and writes the call anyway. The engine refused every `this`
+or `base` target at that step; it now keeps a `this` or `base` of the declaring type (up to
+nullability and tuple names) as the lookup target it was, and only refuses one that would be
+cast.
+
+The share stayed at 99.5 % (one body, below its rounding).
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |
