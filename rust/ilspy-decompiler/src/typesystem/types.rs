@@ -351,6 +351,11 @@ impl<'c, 'a> TypeSystem<'c, 'a> {
         id
     }
 
+    /// The id of a type interned before, without interning it.
+    pub fn find(&self, data: &TypeData) -> Option<TypeId> {
+        self.map.get(data).copied()
+    }
+
     pub fn data(&self, id: TypeId) -> &TypeData {
         &self.data[id.0 as usize]
     }

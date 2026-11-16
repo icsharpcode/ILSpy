@@ -69,6 +69,7 @@ public class PortStatusRatchetTests
 		long bodiesServed = RustSeam2.Served, bodiesTotal = bodiesServed + RustSeam2.Fallbacks;
 		foreach (var (reason, count) in RustSeam2.FallbackReasons.OrderByDescending(r => r.Value).Take(40))
 			TestContext.Out.WriteLine($"seam 2 fallback: {count,6} {reason}");
+		TestContext.Out.WriteLine($"seam 2 type syntax fallback: {RustSeam2.TypeSyntaxFallbacks,6}");
 		Assert.That(bodiesTotal, Is.GreaterThan(0), "no method body went through seam 2");
 		return (Math.Floor(served * 1000.0 / total) / 10, Math.Floor(bodiesServed * 1000.0 / bodiesTotal) / 10);
 	}

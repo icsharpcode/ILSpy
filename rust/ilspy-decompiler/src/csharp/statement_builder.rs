@@ -19,6 +19,8 @@ pub fn convert_body(
     settings: crate::il::transforms::Settings,
     resolver: Option<&dyn crate::il::transforms::Resolver>,
 ) -> Result<(Ast, AstId, Function), Unsupported> {
+    // The unbound type argument the type syntax of a generic definition names.
+    ts.intern(TypeData::Unbound);
     let mut function = read.function.clone();
     let f = &mut function;
     let body = f.body.ok_or("a function without body")?;

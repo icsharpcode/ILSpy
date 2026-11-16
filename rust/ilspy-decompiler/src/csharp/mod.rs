@@ -16,6 +16,7 @@ mod member_access;
 mod statement_builder;
 mod switch;
 mod translated_expression;
+pub mod type_syntax;
 
 use crate::il::ast::{Function, NodeId};
 use crate::typesystem::types::{TypeId, TypeSystem};

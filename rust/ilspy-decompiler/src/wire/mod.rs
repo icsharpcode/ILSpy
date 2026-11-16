@@ -15,6 +15,16 @@ use crate::typesystem::types::{Nullability, TypeData, TypeId, TypeParamOwner, Ty
 pub const MAGIC: &[u8; 4] = b"ILSW";
 
 /// Type entry tags; `Interop/WireReader.cs` mirrors them.
+/// The node kinds of a type syntax entry.
+mod syntax_tag {
+    /// A type the engine does not convert (a function pointer or intersection type).
+    pub const NONE: u8 = 0;
+    pub const PRIMITIVE: u8 = 1;
+    pub const SIMPLE: u8 = 2;
+    pub const COMPOSED: u8 = 3;
+    pub const TUPLE: u8 = 4;
+}
+
 mod tag {
     pub const DEF: u8 = 0;
     pub const UNKNOWN: u8 = 1;
@@ -84,6 +94,13 @@ pub struct Tables {
     types: Bytes,
     type_count: u32,
     type_index: HashMap<TypeId, u32>,
+    /// The type of each entry, in order.
+    type_ids: Vec<TypeId>,
+    /// `TypeSystemAstBuilder.ConvertType` of each entry, length-prefixed, when a translated
+    /// body asked for it (see `type_syntax`).
+    type_syntax: Option<Bytes>,
+    /// How many entries `type_syntax` holds.
+    type_syntax_written: usize,
 }
 
 impl Tables {
@@ -264,7 +281,90 @@ impl Tables {
         self.types.len(e.0.len());
         self.types.raw(&e.0);
         self.type_index.insert(t, i);
+        self.type_ids.push(t);
         i
+    }
+
+    /// The type syntax of every entry, which the host builds the C# types of a translated body
+    /// from; the entries its annotations add get theirs as well.
+    pub fn type_syntax(&mut self, ts: &TypeSystem<'_, '_>, nullable_specifier: bool) {
+        let builder = crate::csharp::type_syntax::TypeSyntaxBuilder::new(ts, nullable_specifier);
+        let mut out = self.type_syntax.take().unwrap_or_default();
+        let mut done = self.type_syntax_written;
+        while done < self.type_ids.len() {
+            let t = self.type_ids[done];
+            let mut e = Bytes::default();
+            match builder.convert_type(t) {
+                Some(syntax) => self.syntax_node(ts, &mut e, &syntax),
+                None => e.u8(syntax_tag::NONE),
+            }
+            out.len(e.0.len());
+            out.raw(&e.0);
+            done += 1;
+        }
+        self.type_syntax = Some(out);
+        self.type_syntax_written = done;
+    }
+
+    fn syntax_node(
+        &mut self,
+        ts: &TypeSystem<'_, '_>,
+        e: &mut Bytes,
+        s: &crate::csharp::type_syntax::TypeSyntax,
+    ) {
+        use crate::csharp::type_syntax::TypeSyntaxKind as K;
+        match &s.kind {
+            K::Primitive(keyword) => {
+                e.u8(syntax_tag::PRIMITIVE);
+                let i = self.string(keyword);
+                e.uvar(u64::from(i));
+            }
+            K::Simple { name, args } => {
+                e.u8(syntax_tag::SIMPLE);
+                let i = self.string(name);
+                e.uvar(u64::from(i));
+                e.len(args.len());
+                for a in args {
+                    self.syntax_node(ts, e, a);
+                }
+            }
+            K::Composed {
+                base,
+                nullable,
+                reference,
+                pointer_rank,
+                arrays,
+            } => {
+                e.u8(syntax_tag::COMPOSED);
+                self.syntax_node(ts, e, base);
+                e.bool(*nullable);
+                e.bool(*reference);
+                e.uvar(u64::from(*pointer_rank));
+                e.len(arrays.len());
+                for &d in arrays {
+                    e.uvar(u64::from(d));
+                }
+            }
+            K::Tuple(elements) => {
+                e.u8(syntax_tag::TUPLE);
+                e.len(elements.len());
+                for (element, name) in elements {
+                    self.syntax_node(ts, e, element);
+                    match name {
+                        Some(n) => {
+                            let i = self.string(n);
+                            e.uvar(u64::from(i) + 1);
+                        }
+                        None => e.uvar(0),
+                    }
+                }
+            }
+        }
+        e.len(s.annotations.len());
+        for &t in &s.annotations {
+            let i = self.ty(ts, t);
+            e.uvar(u64::from(i));
+        }
     }
 
     fn list(&self, e: &mut Bytes, items: &[u32]) {
@@ -286,6 +386,15 @@ impl Tables {
         }
         out.uvar(u64::from(self.type_count));
         out.raw(&self.types.0);
+        // The type syntax, one entry per type, when a body asked for it.
+        match &self.type_syntax {
+            Some(syntax) => {
+                debug_assert_eq!(self.type_syntax_written, self.type_ids.len());
+                out.u8(1);
+                out.raw(&syntax.0);
+            }
+            None => out.u8(0),
+        }
         out.raw(&payload.0);
         out.0
     }

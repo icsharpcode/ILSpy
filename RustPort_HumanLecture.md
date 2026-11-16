@@ -4502,6 +4502,32 @@ With this item no body of the ratchet corpus falls back.
 
 The share rose from 99.7 % to 100.0 %.
 
+### 3.198 Splitting the request-level seam; types as syntax (item 68z1)
+
+Item 68z moves `TypeSystemAstBuilder` and the declaration half of `CSharpDecompiler` into the
+engine, some 5,900 managed lines. It is split like item 68, into gated commits that each keep
+G-ast(0) green: types as syntax (68z1), constants (68z2), member declarations (68z3), type
+declarations with the request-level `SyntaxTree` (68z4), and the request-level seam block
+(68z5). The split was the agent's recommendation, taken under the standing instruction to go
+with it.
+
+Both builders the decompiler configures set `AlwaysUseShortTypeNames`, and the using scopes
+they consult have no aliases (`UsingScope.UsingAliases` is empty). `ConvertType` then never
+asks the resolver anything: with short names the name lookup that decides between a short and
+a qualified name has the same outcome either way, so the syntax is a function of the type and
+`UseNullableSpecifierForValueTypes` alone, and needs no host callback. The engine writes it
+(`csharp/type_syntax.rs`) as a table parallel to the wire's type table, one entry per type,
+when a body was translated: keywords, simple names with the type's own type arguments,
+`ComposedType` with the managed merge rules (`MakeArrayType` puts a rank before the existing
+specifiers, `MakePointerType` stacks on a node without array specifiers, `MakeNullableType`
+always wraps) and tuple types, each node with the `TypeResolveResult` annotations the managed
+`ConvertType` calls add, in their order. The host builds a served body's types from the entry
+its `IType` came from. A function pointer or intersection type, or a type no entry stands for
+(the underlying type of a tuple in an `is` expression), is converted by the managed builder and
+counted as a type syntax fallback, which the ratchet test prints: 2 in its corpus.
+
+The share stayed at 100.0 %.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

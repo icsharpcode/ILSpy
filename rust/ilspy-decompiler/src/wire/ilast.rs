@@ -15,7 +15,7 @@ use crate::typesystem::types::{TypeId, TypeSystem};
 
 use super::{Bytes, Tables};
 
-pub const VERSION: u32 = 2;
+pub const VERSION: u32 = 3;
 
 /// Node tags; `IlAstMaterializer.cs` mirrors them.
 mod op {
@@ -1549,6 +1549,9 @@ pub fn read_function(
         };
     let mut w = ModuleWriter::new(ts);
     w.function(method.row, &f, translated.as_ref())?;
+    if matches!(translated, Some(Ok(_))) {
+        w.tables.type_syntax(ts, settings.lift_nullables);
+    }
     Ok(w.finish())
 }
 

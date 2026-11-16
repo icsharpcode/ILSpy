@@ -47,6 +47,10 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		readonly string[] strings;
 		readonly IType?[] types;
 		readonly int[] typeOffsets;
+		/// <summary>The offset of each type's syntax entry; null when no body asked for them.</summary>
+		readonly int[]? typeSyntaxOffsets;
+		/// <summary>The entry each decoded type came from.</summary>
+		readonly Dictionary<IType, int> typeIndex = new Dictionary<IType, int>(ReferenceComparer.Instance);
 		protected readonly ICompilation compilation;
 		protected readonly IReadOnlyList<MetadataModule> modules;
 
@@ -78,6 +82,87 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				typeOffsets[i] = pos;
 				pos += length;
 			}
+			if (Bool())
+			{
+				typeSyntaxOffsets = new int[types.Length];
+				for (int i = 0; i < types.Length; i++)
+				{
+					int length = Len();
+					typeSyntaxOffsets[i] = pos;
+					pos += length;
+				}
+			}
+		}
+
+		/// <summary>
+		/// <c>TypeSystemAstBuilder.ConvertType(type)</c> as the engine built it for the entry
+		/// <paramref name="type"/> was decoded from, with its <see cref="TypeResolveResult"/>
+		/// annotations; null for a type of no entry, or one the engine does not convert.
+		/// </summary>
+		public CSharp.Syntax.AstType? TypeSyntax(IType type)
+		{
+			if (typeSyntaxOffsets == null || !typeIndex.TryGetValue(type, out int index))
+				return null;
+			int saved = pos;
+			pos = typeSyntaxOffsets[index];
+			var syntax = TypeSyntaxNode();
+			pos = saved;
+			return syntax;
+		}
+
+		CSharp.Syntax.AstType? TypeSyntaxNode()
+		{
+			CSharp.Syntax.AstType result;
+			switch (U8())
+			{
+				case 0:
+					return null;
+				case 1:
+					result = new CSharp.Syntax.PrimitiveType(Str());
+					break;
+				case 2:
+				{
+					var simple = new CSharp.Syntax.SimpleType(Str());
+					int count = Len();
+					for (int i = 0; i < count; i++)
+						simple.TypeArguments.Add(TypeSyntaxNode()!);
+					result = simple;
+					break;
+				}
+				case 3:
+				{
+					var composed = new CSharp.Syntax.ComposedType { BaseType = TypeSyntaxNode()! };
+					composed.HasNullableSpecifier = Bool();
+					composed.HasRefSpecifier = Bool();
+					composed.PointerRank = Len();
+					int count = Len();
+					for (int i = 0; i < count; i++)
+						composed.ArraySpecifiers.Add(new CSharp.Syntax.ArraySpecifier(Len()));
+					result = composed;
+					break;
+				}
+				case 4:
+				{
+					var tuple = new CSharp.Syntax.TupleAstType();
+					int count = Len();
+					for (int i = 0; i < count; i++)
+					{
+						var element = new CSharp.Syntax.TupleTypeElement { Type = TypeSyntaxNode()! };
+						int name = Len();
+						if (name != 0)
+							element.Name = strings[name - 1];
+						tuple.Elements.Add(element);
+					}
+					result = tuple;
+					break;
+				}
+				default:
+					throw new InvalidOperationException("Unknown wire type syntax tag");
+			}
+			int annotations = Len();
+			for (int i = 0; i < annotations; i++)
+				result.AddAnnotation(new TypeResolveResult(Type()));
+			return result;
 		}
 
 		public bool AtEnd => pos == data.Length;
@@ -124,6 +209,8 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 			pos = typeOffsets[index];
 			type = ReadTypeEntry();
 			pos = saved;
+			if (!typeIndex.ContainsKey(type))
+				typeIndex.Add(type, index);
 			return types[index] = type;
 		}
 
@@ -264,7 +351,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 	/// </summary>
 	internal sealed class IlAstMaterializer : WireReader
 	{
-		public const uint Version = 2;
+		public const uint Version = 3;
 
 		readonly MetadataModule mainModule;
 		readonly DecompilerSettings settings;
@@ -672,7 +759,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					RustSeam2.Attach(function, null, Str());
 					break;
 				case 2:
-					RustSeam2.Attach(function, BodyNode(), null);
+					RustSeam2.Attach(function, BodyNode(), null, this);
 					break;
 			}
 			return function;

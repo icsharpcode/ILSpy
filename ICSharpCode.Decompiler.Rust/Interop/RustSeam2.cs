@@ -187,11 +187,36 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		/// <summary>Why the engine did not translate the bodies that fell back, with how often.</summary>
 		public static IReadOnlyDictionary<string, int> FallbackReasons => fallbackReasons;
 
+		static long typeSyntaxFallbacks;
+
+		/// <summary>
+		/// Types of a served body the engine sent no syntax for (a function pointer or intersection
+		/// type, or a type no wire entry stands for), which the managed builder converted.
+		/// </summary>
+		public static long TypeSyntaxFallbacks => Interlocked.Read(ref typeSyntaxFallbacks);
+
 		public static void ResetCounters()
 		{
 			Interlocked.Exchange(ref served, 0);
 			Interlocked.Exchange(ref fallbacks, 0);
+			Interlocked.Exchange(ref typeSyntaxFallbacks, 0);
 			fallbackReasons.Clear();
+		}
+
+		/// <summary>The message the body being built came in, whose type syntax it is written with.</summary>
+		[ThreadStatic]
+		static WireReader? currentTypes;
+
+		/// <summary>
+		/// <c>exprBuilder.ConvertType(type)</c> as the engine built it; the managed conversion,
+		/// counted, for a type the engine sent no syntax for.
+		/// </summary>
+		static AstType ConvertType(ExpressionBuilder exprBuilder, IType type)
+		{
+			if (currentTypes?.TypeSyntax(type) is { } syntax)
+				return syntax;
+			Interlocked.Increment(ref typeSyntaxFallbacks);
+			return exprBuilder.ConvertType(type);
 		}
 
 		static readonly AsyncLocal<bool> disabled = new AsyncLocal<bool>();
@@ -211,13 +236,17 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		{
 			public RustBodyNode? Body;
 			public string? Reason;
+			public WireReader? Types;
 		}
 
-		/// <summary>Records the engine's translation of <paramref name="function"/>'s body, or why there is none.</summary>
-		internal static void Attach(ILFunction function, RustBodyNode? body, string? reason)
+		/// <summary>
+		/// Records the engine's translation of <paramref name="function"/>'s body, or why there is
+		/// none, with the message whose type syntax the body is written with.
+		/// </summary>
+		internal static void Attach(ILFunction function, RustBodyNode? body, string? reason, WireReader? types = null)
 		{
 			translations.Remove(function);
-			translations.Add(function, new Translation { Body = body, Reason = reason });
+			translations.Add(function, new Translation { Body = body, Reason = reason, Types = types });
 		}
 
 		/// <summary>
@@ -236,7 +265,17 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				fallbackReasons.AddOrUpdate(translation.Reason ?? "unknown", 1, (_, n) => n + 1);
 				return null;
 			}
-			var statement = (Statement)Build(translation.Body, statementBuilder.exprBuilder);
+			var saved = currentTypes;
+			currentTypes = translation.Types;
+			Statement statement;
+			try
+			{
+				statement = (Statement)Build(translation.Body, statementBuilder.exprBuilder);
+			}
+			finally
+			{
+				currentTypes = saved;
+			}
 			Interlocked.Increment(ref served);
 			return statement as BlockStatement ?? new BlockStatement { statement };
 		}
@@ -368,7 +407,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					return Annotate(new MemberReferenceExpression(target, (string)node.Value!), node);
 				}
 				case RustBodyNode.TypeReference:
-					return Annotate(new TypeReferenceExpression(exprBuilder.ConvertType(node.Type!)), node);
+					return Annotate(new TypeReferenceExpression(ConvertType(exprBuilder, node.Type!)), node);
 				case RustBodyNode.UsingExpanded:
 				{
 					// `VisitUsingInstruction` where `IsValidInCSharp` fails.
@@ -393,7 +432,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 						TryBlock = (BlockStatement)Build(node.Children[0], exprBuilder),
 						FinallyBlock = new BlockStatement {
 								new ExpressionStatement(new AssignmentExpression(exprBuilder.ConvertVariable(disposeVariable).Expression,
-									new AsExpression(exprBuilder.ConvertVariable(variable).Expression, exprBuilder.ConvertType(disposeType)))),
+									new AsExpression(exprBuilder.ConvertVariable(variable).Expression, ConvertType(exprBuilder, disposeType)))),
 								new IfElseStatement {
 									Condition = new BinaryOperatorExpression(exprBuilder.ConvertVariable(disposeVariable), BinaryOperatorType.InEquality, new NullReferenceExpression()),
 									TrueStatement = new ExpressionStatement(disposeInvocation)
@@ -468,7 +507,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					// A creation of `default(T)` or `Activator.CreateInstance<T>()` keeps its type's resolve result.
 					if (node.Call is { } call)
 						node.ResolveResult = new CSharpInvocationResolveResult(null!, call.Method, argumentResults, isExpandedForm: call.IsExpanded);
-					var creation = new ObjectCreateExpression(exprBuilder.ConvertType(node.Type!), arguments);
+					var creation = new ObjectCreateExpression(ConvertType(exprBuilder, node.Type!), arguments);
 					if (node.Initializer != null)
 						creation.Initializer = new ArrayInitializerExpression(node.Initializer.Select(e => (Expression)Build(e, exprBuilder)));
 					return Annotate(creation, node);
@@ -609,7 +648,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					if (node.Value != null)
 						clause.VariableName = (string)node.Value;
 					if (node.Type != null)
-						clause.Type = exprBuilder.ConvertType(node.Type);
+						clause.Type = ConvertType(exprBuilder, node.Type);
 					if (node.Children.Length == 2)
 						clause.Condition = (Expression)Build(node.Children[1], exprBuilder);
 					clause.Body = (BlockStatement)Build(node.Children[0], exprBuilder);
@@ -667,7 +706,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					var method = (IMethod)node.Value!;
 					node.ResolveResult = new ConversionResolveResult(node.Type!, reference.GetResolveResult(),
 						Conversion.MethodGroupConversion(method, node.Flag, false));
-					return Annotate(new ObjectCreateExpression(exprBuilder.ConvertType(node.Type!), reference), node);
+					return Annotate(new ObjectCreateExpression(ConvertType(exprBuilder, node.Type!), reference), node);
 				}
 				case RustBodyNode.Foreach:
 				{
@@ -691,7 +730,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					}
 					var statement = new ForeachStatement {
 						IsAsync = node.Flag,
-						VariableType = useVar ? new SimpleType("var") : exprBuilder.ConvertType(variable.Type),
+						VariableType = useVar ? new SimpleType("var") : ConvertType(exprBuilder, variable.Type),
 						VariableDesignation = designation,
 						InExpression = (Expression)Build(node.Children[0], exprBuilder),
 						EmbeddedStatement = (Statement)Build(node.Children[1], exprBuilder)
@@ -701,12 +740,12 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					return Annotate(statement, node);
 				}
 				case RustBodyNode.DefaultValue:
-					return Annotate(node.Type == null ? new DefaultValueExpression() : new DefaultValueExpression(exprBuilder.ConvertType(node.Type)), node);
+					return Annotate(node.Type == null ? new DefaultValueExpression() : new DefaultValueExpression(ConvertType(exprBuilder, node.Type)), node);
 				case RustBodyNode.IsType:
 				{
 					var tested = (Expression)Build(node.Children[0], exprBuilder);
 					node.ResolveResult = new TypeIsResolveResult(tested.GetResolveResult(), node.Type!, exprBuilder.compilation.FindType(TypeCode.Boolean));
-					return Annotate(new IsExpression(tested, exprBuilder.ConvertType(node.Type!.TupleUnderlyingTypeOrSelf())), node);
+					return Annotate(new IsExpression(tested, ConvertType(exprBuilder, node.Type!.TupleUnderlyingTypeOrSelf())), node);
 				}
 				case RustBodyNode.IsPattern:
 					return Annotate(new BinaryOperatorExpression((Expression)Build(node.Children[0], exprBuilder), BinaryOperatorType.IsPattern,
@@ -715,7 +754,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				{
 					var variable = (ILVariable)node.Value!;
 					return Annotate(new DeclarationExpression {
-						Type = node.Flag ? new SimpleType("var") : exprBuilder.ConvertType(variable.Type),
+						Type = node.Flag ? new SimpleType("var") : ConvertType(exprBuilder, variable.Type),
 						Designation = Designation(variable)
 					}, node);
 				}
@@ -723,7 +762,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				{
 					var pattern = new RecursivePatternExpression();
 					if (node.Type != null)
-						pattern.Type = exprBuilder.ConvertType(node.Type);
+						pattern.Type = ConvertType(exprBuilder, node.Type);
 					for (int i = 0; i < node.Members.Length; i++)
 					{
 						var member = node.Members[i];
@@ -792,7 +831,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					ArraySpecifier[] additionalSpecifiers = [new ArraySpecifier()];
 					if (!anonymous)
 					{
-						typeExpression = exprBuilder.ConvertType(elementType);
+						typeExpression = ConvertType(exprBuilder, elementType);
 						additionalSpecifiers = [];
 						if (typeExpression is ComposedType composed && composed.ArraySpecifiers.Count > 0)
 						{
@@ -910,7 +949,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					AstNode resourceAcquisition = Build(node.Children[0], exprBuilder);
 					if (node.Value is ILVariable variable)
 					{
-						var declaration = new VariableDeclarationStatement(exprBuilder.ConvertType(variable.Type), variable.Name!, (Expression)resourceAcquisition);
+						var declaration = new VariableDeclarationStatement(ConvertType(exprBuilder, variable.Type), variable.Name!, (Expression)resourceAcquisition);
 						declaration.Variables.Single().AddAnnotation(new ILVariableResolveResult(variable, variable.Type));
 						resourceAcquisition = declaration;
 					}
@@ -936,17 +975,17 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					return direction;
 				}
 				case RustBodyNode.TypeOf:
-					return Annotate(new TypeOfExpression(exprBuilder.ConvertType(node.Type!)), node);
+					return Annotate(new TypeOfExpression(ConvertType(exprBuilder, node.Type!)), node);
 				case RustBodyNode.As:
 				{
 					var operand = (Expression)Build(node.Children[0], exprBuilder);
 					node.ResolveResult = new ConversionResolveResult(node.Type!, operand.GetResolveResult(), Conversion.TryCast);
-					return Annotate(new AsExpression(operand, exprBuilder.ConvertType(node.Type!)), node);
+					return Annotate(new AsExpression(operand, ConvertType(exprBuilder, node.Type!)), node);
 				}
 				case RustBodyNode.Cast:
 				{
 					var operand = (Expression)Build(node.Children[0], exprBuilder);
-					var cast = new CastExpression(exprBuilder.ConvertType(node.Type!), operand);
+					var cast = new CastExpression(ConvertType(exprBuilder, node.Type!), operand);
 					// `TranslatedExpression.ConvertTo` marks a cast to an integer type unchecked.
 					if (node.Flag)
 						cast.AddAnnotation(CSharp.Transforms.AddCheckedBlocks.UncheckedAnnotation);
@@ -965,10 +1004,10 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				}
 				case RustBodyNode.GenericIdentifier:
 					return Annotate(new IdentifierExpression((string)node.Value!,
-						node.TypeArguments.Select(exprBuilder.ConvertType)), node);
+						node.TypeArguments.Select(t => ConvertType(exprBuilder, t))), node);
 				case RustBodyNode.GenericMemberReference:
 					return Annotate(new MemberReferenceExpression((Expression)Build(node.Children[0], exprBuilder), (string)node.Value!,
-						node.TypeArguments.Select(exprBuilder.ConvertType)), node);
+						node.TypeArguments.Select(t => ConvertType(exprBuilder, t))), node);
 				case RustBodyNode.Conditional:
 				{
 					var condition = (Expression)Build(node.Children[0], exprBuilder);

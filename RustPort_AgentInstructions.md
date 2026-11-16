@@ -719,6 +719,23 @@ the reasons. This file holds only the ordered steps, their gates and their rules
       unknown early transforms force managed fallback for the request. Requests with
       `RecordSteps` set always run managed.
     - Gate: G-dotnet, G-oracle, G-ratchet, G-ast(0).
+    - Split into gated commits, each keeping G-ast(0) green (agent decision under the standing
+      instruction to take the recommendation; lecture 3.198):
+      - [x] 68z1. Types as syntax in the engine (lecture 3.198): `TypeSystemAstBuilder.ConvertType` with its
+        name qualification, type syntax nodes in the body AST, the host building `AstType`
+        from them instead of calling `ConvertType`. Subject:
+        `Port TypeSystemAstBuilder.ConvertType to Rust`.
+      - [ ] 68z2. Constants as syntax: `ConvertConstantValue` (enum flags, decimals, special
+        floating values). Subject: `Port TypeSystemAstBuilder.ConvertConstantValue to Rust`.
+      - [ ] 68z3. Member declarations: `ConvertEntity` for methods, constructors, fields,
+        properties, indexers, events and operators, with modifiers, parameters and attributes.
+        Subject: `Port member declarations of TypeSystemAstBuilder to Rust`.
+      - [ ] 68z4. Type declarations, namespaces and usings: the request-level `SyntaxTree`
+        through `Interop/AstMaterializer.cs`, with `ExtensionInfo` and `ExtensionEverything`.
+        Subject: `Add the Rust C# AST builders and the AST materializer`.
+      - [ ] 68z5. The request-level seam 2 block: recognized early transforms as engine flags,
+        `RecordSteps` requests managed, fallback counted per request. Subject:
+        `Serve whole decompile requests through seam 2`.
 
 - [ ] **69-84. One AST transform per commit, in order.** Subject pattern:
   `Port <TransformName> to Rust (AST prefix <K>)`. Gate per commit: G-rust, G-oracle,
