@@ -220,7 +220,30 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				&& field.ParentModule == typeSystem.MainModule
 				&& !field.MetadataToken.IsNil)
 			{
-				var decl = engine.FieldSyntax(field, typeSystemAstBuilder.UseSpecialConstants, settings, out string? reason);
+				var decl = engine.EntitySyntax(field, typeSystemAstBuilder.UseSpecialConstants, settings, out string? reason);
+				if (decl != null)
+				{
+					Interlocked.Increment(ref declarationsServed);
+					return decl;
+				}
+				Interlocked.Increment(ref declarationFallbacks);
+				declarationFallbackReasons.AddOrUpdate(reason ?? "unknown", 1, (_, n) => n + 1);
+			}
+			return managed;
+		}
+
+		/// <summary>
+		/// <c>typeSystemAstBuilder.ConvertEntity(method)</c> from the engine; <paramref name="managed"/>,
+		/// the managed builder's, counted, where the engine does not write it.
+		/// </summary>
+		internal static EntityDeclaration ConvertMethod(IDecompilerTypeSystem typeSystem, IMethod method, TypeSystemAstBuilder typeSystemAstBuilder, DecompilerSettings settings, EntityDeclaration managed)
+		{
+			if (Enabled && RustEngine.For(typeSystem, out _) is { } engine
+				&& method.ParentModule == typeSystem.MainModule
+				&& !method.MetadataToken.IsNil
+				&& method is not ICSharpCode.Decompiler.TypeSystem.Implementation.LocalFunctionMethod)
+			{
+				var decl = engine.EntitySyntax(method, typeSystemAstBuilder.UseSpecialConstants, settings, out string? reason);
 				if (decl != null)
 				{
 					Interlocked.Increment(ref declarationsServed);

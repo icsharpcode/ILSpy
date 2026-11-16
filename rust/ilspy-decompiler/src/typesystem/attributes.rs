@@ -760,7 +760,7 @@ impl TypeSystem<'_, '_> {
 
     /// `IParameter.IsDefaultValueAssignmentAllowed()` for parameter `index` of `params`,
     /// declared by `declaring`.
-    fn default_value_assignment_allowed(
+    pub fn default_value_assignment_allowed(
         &mut self,
         params: &[ParamInfo],
         index: usize,

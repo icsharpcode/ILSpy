@@ -851,17 +851,17 @@ pub unsafe extern "C" fn ilspy_session_read_function(
     }
 }
 
-/// The declaration syntax of the field `field_token` of the main module
-/// (`wire::ilast::field_syntax`). `flags`: bit 0 `UseSpecialConstants`, bit 1
+/// The declaration syntax of the field or method `token` of the main module
+/// (`wire::ilast::field_syntax`, `method_syntax`). `flags`: bit 0 `UseSpecialConstants`, bit 1
 /// `SortCustomAttributes`, bit 2 `IntroducePrivateProtectedAccessibility`, bit 3
 /// `LiftNullables`. Safe to call from several threads at once.
 ///
 /// # Safety
 /// `session` must be a live, loaded session; `out` must be writable.
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn ilspy_session_field_syntax(
+pub unsafe extern "C" fn ilspy_session_entity_syntax(
     session: *const FfiSession,
-    field_token: u32,
+    token: u32,
     flags: u32,
     out: *mut Buf,
 ) -> Status {
@@ -874,9 +874,6 @@ pub unsafe extern "C" fn ilspy_session_field_syntax(
             .compilation
             .get()
             .ok_or("the session has no compilation")?;
-        if field_token >> 24 != 0x04 {
-            return Err(format!("0x{field_token:08x} is not a Field token"));
-        }
         let mut ts = TypeSystem::new(comp);
         let options = ilspy_decompiler::csharp::entity_syntax::EntityOptions {
             special_constants: flags & 1 != 0,
@@ -884,12 +881,14 @@ pub unsafe extern "C" fn ilspy_session_field_syntax(
             private_protected: flags & 4 != 0,
             nullable_specifier: flags & 8 != 0,
         };
-        ilspy_decompiler::wire::ilast::field_syntax(
-            &mut ts,
-            ModuleId(0),
-            field_token & 0x00FF_FFFF,
-            options,
-        )
+        let row = token & 0x00FF_FFFF;
+        match token >> 24 {
+            0x04 => ilspy_decompiler::wire::ilast::field_syntax(&mut ts, ModuleId(0), row, options),
+            0x06 => {
+                ilspy_decompiler::wire::ilast::method_syntax(&mut ts, ModuleId(0), row, options)
+            }
+            _ => Err(format!("0x{token:08x} is no Field or MethodDef token")),
+        }
     }) {
         Ok(bytes) => {
             // SAFETY: as above.

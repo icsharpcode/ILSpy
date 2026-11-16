@@ -578,6 +578,148 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 			return decl;
 		}
 
+		/// <summary>
+		/// <c>ConvertMethod</c>, <c>ConvertOperator</c>, <c>ConvertConstructor</c> or
+		/// <c>ConvertDestructor</c>; null with the reason where the engine did not write it.
+		/// </summary>
+		public CSharp.Syntax.EntityDeclaration? Method(IMethod method, DecompilerSettings settings, out string? unsupportedReason)
+		{
+			unsupportedReason = null;
+			if (U8() == 0)
+			{
+				unsupportedReason = Str();
+				return null;
+			}
+			bool complete = true;
+			byte kind = U8();
+			string? typeName = kind == 0 ? null : Str();
+			var modifiers = (CSharp.Syntax.Modifiers)UVar();
+			var attributes = Sections(null, ref complete);
+			var returnAttributes = Sections("return", ref complete);
+			CSharp.Syntax.AstType? returnType = Bool() ? SyntaxOf(Type(), ref complete) : null;
+			if (Bool() && returnType is CSharp.Syntax.ComposedType ct && ct.HasRefSpecifier)
+				ct.HasReadOnlySpecifier = true;
+			string name = Str();
+			var typeParameters = new List<CSharp.Syntax.TypeParameterDeclaration>();
+			int count = Len();
+			for (int i = 0; i < count; i++)
+			{
+				var tp = new CSharp.Syntax.TypeParameterDeclaration { Variance = (VarianceModifier)U8(), Name = Str() };
+				tp.Attributes.AddRange(Sections(null, ref complete));
+				typeParameters.Add(tp);
+			}
+			var parameters = new List<CSharp.Syntax.ParameterDeclaration>();
+			count = Len();
+			for (int i = 0; i < count; i++)
+			{
+				var p = new CSharp.Syntax.ParameterDeclaration {
+					ParameterModifier = (ReferenceKind)U8(),
+					IsParams = Bool(),
+					IsScopedRef = Bool()
+				};
+				p.Attributes.AddRange(Sections(null, ref complete));
+				p.Type = SyntaxOf(Type(), ref complete);
+				p.Name = Str();
+				if (Bool())
+					p.DefaultExpression = ConstantSyntax(ref complete);
+				parameters.Add(p);
+			}
+			bool thisModifier = Bool();
+			var constraints = new List<CSharp.Syntax.Constraint>();
+			count = Len();
+			for (int i = 0; i < count; i++)
+			{
+				var c = new CSharp.Syntax.Constraint { TypeParameter = new CSharp.Syntax.SimpleType(Str()) };
+				int bases = Len();
+				for (int j = 0; j < bases; j++)
+				{
+					if (U8() == 0)
+					{
+						CSharp.Syntax.AstType keyword = new CSharp.Syntax.PrimitiveType(Str());
+						if (Bool())
+							keyword = keyword.MakeNullableType();
+						c.BaseTypes.Add(keyword);
+					}
+					else
+					{
+						c.BaseTypes.Add(SyntaxOf(Type(), ref complete));
+					}
+				}
+				constraints.Add(c);
+			}
+			if (!complete)
+			{
+				unsupportedReason = "a type without syntax";
+				return null;
+			}
+			CSharp.Syntax.EntityDeclaration decl;
+			// `ConvertOperator` writes a method for a name that is no operator and for operators the
+			// options do not support.
+			CSharp.Syntax.OperatorType? operatorType = kind == 1 ? CSharp.Syntax.OperatorDeclaration.GetOperatorType(typeName!) : null;
+			if (operatorType == CSharp.Syntax.OperatorType.UnsignedRightShift && !settings.UnsignedRightShift
+				|| operatorType != null && !settings.CheckedOperators && CSharp.Syntax.OperatorDeclaration.IsChecked(operatorType.Value))
+			{
+				operatorType = null;
+			}
+			switch (kind)
+			{
+				case 1 when operatorType != null:
+				{
+					var op = new CSharp.Syntax.OperatorDeclaration { Modifiers = modifiers, OperatorType = operatorType.Value, ReturnType = returnType! };
+					op.Parameters.AddRange(parameters);
+					op.Attributes.AddRange(attributes);
+					op.Attributes.AddRange(returnAttributes);
+					decl = op;
+					break;
+				}
+				case 2:
+				{
+					var ctor = new CSharp.Syntax.ConstructorDeclaration { Modifiers = modifiers, Name = typeName! };
+					ctor.Attributes.AddRange(attributes);
+					ctor.Parameters.AddRange(parameters);
+					decl = ctor;
+					break;
+				}
+				case 3:
+				{
+					var dtor = new CSharp.Syntax.DestructorDeclaration { Name = typeName! };
+					dtor.Attributes.AddRange(attributes);
+					decl = dtor;
+					break;
+				}
+				default:
+				{
+					var m = new CSharp.Syntax.MethodDeclaration { Modifiers = modifiers, ReturnType = returnType!, Name = name };
+					m.Attributes.AddRange(attributes);
+					m.Attributes.AddRange(returnAttributes);
+					m.TypeParameters.AddRange(typeParameters);
+					m.Parameters.AddRange(parameters);
+					if (thisModifier && method.ReducedFrom == null && m.Parameters.Any())
+						m.Parameters.First().HasThisModifier = true;
+					m.Constraints.AddRange(constraints);
+					decl = m;
+					break;
+				}
+			}
+			decl.AddAnnotation(new MemberResolveResult(null, method));
+			return decl;
+		}
+
+		/// <summary><c>ConvertAttributes(attributes, target)</c>: one section per attribute.</summary>
+		List<CSharp.Syntax.AttributeSection> Sections(string? target, ref bool complete)
+		{
+			int count = Len();
+			var result = new List<CSharp.Syntax.AttributeSection>(count);
+			for (int i = 0; i < count; i++)
+			{
+				var section = new CSharp.Syntax.AttributeSection(Attribute(ref complete));
+				if (target != null)
+					section.AttributeTarget = target;
+				result.Add(section);
+			}
+			return result;
+		}
+
 		/// <summary><c>ConvertAttribute</c>.</summary>
 		CSharp.Syntax.Attribute Attribute(ref bool complete)
 		{

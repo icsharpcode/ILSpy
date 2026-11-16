@@ -331,6 +331,47 @@ impl<'t, 'c, 'a> ConstantSyntaxBuilder<'t, 'c, 'a> {
         self.convert_constant_value(ty, ty, value, false, special_constants)
     }
 
+    /// `IsSpecialConstant(underlyingType, value)` of an integer or decimal value: the member of
+    /// the value's own type (`int.MaxValue`), which may differ from the expected one (an `int`
+    /// in the constant of a `float` parameter), where its field exists. Not for hexadecimal
+    /// integer literals.
+    fn special_integer_or_decimal(
+        &self,
+        underlying: TypeId,
+        code: KnownTypeCode,
+        value: &ConstValue,
+        hex: bool,
+        special_constants: bool,
+    ) -> Option<ConstSyntax> {
+        let integer = matches!(
+            code,
+            KnownTypeCode::SByte
+                | KnownTypeCode::Byte
+                | KnownTypeCode::Int16
+                | KnownTypeCode::UInt16
+                | KnownTypeCode::Int32
+                | KnownTypeCode::UInt32
+                | KnownTypeCode::Int64
+                | KnownTypeCode::UInt64
+        );
+        if hex && integer || !special_constants {
+            return None;
+        }
+        let (known, member) = special_constant(value)?;
+        let def = self.known_def(known)?;
+        let field = self.field_named(def, member)?;
+        let ty = if known == code {
+            underlying
+        } else {
+            self.ts.find(&TypeData::Def(def))?
+        };
+        Some(ConstSyntax::new(ConstSyntaxKind::SpecialConstant {
+            ty,
+            field,
+            name: member.to_owned(),
+        }))
+    }
+
     /// `IsCSharpSmallIntegerType`, as its keyword.
     fn small_integer_keyword(&self, t: TypeId) -> Option<&'static str> {
         Some(match self.known_code(t) {
@@ -371,6 +412,11 @@ impl<'t, 'c, 'a> ConstantSyntaxBuilder<'t, 'c, 'a> {
             return self.convert_enum_value(underlying, d, as_i64(value)?, hex, special_constants);
         }
         let code = self.known_code(underlying);
+        if let Some(special) =
+            self.special_integer_or_decimal(underlying, code, value, hex, special_constants)
+        {
+            return Some(special);
+        }
         if matches!(code, KnownTypeCode::Single | KnownTypeCode::Double) {
             return self.convert_floating_point(
                 underlying,
@@ -378,31 +424,6 @@ impl<'t, 'c, 'a> ConstantSyntaxBuilder<'t, 'c, 'a> {
                 value,
                 special_constants,
             );
-        }
-        let integer = matches!(
-            code,
-            KnownTypeCode::SByte
-                | KnownTypeCode::Byte
-                | KnownTypeCode::Int16
-                | KnownTypeCode::UInt16
-                | KnownTypeCode::Int32
-                | KnownTypeCode::UInt32
-                | KnownTypeCode::Int64
-                | KnownTypeCode::UInt64
-        );
-        if !(hex && integer)
-            && special_constants
-            && let Some((known, member)) = special_constant(value)
-            && known == code
-            && let Some(def) = self.known_def(known)
-            && let Some(field) = self.field_named(def, member)
-        {
-            // `IsSpecialConstant`: the value's own type is the expected type.
-            return Some(ConstSyntax::new(ConstSyntaxKind::SpecialConstant {
-                ty: underlying,
-                field,
-                name: member.to_owned(),
-            }));
         }
         let native = matches!(ts.data(underlying), TypeData::NInt | TypeData::NUInt);
         let small = self.small_integer_keyword(underlying).is_some();

@@ -89,7 +89,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		internal static extern unsafe RustStatus ilspy_session_load(RustSession session, RustModule* modules, UIntPtr count, uint options);
 
 		[DllImport(Library, CallingConvention = CallingConvention.Cdecl)]
-		internal static extern RustStatus ilspy_session_field_syntax(RustSession session, uint fieldToken, uint flags, out RustBuffer wire);
+		internal static extern RustStatus ilspy_session_entity_syntax(RustSession session, uint token, uint flags, out RustBuffer wire);
 
 		[DllImport(Library, CallingConvention = CallingConvention.Cdecl)]
 		internal static extern RustStatus ilspy_session_read_function(RustSession session, uint methodToken, uint ilPrefix, uint readerFlags, ulong settings, ulong settingsHigh, IntPtr debugContext, RustDebugInfo.Callback? debugInfo, IntPtr resolverContext, RustResolver.Callback? resolver, byte[] rootNames, UIntPtr rootNamesLength, out RustBuffer wire);

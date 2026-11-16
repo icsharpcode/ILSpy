@@ -4614,6 +4614,35 @@ and served bodies need no managed type syntax.
 
 The share stayed at 100.0 %.
 
+### 3.203 Method, constructor, destructor and operator declarations (item 68z3b)
+
+The entity request (`ilspy_session_entity_syntax`, a Field or MethodDef token) now answers for
+the `ConvertEntity(method)` call of `DoDecompile(IMethod)`, after which the host keeps the
+engine's declaration as for fields. `GetMemberModifiers` is ported for methods: the
+accessibility (none for a constructor that is static, a destructor, a public member of an
+interface, or a compiler-controlled method, whose `MetadataMethod.GetAccessibility` is `None`),
+`static`, `readonly` for a `readonly` method of a struct that is not itself `readonly`, and the
+interface and class rules for `sealed`, `abstract`, `virtual` and `override`. A declaration has
+the method's attributes and those of its return value (`[return: ...]`), the return type (with
+`ref readonly`), the type parameters with variance and attributes, the parameters
+(`ConvertParameter`: the reference kind, `params`, a declared `scoped`, attributes, the type
+without the `ByRef` the reference kind writes, the name, and the default value where
+`IsDefaultValueAssignmentAllowed`), the `this` of an extension method, and the constraints of
+`ConvertTypeParameterConstraint`. An operator is sent with its metadata name, which the host
+maps with `OperatorDeclaration.GetOperatorType` and the two operator options exactly as
+`ConvertOperator` decides between an operator and a method.
+
+A special constant is looked up by the raw value before a floating point conversion and named
+after the value's own type: the default `int.MaxValue` of a `float` parameter is written so.
+
+Not written yet, and counted (`shortcut:`): explicit interface implementations (82 in the
+ratchet corpus), generic overrides, whose constraints restate only what disambiguates `T?`, the
+members of types with C# 14 extension blocks, whose type parameters take their names from
+`ExtensionInfo` (30), accessors, and attributes on constraint types. The engine writes 1409
+declarations of the ratchet corpus.
+
+The share stayed at 100.0 %.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

@@ -144,23 +144,28 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		}
 
 		/// <summary>
-		/// <c>TypeSystemAstBuilder.ConvertEntity(field)</c> as the engine writes it with the options
-		/// <c>CSharpDecompiler.CreateAstBuilder</c> gives the builder; null with
+		/// <c>TypeSystemAstBuilder.ConvertEntity(entity)</c> of a field or method as the engine writes
+		/// it with the options <c>CSharpDecompiler.CreateAstBuilder</c> gives the builder; null with
 		/// <paramref name="unsupportedReason"/> where the engine does not write the declaration.
 		/// </summary>
-		public CSharp.Syntax.EntityDeclaration? FieldSyntax(IField field, bool useSpecialConstants, DecompilerSettings settings, out string? unsupportedReason)
+		public CSharp.Syntax.EntityDeclaration? EntitySyntax(IEntity entity, bool useSpecialConstants, DecompilerSettings settings, out string? unsupportedReason)
 		{
 			unsupportedReason = null;
 			uint flags = (useSpecialConstants ? 1u : 0u)
 				| (settings.SortCustomAttributes ? 2u : 0u)
 				| (settings.IntroducePrivateProtectedAccessibility ? 4u : 0u)
 				| (settings.LiftNullables ? 8u : 0u);
-			var status = NativeMethods.ilspy_session_field_syntax(session, (uint)MetadataTokens.GetToken(field.MetadataToken), flags, out var buffer);
+			var status = NativeMethods.ilspy_session_entity_syntax(session, (uint)MetadataTokens.GetToken(entity.MetadataToken), flags, out var buffer);
 			byte[] bytes = NativeMethods.TakeBuffer(buffer);
 			switch (status)
 			{
 				case RustStatus.Ok:
-					return new EntitySyntaxReader(bytes, typeSystem, modules).Field(field, out unsupportedReason);
+					var reader = new EntitySyntaxReader(bytes, typeSystem, modules);
+					return entity switch {
+						IField field => reader.Field(field, out unsupportedReason),
+						IMethod method => reader.Method(method, settings, out unsupportedReason),
+						_ => throw new ArgumentException("An entity request for a field or method", nameof(entity)),
+					};
 				case RustStatus.Cancelled:
 					throw new OperationCanceledException();
 				default:

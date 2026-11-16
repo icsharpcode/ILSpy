@@ -2251,6 +2251,9 @@ namespace ICSharpCode.Decompiler.CSharp
 			{
 				var typeSystemAstBuilder = CreateAstBuilder(decompileRun.Settings);
 				var methodDecl = typeSystemAstBuilder.ConvertEntity(method);
+				// RUST-SEAM-2 BEGIN
+				methodDecl = Rust.Interop.RustSeam2.ConvertMethod(typeSystem, method, typeSystemAstBuilder, settings, methodDecl);
+				// RUST-SEAM-2 END
 				int lastDot = method.Name.LastIndexOf('.');
 				if (methodDecl is not OperatorDeclaration && method.IsExplicitInterfaceImplementation && lastDot >= 0)
 				{

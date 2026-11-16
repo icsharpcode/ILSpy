@@ -2021,19 +2021,19 @@ fn query_message(
     Ok(tables.finish(VERSION, payload))
 }
 
-/// `TypeSystemAstBuilder.ConvertEntity` of a field (`csharp::entity_syntax`) as a message: the
-/// tables with the type syntax, then 1 and the declaration, or 0 and why the engine does not
-/// write it (the host converts it, counted).
-pub fn field_syntax(
+/// An entity request's message: the tables with the type syntax, then 1 and what `write`
+/// writes of the declaration `convert` builds, or 0 and why the engine does not write it (the
+/// host converts it, counted).
+fn entity_message<T>(
     ts: &mut TypeSystem<'_, '_>,
-    module: crate::typesystem::compilation::ModuleId,
-    row: u32,
     options: crate::csharp::entity_syntax::EntityOptions,
+    convert: impl FnOnce(&mut TypeSystem<'_, '_>) -> Result<T, String>,
+    write: impl FnOnce(&mut FunctionWriter<'_, '_, '_, '_>, &T),
 ) -> Result<Vec<u8>, String> {
-    // The unbound type argument the type syntax of a generic definition names.
+    // The types the type and constant syntax name, which the writers only find.
     ts.intern(crate::typesystem::types::TypeData::Unbound);
     ts.intern_constant_types();
-    let syntax = crate::csharp::entity_syntax::convert_field(ts, module, row, options);
+    let syntax = convert(ts);
     ts.intern_oblivious_instances();
     let ts = &*ts;
     let mut tables = Tables::default();
@@ -2055,27 +2055,138 @@ pub fn field_syntax(
             w.out.u8(0);
             w.string(&reason);
         }
-        Ok(field) => {
+        Ok(s) => {
             w.out.u8(1);
-            w.out.uvar(u64::from(field.modifiers));
-            w.out.len(field.attributes.len());
-            for a in &field.attributes {
-                write_attribute(&mut w, a);
-            }
-            w.ty(field.return_type);
-            w.out.bool(field.ref_readonly);
-            match &field.initializer {
-                Some(c) => {
-                    w.out.u8(1);
-                    super::ast::constant_syntax_node(&mut w, c);
-                }
-                None => w.out.u8(0),
-            }
+            write(&mut w, &s);
         }
     }
     let payload = std::mem::take(&mut w.out);
     tables.type_syntax(ts, options.nullable_specifier);
     Ok(tables.finish(VERSION, payload))
+}
+
+/// `TypeSystemAstBuilder.ConvertEntity` of a field (`csharp::entity_syntax`) as a message.
+pub fn field_syntax(
+    ts: &mut TypeSystem<'_, '_>,
+    module: crate::typesystem::compilation::ModuleId,
+    row: u32,
+    options: crate::csharp::entity_syntax::EntityOptions,
+) -> Result<Vec<u8>, String> {
+    entity_message(
+        ts,
+        options,
+        |ts| crate::csharp::entity_syntax::convert_field(ts, module, row, options),
+        |w, field| {
+            w.out.uvar(u64::from(field.modifiers));
+            write_attributes(w, &field.attributes);
+            w.ty(field.return_type);
+            w.out.bool(field.ref_readonly);
+            write_optional_constant(w, field.initializer.as_ref());
+        },
+    )
+}
+
+/// `TypeSystemAstBuilder.ConvertEntity` of a method, operator, constructor or destructor
+/// (`csharp::entity_syntax`) as a message.
+pub fn method_syntax(
+    ts: &mut TypeSystem<'_, '_>,
+    module: crate::typesystem::compilation::ModuleId,
+    row: u32,
+    options: crate::csharp::entity_syntax::EntityOptions,
+) -> Result<Vec<u8>, String> {
+    use crate::csharp::entity_syntax::{ConstraintTypeSyntax, MethodKindSyntax};
+    entity_message(
+        ts,
+        options,
+        |ts| crate::csharp::entity_syntax::convert_method(ts, module, row, options),
+        |w, m| {
+            match &m.kind {
+                MethodKindSyntax::Method => w.out.u8(0),
+                MethodKindSyntax::Operator(name) => {
+                    w.out.u8(1);
+                    w.string(name);
+                }
+                MethodKindSyntax::Constructor(name) => {
+                    w.out.u8(2);
+                    w.string(name);
+                }
+                MethodKindSyntax::Destructor(name) => {
+                    w.out.u8(3);
+                    w.string(name);
+                }
+            }
+            w.out.uvar(u64::from(m.modifiers));
+            write_attributes(w, &m.attributes);
+            write_attributes(w, &m.return_attributes);
+            match m.return_type {
+                Some(t) => {
+                    w.out.u8(1);
+                    w.ty(t);
+                }
+                None => w.out.u8(0),
+            }
+            w.out.bool(m.ref_readonly);
+            w.string(&m.name);
+            w.out.len(m.type_parameters.len());
+            for tp in &m.type_parameters {
+                w.out.u8(tp.variance);
+                w.string(&tp.name);
+                write_attributes(w, &tp.attributes);
+            }
+            w.out.len(m.parameters.len());
+            for p in &m.parameters {
+                w.out.u8(p.ref_kind);
+                w.out.bool(p.is_params);
+                w.out.bool(p.is_scoped);
+                write_attributes(w, &p.attributes);
+                w.ty(p.ty);
+                w.string(&p.name);
+                write_optional_constant(w, p.default_value.as_ref());
+            }
+            w.out.bool(m.this_modifier);
+            w.out.len(m.constraints.len());
+            for c in &m.constraints {
+                w.string(&c.type_parameter);
+                w.out.len(c.base_types.len());
+                for b in &c.base_types {
+                    match b {
+                        ConstraintTypeSyntax::Keyword(k, nullable) => {
+                            w.out.u8(0);
+                            w.string(k);
+                            w.out.bool(*nullable);
+                        }
+                        ConstraintTypeSyntax::Type(t) => {
+                            w.out.u8(1);
+                            w.ty(*t);
+                        }
+                    }
+                }
+            }
+        },
+    )
+}
+
+fn write_attributes(
+    w: &mut FunctionWriter<'_, '_, '_, '_>,
+    attributes: &[crate::csharp::entity_syntax::AttributeSyntax],
+) {
+    w.out.len(attributes.len());
+    for a in attributes {
+        write_attribute(w, a);
+    }
+}
+
+fn write_optional_constant(
+    w: &mut FunctionWriter<'_, '_, '_, '_>,
+    c: Option<&crate::csharp::constant_syntax::ConstSyntax>,
+) {
+    match c {
+        Some(c) => {
+            w.out.u8(1);
+            super::ast::constant_syntax_node(w, c);
+        }
+        None => w.out.u8(0),
+    }
 }
 
 /// One attribute of `csharp::entity_syntax`.
