@@ -263,8 +263,6 @@ namespace ICSharpCode.Decompiler.CSharp
 		/// too, so the ILAst the crash left behind can be rendered rather than the error comment.
 		/// </summary>
 		public ILFunction? StepLimitHaltedFunction { get; private set; }
-
-
 		/// <summary>
 		/// Returns all built-in transforms of the C# AST pipeline.
 		/// </summary>
@@ -2438,7 +2436,6 @@ namespace ICSharpCode.Decompiler.CSharp
 				// boundary to the member the pipeline is only about to start.
 				context.StepStartGroup(method.FullName);
 				function.RunTransforms(SelectILTransforms(localSettings.DecompileMemberBodies), context);
-
 
 				// Generate C# AST only if bodies should be displayed.
 				if (localSettings.DecompileMemberBodies)
