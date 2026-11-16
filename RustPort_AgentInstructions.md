@@ -684,7 +684,9 @@ the reasons. This file holds only the ordered steps, their gates and their rules
     `Translate span-based string concatenation in the engine`.
   - [x] 68y82. Switch statements on strings (lecture 3.190). Subject:
     `Translate switch statements on strings in the engine`.
-  - [ ] 68y83-. Further construct groups (numbered on from 68y1), in the order of the fallback reasons the ratchet test
+  - [x] 68y83. Usings that are no valid C# (lecture 3.191). Subject:
+    `Translate usings of non-disposable types in the engine`.
+  - [ ] 68y84-. Further construct groups (numbered on from 68y1), in the order of the fallback reasons the ratchet test
     prints, until no body of the corpus falls back. Subject pattern:
     `Translate <construct group> to C# in the engine`.
   - [ ] 68z. Request-level seam 2. Subject: `Add the Rust C# AST builders and the AST materializer`.

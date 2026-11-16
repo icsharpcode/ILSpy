@@ -928,6 +928,14 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 						node.Children[i] = BodyNode();
 					}
 					break;
+				case RustBodyNode.UsingExpanded:
+					// The variable, whether it is the store, whether it is an `await using`, and the
+					// resource or the body.
+					node.Value = Variable();
+					node.ResolveOperator = Bool();
+					node.Flag = Bool();
+					node.Children = [BodyNode()];
+					break;
 				case RustBodyNode.ParenthesizedDesignation:
 					node.Children = new RustBodyNode[Len()];
 					for (int i = 0; i < node.Children.Length; i++)

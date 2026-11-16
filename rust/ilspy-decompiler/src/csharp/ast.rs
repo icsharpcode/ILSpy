@@ -188,6 +188,16 @@ pub enum AstNode {
     Continue,
     /// `TupleExpression` of the targets of a deconstruction, without resolve result.
     DeconstructionTuple { elements: Vec<AstId> },
+    /// A statement of `VisitUsingInstruction` where the using is no valid C# `using`: the store of
+    /// the resource (`part`, `is_store`) to `variable`, or `try { part } finally { d = variable as
+    /// IDisposable; if (d != null) d.Dispose(); }` (`IAsyncDisposable` and
+    /// `await d.DisposeAsync()` for `is_async`).
+    UsingExpanded {
+        variable: crate::il::ast::VarId,
+        part: AstId,
+        is_store: bool,
+        is_async: bool,
+    },
     /// `ParenthesizedVariableDesignation` of a deconstruction's targets.
     ParenthesizedDesignation { elements: Vec<AstId> },
     /// `SingleVariableDesignation` of a variable, or `_`.

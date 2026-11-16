@@ -92,6 +92,7 @@ mod kind {
     pub const IN_DIRECTION: u8 = 68;
     pub const PARENTHESIZED_DESIGNATION: u8 = 69;
     pub const SINGLE_DESIGNATION: u8 = 70;
+    pub const USING_EXPANDED: u8 = 71;
 }
 
 pub(super) fn write_body(
@@ -368,6 +369,7 @@ fn node(w: &mut FunctionWriter<'_, '_, '_, '_>, ast: &Ast, id: AstId) -> Result<
         AstNode::Break => kind::BREAK,
         AstNode::Continue => kind::CONTINUE,
         AstNode::Label { .. } => kind::LABEL,
+        AstNode::UsingExpanded { .. } => kind::USING_EXPANDED,
         AstNode::ParenthesizedDesignation { .. } => kind::PARENTHESIZED_DESIGNATION,
         AstNode::SingleDesignation { .. } => kind::SINGLE_DESIGNATION,
         AstNode::InDirection { .. } => kind::IN_DIRECTION,
@@ -537,6 +539,18 @@ fn node(w: &mut FunctionWriter<'_, '_, '_, '_>, ast: &Ast, id: AstId) -> Result<
         AstNode::Identifier { name } => w.string(&name),
         AstNode::Label { name } | AstNode::Goto { name } => w.string(&name),
         AstNode::InDirection { expression } => node(w, ast, expression)?,
+        AstNode::UsingExpanded {
+            variable,
+            part,
+            is_store,
+            is_async,
+        } => {
+            let i = var_index(w, variable)?;
+            w.out.len(i);
+            w.out.bool(is_store);
+            w.out.bool(is_async);
+            node(w, ast, part)?;
+        }
         AstNode::ParenthesizedDesignation { elements } => {
             w.out.len(elements.len());
             for e in elements {

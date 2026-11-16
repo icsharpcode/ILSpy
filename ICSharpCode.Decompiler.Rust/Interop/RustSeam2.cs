@@ -113,6 +113,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		public const byte InDirection = 68;
 		public const byte ParenthesizedDesignation = 69;
 		public const byte SingleDesignation = 70;
+		public const byte UsingExpanded = 71;
 
 		public byte Kind;
 		/// <summary>The instructions the node is annotated with, in order.</summary>
@@ -366,6 +367,39 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				}
 				case RustBodyNode.TypeReference:
 					return Annotate(new TypeReferenceExpression(exprBuilder.ConvertType(node.Type!)), node);
+				case RustBodyNode.UsingExpanded:
+				{
+					// `VisitUsingInstruction` where `IsValidInCSharp` fails.
+					var variable = (ILVariable)node.Value!;
+					// The store of the resource.
+					if (node.ResolveOperator)
+					{
+						return Annotate(new ExpressionStatement(new AssignmentExpression(exprBuilder.ConvertVariable(variable).Expression,
+							(Expression)Build(node.Children[0], exprBuilder))), node);
+					}
+					var function = variable.Function!;
+					bool isAsync = node.Flag;
+					var disposeType = exprBuilder.compilation.FindType(isAsync ? KnownTypeCode.IAsyncDisposable : KnownTypeCode.IDisposable);
+					variable.Kind = VariableKind.Local;
+					var disposeVariable = function.RegisterVariable(VariableKind.Local, disposeType,
+						IL.Transforms.AssignVariableNames.GenerateVariableName(function, disposeType, exprBuilder.statementBuilder.decompileRun.UsingScope));
+					Expression disposeInvocation = new InvocationExpression(new MemberReferenceExpression(
+						exprBuilder.ConvertVariable(disposeVariable).Expression, isAsync ? "DisposeAsync" : "Dispose"));
+					if (isAsync)
+						disposeInvocation = new UnaryOperatorExpression { Expression = disposeInvocation, Operator = UnaryOperatorType.Await };
+					var tryFinally = new TryCatchStatement {
+						TryBlock = (BlockStatement)Build(node.Children[0], exprBuilder),
+						FinallyBlock = new BlockStatement {
+								new ExpressionStatement(new AssignmentExpression(exprBuilder.ConvertVariable(disposeVariable).Expression,
+									new AsExpression(exprBuilder.ConvertVariable(variable).Expression, exprBuilder.ConvertType(disposeType)))),
+								new IfElseStatement {
+									Condition = new BinaryOperatorExpression(exprBuilder.ConvertVariable(disposeVariable), BinaryOperatorType.InEquality, new NullReferenceExpression()),
+									TrueStatement = new ExpressionStatement(disposeInvocation)
+								}
+							}
+					};
+					return Annotate(tryFinally, node);
+				}
 				case RustBodyNode.ParenthesizedDesignation:
 				{
 					var designations = new ParenthesizedVariableDesignation();

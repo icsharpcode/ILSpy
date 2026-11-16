@@ -396,8 +396,27 @@ impl Builder<'_, '_, '_, '_> {
                         .type_def(d)
                         .is_ok_and(|i| i.known == disposable_code)
                 });
+            // `IsValidInCSharp` fails: the store, then `try`/`finally` disposing through a new
+            // variable of the interface type, which the host writes out and registers.
             if !disposable {
-                return Err("a using of a type that does not implement IDisposable".to_owned());
+                let store = self.ast.add(AstNode::UsingExpanded {
+                    variable,
+                    part: resource.expression,
+                    is_store: true,
+                    is_async,
+                });
+                let body = self.convert_as_block(body)?;
+                let try_finally = self.ast.add(AstNode::UsingExpanded {
+                    variable,
+                    part: body,
+                    is_store: false,
+                    is_async,
+                });
+                // A block, which the enclosing block takes the statements of.
+                let s = self.ast.add(AstNode::Block {
+                    statements: vec![store, try_finally],
+                });
+                return Ok(self.ast.with_il(s, inst));
             }
         }
         let (declaration, resource) = if used {

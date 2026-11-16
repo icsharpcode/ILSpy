@@ -4394,6 +4394,19 @@ labels from its map: every string key (or `null`) mapped to a section's value, o
 
 The share stayed at 99.0 % (the body gained is below its rounding).
 
+### 3.191 Usings that are no valid C# (item 68y83)
+
+`VisitUsingInstruction` of a resource whose type implements neither `IDisposable` nor
+`IAsyncDisposable` (`IsValidInCSharp` fails) writes the using out: the store of the resource
+to the variable, which becomes an ordinary local, then
+`try { body } finally { d = variable as IDisposable; if (d != null) d.Dispose(); }`. The
+engine emits the two statements in a block that the enclosing block takes apart, as the
+managed one does; the host writes the `try`/`finally` and registers the dispose variable with
+its function, named by `GenerateVariableName` with the decompilation's using scope, as the
+managed statement builder does.
+
+The share rose from 99.0 % to 99.1 %.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |
