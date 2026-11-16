@@ -49,7 +49,7 @@ public static class SampleBuilder
 	/// working tree; SourceLink builds point their documents there. The PDB checksums guarantee that
 	/// a stale commit can only make the recovery fail, never return different sources.
 	/// </summary>
-	public const string SourceLinkBaseUrl = "https://raw.githubusercontent.com/franck00/ilspy/617bcbf74b60e795b714acf51bd0d4b16783e6d2/Redecomp/samples";
+	public const string SourceLinkBaseUrl = "https://raw.githubusercontent.com/franck00/ilspy/cba849a0bf3a362d27e032d364c0a3e168c37c2f/Redecomp/samples";
 
 	public static string SourceDirectory(string sample) => Path.Combine(SamplesDirectory, sample);
 
