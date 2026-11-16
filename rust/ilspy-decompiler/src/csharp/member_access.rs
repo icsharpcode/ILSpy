@@ -218,6 +218,7 @@ impl Builder<'_, '_, '_, '_> {
         // a field of a non-generic type; a member of a generic type is substituted from the IL
         // reference, without the names the target's type gives its type arguments, and is not
         // translated.
+        let mut translated = translated;
         let names_known = match self.rr_of(translated.expression) {
             Rr::Variable { .. } => true,
             Rr::Field { field, .. } => field
@@ -229,15 +230,33 @@ impl Builder<'_, '_, '_, '_> {
             Rr::Invocation { method, .. }
             | Rr::Property {
                 accessor: method, ..
-            } => {
-                let declared = method
-                    .method
-                    .declaring
-                    .is_some_and(|d| !matches!(self.ts.data(d), TypeData::Inst { .. }));
-                declared
-                    && crate::semantics::Method::from_resolved(self.ts, &method.method)
-                        .is_some_and(|m| m.method_args.is_none_or(|a| a.is_empty()))
+            } if method
+                .method
+                .declaring
+                .is_some_and(|d| !matches!(self.ts.data(d), TypeData::Inst { .. })) =>
+            {
+                let generic = crate::semantics::Method::from_resolved(self.ts, &method.method)
+                    .is_none_or(|m| m.method_args.is_some_and(|a| !a.is_empty()));
+                // The type arguments the overload resolution inferred carry the names of the
+                // arguments' types, which the engine may have lost: names it found are the
+                // resolver's, a tuple without names may lack them.
+                !generic || self.tuple_has_names(translated.ty)
             }
+            // A member of a generic type takes the type arguments, with their names, of the
+            // target's type, as the resolver substitutes it: exact for a variable, and for
+            // other targets where names were found.
+            Rr::Invocation { method, target, .. }
+            | Rr::Property {
+                accessor: method,
+                target,
+                ..
+            } => match self.member_type_of_target(&method.method, &target) {
+                Some(ty) if matches!(*target, Rr::Variable { .. }) || self.tuple_has_names(ty) => {
+                    translated.ty = ty;
+                    true
+                }
+                _ => false,
+            },
             _ => false,
         };
         if !names_known || !matches!(self.ts.data(translated.ty), TypeData::Tuple { .. }) {
@@ -273,6 +292,36 @@ impl Builder<'_, '_, '_, '_> {
             },
         );
         Ok(TranslatedExpression { expression: e, ty })
+    }
+
+    /// Whether `ty` is a tuple type with at least one element name.
+    fn tuple_has_names(&self, ty: TypeId) -> bool {
+        matches!(self.ts.data(ty), TypeData::Tuple { names, .. } if names.iter().any(Option::is_some))
+    }
+
+    /// The return type of `method`, a member of a generic type, specialized with the type
+    /// arguments of `target`'s type where that is the same type up to tuple names and
+    /// nullability; `None` otherwise.
+    fn member_type_of_target(
+        &mut self,
+        method: &crate::typesystem::resolve::ResolvedMethod,
+        target: &Rr,
+    ) -> Option<TypeId> {
+        let declaring = method.declaring?;
+        let target_ty = self.rr_type(target);
+        let n = Normalization::TYPE_ERASURE;
+        if self.ts.normalize_with(target_ty, n) != self.ts.normalize_with(declaring, n) {
+            return None;
+        }
+        let TypeData::Inst { args, .. } = self.ts.data(target_ty).clone() else {
+            return None;
+        };
+        let m = crate::semantics::Method::from_resolved(self.ts, method)?;
+        let method_args = m.method_args.clone();
+        Some(
+            m.specialize_definition(self.ts, Some(args.to_vec()), method_args)
+                .return_type,
+        )
     }
 
     /// `ConvertField(field, targetInstruction)` for a field that is no backing field.

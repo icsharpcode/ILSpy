@@ -2659,7 +2659,15 @@ impl Builder<'_, '_, '_, '_> {
         }
         let mut types: Vec<TypeId> = written.iter().map(|a| a.ty).collect();
         if written.len() == 1 && method.name == "op_Explicit" {
-            types.push(method.return_type);
+            // The target's candidates are those of its underlying type. A lifted operator
+            // takes nullable value types, which an operand of reference type does not convert
+            // to, so a cast of one to a nullable type has no lifted candidates.
+            let target = if self.ts.is_reference_type(types[0]) == Some(true) {
+                self.ts.nullable_underlying(method.return_type)
+            } else {
+                method.return_type
+            };
+            types.push(target);
         }
         if types
             .iter()

@@ -4419,6 +4419,24 @@ enclosing one restored after it.
 
 The share rose from 99.1 % to 99.2 %.
 
+### 3.193 Tuple names of generic members, casts to nullable types (item 68y85)
+
+The resolver substitutes a member of a generic type with the type arguments of its target's
+type, names included, and a generic method with the type arguments overload resolution
+inferred from the arguments' types. The engine now specializes a member of a generic type with
+the target's type arguments as well, and trusts the tuple it gets when the target is a variable
+(whose type is exact) or when the tuple carries names; a generic method's tuple is trusted when
+it carries names. A tuple without names may still lack names the engine lost on the way
+(`TupleDict.Values.ToList().First()` loses them at the generic `Values` property), so those
+bodies keep falling back.
+
+A cast to a nullable type (`(bool?)attribute`) looks up the conversion operators of the
+underlying target type, as `NullableType.GetUnderlyingType(method.ReturnType)` does. A lifted
+operator takes nullable value types, which an operand of reference type does not convert to,
+so such a cast has no lifted candidates and needs no lifting.
+
+The share rose from 99.2 % to 99.4 %.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |
