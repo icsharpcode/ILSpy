@@ -28,6 +28,12 @@ redecomp <app.dll | dossier-publié> -o <dossier-de-sortie> [--offline] [--verif
 
 La comparaison IL porte sur le code exécuté (signature, variables locales, instructions). Les blocs d'attributs ne sont pas comparés : le compilateur déplace les annotations `Nullable` entre un type et ses membres sans changer le code.
 
+## Documentation
+
+- [Guide d'utilisation](docs/guide-utilisation.md) : installation, commande, lecture du résultat, limites.
+- [Architecture](docs/architecture.md) : pipeline, modules, points d'extension d'ILSpy, choix de conception, nommage déterministe.
+- [Banc d'essai et tests](docs/banc-essai-et-tests.md) : lancer les tests, critères mesurés, applis témoins, en ajouter une.
+
 ## Principe
 
 Un compilateur jette de l'information : les commentaires, souvent les noms des variables locales, la structure des dossiers, une partie du `.csproj`. Redecomp travaille en trois couches, de la plus sûre à la moins sûre :
@@ -107,3 +113,4 @@ dotnet build Redecomp.slnx -p:RedecompDecompilerAssembly=/chemin/vers/ICSharpCod
 - `Redecomp.Tests/` : les tests, exécutables sans package NuGet
 - `bench/` : les derniers scores du banc d'essai
 - `samples/` : les applis témoins du banc d'essai, avec leurs sources d'origine
+- `docs/` : la documentation
