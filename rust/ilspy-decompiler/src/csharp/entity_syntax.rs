@@ -1196,43 +1196,139 @@ fn convert_parameters(
     Ok(parameters)
 }
 
-/// Whether every type definition `t` names is public, as are the types declaring it: those the
-/// base list can always name.
-fn names_only_public_types(ts: &TypeSystem<'_, '_>, t: TypeId) -> bool {
+/// The type definitions `t` names, the generic types of instances included (the
+/// `BaseListNameabilityVisitor` visits).
+fn named_definitions(
+    ts: &TypeSystem<'_, '_>,
+    t: TypeId,
+    out: &mut Vec<crate::typesystem::compilation::TypeDefId>,
+) {
     match ts.data(t) {
-        TypeData::Def(d) => {
-            let mut def = *d;
-            loop {
-                let Ok(info) = ts.comp.type_def(def) else {
-                    return false;
-                };
-                if crate::typesystem::attrs::type_accessibility(info.flags) != 6 {
-                    return false;
-                }
-                if info.declaring == 0 {
-                    return true;
-                }
-                def = crate::typesystem::compilation::TypeDefId {
-                    module: def.module,
-                    row: info.declaring,
-                };
+        TypeData::Def(d) => out.push(*d),
+        TypeData::Inst { generic, args } => {
+            named_definitions(ts, *generic, out);
+            for &a in args.iter() {
+                named_definitions(ts, a, out);
             }
         }
-        TypeData::Inst { generic, args } => {
-            names_only_public_types(ts, *generic)
-                && args.iter().all(|&a| names_only_public_types(ts, a))
-        }
         TypeData::Annotated { inner, .. } | TypeData::Modified { inner, .. } => {
-            names_only_public_types(ts, *inner)
+            named_definitions(ts, *inner, out)
         }
         TypeData::Array { elem, .. } | TypeData::Pointer(elem) | TypeData::ByRef(elem) => {
-            names_only_public_types(ts, *elem)
+            named_definitions(ts, *elem, out)
         }
         TypeData::Tuple { elements, .. } => {
-            elements.iter().all(|&e| names_only_public_types(ts, e))
+            for &e in elements.iter() {
+                named_definitions(ts, e, out);
+            }
         }
-        _ => true,
+        _ => {}
     }
+}
+
+/// The enclosing type definition of `def`, if it is nested.
+fn enclosing(
+    ts: &TypeSystem<'_, '_>,
+    def: crate::typesystem::compilation::TypeDefId,
+) -> Option<crate::typesystem::compilation::TypeDefId> {
+    let declaring = ts.comp.type_def(def).ok()?.declaring;
+    (declaring != 0).then_some(crate::typesystem::compilation::TypeDefId {
+        module: def.module,
+        row: declaring,
+    })
+}
+
+/// `MemberLookup.IsAccessible(td, allowProtectedAccess: false)` of a type definition, looked up
+/// from `current` (the enclosing type of the declared type, or none) in `module`.
+fn type_accessible(
+    ts: &mut TypeSystem<'_, '_>,
+    td: crate::typesystem::compilation::TypeDefId,
+    current: Option<crate::typesystem::compilation::TypeDefId>,
+    module: ModuleId,
+) -> Result<bool, Unsupported> {
+    let flags = ts.comp.type_def(td).map_err(|e| e.to_string())?.flags;
+    let owner = enclosing(ts, td);
+    let chain = |ts: &TypeSystem<'_, '_>| {
+        let mut v = Vec::new();
+        let mut t = current;
+        while let Some(c) = t {
+            v.push(c);
+            t = enclosing(ts, c);
+        }
+        v
+    };
+    // shortcut: an internal type of another module is accessible by `InternalsVisibleTo`, which
+    // the engine does not read; such a base list stays with the host.
+    let internal = |_: &TypeSystem<'_, '_>| {
+        if td.module == module {
+            Ok(true)
+        } else {
+            Err("a base list naming an internal type of another module".to_owned())
+        }
+    };
+    // Protected access for a type definition: from its declaring type or a type derived from it.
+    let protected = |ts: &mut TypeSystem<'_, '_>| -> bool {
+        let Some(owner) = owner else {
+            return false;
+        };
+        for t in chain(ts) {
+            if t == owner {
+                return true;
+            }
+            let ty = ts.intern_def(t);
+            if ts.all_base_type_definitions(ty).contains(&owner) {
+                return true;
+            }
+        }
+        false
+    };
+    Ok(match crate::typesystem::attrs::type_accessibility(flags) {
+        // Private: from the declaring type or a type nested in it.
+        1 => owner.is_some_and(|o| chain(ts).contains(&o)),
+        6 => true,
+        3 => protected(ts),
+        4 => internal(ts)?,
+        5 => internal(ts)? || protected(ts),
+        2 => internal(ts)? && protected(ts),
+        _ => false,
+    })
+}
+
+/// `BaseTypeAccessibleFrom(baseType, currentType, lookup)`: whether the base list of `current`
+/// can name every type definition of `t`.
+fn base_type_accessible_from(
+    ts: &mut TypeSystem<'_, '_>,
+    t: TypeId,
+    current: crate::typesystem::compilation::TypeDefId,
+) -> Result<bool, Unsupported> {
+    let mut defs = Vec::new();
+    named_definitions(ts, t, &mut defs);
+    let lookup_type = enclosing(ts, current);
+    for td in defs {
+        // `TypeDefinitionNameableInBaseList`
+        let mut td = Some(td);
+        while let Some(d) = td {
+            let owner = enclosing(ts, d);
+            // A type may name the nested types of itself and of its enclosing types.
+            let mut c = Some(current);
+            let mut nested_in_scope = false;
+            while let Some(x) = c {
+                if owner == Some(x) {
+                    nested_in_scope = true;
+                    break;
+                }
+                c = enclosing(ts, x);
+            }
+            if nested_in_scope {
+                break;
+            }
+            if !type_accessible(ts, d, lookup_type, current.module)? {
+                return Ok(false);
+            }
+            td = owner;
+        }
+    }
+    Ok(true)
 }
 
 /// `ConvertTypeDefinition(typeDefinition)` with the record options.
@@ -1378,7 +1474,7 @@ pub fn convert_type_definition(
     let own_args: Vec<TypeId> = (0..type_params.len() as u32)
         .map(|index| {
             ts.intern(TypeData::TypeParam {
-                owner: crate::typesystem::types::TypeParamOwner::Type(def),
+                owner: ts.class_param_owner(def, index),
                 index,
             })
         })
@@ -1392,11 +1488,10 @@ pub fn convert_type_definition(
         })
     };
     for b in ts.direct_base_types(def).map_err(|e| e.to_string())? {
-        if ts.is_interface(b) && !names_only_public_types(ts, b) {
-            // shortcut: `BaseTypeAccessibleFrom` drops interfaces the base list cannot name by
-            // `MemberLookup.IsAccessible`, which the engine does not port; a base list naming a
-            // type that is not public stays with the host.
-            return Err("a base list naming a non-public type".to_owned());
+        // Interfaces enter the interface-impl metadata transitively, so entries the base list
+        // cannot name are dropped; a base class was always written explicitly and stays.
+        if ts.is_interface(b) && !base_type_accessible_from(ts, b, def)? {
+            continue;
         }
         if kind == TypeKind::Enum && ts.is_known(b, K::Enum) {
             // The underlying type, unless it is `int`.

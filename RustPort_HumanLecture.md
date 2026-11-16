@@ -4717,6 +4717,22 @@ that is not public stays with the host (`shortcut:`, 4 in the ratchet corpus). T
 
 The share stayed at 100.0 %.
 
+### 3.208 Base lists the declaration cannot name (item 68z4a)
+
+`BaseTypeAccessibleFrom` drops an interface from the base list when the declaration cannot name
+one of the type definitions it mentions, type arguments included (`TypeDefinitionNameableInBaseList`):
+a type may name the nested types of itself and of its enclosing types; any other type must be
+accessible by `MemberLookup.IsAccessible(td, allowProtectedAccess: false)` from the enclosing
+type, and so must the types declaring it. The engine ports that check for type definitions:
+private from the declaring type or a type nested in it, protected from the declaring type or a
+type derived from it, internal within the same module. An internal type of another module is
+accessible by `InternalsVisibleTo`, which the engine does not read; such a base list stays with
+the host (`shortcut:`). A record's omitted `IEquatable<R>` compares with `R` as its own instance,
+whose leading type parameters belong to the enclosing types (`class_param_owner`). The engine
+writes 1896 declarations of the ratchet corpus.
+
+The share stayed at 100.0 %.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |
