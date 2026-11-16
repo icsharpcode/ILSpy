@@ -690,7 +690,9 @@ the reasons. This file holds only the ordered steps, their gates and their rules
     `Translate goto case in the engine`.
   - [x] 68y85. Tuple names of generic members, casts to nullable types (lecture 3.193). Subject:
     `Translate tuple elements of generic members in the engine`.
-  - [ ] 68y86-. Further construct groups (numbered on from 68y1), in the order of the fallback reasons the ratchet test
+  - [x] 68y86. Foreach variables of tuple types, tuple literals as arguments (lecture 3.194). Subject:
+    `Translate foreach loops over tuples in the engine`.
+  - [ ] 68y87-. Further construct groups (numbered on from 68y1), in the order of the fallback reasons the ratchet test
     prints, until no body of the corpus falls back. Subject pattern:
     `Translate <construct group> to C# in the engine`.
   - [ ] 68z. Request-level seam 2. Subject: `Add the Rust C# AST builders and the AST materializer`.

@@ -9,6 +9,8 @@ use crate::il::ast::{ContainerKind, Inst, NodeId, VarId, VariableKind};
 use crate::il::transforms::assign_variable_names::{
     add_existing_name, name_from_instruction, split_name,
 };
+use crate::typesystem::fnptr::Normalization;
+use crate::typesystem::known::KnownTypeCode;
 use crate::typesystem::types::{TypeData, TypeId};
 
 use super::ast::{AstId, AstNode, Rr};
@@ -243,11 +245,29 @@ impl Builder<'_, '_, '_, '_> {
             let (variable, designation) = self.foreach_designation(deconstruction)?;
             (variable, Some(designation))
         } else {
-            if matches!(self.ts.data(getter_type), TypeData::Tuple { .. })
+            let getter_type = if matches!(self.ts.data(getter_type), TypeData::Tuple { .. })
                 || self.ts.tuple_element_types(getter_type).is_some()
             {
-                return Err("a foreach variable of a tuple type".to_owned());
-            }
+                // The type `var` infers, with the tuple names of the collection's type, where
+                // the getter's value is not cast; the host writes `var` for it.
+                let element = if get_current.replaced == single_getter {
+                    self.foreach_element_type(collection)?
+                } else {
+                    None
+                };
+                let n = Normalization::TYPE_ERASURE;
+                match element {
+                    Some(e)
+                        if self.ts.normalize_with(e, n)
+                            == self.ts.normalize_with(getter_type, n) =>
+                    {
+                        e
+                    }
+                    _ => return Err("a foreach variable of a tuple type".to_owned()),
+                }
+            } else {
+                getter_type
+            };
 
             let value_context = self.ast.annotations(collection).il.first().copied();
             let name = self.generate_foreach_variable_name(value_context, get_current.existing)?;
@@ -348,6 +368,23 @@ impl Builder<'_, '_, '_, '_> {
             block.push(s);
         }
         Ok(Some(self.ast.add(AstNode::Block { statements: block })))
+    }
+
+    /// `ResolveForeach(collection).ElementType`: the type argument of the `IEnumerable<T>`
+    /// the collection's type implements.
+    // shortcut: takes `IEnumerable<T>` instead of the `GetEnumerator` pattern, which agree for
+    // the collections of the corpus; port the pattern lookup when a collection differs.
+    fn foreach_element_type(&mut self, collection: AstId) -> Result<Option<TypeId>, Unsupported> {
+        let rr = self.rr_of(collection);
+        let ty = self.rr_type(&rr);
+        for b in self.ts.all_base_types(ty).map_err(|e| e.to_string())? {
+            if self.ts.is_known(b, KnownTypeCode::IEnumerableOfT)
+                && let TypeData::Inst { args, .. } = self.ts.data(b)
+            {
+                return Ok(Some(args[0]));
+            }
+        }
+        Ok(None)
     }
 
     /// `DetectGetCurrentTransformation` for `UseExistingVariable`: the getter call of

@@ -41,6 +41,23 @@ enum CastResult {
 impl Builder<'_, '_, '_, '_> {
     /// The resolve result of an expression the builders made, as the C# semantics see it.
     pub(crate) fn semantic_rr(&self, e: AstId, ty: TypeId) -> ResolveResult {
+        // `TupleResolveResult` of a tuple literal: its elements' resolve results, which
+        // convert one by one (a `default` literal to any element type).
+        if let AstNode::Tuple { elements, .. } = self.ast.node(e)
+            && let TypeData::Tuple {
+                elements: types, ..
+            } = self.ts.data(ty)
+            && types.len() == elements.len()
+        {
+            return ResolveResult::Tuple {
+                ty,
+                elements: elements
+                    .iter()
+                    .zip(types.iter())
+                    .map(|(&element, &t)| self.semantic_rr(element, t))
+                    .collect(),
+            };
+        }
         match &self.ast.annotations(e).rr {
             Some(Rr::Constant { ty, value }) => ResolveResult::Constant {
                 ty: *ty,

@@ -4437,6 +4437,24 @@ so such a cast has no lifted candidates and needs no lifting.
 
 The share rose from 99.2 % to 99.4 %.
 
+### 3.194 Foreach variables of tuple types, tuple literals as arguments (item 68y86)
+
+Where `get_Current` returns a tuple and its value is not cast, `TransformToForeach` asks the
+resolver which type `var` would infer (`ResolveForeach(collection).ElementType`); when that
+type equals the getter's after erasure, the variable takes it, with the tuple names of the
+collection's type, and is declared `var`. The engine takes the type argument of the
+`IEnumerable<T>` the collection's type implements (a `shortcut:` until a collection's
+`GetEnumerator` pattern disagrees with it), and the host writes `var` for a foreach variable
+of a tuple type, which the engine only translates in this case.
+
+The bodies this opened showed a gap in overload resolution: a tuple literal reached the
+resolver as an expression of its tuple type, whose `default` literal elements have no type,
+so `Add(key, (default, default))` failed to resolve and its arguments were cast. The resolver
+sees a tuple literal as a `TupleResolveResult` of its elements' resolve results, each converted
+on its own, as the managed one does.
+
+The share rose from 99.4 % to 99.5 %.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

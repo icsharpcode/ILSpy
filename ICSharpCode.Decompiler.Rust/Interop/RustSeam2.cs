@@ -684,8 +684,10 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					{
 						designation = new SingleVariableDesignation { Identifier = variable.Name! };
 						designation.AddAnnotation(new ILVariableResolveResult(variable, variable.Type));
-						// `var` for a variable of an anonymous type.
-						useVar = exprBuilder.settings.AnonymousTypes && variable.Type.ContainsAnonymousType();
+						// `var` for a variable of an anonymous type, and for one of a tuple type,
+						// which the engine only translates where it is the type `var` infers.
+						useVar = exprBuilder.settings.AnonymousTypes && variable.Type.ContainsAnonymousType()
+							|| TupleType.IsTupleCompatible(variable.Type, out _);
 					}
 					var statement = new ForeachStatement {
 						IsAsync = node.Flag,
