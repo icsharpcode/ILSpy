@@ -2225,6 +2225,90 @@ pub fn property_syntax(
     )
 }
 
+/// `TypeSystemAstBuilder.ConvertEntity` of a type definition (`csharp::entity_syntax`) as a
+/// message.
+pub fn type_syntax(
+    ts: &mut TypeSystem<'_, '_>,
+    row: u32,
+    options: crate::csharp::entity_syntax::EntityOptions,
+    record_classes: bool,
+    record_structs: bool,
+) -> Result<Vec<u8>, String> {
+    let module = crate::typesystem::compilation::ModuleId(0);
+    entity_message(
+        ts,
+        options,
+        |ts| {
+            crate::csharp::entity_syntax::convert_type_definition(
+                ts,
+                module,
+                row,
+                options,
+                record_classes,
+                record_structs,
+            )
+        },
+        |w, t| {
+            match t.class_type {
+                Some(c) => {
+                    w.out.u8(1);
+                    w.out.u8(c);
+                }
+                None => w.out.u8(0),
+            }
+            w.out.uvar(u64::from(t.modifiers));
+            write_attributes(w, &t.attributes);
+            w.string(&t.name);
+            w.out.len(t.type_parameters.len());
+            for tp in &t.type_parameters {
+                w.out.u8(tp.variance);
+                w.string(&tp.name);
+                write_attributes(w, &tp.attributes);
+            }
+            w.out.len(t.base_types.len());
+            for &b in &t.base_types {
+                w.ty(b);
+            }
+            write_constraints(w, &t.constraints);
+            write_attributes(w, &t.return_attributes);
+            match t.return_type {
+                Some(r) => {
+                    w.out.u8(1);
+                    w.ty(r);
+                }
+                None => w.out.u8(0),
+            }
+            w.out.bool(t.ref_readonly);
+            write_parameters(w, &t.parameters);
+        },
+    )
+}
+
+fn write_constraints(
+    w: &mut FunctionWriter<'_, '_, '_, '_>,
+    constraints: &[crate::csharp::entity_syntax::ConstraintSyntax],
+) {
+    use crate::csharp::entity_syntax::ConstraintTypeSyntax;
+    w.out.len(constraints.len());
+    for c in constraints {
+        w.string(&c.type_parameter);
+        w.out.len(c.base_types.len());
+        for b in &c.base_types {
+            match b {
+                ConstraintTypeSyntax::Keyword(k, nullable) => {
+                    w.out.u8(0);
+                    w.string(k);
+                    w.out.bool(*nullable);
+                }
+                ConstraintTypeSyntax::Type(t) => {
+                    w.out.u8(1);
+                    w.ty(*t);
+                }
+            }
+        }
+    }
+}
+
 fn write_parameters(
     w: &mut FunctionWriter<'_, '_, '_, '_>,
     parameters: &[crate::csharp::entity_syntax::ParameterSyntax],

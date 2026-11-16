@@ -256,11 +256,11 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		}
 
 		/// <summary>
-		/// <c>typeSystemAstBuilder.ConvertEntity(member)</c> of a property or event from the engine;
+		/// <c>typeSystemAstBuilder.ConvertEntity(member)</c> of a type, property or event from the engine;
 		/// <paramref name="managed"/>, the managed builder's, counted, where the engine does not
 		/// write it.
 		/// </summary>
-		internal static EntityDeclaration ConvertPropertyOrEvent(IDecompilerTypeSystem typeSystem, IMember member, TypeSystemAstBuilder typeSystemAstBuilder, DecompilerSettings settings, EntityDeclaration managed)
+		internal static EntityDeclaration ConvertDeclaration(IDecompilerTypeSystem typeSystem, IEntity member, TypeSystemAstBuilder typeSystemAstBuilder, DecompilerSettings settings, EntityDeclaration managed)
 		{
 			if (Enabled && RustEngine.For(typeSystem, out _) is { } engine
 				&& member.ParentModule == typeSystem.MainModule

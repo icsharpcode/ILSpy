@@ -38,6 +38,7 @@ pub mod modifiers {
     pub const READONLY: u32 = 0x0200;
     pub const CONST: u32 = 0x0400;
     pub const VOLATILE: u32 = 0x4000;
+    pub const REF: u32 = 0x20000;
 }
 
 /// A named argument of an attribute.
@@ -281,7 +282,7 @@ pub struct ParameterSyntax {
 /// `ConvertTypeParameter`.
 #[derive(Clone, Debug)]
 pub struct TypeParameterSyntax {
-    /// `VarianceModifier`, as the managed enum value.
+    /// `VarianceModifier`, as the managed enum value (an `sbyte`: contravariant is -1).
     pub variance: u8,
     pub name: String,
     pub attributes: Vec<AttributeSyntax>,
@@ -614,7 +615,7 @@ pub fn convert_method(
         type_parameters.push(TypeParameterSyntax {
             variance: match tp.variance {
                 "Covariant" => 1,
-                "Contravariant" => 2,
+                "Contravariant" => (-1i8) as u8,
                 _ => 0,
             },
             name: tp.name.clone(),
@@ -1089,4 +1090,354 @@ pub fn convert_event(
             None
         },
     })
+}
+
+/// `ConvertTypeDefinition`: a type declaration's header, or a delegate declaration.
+#[derive(Clone, Debug)]
+pub struct TypeDeclarationSyntax {
+    /// `ClassType`, as the managed enum value; `None` for a delegate.
+    pub class_type: Option<u8>,
+    pub modifiers: u32,
+    pub attributes: Vec<AttributeSyntax>,
+    pub name: String,
+    pub type_parameters: Vec<TypeParameterSyntax>,
+    pub base_types: Vec<TypeId>,
+    pub constraints: Vec<ConstraintSyntax>,
+    /// A delegate's `Invoke` signature: the return value's attributes, the return type and the
+    /// parameters.
+    pub return_attributes: Vec<AttributeSyntax>,
+    pub return_type: Option<TypeId>,
+    pub ref_readonly: bool,
+    pub parameters: Vec<ParameterSyntax>,
+}
+
+/// `MetadataTypeDefinition.ComputeIsRecord`: a class or struct with the members the compiler
+/// generates for records.
+fn is_record(md: &crate::metadata::Metadata<'_>, row: u32, kind: TypeKind) -> bool {
+    if !matches!(kind, TypeKind::Class | TypeKind::Struct) {
+        return false;
+    }
+    let is_struct = kind == TypeKind::Struct;
+    let (mut equality_contract, mut to_string, mut print_members, mut get_hash_code) =
+        (is_struct, false, false, false);
+    let (mut equals, mut op_equality, mut op_inequality, mut clone) =
+        (false, false, false, is_struct);
+    for m in md.type_methods(row).unwrap_or_default() {
+        let Ok(def) = md.get::<rows::MethodDef>(m) else {
+            continue;
+        };
+        let Ok(name) = md.string(def.name) else {
+            continue;
+        };
+        // Members named `Clone` are disallowed in records (CS8859).
+        if name == "Clone" {
+            return false;
+        }
+        equality_contract |= name == "get_EqualityContract";
+        to_string |= name == "ToString";
+        print_members |= name == "PrintMembers";
+        get_hash_code |= name == "GetHashCode";
+        equals |= name == "Equals";
+        op_equality |= name == "op_Equality";
+        op_inequality |= name == "op_Inequality";
+        clone |= name == "<Clone>$";
+    }
+    if is_struct && !to_string {
+        return false;
+    }
+    equality_contract
+        && print_members
+        && get_hash_code
+        && equals
+        && op_equality
+        && op_inequality
+        && clone
+}
+
+/// The parameters of `ConvertParameter`, for a method, indexer or delegate.
+fn convert_parameters(
+    ts: &mut TypeSystem<'_, '_>,
+    module: ModuleId,
+    params: &[crate::typesystem::members::ParamInfo],
+    declaring: crate::typesystem::compilation::TypeDefId,
+    options: EntityOptions,
+) -> Result<Vec<ParameterSyntax>, Unsupported> {
+    let mut parameters = Vec::with_capacity(params.len());
+    for (i, p) in params.iter().enumerate() {
+        let a = ts
+            .parameter_attributes(module, params, i, Some(declaring))
+            .map_err(|e| e.to_string())?;
+        let ty = match *ts.data(p.ty) {
+            TypeData::ByRef(e) => e,
+            _ => p.ty,
+        };
+        let default_value = if ts
+            .default_value_assignment_allowed(params, i, Some(declaring))
+            .map_err(|e| e.to_string())?
+        {
+            Some(
+                ConstantSyntaxBuilder::new(ts)
+                    .convert_raw(ty, &p.value, options.special_constants)
+                    .ok_or("a default value the engine does not write")?,
+            )
+        } else {
+            None
+        };
+        parameters.push(ParameterSyntax {
+            ref_kind: p.ref_kind as u8,
+            is_params: p.is_params,
+            is_scoped: p.declared_scope != crate::typesystem::flags::ScopedKind::None,
+            attributes: convert_attributes(ts, &a, options)?,
+            ty,
+            name: p.name.clone(),
+            default_value,
+        });
+    }
+    Ok(parameters)
+}
+
+/// Whether every type definition `t` names is public, as are the types declaring it: those the
+/// base list can always name.
+fn names_only_public_types(ts: &TypeSystem<'_, '_>, t: TypeId) -> bool {
+    match ts.data(t) {
+        TypeData::Def(d) => {
+            let mut def = *d;
+            loop {
+                let Ok(info) = ts.comp.type_def(def) else {
+                    return false;
+                };
+                if crate::typesystem::attrs::type_accessibility(info.flags) != 6 {
+                    return false;
+                }
+                if info.declaring == 0 {
+                    return true;
+                }
+                def = crate::typesystem::compilation::TypeDefId {
+                    module: def.module,
+                    row: info.declaring,
+                };
+            }
+        }
+        TypeData::Inst { generic, args } => {
+            names_only_public_types(ts, *generic)
+                && args.iter().all(|&a| names_only_public_types(ts, a))
+        }
+        TypeData::Annotated { inner, .. } | TypeData::Modified { inner, .. } => {
+            names_only_public_types(ts, *inner)
+        }
+        TypeData::Array { elem, .. } | TypeData::Pointer(elem) | TypeData::ByRef(elem) => {
+            names_only_public_types(ts, *elem)
+        }
+        TypeData::Tuple { elements, .. } => {
+            elements.iter().all(|&e| names_only_public_types(ts, e))
+        }
+        _ => true,
+    }
+}
+
+/// `ConvertTypeDefinition(typeDefinition)` with the record options.
+pub fn convert_type_definition(
+    ts: &mut TypeSystem<'_, '_>,
+    module: ModuleId,
+    row: u32,
+    options: EntityOptions,
+    record_classes: bool,
+    record_structs: bool,
+) -> Result<TypeDeclarationSyntax, Unsupported> {
+    use crate::typesystem::compilation::TypeDefId;
+    use crate::typesystem::known::KnownTypeCode as K;
+    let def = TypeDefId { module, row };
+    let info = ts.comp.type_def(def).map_err(|e| e.to_string())?;
+    let (flags, kind, declaring_row, enum_underlying) =
+        (info.flags, info.kind, info.declaring, info.enum_underlying);
+    let name = info.full_name.name().to_owned();
+    let type_flags = ts.type_flags(def);
+    let md = &ts.comp.module(module).md;
+    let record = is_record(md, row, kind);
+    let mut m = modifier_of_accessibility(
+        crate::typesystem::attrs::type_accessibility(flags),
+        options.private_protected,
+    );
+    const ABSTRACT: u32 = 0x80;
+    const SEALED: u32 = 0x100;
+    if flags & (ABSTRACT | SEALED) == ABSTRACT | SEALED {
+        m |= modifiers::STATIC;
+    } else if flags & ABSTRACT != 0 {
+        m |= modifiers::ABSTRACT;
+    } else if flags & SEALED != 0 {
+        m |= modifiers::SEALED;
+    }
+    let class_type = match kind {
+        TypeKind::Struct | TypeKind::Void => {
+            m &= !modifiers::SEALED;
+            if type_flags.read_only {
+                m |= modifiers::READONLY;
+            }
+            if type_flags.by_ref_like {
+                m |= modifiers::REF;
+            }
+            Some(if record_structs && record { 5 } else { 1 })
+        }
+        TypeKind::Enum => {
+            m &= !modifiers::SEALED;
+            Some(3)
+        }
+        TypeKind::Interface => {
+            m &= !modifiers::ABSTRACT;
+            Some(2)
+        }
+        TypeKind::Delegate => None,
+        TypeKind::Class => Some(if record_classes && record { 4 } else { 0 }),
+    };
+    let outer = if declaring_row == 0 {
+        0
+    } else {
+        ts.comp
+            .type_def(TypeDefId {
+                module,
+                row: declaring_row,
+            })
+            .map_err(|e| e.to_string())?
+            .type_parameter_count as usize
+    };
+    let attributes = ts.type_attributes(def).map_err(|e| e.to_string())?;
+    let attributes = convert_attributes(ts, &attributes, options)?;
+    let type_params = ts
+        .type_parameters(module, TableId::TypeDef, row)
+        .map_err(|e| e.to_string())?;
+    let gp_rows: Vec<u32> = ts
+        .comp
+        .module(module)
+        .md
+        .generic_params(TableId::TypeDef, row)
+        .collect();
+    let mut type_parameters = Vec::new();
+    let mut constraints = Vec::new();
+    for (tp, &gp) in type_params.iter().zip(&gp_rows).skip(outer) {
+        let a = ts
+            .type_parameter_attributes(module, gp)
+            .map_err(|e| e.to_string())?;
+        type_parameters.push(TypeParameterSyntax {
+            variance: match tp.variance {
+                "Covariant" => 1,
+                "Contravariant" => (-1i8) as u8,
+                _ => 0,
+            },
+            name: tp.name.clone(),
+            attributes: convert_attributes(ts, &a, options)?,
+        });
+        let constraint_attributes = has_constraint_attributes(&ts.comp.module(module).md, gp);
+        if let Some(c) = convert_constraint(ts, tp, constraint_attributes)? {
+            constraints.push(c);
+        }
+    }
+    let escaped = if name == "_" { "@_".to_owned() } else { name };
+    if class_type.is_none() {
+        // `ConvertDelegate`: the signature of `Invoke`.
+        let md = &ts.comp.module(module).md;
+        let invoke = md
+            .type_methods(row)
+            .map_err(|e| e.to_string())?
+            .into_iter()
+            .find(|&r| {
+                md.get::<rows::MethodDef>(r)
+                    .ok()
+                    .and_then(|d| md.string(d.name).ok())
+                    .is_some_and(|n| n == "Invoke")
+            })
+            .ok_or("a delegate without Invoke")?;
+        let invoke = crate::typesystem::members::MethodDefId {
+            module,
+            row: invoke,
+        };
+        let return_attributes = ts
+            .return_type_attributes(invoke)
+            .map_err(|e| e.to_string())?;
+        let return_attributes = convert_attributes(ts, &return_attributes, options)?;
+        let (ret, params) = ts.method_signature(invoke);
+        let method_flags = ts.method_flags(invoke, None);
+        let parameters = convert_parameters(ts, module, &params, def, options)?;
+        return Ok(TypeDeclarationSyntax {
+            class_type: None,
+            modifiers: m & !modifiers::SEALED,
+            attributes,
+            name: escaped,
+            type_parameters,
+            base_types: Vec::new(),
+            constraints,
+            return_attributes,
+            return_type: Some(ret),
+            ref_readonly: method_flags.return_read_only
+                && matches!(ts.data(ret), TypeData::ByRef(_)),
+            parameters,
+        });
+    }
+    let mut base_types = Vec::new();
+    // `AsParameterizedType()`: the definition with its own type parameters.
+    let this_type = ts.intern_def(def);
+    let own_args: Vec<TypeId> = (0..type_params.len() as u32)
+        .map(|index| {
+            ts.intern(TypeData::TypeParam {
+                owner: crate::typesystem::types::TypeParamOwner::Type(def),
+                index,
+            })
+        })
+        .collect();
+    let self_type = if own_args.is_empty() {
+        this_type
+    } else {
+        ts.intern(TypeData::Inst {
+            generic: this_type,
+            args: own_args.into(),
+        })
+    };
+    for b in ts.direct_base_types(def).map_err(|e| e.to_string())? {
+        if ts.is_interface(b) && !names_only_public_types(ts, b) {
+            // shortcut: `BaseTypeAccessibleFrom` drops interfaces the base list cannot name by
+            // `MemberLookup.IsAccessible`, which the engine does not port; a base list naming a
+            // type that is not public stays with the host.
+            return Err("a base list naming a non-public type".to_owned());
+        }
+        if kind == TypeKind::Enum && ts.is_known(b, K::Enum) {
+            // The underlying type, unless it is `int`.
+            let underlying = enum_underlying.ok_or("an enum without primitive underlying type")?;
+            if underlying != K::Int32 {
+                base_types.push(ts.known_type(underlying));
+            }
+        } else if !(matches!(kind, TypeKind::Struct | TypeKind::Void) && ts.is_known(b, K::ValueType)
+            || ts.is_known(b, K::Object)
+            // A record omits `IEquatable<R>`.
+            || record_classes && record && is_equatable_of(ts, b, self_type))
+        {
+            base_types.push(b);
+        }
+    }
+    Ok(TypeDeclarationSyntax {
+        class_type,
+        modifiers: m,
+        attributes,
+        name: escaped,
+        type_parameters,
+        base_types,
+        constraints,
+        return_attributes: Vec::new(),
+        return_type: None,
+        ref_readonly: false,
+        parameters: Vec::new(),
+    })
+}
+
+/// `System.IEquatable<R>` of a record `R`, which its declaration omits.
+fn is_equatable_of(ts: &TypeSystem<'_, '_>, t: TypeId, self_type: TypeId) -> bool {
+    let TypeData::Inst { generic, args } = ts.data(t) else {
+        return false;
+    };
+    let Some(d) = ts.definition(*generic) else {
+        return false;
+    };
+    ts.comp
+        .type_def(d)
+        .is_ok_and(|i| i.full_name.top.ns == "System" && i.full_name.name() == "IEquatable")
+        && args.len() == 1
+        && args[0] == self_type
 }

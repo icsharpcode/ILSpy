@@ -4691,6 +4691,32 @@ declarations, and only the 30 members of types with extension blocks stay with t
 
 The share stayed at 100.0 %.
 
+### 3.207 Type declarations (item 68z4a)
+
+Item 68z4 is split like 68z3 (agent recommendation): the type declaration header (68z4a), C# 14
+extension blocks with `ExtensionInfo` (68z4b), and the request-level `SyntaxTree` with namespaces,
+usings and the member order (68z4c). The entity request answers for TypeDef tokens at the
+`ConvertEntity(typeDef)` call of `DoDecompile(ITypeDefinition)`, after which the host keeps the
+engine's declaration; members are added to it by the host as before.
+
+`ConvertTypeDefinition` writes the accessibility, `static` (abstract and sealed), `abstract` or
+`sealed`, and by kind: a struct drops `sealed` and has `readonly` and `ref` (by-ref-like); an enum
+drops `sealed`; an interface drops `abstract`; a class or struct with the members the compiler
+generates for records (`ComputeIsRecord`) is a `record` or `record struct` where the options
+allow. Then the attributes, the type parameters after the enclosing types' (with variance; the
+managed `VarianceModifier` is an `sbyte` whose contravariant value is -1), the base list and the
+constraints. The base list leaves out `System.Object`, `System.ValueType` of a struct and a record's
+`IEquatable<R>`, and writes an enum's underlying type for `System.Enum` unless it is `int`. A
+delegate is `ConvertDelegate`: the type's attributes, its `Invoke`'s return value attributes,
+return type and parameters, and the constraints.
+
+`BaseTypeAccessibleFrom` drops interfaces the base list cannot name, by `MemberLookup.IsAccessible`
+in the enclosing scope; the engine does not port that check yet, and a base list naming a type
+that is not public stays with the host (`shortcut:`, 4 in the ratchet corpus). The engine writes
+1892 declarations of the ratchet corpus.
+
+The share stayed at 100.0 %.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

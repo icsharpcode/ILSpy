@@ -1854,6 +1854,9 @@ namespace ICSharpCode.Decompiler.CSharp
 				else
 				{
 					entityDecl = typeSystemAstBuilder.ConvertEntity(typeDef);
+					// RUST-SEAM-2 BEGIN
+					entityDecl = Rust.Interop.RustSeam2.ConvertDeclaration(typeSystem, typeDef, typeSystemAstBuilder, settings, entityDecl);
+					// RUST-SEAM-2 END
 				}
 
 				if (entityDecl is DelegateDeclaration delegateDeclaration)
@@ -2880,7 +2883,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				var typeSystemAstBuilder = CreateAstBuilder(decompileRun.Settings);
 				EntityDeclaration propertyDecl = typeSystemAstBuilder.ConvertEntity(property);
 				// RUST-SEAM-2 BEGIN
-				propertyDecl = Rust.Interop.RustSeam2.ConvertPropertyOrEvent(typeSystem, property, typeSystemAstBuilder, settings, propertyDecl);
+				propertyDecl = Rust.Interop.RustSeam2.ConvertDeclaration(typeSystem, property, typeSystemAstBuilder, settings, propertyDecl);
 				// RUST-SEAM-2 END
 				if (property.IsExplicitInterfaceImplementation && !property.IsIndexer)
 				{
@@ -2965,7 +2968,7 @@ namespace ICSharpCode.Decompiler.CSharp
 						|| removerHasBody);
 				var eventDecl = typeSystemAstBuilder.ConvertEntity(ev);
 				// RUST-SEAM-2 BEGIN
-				eventDecl = Rust.Interop.RustSeam2.ConvertPropertyOrEvent(typeSystem, ev, typeSystemAstBuilder, settings, eventDecl);
+				eventDecl = Rust.Interop.RustSeam2.ConvertDeclaration(typeSystem, ev, typeSystemAstBuilder, settings, eventDecl);
 				// RUST-SEAM-2 END
 				int lastDot = ev.Name.LastIndexOf('.');
 				if (ev.IsExplicitInterfaceImplementation)

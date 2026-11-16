@@ -156,7 +156,9 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				| (settings.IntroducePrivateProtectedAccessibility ? 4u : 0u)
 				| (settings.LiftNullables ? 8u : 0u)
 				| (useCustomEvents ? 16u : 0u)
-				| (settings.InitAccessors ? 32u : 0u);
+				| (settings.InitAccessors ? 32u : 0u)
+				| (settings.RecordClasses ? 64u : 0u)
+				| (settings.RecordStructs ? 128u : 0u);
 			var status = NativeMethods.ilspy_session_entity_syntax(session, (uint)MetadataTokens.GetToken(entity.MetadataToken), flags, out var buffer);
 			byte[] bytes = NativeMethods.TakeBuffer(buffer);
 			switch (status)
@@ -167,6 +169,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 						IField field => reader.Field(field, out unsupportedReason),
 						IMethod method => reader.Method(method, settings, out unsupportedReason),
 						IProperty or IEvent => reader.Property((IMember)entity, out unsupportedReason),
+						ITypeDefinition type => reader.TypeDefinition(type, out unsupportedReason),
 						_ => throw new ArgumentException("An entity request for a field or method", nameof(entity)),
 					};
 				case RustStatus.Cancelled:

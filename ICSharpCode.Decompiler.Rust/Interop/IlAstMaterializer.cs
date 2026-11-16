@@ -604,7 +604,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 			int count = Len();
 			for (int i = 0; i < count; i++)
 			{
-				var tp = new CSharp.Syntax.TypeParameterDeclaration { Variance = (VarianceModifier)U8(), Name = Str() };
+				var tp = new CSharp.Syntax.TypeParameterDeclaration { Variance = (VarianceModifier)unchecked((sbyte)U8()), Name = Str() };
 				tp.Attributes.AddRange(Sections(null, ref complete));
 				typeParameters.Add(tp);
 			}
@@ -797,6 +797,98 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 			decl.Attributes.AddRange(attributes);
 			decl.AddAnnotation(new MemberResolveResult(null, member));
 			return decl;
+		}
+
+		/// <summary>
+		/// <c>ConvertTypeDefinition</c>: a type declaration without members, or a delegate
+		/// declaration; null with the reason where the engine did not write it.
+		/// </summary>
+		public CSharp.Syntax.EntityDeclaration? TypeDefinition(ITypeDefinition type, out string? unsupportedReason)
+		{
+			unsupportedReason = null;
+			if (U8() == 0)
+			{
+				unsupportedReason = Str();
+				return null;
+			}
+			bool complete = true;
+			CSharp.Syntax.ClassType? classType = Bool() ? (CSharp.Syntax.ClassType)U8() : null;
+			var modifiers = (CSharp.Syntax.Modifiers)UVar();
+			var attributes = Sections(null, ref complete);
+			string name = Str();
+			var typeParameters = new List<CSharp.Syntax.TypeParameterDeclaration>();
+			int count = Len();
+			for (int i = 0; i < count; i++)
+			{
+				var tp = new CSharp.Syntax.TypeParameterDeclaration { Variance = (VarianceModifier)unchecked((sbyte)U8()), Name = Str() };
+				tp.Attributes.AddRange(Sections(null, ref complete));
+				typeParameters.Add(tp);
+			}
+			var baseTypes = new List<CSharp.Syntax.AstType>();
+			count = Len();
+			for (int i = 0; i < count; i++)
+				baseTypes.Add(SyntaxOf(Type(), ref complete));
+			var constraints = Constraints(ref complete);
+			var returnAttributes = Sections("return", ref complete);
+			CSharp.Syntax.AstType? returnType = Bool() ? SyntaxOf(Type(), ref complete) : null;
+			if (Bool() && returnType is CSharp.Syntax.ComposedType ct && ct.HasRefSpecifier)
+				ct.HasReadOnlySpecifier = true;
+			var parameters = Parameters(ref complete);
+			if (!complete)
+			{
+				unsupportedReason = "a type without syntax";
+				return null;
+			}
+			CSharp.Syntax.EntityDeclaration decl;
+			if (classType is { } c)
+			{
+				var td = new CSharp.Syntax.TypeDeclaration { ClassType = c, Modifiers = modifiers, Name = name };
+				td.Attributes.AddRange(attributes);
+				td.TypeParameters.AddRange(typeParameters);
+				td.BaseTypes.AddRange(baseTypes);
+				td.Constraints.AddRange(constraints);
+				decl = td;
+			}
+			else
+			{
+				var dd = new CSharp.Syntax.DelegateDeclaration { Modifiers = modifiers, ReturnType = returnType!, Name = name };
+				dd.Attributes.AddRange(attributes);
+				dd.Attributes.AddRange(returnAttributes);
+				dd.TypeParameters.AddRange(typeParameters);
+				dd.Parameters.AddRange(parameters);
+				dd.Constraints.AddRange(constraints);
+				decl = dd;
+			}
+			decl.AddAnnotation(new TypeResolveResult(type));
+			return decl;
+		}
+
+		/// <summary><c>ConvertTypeParameterConstraint</c> of each constrained type parameter.</summary>
+		List<CSharp.Syntax.Constraint> Constraints(ref bool complete)
+		{
+			var constraints = new List<CSharp.Syntax.Constraint>();
+			int count = Len();
+			for (int i = 0; i < count; i++)
+			{
+				var c = new CSharp.Syntax.Constraint { TypeParameter = new CSharp.Syntax.SimpleType(Str()) };
+				int bases = Len();
+				for (int j = 0; j < bases; j++)
+				{
+					if (U8() == 0)
+					{
+						CSharp.Syntax.AstType keyword = new CSharp.Syntax.PrimitiveType(Str());
+						if (Bool())
+							keyword = keyword.MakeNullableType();
+						c.BaseTypes.Add(keyword);
+					}
+					else
+					{
+						c.BaseTypes.Add(SyntaxOf(Type(), ref complete));
+					}
+				}
+				constraints.Add(c);
+			}
+			return constraints;
 		}
 
 		/// <summary><c>ConvertAttributes(attributes, target)</c>: one section per attribute.</summary>

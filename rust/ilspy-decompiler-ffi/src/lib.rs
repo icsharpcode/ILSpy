@@ -855,7 +855,7 @@ pub unsafe extern "C" fn ilspy_session_read_function(
 /// module (`wire::ilast::field_syntax`, `method_syntax`, `property_syntax`). `flags`: bit 0
 /// `UseSpecialConstants`, bit 1 `SortCustomAttributes`, bit 2
 /// `IntroducePrivateProtectedAccessibility`, bit 3 `LiftNullables`, bit 4 `UseCustomEvents`,
-/// bit 5 `InitAccessors`. Safe to call from several threads at once.
+/// bit 5 `InitAccessors`, bit 6 `RecordClasses`, bit 7 `RecordStructs`. Safe to call from several threads at once.
 ///
 /// # Safety
 /// `session` must be a live, loaded session; `out` must be writable.
@@ -888,6 +888,13 @@ pub unsafe extern "C" fn ilspy_session_entity_syntax(
             0x06 => {
                 ilspy_decompiler::wire::ilast::method_syntax(&mut ts, ModuleId(0), row, options)
             }
+            0x02 => ilspy_decompiler::wire::ilast::type_syntax(
+                &mut ts,
+                row,
+                options,
+                flags & 64 != 0,
+                flags & 128 != 0,
+            ),
             0x14 | 0x17 => ilspy_decompiler::wire::ilast::property_syntax(
                 &mut ts,
                 token,
@@ -896,7 +903,7 @@ pub unsafe extern "C" fn ilspy_session_entity_syntax(
                 flags & 32 != 0,
             ),
             _ => Err(format!(
-                "0x{token:08x} is no Field, MethodDef, Property or Event token"
+                "0x{token:08x} is no TypeDef, Field, MethodDef, Property or Event token"
             )),
         }
     }) {

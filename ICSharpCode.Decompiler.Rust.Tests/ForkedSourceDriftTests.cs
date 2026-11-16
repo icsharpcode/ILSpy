@@ -49,12 +49,12 @@ public class ForkedSourceDriftTests
 		string fork = ReadNormalized(Path.Combine(root, "ICSharpCode.Decompiler.Rust", "CSharp", "CSharpDecompiler.cs"));
 
 		// Seam 1 has four blocks: a field, the analysis body, the handover before the RunTransforms
-		// call and the restore after it. Seam 2 has seven: the AST transform loop, the engine's
-		// method declaration and body translation with the label after the statement builder it
+		// call and the restore after it. Seam 2 has eight: the AST transform loop, the engine's type and
+		// method declarations and body translation with the label after the statement builder it
 		// skips, and the engine's field, property and event declarations; each declaration
 		// replaces the managed one.
 		var blocks = SeamBlock.Matches(fork);
-		Assert.That(blocks.Select(m => m.Groups["n"].Value), Is.EqualTo(new[] { "1", "1", "2", "2", "1", "1", "2", "2", "2", "2", "2" }), "the RUST-SEAM blocks in file order");
+		Assert.That(blocks.Select(m => m.Groups["n"].Value), Is.EqualTo(new[] { "1", "1", "2", "2", "2", "1", "1", "2", "2", "2", "2", "2" }), "the RUST-SEAM blocks in file order");
 		Assert.That(SeamBlock.Replace(fork, ""), Is.EqualTo(original));
 	}
 }
