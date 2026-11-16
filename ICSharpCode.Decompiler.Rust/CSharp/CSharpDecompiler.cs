@@ -2879,6 +2879,9 @@ namespace ICSharpCode.Decompiler.CSharp
 			{
 				var typeSystemAstBuilder = CreateAstBuilder(decompileRun.Settings);
 				EntityDeclaration propertyDecl = typeSystemAstBuilder.ConvertEntity(property);
+				// RUST-SEAM-2 BEGIN
+				propertyDecl = Rust.Interop.RustSeam2.ConvertPropertyOrEvent(typeSystem, property, typeSystemAstBuilder, settings, propertyDecl);
+				// RUST-SEAM-2 END
 				if (property.IsExplicitInterfaceImplementation && !property.IsIndexer)
 				{
 					int lastDot = property.Name.LastIndexOf('.');
@@ -2961,6 +2964,9 @@ namespace ICSharpCode.Decompiler.CSharp
 						|| adderHasBody
 						|| removerHasBody);
 				var eventDecl = typeSystemAstBuilder.ConvertEntity(ev);
+				// RUST-SEAM-2 BEGIN
+				eventDecl = Rust.Interop.RustSeam2.ConvertPropertyOrEvent(typeSystem, ev, typeSystemAstBuilder, settings, eventDecl);
+				// RUST-SEAM-2 END
 				int lastDot = ev.Name.LastIndexOf('.');
 				if (ev.IsExplicitInterfaceImplementation)
 				{

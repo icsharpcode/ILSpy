@@ -741,6 +741,8 @@ the reasons. This file holds only the ordered steps, their gates and their rules
         `Write field declarations in the engine`.
       - [x] 68z3b. Method, constructor, destructor and operator declarations (lecture 3.203).
         Subject: `Write method declarations in the engine`.
+      - [x] 68z3c. Property, indexer and event declarations with their accessors (lecture
+        3.205). Subject: `Write property and event declarations in the engine`.
       - [ ] 68z4. Type declarations, namespaces and usings: the request-level `SyntaxTree`
         through `Interop/AstMaterializer.cs`, with `ExtensionInfo` and `ExtensionEverything`.
         Subject: `Add the Rust C# AST builders and the AST materializer`.

@@ -674,3 +674,436 @@ pub fn convert_method(
         private_implementation_type,
     })
 }
+
+/// `ConvertAccessor`.
+#[derive(Clone, Debug)]
+pub struct AccessorSyntax {
+    /// The accessor's `MethodDef`, whose `IMethod` the host takes from the owner.
+    pub row: u32,
+    /// `AccessorKind`, as the managed enum value.
+    pub kind: u8,
+    pub is_init_only: bool,
+    pub modifiers: u32,
+    pub attributes: Vec<AttributeSyntax>,
+    pub return_attributes: Vec<AttributeSyntax>,
+    /// The value parameter's attributes (`[param: ...]`) of a setter, adder or remover.
+    pub parameter_attributes: Vec<AttributeSyntax>,
+}
+
+/// `ConvertProperty`, `ConvertIndexer` or `ConvertEvent`.
+#[derive(Clone, Debug)]
+pub struct PropertySyntax {
+    /// 0 property, 1 indexer, 2 field-like event, 3 custom event.
+    pub kind: u8,
+    pub modifiers: u32,
+    pub attributes: Vec<AttributeSyntax>,
+    pub return_type: TypeId,
+    pub ref_readonly: bool,
+    pub name: String,
+    pub parameters: Vec<ParameterSyntax>,
+    /// The getter and setter, or the adder and remover.
+    pub accessors: [Option<AccessorSyntax>; 2],
+    pub private_implementation_type: Option<TypeId>,
+}
+
+/// `AccessibilityExtensions.Union` of managed `Accessibility` values.
+fn accessibility_union(a: u8, b: u8) -> u8 {
+    let (a, b) = if a > b { (b, a) } else { (a, b) };
+    // Protected (3) and Internal (4) make ProtectedOrInternal (5).
+    if a == 3 && b == 4 { 5 } else { b }
+}
+
+/// `ModifierFromAccessibility` of a managed `Accessibility` value.
+fn modifier_of_accessibility(value: u8, private_protected: bool) -> u32 {
+    use modifiers::*;
+    match value {
+        1 => PRIVATE,
+        2 if private_protected => PRIVATE | PROTECTED,
+        2 => PROTECTED,
+        3 => PROTECTED,
+        4 => INTERNAL,
+        5 => PROTECTED | INTERNAL,
+        6 => PUBLIC,
+        _ => 0,
+    }
+}
+
+/// The interface of an explicit implementation through `accessor`, as `declaring` implements it.
+fn explicit_interface_of(
+    ts: &mut TypeSystem<'_, '_>,
+    accessor: crate::typesystem::members::MethodDefId,
+    declaring: crate::typesystem::compilation::TypeDefId,
+) -> Result<Option<TypeId>, Unsupported> {
+    let md = &ts.comp.module(accessor.module).md;
+    let def = md
+        .get::<rows::MethodDef>(accessor.row)
+        .map_err(|e| e.to_string())?;
+    let name = md.string(def.name).map_err(|e| e.to_string())?.into_owned();
+    let implemented = ts
+        .explicit_implementations(accessor)
+        .map_err(|e| e.to_string())?;
+    let Some(first) = implemented.first().filter(|_| name.contains('.')) else {
+        return Ok(None);
+    };
+    let interface = first
+        .declaring
+        .ok_or("an implemented member without declaring type")?;
+    let this_type = ts.intern_def(declaring);
+    let n = crate::typesystem::fnptr::Normalization::IGNORE_NULLABILITY_AND_TUPLES;
+    let wanted = ts.normalize_with(interface, n);
+    let bases = ts.all_base_types(this_type).map_err(|e| e.to_string())?;
+    Ok(Some(
+        bases
+            .into_iter()
+            .find(|&b| ts.is_interface(b) && ts.normalize_with(b, n) == wanted)
+            .unwrap_or(interface),
+    ))
+}
+
+/// `ConvertAccessor(accessor, kind, ownerAccessibility, addParameterAttribute)`.
+#[allow(clippy::too_many_arguments)]
+fn convert_accessor(
+    ts: &mut TypeSystem<'_, '_>,
+    module: ModuleId,
+    row: u32,
+    kind: u8,
+    owner_accessibility: u8,
+    parameter_attribute: bool,
+    declaring: crate::typesystem::compilation::TypeDefId,
+    options: EntityOptions,
+    init_accessors: bool,
+) -> Result<AccessorSyntax, Unsupported> {
+    use crate::typesystem::members::MethodDefId;
+    let m = MethodDefId { module, row };
+    let attributes = ts.method_attributes(m).map_err(|e| e.to_string())?;
+    let attributes = convert_attributes(ts, &attributes, options)?;
+    let return_attributes = ts.return_type_attributes(m).map_err(|e| e.to_string())?;
+    let return_attributes = convert_attributes(ts, &return_attributes, options)?;
+    let (_, params) = ts.method_signature(m);
+    let parameter_attributes = if parameter_attribute && !params.is_empty() {
+        let a = ts
+            .parameter_attributes(module, &params, params.len() - 1, Some(declaring))
+            .map_err(|e| e.to_string())?;
+        convert_attributes(ts, &a, options)?
+    } else {
+        Vec::new()
+    };
+    let accessibility = ts.method_accessibility_of(m).map_err(|e| e.to_string())?;
+    let mut modifiers = 0;
+    if accessibility != owner_accessibility {
+        modifiers = modifier_of_accessibility(accessibility, options.private_protected);
+    }
+    let flags = ts.method_flags(m, None);
+    // `HasReadonlyModifier`: a readonly accessor of a struct that is not itself readonly.
+    if flags.this_read_only && !ts.type_flags(declaring).read_only {
+        modifiers |= modifiers::READONLY;
+    }
+    // A setter of an init-only property is an `init` accessor where the option supports it.
+    let kind = if kind == 2 && init_accessors && flags.init_only {
+        3
+    } else {
+        kind
+    };
+    Ok(AccessorSyntax {
+        row,
+        kind,
+        is_init_only: flags.init_only,
+        modifiers,
+        attributes,
+        return_attributes,
+        parameter_attributes,
+    })
+}
+
+/// `MergeReadOnlyModifiers`: `readonly` moves to the declaration where every accessor has it.
+fn merge_read_only(modifiers: &mut u32, accessors: &mut [Option<AccessorSyntax>; 2]) {
+    let readonly = |a: &Option<AccessorSyntax>| {
+        a.as_ref()
+            .is_some_and(|a| a.modifiers & modifiers::READONLY != 0)
+    };
+    if accessors[0].is_none() || !readonly(&accessors[0]) {
+        return;
+    }
+    if accessors[1].is_none() || readonly(&accessors[1]) {
+        for a in accessors.iter_mut().flatten() {
+            a.modifiers &= !modifiers::READONLY;
+        }
+        *modifiers |= modifiers::READONLY;
+    }
+}
+
+/// `GetMemberModifiers(member)` of a property or event, whose modifiers are those of its first
+/// accessor and whose accessibility is `accessibility`.
+fn accessor_owner_modifiers(
+    ts: &mut TypeSystem<'_, '_>,
+    any: crate::typesystem::members::MethodDefId,
+    accessibility: u8,
+    in_interface: bool,
+    is_explicit: bool,
+    options: EntityOptions,
+) -> Result<u32, Unsupported> {
+    let modifiers_info = ts.method_modifiers_of(any).map_err(|e| e.to_string())?;
+    let mut r = 0;
+    let needs_accessibility = !is_explicit && (!in_interface || accessibility != 6);
+    if needs_accessibility {
+        r |= modifier_of_accessibility(accessibility, options.private_protected);
+    }
+    if modifiers_info.is_static {
+        r |= modifiers::STATIC;
+    }
+    if in_interface {
+        if modifiers_info.is_static {
+            if modifiers_info.is_abstract {
+                r |= modifiers::ABSTRACT;
+            } else if modifiers_info.is_virtual && !modifiers_info.is_override {
+                r |= modifiers::VIRTUAL;
+            }
+        }
+    } else {
+        if modifiers_info.is_abstract {
+            r |= modifiers::ABSTRACT;
+        } else if modifiers_info.is_virtual && !modifiers_info.is_override {
+            r |= modifiers::VIRTUAL;
+        }
+        if modifiers_info.is_override && !is_explicit {
+            r |= modifiers::OVERRIDE;
+        }
+        if modifiers_info.is_sealed && !is_explicit {
+            r |= modifiers::SEALED;
+        }
+    }
+    Ok(r)
+}
+
+/// `ConvertProperty(property)` or `ConvertIndexer(indexer)`.
+pub fn convert_property(
+    ts: &mut TypeSystem<'_, '_>,
+    module: ModuleId,
+    row: u32,
+    options: EntityOptions,
+    init_accessors: bool,
+) -> Result<PropertySyntax, Unsupported> {
+    use crate::typesystem::members::{MethodDefId, SymbolKind as S};
+    let md = &ts.comp.module(module).md;
+    let (getter, setter, _) = md.property_accessors(row);
+    let any = if getter != 0 { getter } else { setter };
+    if any == 0 {
+        return Err("a property without accessors".to_owned());
+    }
+    let p = md.get::<rows::Property>(row).map_err(|e| e.to_string())?;
+    let name = md.string(p.name).map_err(|e| e.to_string())?.into_owned();
+    let ref_readonly_attribute = crate::typesystem::flags::has_attribute(
+        md,
+        TableId::Property,
+        row,
+        "System.Runtime.CompilerServices",
+        "IsReadOnlyAttribute",
+    );
+    let declaring = crate::typesystem::compilation::TypeDefId {
+        module,
+        row: md.method_declaring_type(any).map_err(|e| e.to_string())?,
+    };
+    let kind = ts
+        .property_symbol_kind(module, row)
+        .map_err(|e| e.to_string())?;
+    let any_method = MethodDefId { module, row: any };
+    let modifiers_info = ts
+        .method_modifiers_of(any_method)
+        .map_err(|e| e.to_string())?;
+    // `ComputeAccessibility`: an override of one accessor copies the base member's.
+    if modifiers_info.is_override && (getter == 0 || setter == 0) {
+        return Err("an override of one accessor".to_owned());
+    }
+    let accessibility_of = |ts: &TypeSystem<'_, '_>, r: u32| {
+        if r == 0 {
+            Ok(0)
+        } else {
+            ts.method_accessibility_of(MethodDefId { module, row: r })
+                .map_err(|e| e.to_string())
+        }
+    };
+    let accessibility =
+        accessibility_union(accessibility_of(ts, getter)?, accessibility_of(ts, setter)?);
+    let in_interface = ts
+        .comp
+        .type_def(declaring)
+        .is_ok_and(|i| i.kind == TypeKind::Interface);
+    let private_implementation_type = explicit_interface_of(ts, any_method, declaring)?;
+    let is_explicit = private_implementation_type.is_some();
+    let mut modifiers = accessor_owner_modifiers(
+        ts,
+        any_method,
+        accessibility,
+        in_interface,
+        is_explicit,
+        options,
+    )?;
+    let attributes = ts
+        .property_attributes(module, row)
+        .map_err(|e| e.to_string())?;
+    let attributes = convert_attributes(ts, &attributes, options)?;
+    let (ty, params) = ts
+        .property_signature(module, row)
+        .map_err(|e| e.to_string())?;
+    let indexer = matches!(kind, S::Indexer);
+    let mut parameters = Vec::new();
+    if indexer {
+        for (i, p) in params.iter().enumerate() {
+            let a = ts
+                .parameter_attributes(module, &params, i, Some(declaring))
+                .map_err(|e| e.to_string())?;
+            let pty = match *ts.data(p.ty) {
+                TypeData::ByRef(e) => e,
+                _ => p.ty,
+            };
+            let default_value = if ts
+                .default_value_assignment_allowed(&params, i, Some(declaring))
+                .map_err(|e| e.to_string())?
+            {
+                Some(
+                    ConstantSyntaxBuilder::new(ts)
+                        .convert_raw(pty, &p.value, options.special_constants)
+                        .ok_or("a default value the engine does not write")?,
+                )
+            } else {
+                None
+            };
+            parameters.push(ParameterSyntax {
+                ref_kind: p.ref_kind as u8,
+                is_params: p.is_params,
+                is_scoped: p.declared_scope != crate::typesystem::flags::ScopedKind::None,
+                attributes: convert_attributes(ts, &a, options)?,
+                ty: pty,
+                name: p.name.clone(),
+                default_value,
+            });
+        }
+    } else if !params.is_empty() {
+        return Err("a property with parameters".to_owned());
+    }
+    let get = if getter != 0 {
+        Some(convert_accessor(
+            ts,
+            module,
+            getter,
+            1,
+            accessibility,
+            false,
+            declaring,
+            options,
+            init_accessors,
+        )?)
+    } else {
+        None
+    };
+    let set = if setter != 0 {
+        Some(convert_accessor(
+            ts,
+            module,
+            setter,
+            2,
+            accessibility,
+            true,
+            declaring,
+            options,
+            init_accessors,
+        )?)
+    } else {
+        None
+    };
+    let mut accessors = [get, set];
+    merge_read_only(&mut modifiers, &mut accessors);
+    Ok(PropertySyntax {
+        kind: if indexer { 1 } else { 0 },
+        modifiers,
+        attributes,
+        return_type: ty,
+        ref_readonly: matches!(ts.data(ty), TypeData::ByRef(_)) && ref_readonly_attribute,
+        name,
+        parameters,
+        accessors,
+        private_implementation_type,
+    })
+}
+
+/// `ConvertEvent(ev)`, with `UseCustomEvents` as `DoDecompile(IEvent)` sets it.
+pub fn convert_event(
+    ts: &mut TypeSystem<'_, '_>,
+    module: ModuleId,
+    row: u32,
+    options: EntityOptions,
+    custom_events: bool,
+) -> Result<PropertySyntax, Unsupported> {
+    use crate::typesystem::members::MethodDefId;
+    let md = &ts.comp.module(module).md;
+    let (adder, remover, raiser, _) = md.event_accessors(row);
+    // `GetAny`: the adder, else the remover, else the raiser.
+    let any = [adder, remover, raiser].into_iter().find(|&r| r != 0);
+    let Some(any) = any else {
+        return Err("an event without accessors".to_owned());
+    };
+    let e = md.get::<rows::Event>(row).map_err(|e| e.to_string())?;
+    let name = md.string(e.name).map_err(|e| e.to_string())?.into_owned();
+    let declaring = crate::typesystem::compilation::TypeDefId {
+        module,
+        row: md.method_declaring_type(any).map_err(|e| e.to_string())?,
+    };
+    let any_method = MethodDefId { module, row: any };
+    // `MetadataEvent.Accessibility`: the first accessor's.
+    let accessibility = ts
+        .method_accessibility_of(any_method)
+        .map_err(|e| e.to_string())?;
+    let in_interface = ts
+        .comp
+        .type_def(declaring)
+        .is_ok_and(|i| i.kind == TypeKind::Interface);
+    let private_implementation_type = explicit_interface_of(ts, any_method, declaring)?;
+    let is_explicit = private_implementation_type.is_some();
+    let mut modifiers = accessor_owner_modifiers(
+        ts,
+        any_method,
+        accessibility,
+        in_interface,
+        is_explicit,
+        options,
+    )?;
+    let attributes = ts
+        .event_attributes(module, row)
+        .map_err(|e| e.to_string())?;
+    let attributes = convert_attributes(ts, &attributes, options)?;
+    let ty = ts.event_type(module, row).map_err(|e| e.to_string())?;
+    let mut accessors = [None, None];
+    if custom_events {
+        for (slot, (r, kind)) in [(adder, 4), (remover, 5)].into_iter().enumerate() {
+            if r != 0 {
+                accessors[slot] = Some(convert_accessor(
+                    ts,
+                    module,
+                    r,
+                    kind,
+                    accessibility,
+                    true,
+                    declaring,
+                    options,
+                    false,
+                )?);
+            }
+        }
+        merge_read_only(&mut modifiers, &mut accessors);
+    }
+    Ok(PropertySyntax {
+        kind: if custom_events { 3 } else { 2 },
+        modifiers,
+        attributes,
+        return_type: ty,
+        ref_readonly: false,
+        name,
+        parameters: Vec::new(),
+        accessors,
+        private_implementation_type: if custom_events {
+            private_implementation_type
+        } else {
+            None
+        },
+    })
+}

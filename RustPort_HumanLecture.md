@@ -4658,6 +4658,28 @@ back.
 
 The share stayed at 100.0 %.
 
+### 3.205 Property, indexer and event declarations (item 68z3c)
+
+The entity request answers for Property and Event tokens at the `ConvertEntity` calls of
+`DoDecompile(IProperty)` and `DoDecompile(IEvent)`, the latter after the host has set
+`UseCustomEvents` for the event, which the request carries with `InitAccessors`. A property or
+event takes its modifiers from its first accessor (`GetAny`: the getter, else the setter; the
+adder, else the remover, else the raiser); a property's accessibility is the union of its
+accessors' (`AccessibilityExtensions.Union`, where protected and internal make protected
+internal), an event's that of its first accessor. An explicit implementation is one through
+its first accessor, with the interface as for methods. `ConvertAccessor` writes an accessor's
+accessibility where it differs from the owner's, `readonly` for a readonly accessor of a struct
+that is not itself readonly, the `init` kind for an init-only setter where the option allows
+it, and the attributes of the accessor, its return value (`[return: ...]`) and, for a setter,
+adder or remover, its value parameter (`[param: ...]`); `MergeReadOnlyModifiers` moves
+`readonly` to the declaration when every accessor has it. An indexer has the parameters of
+`ConvertParameter`; a field-like event is a variable declaration, a custom event has its adder
+and remover. An override that declares only one accessor copies the base member's
+accessibility, which the engine does not look up yet (`shortcut:`, 18 in the ratchet corpus).
+The engine writes 1712 declarations of the ratchet corpus.
+
+The share stayed at 100.0 %.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

@@ -851,10 +851,11 @@ pub unsafe extern "C" fn ilspy_session_read_function(
     }
 }
 
-/// The declaration syntax of the field or method `token` of the main module
-/// (`wire::ilast::field_syntax`, `method_syntax`). `flags`: bit 0 `UseSpecialConstants`, bit 1
-/// `SortCustomAttributes`, bit 2 `IntroducePrivateProtectedAccessibility`, bit 3
-/// `LiftNullables`. Safe to call from several threads at once.
+/// The declaration syntax of the field, method, property or event `token` of the main
+/// module (`wire::ilast::field_syntax`, `method_syntax`, `property_syntax`). `flags`: bit 0
+/// `UseSpecialConstants`, bit 1 `SortCustomAttributes`, bit 2
+/// `IntroducePrivateProtectedAccessibility`, bit 3 `LiftNullables`, bit 4 `UseCustomEvents`,
+/// bit 5 `InitAccessors`. Safe to call from several threads at once.
 ///
 /// # Safety
 /// `session` must be a live, loaded session; `out` must be writable.
@@ -887,7 +888,16 @@ pub unsafe extern "C" fn ilspy_session_entity_syntax(
             0x06 => {
                 ilspy_decompiler::wire::ilast::method_syntax(&mut ts, ModuleId(0), row, options)
             }
-            _ => Err(format!("0x{token:08x} is no Field or MethodDef token")),
+            0x14 | 0x17 => ilspy_decompiler::wire::ilast::property_syntax(
+                &mut ts,
+                token,
+                options,
+                flags & 16 != 0,
+                flags & 32 != 0,
+            ),
+            _ => Err(format!(
+                "0x{token:08x} is no Field, MethodDef, Property or Event token"
+            )),
         }
     }) {
         Ok(bytes) => {

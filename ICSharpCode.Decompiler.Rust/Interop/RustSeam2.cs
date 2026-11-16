@@ -255,6 +255,29 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 			return managed;
 		}
 
+		/// <summary>
+		/// <c>typeSystemAstBuilder.ConvertEntity(member)</c> of a property or event from the engine;
+		/// <paramref name="managed"/>, the managed builder's, counted, where the engine does not
+		/// write it.
+		/// </summary>
+		internal static EntityDeclaration ConvertPropertyOrEvent(IDecompilerTypeSystem typeSystem, IMember member, TypeSystemAstBuilder typeSystemAstBuilder, DecompilerSettings settings, EntityDeclaration managed)
+		{
+			if (Enabled && RustEngine.For(typeSystem, out _) is { } engine
+				&& member.ParentModule == typeSystem.MainModule
+				&& !member.MetadataToken.IsNil)
+			{
+				var decl = engine.EntitySyntax(member, typeSystemAstBuilder.UseSpecialConstants, settings, out string? reason, typeSystemAstBuilder.UseCustomEvents);
+				if (decl != null)
+				{
+					Interlocked.Increment(ref declarationsServed);
+					return decl;
+				}
+				Interlocked.Increment(ref declarationFallbacks);
+				declarationFallbackReasons.AddOrUpdate(reason ?? "unknown", 1, (_, n) => n + 1);
+			}
+			return managed;
+		}
+
 		static long constantSyntaxFallbacks;
 
 		/// <summary>Constants of a served body the engine sent no syntax for, which the managed builder converted.</summary>

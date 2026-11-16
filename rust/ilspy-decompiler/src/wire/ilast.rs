@@ -2133,16 +2133,7 @@ pub fn method_syntax(
                 w.string(&tp.name);
                 write_attributes(w, &tp.attributes);
             }
-            w.out.len(m.parameters.len());
-            for p in &m.parameters {
-                w.out.u8(p.ref_kind);
-                w.out.bool(p.is_params);
-                w.out.bool(p.is_scoped);
-                write_attributes(w, &p.attributes);
-                w.ty(p.ty);
-                w.string(&p.name);
-                write_optional_constant(w, p.default_value.as_ref());
-            }
+            write_parameters(w, &m.parameters);
             w.out.bool(m.this_modifier);
             w.out.len(m.constraints.len());
             for c in &m.constraints {
@@ -2171,6 +2162,83 @@ pub fn method_syntax(
             }
         },
     )
+}
+
+/// `TypeSystemAstBuilder.ConvertEntity` of a property, indexer or event
+/// (`csharp::entity_syntax`) as a message.
+pub fn property_syntax(
+    ts: &mut TypeSystem<'_, '_>,
+    token: u32,
+    options: crate::csharp::entity_syntax::EntityOptions,
+    custom_events: bool,
+    init_accessors: bool,
+) -> Result<Vec<u8>, String> {
+    let module = crate::typesystem::compilation::ModuleId(0);
+    let row = token & 0x00FF_FFFF;
+    entity_message(
+        ts,
+        options,
+        |ts| {
+            if token >> 24 == 0x14 {
+                crate::csharp::entity_syntax::convert_event(ts, module, row, options, custom_events)
+            } else {
+                crate::csharp::entity_syntax::convert_property(
+                    ts,
+                    module,
+                    row,
+                    options,
+                    init_accessors,
+                )
+            }
+        },
+        |w, p| {
+            w.out.u8(p.kind);
+            w.out.uvar(u64::from(p.modifiers));
+            write_attributes(w, &p.attributes);
+            w.ty(p.return_type);
+            w.out.bool(p.ref_readonly);
+            w.string(&p.name);
+            write_parameters(w, &p.parameters);
+            for a in &p.accessors {
+                match a {
+                    Some(a) => {
+                        w.out.u8(1);
+                        w.out.uvar(u64::from(a.row));
+                        w.out.u8(a.kind);
+                        w.out.bool(a.is_init_only);
+                        w.out.uvar(u64::from(a.modifiers));
+                        write_attributes(w, &a.attributes);
+                        write_attributes(w, &a.return_attributes);
+                        write_attributes(w, &a.parameter_attributes);
+                    }
+                    None => w.out.u8(0),
+                }
+            }
+            match p.private_implementation_type {
+                Some(t) => {
+                    w.out.u8(1);
+                    w.ty(t);
+                }
+                None => w.out.u8(0),
+            }
+        },
+    )
+}
+
+fn write_parameters(
+    w: &mut FunctionWriter<'_, '_, '_, '_>,
+    parameters: &[crate::csharp::entity_syntax::ParameterSyntax],
+) {
+    w.out.len(parameters.len());
+    for p in parameters {
+        w.out.u8(p.ref_kind);
+        w.out.bool(p.is_params);
+        w.out.bool(p.is_scoped);
+        write_attributes(w, &p.attributes);
+        w.ty(p.ty);
+        w.string(&p.name);
+        write_optional_constant(w, p.default_value.as_ref());
+    }
 }
 
 fn write_attributes(

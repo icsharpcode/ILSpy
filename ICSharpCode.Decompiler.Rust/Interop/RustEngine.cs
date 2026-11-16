@@ -148,13 +148,15 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		/// it with the options <c>CSharpDecompiler.CreateAstBuilder</c> gives the builder; null with
 		/// <paramref name="unsupportedReason"/> where the engine does not write the declaration.
 		/// </summary>
-		public CSharp.Syntax.EntityDeclaration? EntitySyntax(IEntity entity, bool useSpecialConstants, DecompilerSettings settings, out string? unsupportedReason)
+		public CSharp.Syntax.EntityDeclaration? EntitySyntax(IEntity entity, bool useSpecialConstants, DecompilerSettings settings, out string? unsupportedReason, bool useCustomEvents = false)
 		{
 			unsupportedReason = null;
 			uint flags = (useSpecialConstants ? 1u : 0u)
 				| (settings.SortCustomAttributes ? 2u : 0u)
 				| (settings.IntroducePrivateProtectedAccessibility ? 4u : 0u)
-				| (settings.LiftNullables ? 8u : 0u);
+				| (settings.LiftNullables ? 8u : 0u)
+				| (useCustomEvents ? 16u : 0u)
+				| (settings.InitAccessors ? 32u : 0u);
 			var status = NativeMethods.ilspy_session_entity_syntax(session, (uint)MetadataTokens.GetToken(entity.MetadataToken), flags, out var buffer);
 			byte[] bytes = NativeMethods.TakeBuffer(buffer);
 			switch (status)
@@ -164,6 +166,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					return entity switch {
 						IField field => reader.Field(field, out unsupportedReason),
 						IMethod method => reader.Method(method, settings, out unsupportedReason),
+						IProperty or IEvent => reader.Property((IMember)entity, out unsupportedReason),
 						_ => throw new ArgumentException("An entity request for a field or method", nameof(entity)),
 					};
 				case RustStatus.Cancelled:

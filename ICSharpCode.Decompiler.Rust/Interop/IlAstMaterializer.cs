@@ -608,22 +608,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				tp.Attributes.AddRange(Sections(null, ref complete));
 				typeParameters.Add(tp);
 			}
-			var parameters = new List<CSharp.Syntax.ParameterDeclaration>();
-			count = Len();
-			for (int i = 0; i < count; i++)
-			{
-				var p = new CSharp.Syntax.ParameterDeclaration {
-					ParameterModifier = (ReferenceKind)U8(),
-					IsParams = Bool(),
-					IsScopedRef = Bool()
-				};
-				p.Attributes.AddRange(Sections(null, ref complete));
-				p.Type = SyntaxOf(Type(), ref complete);
-				p.Name = Str();
-				if (Bool())
-					p.DefaultExpression = ConstantSyntax(ref complete);
-				parameters.Add(p);
-			}
+			var parameters = Parameters(ref complete);
 			bool thisModifier = Bool();
 			var constraints = new List<CSharp.Syntax.Constraint>();
 			count = Len();
@@ -705,6 +690,112 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				}
 			}
 			decl.AddAnnotation(new MemberResolveResult(null, method));
+			return decl;
+		}
+
+		/// <summary><c>ConvertParameter</c> of each parameter.</summary>
+		List<CSharp.Syntax.ParameterDeclaration> Parameters(ref bool complete)
+		{
+			var parameters = new List<CSharp.Syntax.ParameterDeclaration>();
+			int count = Len();
+			for (int i = 0; i < count; i++)
+			{
+				var p = new CSharp.Syntax.ParameterDeclaration {
+					ParameterModifier = (ReferenceKind)U8(),
+					IsParams = Bool(),
+					IsScopedRef = Bool()
+				};
+				p.Attributes.AddRange(Sections(null, ref complete));
+				p.Type = SyntaxOf(Type(), ref complete);
+				p.Name = Str();
+				if (Bool())
+					p.DefaultExpression = ConstantSyntax(ref complete);
+				parameters.Add(p);
+			}
+			return parameters;
+		}
+
+		/// <summary>
+		/// <c>ConvertProperty</c>, <c>ConvertIndexer</c> or <c>ConvertEvent</c>; null with the reason
+		/// where the engine did not write it.
+		/// </summary>
+		public CSharp.Syntax.EntityDeclaration? Property(IMember member, out string? unsupportedReason)
+		{
+			unsupportedReason = null;
+			if (U8() == 0)
+			{
+				unsupportedReason = Str();
+				return null;
+			}
+			bool complete = true;
+			byte kind = U8();
+			var modifiers = (CSharp.Syntax.Modifiers)UVar();
+			var attributes = Sections(null, ref complete);
+			var returnType = SyntaxOf(Type(), ref complete);
+			if (Bool() && returnType is CSharp.Syntax.ComposedType ct && ct.HasRefSpecifier)
+				ct.HasReadOnlySpecifier = true;
+			string name = Str();
+			var parameters = Parameters(ref complete);
+			var accessors = new CSharp.Syntax.Accessor?[2];
+			for (int slot = 0; slot < 2; slot++)
+			{
+				if (!Bool())
+					continue;
+				UVar();
+				var accessor = new CSharp.Syntax.Accessor { Kind = (CSharp.Syntax.AccessorKind)U8(), IsInitOnly = Bool(), Modifiers = (CSharp.Syntax.Modifiers)UVar() };
+				accessor.Attributes.AddRange(Sections(null, ref complete));
+				accessor.Attributes.AddRange(Sections("return", ref complete));
+				accessor.Attributes.AddRange(Sections("param", ref complete));
+				IMethod? method = member switch {
+					IProperty p => slot == 0 ? p.Getter : p.Setter,
+					IEvent e => slot == 0 ? e.AddAccessor : e.RemoveAccessor,
+					_ => null
+				};
+				if (method != null)
+					accessor.AddAnnotation(new MemberResolveResult(null, method));
+				accessors[slot] = accessor;
+			}
+			CSharp.Syntax.AstType? privateImplementationType = Bool() ? SyntaxOf(Type(), ref complete) : null;
+			if (!complete)
+			{
+				unsupportedReason = "a type without syntax";
+				return null;
+			}
+			CSharp.Syntax.EntityDeclaration decl;
+			switch (kind)
+			{
+				case 0:
+					decl = new CSharp.Syntax.PropertyDeclaration {
+						Modifiers = modifiers, ReturnType = returnType, Name = name,
+						Getter = accessors[0]!, Setter = accessors[1]!, PrivateImplementationType = privateImplementationType!
+					};
+					break;
+				case 1:
+				{
+					var indexer = new CSharp.Syntax.IndexerDeclaration {
+						Modifiers = modifiers, ReturnType = returnType,
+						Getter = accessors[0]!, Setter = accessors[1]!, PrivateImplementationType = privateImplementationType!
+					};
+					indexer.Parameters.AddRange(parameters);
+					decl = indexer;
+					break;
+				}
+				case 2:
+				{
+					var ev = new CSharp.Syntax.EventDeclaration { Modifiers = modifiers, ReturnType = returnType };
+					ev.Variables.Add(new CSharp.Syntax.VariableInitializer(name));
+					decl = ev;
+					break;
+				}
+				default:
+					decl = new CSharp.Syntax.CustomEventDeclaration {
+						Modifiers = modifiers, ReturnType = returnType, Name = name,
+						AddAccessor = accessors[0]!, RemoveAccessor = accessors[1]!, PrivateImplementationType = privateImplementationType!
+					};
+					break;
+			}
+			decl.Attributes.AddRange(attributes);
+			decl.AddAnnotation(new MemberResolveResult(null, member));
 			return decl;
 		}
 
