@@ -4468,6 +4468,21 @@ cast.
 
 The share stayed at 99.5 % (one body, below its rounding).
 
+### 3.196 Implicit span conversions as calls (item 68y88)
+
+The C# 14 compiler emits an implicit span conversion as a call of one of the span types' own
+members: `op_Implicit` of `Span<T>` or `ReadOnlySpan<T>`, or `MemoryExtensions.AsSpan(string)`.
+`HandleImplicitConversion` folds such a call back into the conversion when the implicit
+conversion from the argument's type is a span conversion (`IsEquivalentToSpanConversion`), and
+`AsSpan(string)` reaches it under `FirstClassSpanTypes` when the conversion applies to the
+argument. `CastCanBeMadeImplicit` lets a span cast go where the input converts to the new
+target as a span directly, since span conversions compose; and an rvalue bound to an `in`
+parameter gets that chance as well. A span-based `string.Concat` that is no concatenation of
+strings and chars is an ordinary call. `ReadOnlySpan<T>.CastUp` stays refused (a `shortcut:`
+until a body needs it).
+
+The share rose from 99.5 % to 99.7 %.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

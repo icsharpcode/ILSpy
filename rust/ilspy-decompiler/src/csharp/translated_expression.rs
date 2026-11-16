@@ -608,12 +608,15 @@ impl Builder<'_, '_, '_, '_> {
             return Ok(self.ts.is_known(new, KnownTypeCode::FormattableString)
                 || self.ts.is_known(new, KnownTypeCode::IFormattable));
         }
-        if conversion.is_implicit_span() {
-            return Err("a cast of a span".to_owned());
-        }
         let mut conversions = Conversions::new(self.ts);
         if conversion.is_boxing() {
             return Ok(conversions.is_boxing_or_involving_type_parameter(input, new));
+        }
+        // Implicit span conversions compose: where the input converts to the new target
+        // directly, the result is the span the two steps give.
+        if conversion.is_implicit_span() {
+            return Ok(conversions.identity(old, new)
+                || conversions.implicit_type(input, new).is_implicit_span());
         }
         Ok(conversions.identity(old, new))
     }

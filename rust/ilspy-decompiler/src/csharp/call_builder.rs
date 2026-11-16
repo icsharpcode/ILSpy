@@ -444,6 +444,17 @@ impl Builder<'_, '_, '_, '_> {
         if method.is_operator && method.name == "op_Implicit" && list.arguments.len() == 1 {
             return self.implicit_conversion_call(inst, &method, &list);
         }
+        // The C# 14 compiler emits `AsSpan(string)` for the implicit span conversion, which
+        // the call folds back into where the conversion applies to the argument's type.
+        if self.settings.first_class_span_types
+            && list.arguments.len() == 1
+            && self.is_string_to_read_only_span_char_as_span(&method, declaring)
+            && Conversions::new(self.ts)
+                .implicit_type(list.arguments[0].ty, method.return_type)
+                .is_implicit_span()
+        {
+            return self.implicit_conversion_call(inst, &method, &list);
+        }
 
         // A delegate's `Invoke` is the invocation of the delegate itself, unless the target is
         // null-conditional: `d?.Invoke(...)` is an ordinary call.
@@ -609,6 +620,46 @@ impl Builder<'_, '_, '_, '_> {
         })
     }
 
+    /// `IsStringToReadOnlySpanCharAsSpan`: `MemoryExtensions.AsSpan(string)`.
+    fn is_string_to_read_only_span_char_as_span(&self, method: &Method, declaring: TypeId) -> bool {
+        method.is_static
+            && method.name == "AsSpan"
+            && method.parameters.len() == 1
+            && method.method_args.as_ref().is_none_or(|a| a.is_empty())
+            && self
+                .ts
+                .definition(declaring)
+                .and_then(|d| self.ts.comp.type_def(d).ok())
+                .is_some_and(|i| {
+                    i.full_name.top.ns == "System" && i.full_name.name() == "MemoryExtensions"
+                })
+            && self
+                .ts
+                .is_known(method.return_type, KnownTypeCode::ReadOnlySpanOfT)
+            && self
+                .ts
+                .first_type_argument(method.return_type)
+                .is_some_and(|a| self.ts.is_known(a, KnownTypeCode::Char))
+            && self
+                .ts
+                .is_known(method.parameters[0].ty, KnownTypeCode::String)
+    }
+
+    /// `IsEquivalentToSpanConversion`: an implicit conversion operator of a span type, or
+    /// `AsSpan(string)`.
+    // shortcut: no `ReadOnlySpan<T>.CastUp`, which the engine translates as an ordinary call of
+    // its span type and refuses; port it with the `CastUp` folding.
+    fn is_equivalent_to_span_conversion(&self, method: &Method) -> bool {
+        let Some(declaring) = method.declaring else {
+            return false;
+        };
+        ((self.ts.is_known(declaring, KnownTypeCode::SpanOfT)
+            || self.ts.is_known(declaring, KnownTypeCode::ReadOnlySpanOfT))
+            && method.is_operator
+            && method.name == "op_Implicit")
+            || self.is_string_to_read_only_span_char_as_span(method, declaring)
+    }
+
     /// `HandleImplicitConversion`: `(T)argument`, with the argument first cast to the
     /// parameter type where the implicit conversion from its own type is not the operator.
     fn implicit_conversion_call(
@@ -625,7 +676,9 @@ impl Builder<'_, '_, '_, '_> {
                 crate::semantics::Conversion::UserDefined { method: found, .. } => {
                     self.same_method_after_type_erasure(method, found)
                 }
-                _ => false,
+                // The compiler emits an implicit span conversion as a call of one of the span
+                // types' own members, so the call is the conversion.
+                c => c.is_implicit_span() && self.is_equivalent_to_span_conversion(method),
             };
         if !direct {
             let parameter = method.parameters[0].ty;
@@ -951,6 +1004,25 @@ impl Builder<'_, '_, '_, '_> {
                     is_address_of,
                     parameter.ref_kind == RefKind::RefReadOnly,
                 );
+                // An rvalue bound to an `in` parameter is an ordinary value: a span conversion
+                // gets the chance to become implicit that by-value arguments get.
+                if let AstNode::Cast { expression, .. } = *self.ast.node(arg.expression)
+                    && matches!(
+                        self.rr_of(arg.expression),
+                        Rr::ImplicitConversion { .. } | Rr::Conversion { .. }
+                    )
+                    && let TypeData::ByRef(element) =
+                        *self.ts.data(self.ts.skip_modifiers(parameter.ty))
+                {
+                    let inner = self.rr_of(expression);
+                    let inner = self.rr_type(&inner);
+                    if Conversions::new(self.ts)
+                        .implicit_type(inner, arg.ty)
+                        .is_implicit_span()
+                    {
+                        arg = self.convert_to(arg, element, true)?;
+                    }
+                }
             }
             list.arguments.push(arg);
         }
@@ -1623,17 +1695,11 @@ impl Builder<'_, '_, '_, '_> {
                 .and_then(|d| ts.comp.type_def(d).ok())
                 .is_some_and(|i| i.full_name.top.ns == ns && i.full_name.name() == name)
         };
-        // `IsSpanBasedStringConcat`: a `string.Concat` of `ReadOnlySpan<char>` parameters only;
-        // any other `Concat` is an ordinary call.
-        let span_concat = method.name == "Concat"
-            && method.is_static
-            && method.parameters.iter().all(|p| {
-                ts.is_known(p.ty, KnownTypeCode::ReadOnlySpanOfT)
-                    && ts
-                        .first_type_argument(p.ty)
-                        .is_some_and(|a| ts.is_known(a, KnownTypeCode::Char))
-            });
-        let special = (ts.is_known(declaring, KnownTypeCode::String) && span_concat)
+        // A span-based `string.Concat` of strings and chars is built before; any other
+        // `Concat` is an ordinary call. An implicit conversion operator of a span type is
+        // `HandleImplicitConversion`'s.
+        let span_operator = method.is_operator && method.name == "op_Implicit";
+        let special = false
             // `FormattableStringFactory.Create` is an interpolated string where its format
             // tokenizes.
             || (in_namespace(
@@ -1642,15 +1708,8 @@ impl Builder<'_, '_, '_, '_> {
             ) && method.name != "Create")
             || ts.is_known(declaring, KnownTypeCode::Range)
             || ts.is_known(declaring, KnownTypeCode::Index)
-            // `IsStringToReadOnlySpanCharAsSpan`, which C# 14 folds into the implicit span
-            // conversion; any other `MemoryExtensions` call is ordinary.
-            || (in_namespace("System", "MemoryExtensions")
-                && self.settings.first_class_span_types
-                && method.name == "AsSpan"
-                && method.parameters.len() == 1
-                && ts.is_known(method.parameters[0].ty, KnownTypeCode::String))
-            || ts.is_known(declaring, KnownTypeCode::ReadOnlySpanOfT)
-            || ts.is_known(declaring, KnownTypeCode::SpanOfT)
+            || (ts.is_known(declaring, KnownTypeCode::ReadOnlySpanOfT) && !span_operator)
+            || (ts.is_known(declaring, KnownTypeCode::SpanOfT) && !span_operator)
             || in_namespace("", "<PrivateImplementationDetails>")
             || ts.is_known(declaring, KnownTypeCode::Delegate);
         if special {
