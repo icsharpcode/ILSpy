@@ -20,6 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text.Json;
 
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.Tests.Helpers;
@@ -40,7 +41,7 @@ namespace ICSharpCode.Decompiler.Tests
 		[SetUp]
 		public void SetUp()
 		{
-			gacDirectory = Path.Combine(Path.GetTempPath(), "ILSpyGacTest_" + Path.GetRandomFileName());
+			gacDirectory = Path.Combine(Path.GetTempPath(), "ilspygactest_" + Path.GetRandomFileName());
 			Directory.CreateDirectory(gacDirectory);
 		}
 
@@ -181,6 +182,76 @@ namespace ICSharpCode.Decompiler.Tests
 			resolver.AddSearchDirectory(gacDirectory);
 
 			Assert.That(resolver.FindAssemblyFile(Reference("../Canary", "1.0.0.0", "b77a5c561934e089")), Is.Null);
+		}
+
+		[Test]
+		public void PathLikeModuleNamesAreNotProbed()
+		{
+			string mainDirectory = Path.Combine(gacDirectory, "main");
+			Directory.CreateDirectory(mainDirectory);
+			string mainFile = Path.Combine(mainDirectory, "main.dll");
+			File.Copy(typeof(UniversalAssemblyResolverTests).Assembly.Location, mainFile);
+			string outsideFile = Path.Combine(gacDirectory, "Canary.netmodule");
+			File.Copy(typeof(UniversalAssemblyResolverTests).Assembly.Location, outsideFile);
+
+			using var mainModule = new PEFile(mainFile);
+			var resolver = new UniversalAssemblyResolver(null, throwOnError: false, targetFramework: null);
+
+			Assert.That(resolver.ResolveModule(mainModule, "../Canary.netmodule"), Is.Null);
+		}
+
+		[Test]
+		public void PathLikeRuntimeAssetsInDepsJsonAreNotProbed()
+		{
+			const string targetFramework = ".NETCoreApp,Version=v10.0";
+			string mainFile = Path.Combine(gacDirectory, "Input.dll");
+			File.Copy(typeof(UniversalAssemblyResolverTests).Assembly.Location, mainFile);
+
+			string packageRoot = Path.Combine(
+				Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".nuget", "packages", "Canary", "1.0.0");
+			string outsideDirectory = Path.Combine(gacDirectory, "outside");
+			Directory.CreateDirectory(outsideDirectory);
+			File.Copy(typeof(UniversalAssemblyResolverTests).Assembly.Location, Path.Combine(outsideDirectory, "Canary.dll"));
+			string assetPath = Path.Combine(Path.GetRelativePath(packageRoot, outsideDirectory), "Canary.dll");
+
+			WriteDepsFile(mainFile, targetFramework, assetPath);
+			var resolver = new UniversalAssemblyResolver(mainFile, throwOnError: false, targetFramework);
+
+			Assert.That(resolver.FindAssemblyFile(Reference("Canary", "1.0.0.0", "b77a5c561934e089")), Is.Null);
+		}
+
+		[Test]
+		public void InvalidRuntimeAssetPathsInDepsJsonDoNotAbortResolution()
+		{
+			const string targetFramework = ".NETCoreApp,Version=v10.0";
+			string mainFile = Path.Combine(gacDirectory, "Input.dll");
+			File.Copy(typeof(UniversalAssemblyResolverTests).Assembly.Location, mainFile);
+			WriteDepsFile(mainFile, targetFramework, "lib/a\0b/Canary.dll");
+			var resolver = new UniversalAssemblyResolver(mainFile, throwOnError: false, targetFramework);
+
+			Assert.That(() => resolver.FindAssemblyFile(Reference("Canary", "1.0.0.0", "b77a5c561934e089")), Throws.Nothing);
+			Assert.That(resolver.FindAssemblyFile(Reference("Canary", "1.0.0.0", "b77a5c561934e089")), Is.Null);
+		}
+
+		void WriteDepsFile(string mainFile, string targetFramework, string runtimeAsset)
+		{
+			var depsFile = new {
+				runtimeTarget = new { name = targetFramework, signature = "" },
+				targets = new Dictionary<string, object> {
+					[targetFramework] = new Dictionary<string, object> {
+						["Canary/1.0.0"] = new {
+							type = "package",
+							runtime = new Dictionary<string, object> {
+								[runtimeAsset] = new { }
+							}
+						}
+					}
+				},
+				libraries = new Dictionary<string, object> {
+					["Canary/1.0.0"] = new { type = "package", path = "Canary/1.0.0" }
+				}
+			};
+			File.WriteAllText(Path.ChangeExtension(mainFile, ".deps.json"), JsonSerializer.Serialize(depsFile));
 		}
 
 		[Test]
