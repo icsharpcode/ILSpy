@@ -4407,6 +4407,18 @@ managed statement builder does.
 
 The share rose from 99.0 % to 99.1 %.
 
+### 3.192 `goto case` (item 68y84)
+
+`TranslateSwitch` maps, before it converts any section, the block a section's branch inlines
+to the section's first label (`caseLabelMapping`, `null` for the default section), where
+every branch to the block has the switch's container as its closest switch container. A
+section inlines its block whatever other branches reach it, and those branches are
+`goto case label;` or `goto default;` (two new statement nodes); in a switch on strings the
+label is the first string its first value maps. Each switch has its own mapping, the
+enclosing one restored after it.
+
+The share rose from 99.1 % to 99.2 %.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

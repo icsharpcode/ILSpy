@@ -84,6 +84,14 @@ pub(crate) struct Builder<'f, 't, 'c, 'a> {
     pub(crate) current_function: Option<NodeId>,
     /// `labels`: the label `EnsureUniqueLabel` gave each block of the current function.
     pub(crate) labels: Vec<(NodeId, String)>,
+    /// `caseLabelMapping`: the block each section of the current switch inlines, with the
+    /// first value of its labels (`None` for the default section) and the case type, which a
+    /// branch to the block writes as `goto case`.
+    pub(crate) case_label_mapping: Vec<(
+        NodeId,
+        Option<switch::CaseValue>,
+        crate::typesystem::types::TypeId,
+    )>,
     /// `endContainerLabels`: the label `goto` of a leave out of each container targets.
     pub(crate) end_container_labels: Vec<(NodeId, String)>,
     /// `duplicateLabels`: how many blocks share each `Block.Label`.

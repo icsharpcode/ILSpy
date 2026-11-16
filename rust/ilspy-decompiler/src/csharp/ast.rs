@@ -204,6 +204,10 @@ pub enum AstNode {
     SingleDesignation {
         variable: Option<crate::il::ast::VarId>,
     },
+    /// `GotoCaseStatement` of the label.
+    GotoCase { label: AstId },
+    /// `GotoDefaultStatement`.
+    GotoDefault,
     /// `LabelStatement` of the label `name`.
     Label { name: String },
     /// `GotoStatement` to the label `name`.

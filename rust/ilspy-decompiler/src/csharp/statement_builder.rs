@@ -66,6 +66,7 @@ pub fn convert_body(
         current_function: None,
         labels: Vec::new(),
         end_container_labels: Vec::new(),
+        case_label_mapping: Vec::new(),
         duplicate_labels: std::collections::HashMap::new(),
     };
     b.begin_local_functions()?;
@@ -160,6 +161,28 @@ impl Builder<'_, '_, '_, '_> {
             } if Some(target) == self.continue_target => {
                 self.continue_count += 1;
                 let s = self.ast.add(AstNode::Continue);
+                Ok(self.ast.with_il(s, inst))
+            }
+            // `goto case` or `goto default` for a block a section of the switch inlines.
+            Inst::Branch {
+                target: BranchTarget::Block(target),
+            } if self.case_label_mapping.iter().any(|(b, ..)| *b == target) => {
+                let (_, label, ty) = self
+                    .case_label_mapping
+                    .iter()
+                    .find(|(b, ..)| *b == target)
+                    .cloned()
+                    .expect("a mapped block");
+                let s = match label {
+                    Some(value) => {
+                        let label = match value {
+                            super::switch::CaseValue::Integer(v) => self.case_label(v, ty)?,
+                            super::switch::CaseValue::String(c) => self.string_case_label(ty, c)?,
+                        };
+                        self.ast.add(AstNode::GotoCase { label })
+                    }
+                    None => self.ast.add(AstNode::GotoDefault),
+                };
                 Ok(self.ast.with_il(s, inst))
             }
             Inst::Branch {

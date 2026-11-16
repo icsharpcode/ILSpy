@@ -15,6 +15,17 @@ use super::{Builder, TranslatedExpression, Unsupported};
 /// The most case labels one section is written with; a larger range is not translated.
 const MAX_LABELS: u64 = 4096;
 
+/// `StringToInt.Map`: each string (`None` for null) with the value it maps to.
+type StringMap = [(Option<Vec<u16>>, i32)];
+
+/// The first value of a switch section's labels, which `goto case` writes.
+#[derive(Clone, Debug)]
+pub(crate) enum CaseValue {
+    Integer(i64),
+    /// A string (or `null`) of a switch on strings.
+    String(ConstValue),
+}
+
 impl Builder<'_, '_, '_, '_> {
     /// `TranslateSwitch(switchContainer, inst)`. A lifted switch, a switch on strings, labels a
     /// section body does not inline (`goto case`, labeled blocks) and a governing type reached
@@ -69,7 +80,97 @@ impl Builder<'_, '_, '_, '_> {
 
         let default = default_section(&section_parts);
 
-        // The blocks of the container a section's branch inlines (`caseLabelMapping`).
+        // `caseLabelMapping`: the block a section's branch inlines, where every branch to it is
+        // in this switch, with the section's first value.
+        let mut mapping = Vec::new();
+        for (i, (labels, body)) in section_parts.iter().enumerate() {
+            if let Inst::Branch {
+                target: BranchTarget::Block(b),
+            } = *self.f.inst(*body)
+                && blocks[1..].contains(&b)
+                && self.branches_stay_in_switch(container, b)
+            {
+                let label = if i == default {
+                    None
+                } else {
+                    let v = labels
+                        .values()
+                        .next()
+                        .ok_or("a switch section without labels")?;
+                    Some(match &string_map {
+                        // The first string the section's first value maps.
+                        Some(map) => {
+                            let (key, _) = map
+                                .iter()
+                                .find(|(_, mapped)| i64::from(*mapped) == v)
+                                .ok_or("a string switch value without key")?;
+                            CaseValue::String(match key {
+                                Some(s) => ConstValue::String(s.clone()),
+                                None => ConstValue::Null,
+                            })
+                        }
+                        None => CaseValue::Integer(v),
+                    })
+                };
+                mapping.push((b, label, case_type));
+            }
+        }
+        let saved_mapping = std::mem::replace(&mut self.case_label_mapping, mapping);
+        let result = self.switch_sections(
+            container,
+            blocks,
+            &section_parts,
+            default,
+            case_type,
+            string_map.as_deref(),
+        );
+        self.case_label_mapping = saved_mapping;
+        let ast_sections = result?;
+        let s = self.ast.add(AstNode::Switch {
+            expression: value.expression,
+            sections: ast_sections,
+        });
+        Ok(self.ast.with_il(s, container))
+    }
+
+    /// Whether every branch to `block` has `container` as its closest switch container
+    /// (`BlockContainer.FindClosestSwitchContainer`).
+    fn branches_stay_in_switch(&self, container: NodeId, block: NodeId) -> bool {
+        self.f.descendants_post(container).into_iter().all(|n| {
+            !matches!(*self.f.inst(n), Inst::Branch { target: BranchTarget::Block(t) } if t == block)
+                || self.closest_switch_container(n) == Some(container)
+        })
+    }
+
+    /// `FindClosestSwitchContainer`
+    fn closest_switch_container(&self, inst: NodeId) -> Option<NodeId> {
+        let mut current = self.f.node(inst).parent;
+        while let Some(c) = current {
+            if matches!(
+                self.f.inst(c),
+                Inst::BlockContainer {
+                    kind: crate::il::ast::ContainerKind::Switch,
+                    ..
+                }
+            ) {
+                return Some(c);
+            }
+            current = self.f.node(c).parent;
+        }
+        None
+    }
+
+    /// The sections of the switch, each with its case labels and its body (the inlined block of
+    /// a section that branches to one).
+    fn switch_sections(
+        &mut self,
+        container: NodeId,
+        blocks: &[NodeId],
+        section_parts: &[(crate::util::long_set::LongSet, NodeId)],
+        default: usize,
+        case_type: TypeId,
+        string_map: Option<&StringMap>,
+    ) -> Result<Vec<AstId>, Unsupported> {
         let mut inlined = Vec::new();
         let mut ast_sections = Vec::with_capacity(section_parts.len());
         for (i, (labels, body)) in section_parts.iter().enumerate() {
@@ -103,9 +204,8 @@ impl Builder<'_, '_, '_, '_> {
                 Inst::Branch {
                     target: BranchTarget::Block(b),
                 } if blocks[1..].contains(&b) => {
-                    // A block other branches reach would need `goto case`.
-                    if self.f.node(b).incoming_edge_count != 1 {
-                        return Err("a switch section reached by goto case".to_owned());
+                    if !self.case_label_mapping.iter().any(|(m, ..)| *m == b) {
+                        return Err("a switch section branching out of its switch".to_owned());
                     }
                     inlined.push(b);
                     self.switch_section_body(b)?
@@ -128,11 +228,7 @@ impl Builder<'_, '_, '_, '_> {
         if blocks[1..].iter().any(|b| !inlined.contains(b)) {
             return Err("a switch with labeled blocks".to_owned());
         }
-        let s = self.ast.add(AstNode::Switch {
-            expression: value.expression,
-            sections: ast_sections,
-        });
-        Ok(self.ast.with_il(s, container))
+        Ok(ast_sections)
     }
 
     /// `ConvertSwitchSectionBody`: the body, with a `break` where its end point is reachable.
@@ -401,7 +497,11 @@ impl Builder<'_, '_, '_, '_> {
     /// `CreateTypedCaseLabel(i, type)` without a string map, written with
     /// `ConvertConstantValue(label, allowImplicitConversion: true)`.
     /// The case label of a string constant (or `null`) of a switch on strings.
-    fn string_case_label(&mut self, ty: TypeId, value: ConstValue) -> Result<AstId, Unsupported> {
+    pub(crate) fn string_case_label(
+        &mut self,
+        ty: TypeId,
+        value: ConstValue,
+    ) -> Result<AstId, Unsupported> {
         let e = self.ast.add(AstNode::ConstantValue {
             ty,
             value: value.clone(),
@@ -412,7 +512,7 @@ impl Builder<'_, '_, '_, '_> {
         Ok(e)
     }
 
-    fn case_label(&mut self, i: i64, ty: TypeId) -> Result<AstId, Unsupported> {
+    pub(crate) fn case_label(&mut self, i: i64, ty: TypeId) -> Result<AstId, Unsupported> {
         let ty = self.ts.nullable_underlying(ty);
         let value = if self.ts.is_known(ty, KnownTypeCode::Boolean) {
             ConstValue::Boolean(i != 0)

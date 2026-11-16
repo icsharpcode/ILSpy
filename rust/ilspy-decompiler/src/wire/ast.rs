@@ -93,6 +93,8 @@ mod kind {
     pub const PARENTHESIZED_DESIGNATION: u8 = 69;
     pub const SINGLE_DESIGNATION: u8 = 70;
     pub const USING_EXPANDED: u8 = 71;
+    pub const GOTO_CASE: u8 = 72;
+    pub const GOTO_DEFAULT: u8 = 73;
 }
 
 pub(super) fn write_body(
@@ -369,6 +371,8 @@ fn node(w: &mut FunctionWriter<'_, '_, '_, '_>, ast: &Ast, id: AstId) -> Result<
         AstNode::Break => kind::BREAK,
         AstNode::Continue => kind::CONTINUE,
         AstNode::Label { .. } => kind::LABEL,
+        AstNode::GotoCase { .. } => kind::GOTO_CASE,
+        AstNode::GotoDefault => kind::GOTO_DEFAULT,
         AstNode::UsingExpanded { .. } => kind::USING_EXPANDED,
         AstNode::ParenthesizedDesignation { .. } => kind::PARENTHESIZED_DESIGNATION,
         AstNode::SingleDesignation { .. } => kind::SINGLE_DESIGNATION,
@@ -539,6 +543,7 @@ fn node(w: &mut FunctionWriter<'_, '_, '_, '_>, ast: &Ast, id: AstId) -> Result<
         AstNode::Identifier { name } => w.string(&name),
         AstNode::Label { name } | AstNode::Goto { name } => w.string(&name),
         AstNode::InDirection { expression } => node(w, ast, expression)?,
+        AstNode::GotoCase { label } => node(w, ast, label)?,
         AstNode::UsingExpanded {
             variable,
             part,
@@ -944,6 +949,7 @@ fn node(w: &mut FunctionWriter<'_, '_, '_, '_>, ast: &Ast, id: AstId) -> Result<
         | AstNode::Base
         | AstNode::Break
         | AstNode::Continue
+        | AstNode::GotoDefault
         | AstNode::YieldBreak => {}
     }
     Ok(())

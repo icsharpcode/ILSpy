@@ -114,6 +114,8 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		public const byte ParenthesizedDesignation = 69;
 		public const byte SingleDesignation = 70;
 		public const byte UsingExpanded = 71;
+		public const byte GotoCase = 72;
+		public const byte GotoDefault = 73;
 
 		public byte Kind;
 		/// <summary>The instructions the node is annotated with, in order.</summary>
@@ -650,6 +652,10 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					tuple.Elements.AddRange(node.Children.Select(c => (Expression)Build(c, exprBuilder)));
 					return Annotate(tuple, node);
 				}
+				case RustBodyNode.GotoCase:
+					return Annotate(new GotoCaseStatement { LabelExpression = (Expression)Build(node.Children[0], exprBuilder) }, node);
+				case RustBodyNode.GotoDefault:
+					return Annotate(new GotoDefaultStatement(), node);
 				case RustBodyNode.Label:
 					return Annotate(new LabelStatement { Label = (string)node.Value! }, node);
 				case RustBodyNode.Goto:

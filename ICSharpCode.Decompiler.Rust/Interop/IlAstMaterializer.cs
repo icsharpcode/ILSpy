@@ -945,6 +945,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					node.Value = Bool() ? Variable() : null;
 					break;
 				case RustBodyNode.InDirection:
+				case RustBodyNode.GotoCase:
 					node.Children = [BodyNode()];
 					break;
 				case RustBodyNode.DeconstructionTuple:
