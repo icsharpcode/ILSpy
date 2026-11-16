@@ -696,9 +696,9 @@ the reasons. This file holds only the ordered steps, their gates and their rules
     `Translate constructor initializers of unresolved base calls`.
   - [x] 68y88. Implicit span conversions as calls (lecture 3.196). Subject:
     `Translate implicit span conversion calls in the engine`.
-  - [ ] 68y89-. Further construct groups (numbered on from 68y1), in the order of the fallback reasons the ratchet test
-    prints, until no body of the corpus falls back. Subject pattern:
-    `Translate <construct group> to C# in the engine`.
+  - [x] 68y89. Named arguments of object creations, deconstruction in lambdas that return a
+    value (lecture 3.197); no body of the ratchet corpus falls back. Subject:
+    `Translate named arguments of object creations in the engine`.
   - [ ] 68z. Request-level seam 2. Subject: `Add the Rust C# AST builders and the AST materializer`.
     - `csharp/ast/`: arena with roles, one struct per node kind, a side table of annotations
       (symbol, resolve result, IL node id, variable id, let-identifier, implicit return, member

@@ -4483,6 +4483,25 @@ until a body needs it).
 
 The share rose from 99.5 % to 99.7 %.
 
+### 3.197 Named arguments of object creations, deconstruction in lambdas (item 68y89)
+
+`CallWithNamedArgs` hands an object creation to `Build(OpCode.NewObj, ...)` with its argument
+map, which builds the constructor call; the engine routes a `newobj` the same way, with no
+target among its arguments. That path is no tuple literal: `new ValueTuple<A, B>(item2: x,
+item1: y)` stays a constructor call, and the engine's tuple matcher, which ran first and
+translated the elements while the map was still pending, is skipped there (it had let an inner
+call take the map and panicked). The run of omitted optional arguments is the written order's,
+as for any other call, so a map no longer refuses it.
+
+A deconstruction in a lambda that returns a value translates as the managed builder does. In a
+void lambda it still falls back (`shortcut:`): the fixture `Task.Run(() => { (a, b) = ...; })`
+resolves to `Run<?>(Func<?>)` in the engine and to `Run(Action)` in the managed builder, although
+type inference, `Fix` and betterness are ported alike; the difference is still to be found.
+
+With this item no body of the ratchet corpus falls back.
+
+The share rose from 99.7 % to 100.0 %.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

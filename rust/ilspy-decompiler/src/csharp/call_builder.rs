@@ -1026,11 +1026,6 @@ impl Builder<'_, '_, '_, '_> {
             }
             list.arguments.push(arg);
         }
-        // Omitted optional arguments among named ones are found through the map, which the
-        // engine does not follow.
-        if list.parameter_map.is_some() && list.first_optional >= 0 {
-            return Err("omitted optional arguments with named arguments".to_owned());
-        }
         Ok(list)
     }
 
@@ -1198,7 +1193,11 @@ impl Builder<'_, '_, '_, '_> {
         call: &CallData,
         hint: TypeId,
     ) -> Result<TranslatedExpression, Unsupported> {
-        if let Some(tuple) = self.tuple_construction(inst, call, hint)? {
+        // `CallWithNamedArgs` builds the constructor call (`Build(OpCode.NewObj, ...)`), which
+        // is no tuple literal.
+        if self.named_argument_map.is_none()
+            && let Some(tuple) = self.tuple_construction(inst, call, hint)?
+        {
             return Ok(tuple);
         }
         let operand = &call.method;
@@ -2322,11 +2321,14 @@ impl Builder<'_, '_, '_, '_> {
         final_inst: NodeId,
     ) -> Result<TranslatedExpression, Unsupported> {
         let (call, op) = match self.f.inst(final_inst) {
-            Inst::Call(c) => (c.clone(), CallOp::Call),
-            Inst::CallVirt(c) => (c.clone(), CallOp::CallVirt),
-            _ => return Err("named arguments of an object creation".to_owned()),
+            Inst::Call(c) => (c.clone(), Some(CallOp::Call)),
+            Inst::CallVirt(c) => (c.clone(), Some(CallOp::CallVirt)),
+            // `Build(OpCode.NewObj, ...)`: the constructor call.
+            Inst::NewObj(c) => (c.clone(), None),
+            _ => return Err("named arguments of another call".to_owned()),
         };
-        let first_param = usize::from(!call.method.method.is_static);
+        // An object creation has no target among its arguments.
+        let first_param = usize::from(op.is_some() && !call.method.method.is_static);
         let is_named = |b: &Self, n: NodeId| match *b.f.inst(n) {
             Inst::LdLoc { var } => b.f.var(var).kind == crate::il::ast::VariableKind::NamedArgument,
             _ => false,
@@ -2362,7 +2364,13 @@ impl Builder<'_, '_, '_, '_> {
         }
         let call = crate::il::ast::CallData { args, ..call };
         self.named_argument_map = Some(map);
-        let result = self.call(final_inst, &call, op);
+        let result = match op {
+            Some(op) => self.call(final_inst, &call, op),
+            None => {
+                let no_hint = self.ts.intern(TypeData::NoType);
+                self.new_obj(final_inst, &call, no_hint)
+            }
+        };
         self.named_argument_map = None;
         let result = result?;
         self.ast.with_il(result.expression, block);
