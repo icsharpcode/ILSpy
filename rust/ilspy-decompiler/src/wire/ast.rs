@@ -520,6 +520,8 @@ fn node(w: &mut FunctionWriter<'_, '_, '_, '_>, ast: &Ast, id: AstId) -> Result<
             w.ty(ty);
             constant(w, &value);
             w.out.bool(allow_implicit_conversion);
+            let special = w.special_constants;
+            constant_syntax(w, ty, &value, allow_implicit_conversion, false, special)?;
         }
         AstNode::LocalFunctionDeclaration { body } => node(w, ast, body)?,
         AstNode::SwitchExpression { expression, arms } => {
@@ -538,6 +540,8 @@ fn node(w: &mut FunctionWriter<'_, '_, '_, '_>, ast: &Ast, id: AstId) -> Result<
             w.ty(ty);
             constant(w, &value);
             w.out.bool(display_as_hex);
+            let special = w.special_constants;
+            constant_syntax(w, ty, &value, false, display_as_hex, special)?;
         }
         AstNode::StringLiteral { value } => utf16(w, &value),
         AstNode::Identifier { name } => w.string(&name),
@@ -812,7 +816,11 @@ fn node(w: &mut FunctionWriter<'_, '_, '_, '_>, ast: &Ast, id: AstId) -> Result<
             }
             w.out.bool(initializer.is_some());
             if let Some(i) = initializer {
-                node(w, ast, i)?;
+                // `UseSpecialConstants` as given, for the elements.
+                let saved = std::mem::replace(&mut w.special_constants, special_constants);
+                let written = node(w, ast, i);
+                w.special_constants = saved;
+                written?;
             }
         }
         AstNode::YieldReturn { expression } => node(w, ast, expression)?,
@@ -953,6 +961,97 @@ fn node(w: &mut FunctionWriter<'_, '_, '_, '_>, ast: &Ast, id: AstId) -> Result<
         | AstNode::YieldBreak => {}
     }
     Ok(())
+}
+
+/// The constant's syntax (`csharp::constant_syntax`), or 0 when the host converts it.
+fn constant_syntax(
+    w: &mut FunctionWriter<'_, '_, '_, '_>,
+    ty: crate::typesystem::types::TypeId,
+    value: &ConstValue,
+    allow_implicit_conversion: bool,
+    hex: bool,
+    special_constants: bool,
+) -> Result<(), String> {
+    let syntax = crate::csharp::constant_syntax::ConstantSyntaxBuilder::new(w.ts).convert(
+        ty,
+        value,
+        allow_implicit_conversion,
+        hex,
+        special_constants,
+    );
+    match syntax {
+        Some(s) => {
+            w.out.u8(1);
+            constant_syntax_node(w, &s);
+        }
+        None => w.out.u8(0),
+    }
+    Ok(())
+}
+
+fn constant_syntax_node(
+    w: &mut FunctionWriter<'_, '_, '_, '_>,
+    s: &crate::csharp::constant_syntax::ConstSyntax,
+) {
+    use crate::csharp::constant_syntax::{ConstRr, ConstSyntaxKind as K};
+    match &s.kind {
+        K::Literal { value, hex } => {
+            w.out.u8(0);
+            constant(w, value);
+            w.out.bool(*hex);
+        }
+        K::Null => w.out.u8(1),
+        K::Default(t) => {
+            w.out.u8(2);
+            w.ty(*t);
+        }
+        K::Cast(t, e) => {
+            w.out.u8(3);
+            w.ty(*t);
+            constant_syntax_node(w, e);
+        }
+        K::PrimitiveCast(keyword, e) => {
+            w.out.u8(4);
+            w.string(keyword);
+            constant_syntax_node(w, e);
+        }
+        K::SpecialConstant { ty, field, name } => {
+            w.out.u8(5);
+            w.ty(*ty);
+            w.out.len(field.module.0 as usize);
+            w.out.uvar(u64::from(field.row));
+            w.string(name);
+        }
+        K::EnumMember { ty, field, name } => {
+            w.out.u8(6);
+            w.ty(*ty);
+            w.out.len(field.module.0 as usize);
+            w.out.uvar(u64::from(field.row));
+            w.string(name);
+        }
+        K::BitwiseOr(l, r) => {
+            w.out.u8(7);
+            constant_syntax_node(w, l);
+            constant_syntax_node(w, r);
+        }
+        K::Minus(e) => {
+            w.out.u8(8);
+            constant_syntax_node(w, e);
+        }
+        K::BitNot(e) => {
+            w.out.u8(9);
+            constant_syntax_node(w, e);
+        }
+    }
+    match &s.rr {
+        None => w.out.u8(0),
+        Some(ConstRr::Constant(t, v)) => {
+            w.out.u8(1);
+            w.ty(*t);
+            constant(w, v);
+        }
+        Some(ConstRr::NullLiteral) => w.out.u8(2),
+    }
 }
 
 fn utf16(w: &mut FunctionWriter<'_, '_, '_, '_>, value: &[u16]) {

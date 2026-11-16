@@ -4528,6 +4528,28 @@ counted as a type syntax fallback, which the ratchet test prints: 2 in its corpu
 
 The share stayed at 100.0 %.
 
+### 3.199 Constants as syntax (item 68z2)
+
+`ExpressionBuilder.ConvertConstantValue` wraps `TypeSystemAstBuilder.ConvertConstantValue`:
+a cast where the context does not supply the type (a null of a typed context, a small or native
+integer), and the constant's own resolve result on an expression that has none. The engine
+writes the whole expression after each constant node (`csharp/constant_syntax.rs`): the literal
+with the literal type's `ConstantResolveResult` (`int` for small integers, `uint` for `nuint`),
+`null` or `default(T)` by the managed rule (reference type, `Nullable<T>` or pointer), the
+special constants (`int.MaxValue`, `decimal.MinValue`) as member references of the known type
+where its field exists and `UseSpecialConstants` holds, and enum values as `ConvertEnumValue`
+builds them: the member of that value, or for a `[Flags]` enum the members whose bits make up
+the value, or the complement where that takes fewer members, otherwise the cast numeric value.
+An enum member reference's `MemberResolveResult` has the unannotated type reference's resolve
+result as target, `ErrorResolveResult.UnknownError`, as in the managed builder. The initializers
+of integer and decimal arrays turn `UseSpecialConstants` off, which the writer carries down.
+Floating point constants (special values, fractions, multiples of PI and E, which depend on the
+round-trip formatting of .NET) and nulls of a type parameter's type, whose reference type
+question the writer's read-only type system cannot answer, stay with the host's builder and are
+counted (`shortcut:`): 9 constants in the ratchet corpus.
+
+The share stayed at 100.0 %.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

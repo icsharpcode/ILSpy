@@ -15,7 +15,7 @@ use crate::typesystem::types::{TypeId, TypeSystem};
 
 use super::{Bytes, Tables};
 
-pub const VERSION: u32 = 3;
+pub const VERSION: u32 = 4;
 
 /// Node tags; `IlAstMaterializer.cs` mirrors them.
 mod op {
@@ -165,6 +165,7 @@ impl<'t, 'c, 'a> ModuleWriter<'t, 'c, 'a> {
             block_order: Vec::new(),
             containers: HashMap::new(),
             written: HashMap::new(),
+            special_constants: true,
         };
         w.write(r, &nested)?;
         super::ast::write_body(&mut w, body)?;
@@ -183,7 +184,10 @@ impl<'t, 'c, 'a> ModuleWriter<'t, 'c, 'a> {
 }
 
 pub(super) struct FunctionWriter<'w, 't, 'c, 'a> {
-    ts: &'t TypeSystem<'c, 'a>,
+    pub(super) ts: &'t TypeSystem<'c, 'a>,
+    /// `UseSpecialConstants` for the constants written now: off in the initializers of
+    /// integer and decimal arrays.
+    pub(super) special_constants: bool,
     tables: &'w mut Tables,
     f: &'w Function,
     pub(super) out: Bytes,
@@ -2005,6 +2009,7 @@ fn query_message(
         block_order: Vec::new(),
         containers: HashMap::new(),
         written: HashMap::new(),
+        special_constants: true,
     };
     w.contexts();
     write(&mut w)?;

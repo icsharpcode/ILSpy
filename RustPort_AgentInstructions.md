@@ -725,8 +725,10 @@ the reasons. This file holds only the ordered steps, their gates and their rules
         name qualification, type syntax nodes in the body AST, the host building `AstType`
         from them instead of calling `ConvertType`. Subject:
         `Port TypeSystemAstBuilder.ConvertType to Rust`.
-      - [ ] 68z2. Constants as syntax: `ConvertConstantValue` (enum flags, decimals, special
-        floating values). Subject: `Port TypeSystemAstBuilder.ConvertConstantValue to Rust`.
+      - [x] 68z2. Constants as syntax: `ConvertConstantValue` (enum flags, decimals, special
+        constants; lecture 3.199). Subject: `Port TypeSystemAstBuilder.ConvertConstantValue to Rust`.
+      - [ ] 68z2b. Floating point constants (`ConvertFloatingPointLiteral`) and nulls of type
+        parameter types. Subject: `Port floating point constant syntax to Rust`.
       - [ ] 68z3. Member declarations: `ConvertEntity` for methods, constructors, fields,
         properties, indexers, events and operators, with modifiers, parameters and attributes.
         Subject: `Port member declarations of TypeSystemAstBuilder to Rust`.

@@ -6,6 +6,7 @@
 
 pub mod ast;
 mod call_builder;
+pub mod constant_syntax;
 mod deconstruct;
 mod delegate;
 mod expression_builder;

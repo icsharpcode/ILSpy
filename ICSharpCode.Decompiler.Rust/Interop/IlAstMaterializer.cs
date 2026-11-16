@@ -351,7 +351,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 	/// </summary>
 	internal sealed class IlAstMaterializer : WireReader
 	{
-		public const uint Version = 3;
+		public const uint Version = 4;
 
 		readonly MetadataModule mainModule;
 		readonly DecompilerSettings settings;
@@ -853,6 +853,12 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					node.Type = Type();
 					node.Value = Constant();
 					node.Flag = Bool();
+					if (Bool())
+					{
+						bool complete = true;
+						var syntax = ConstantSyntax(ref complete);
+						node.ConstantSyntax = complete ? syntax : null;
+					}
 					break;
 				case RustBodyNode.StringLiteral:
 					node.Value = String();
@@ -1535,6 +1541,96 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 			return candidates
 				.FirstOrDefault(m => m.Parameters.Select(p => Oblivious(p.Type)).SequenceEqual(parameterTypes.Select(Oblivious)))
 				?? throw new InvalidOperationException($"No method {name} of {type} matches the sent parameter types");
+		}
+
+		/// <summary>
+		/// A constant as the engine wrote it (rust/ilspy-decompiler/src/csharp/constant_syntax.rs);
+		/// <paramref name="complete"/> turns false where a type has no syntax entry.
+		/// </summary>
+		CSharp.Syntax.Expression ConstantSyntax(ref bool complete)
+		{
+			CSharp.Syntax.Expression result;
+			byte tag = U8();
+			switch (tag)
+			{
+				case 0:
+				{
+					var value = Constant()!;
+					result = new CSharp.Syntax.PrimitiveExpression(value,
+						Bool() ? CSharp.Syntax.LiteralFormat.HexadecimalNumber : CSharp.Syntax.LiteralFormat.None);
+					break;
+				}
+				case 1:
+					result = new CSharp.Syntax.NullReferenceExpression();
+					break;
+				case 2:
+					result = new CSharp.Syntax.DefaultValueExpression(SyntaxOf(Type(), ref complete));
+					break;
+				case 3:
+				{
+					var type = SyntaxOf(Type(), ref complete);
+					result = new CSharp.Syntax.CastExpression(type, ConstantSyntax(ref complete));
+					break;
+				}
+				case 4:
+				{
+					var keyword = Str();
+					result = new CSharp.Syntax.CastExpression(new CSharp.Syntax.PrimitiveType(keyword), ConstantSyntax(ref complete));
+					break;
+				}
+				case 5:
+				case 6:
+				{
+					bool special = tag == 5;
+					var type = Type();
+					var module = modules[Len()];
+					var field = module.GetDefinition(MetadataTokens.FieldDefinitionHandle(Len()));
+					var target = new CSharp.Syntax.TypeReferenceExpression(SyntaxOf(type, ref complete));
+					if (special)
+						target.AddAnnotation(new TypeResolveResult(type));
+					var reference = new CSharp.Syntax.MemberReferenceExpression(target, Str());
+					reference.AddAnnotation(new MemberResolveResult(
+						special ? new TypeResolveResult(type) : ErrorResolveResult.UnknownError, field));
+					result = reference;
+					break;
+				}
+				case 7:
+				{
+					var left = ConstantSyntax(ref complete);
+					result = new CSharp.Syntax.BinaryOperatorExpression(left, CSharp.Syntax.BinaryOperatorType.BitwiseOr, ConstantSyntax(ref complete));
+					break;
+				}
+				case 8:
+					result = new CSharp.Syntax.UnaryOperatorExpression(CSharp.Syntax.UnaryOperatorType.Minus, ConstantSyntax(ref complete));
+					break;
+				case 9:
+					result = new CSharp.Syntax.UnaryOperatorExpression(CSharp.Syntax.UnaryOperatorType.BitNot, ConstantSyntax(ref complete));
+					break;
+				default:
+					throw new InvalidOperationException("Unknown wire constant syntax tag");
+			}
+			switch (U8())
+			{
+				case 1:
+				{
+					var type = Type();
+					result.AddAnnotation(new ConstantResolveResult(type, Constant()));
+					break;
+				}
+				case 2:
+					result.AddAnnotation(new ConstantResolveResult(SpecialType.NullType, null));
+					break;
+			}
+			return result;
+		}
+
+		/// <summary>The engine's syntax of <paramref name="type"/>, a placeholder where it has none.</summary>
+		CSharp.Syntax.AstType SyntaxOf(IType type, ref bool complete)
+		{
+			if (TypeSyntax(type) is { } syntax)
+				return syntax;
+			complete = false;
+			return new CSharp.Syntax.SimpleType("?");
 		}
 
 		IField Field()

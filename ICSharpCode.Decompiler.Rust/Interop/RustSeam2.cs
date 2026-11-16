@@ -161,6 +161,8 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		/// <summary>For a generic name: the type arguments written with it.</summary>
 		public IType[] TypeArguments = [];
 		public object? Value;
+		/// <summary>For a constant: the expression the engine wrote it as; null when the host converts it.</summary>
+		public Expression? ConstantSyntax;
 		/// <summary>For a recursive pattern: the member of each sub-pattern.</summary>
 		public IMember[] Members = [];
 		public bool Flag;
@@ -195,11 +197,17 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		/// </summary>
 		public static long TypeSyntaxFallbacks => Interlocked.Read(ref typeSyntaxFallbacks);
 
+		static long constantSyntaxFallbacks;
+
+		/// <summary>Constants of a served body the engine sent no syntax for, which the managed builder converted.</summary>
+		public static long ConstantSyntaxFallbacks => Interlocked.Read(ref constantSyntaxFallbacks);
+
 		public static void ResetCounters()
 		{
 			Interlocked.Exchange(ref served, 0);
 			Interlocked.Exchange(ref fallbacks, 0);
 			Interlocked.Exchange(ref typeSyntaxFallbacks, 0);
+			Interlocked.Exchange(ref constantSyntaxFallbacks, 0);
 			fallbackReasons.Clear();
 		}
 
@@ -211,6 +219,13 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		/// <c>exprBuilder.ConvertType(type)</c> as the engine built it; the managed conversion,
 		/// counted, for a type the engine sent no syntax for.
 		/// </summary>
+		/// <summary>A constant the managed builder converted, counted.</summary>
+		static Expression ConstantFallback(Expression expression)
+		{
+			Interlocked.Increment(ref constantSyntaxFallbacks);
+			return expression;
+		}
+
 		static AstType ConvertType(ExpressionBuilder exprBuilder, IType type)
 		{
 			if (currentTypes?.TypeSyntax(type) is { } syntax)
@@ -354,7 +369,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				case RustBodyNode.ConstantValue:
 				{
 					// The AST builder annotates the constant itself.
-					var expression = exprBuilder.ConvertConstantValue(new ConstantResolveResult(node.Type!, node.Value), node.Flag).Expression;
+					var expression = node.ConstantSyntax ?? ConstantFallback(exprBuilder.ConvertConstantValue(new ConstantResolveResult(node.Type!, node.Value), node.Flag).Expression);
 					foreach (var inst in node.IL)
 						expression.AddAnnotation(inst);
 					return expression;
@@ -375,8 +390,8 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				case RustBodyNode.HexConstant:
 				{
 					// A bitwise operator's constant operand, in hexadecimal where the flag says so.
-					var expression = exprBuilder.ConvertConstantValue(new ConstantResolveResult(node.Type!, node.Value),
-						allowImplicitConversion: false, displayAsHex: node.Flag).Expression;
+					var expression = node.ConstantSyntax ?? ConstantFallback(exprBuilder.ConvertConstantValue(new ConstantResolveResult(node.Type!, node.Value),
+						allowImplicitConversion: false, displayAsHex: node.Flag).Expression);
 					foreach (var inst in node.IL)
 						expression.AddAnnotation(inst);
 					return expression;
