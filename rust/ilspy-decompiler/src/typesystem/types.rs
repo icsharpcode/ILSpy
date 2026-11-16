@@ -351,6 +351,50 @@ impl<'c, 'a> TypeSystem<'c, 'a> {
         id
     }
 
+    /// Interns the oblivious instance of every generic instance interned so far whose generic
+    /// type carries a nullability, which the type syntax of a nullable instance is annotated
+    /// with (`type.ChangeNullability(Nullability.Oblivious)`).
+    pub fn intern_oblivious_instances(&mut self) {
+        for i in 0..self.data.len() {
+            if let TypeData::Inst { generic, args } = &self.data[i]
+                && let TypeData::Annotated { inner, .. } = self.data[generic.0 as usize]
+            {
+                let oblivious = TypeData::Inst {
+                    generic: inner,
+                    args: args.clone(),
+                };
+                self.intern(oblivious);
+            }
+        }
+    }
+
+    /// Interns the types the constant syntax names without interning them: the primitive types
+    /// (literal and enum underlying types) and `System.Math` (`Math.PI`, `Math.E`).
+    pub fn intern_constant_types(&mut self) {
+        use super::known::KnownTypeCode as K;
+        for code in [
+            K::Object,
+            K::Boolean,
+            K::Char,
+            K::SByte,
+            K::Byte,
+            K::Int16,
+            K::UInt16,
+            K::Int32,
+            K::UInt32,
+            K::Int64,
+            K::UInt64,
+            K::Single,
+            K::Double,
+            K::Decimal,
+            K::String,
+        ] {
+            self.known_type(code);
+        }
+        self.find_top_level(super::names::TopLevelTypeName::new("System", "Math", 0));
+        self.intern(TypeData::UnknownSpecial);
+    }
+
     /// The id of a type interned before, without interning it.
     pub fn find(&self, data: &TypeData) -> Option<TypeId> {
         self.map.get(data).copied()

@@ -237,7 +237,22 @@ impl<'t, 'c, 'a> TypeSyntaxBuilder<'t, 'c, 'a> {
                 {
                     return Some(self.convert_type(arg)?.make_nullable());
                 }
-                self.convert_generic(generic, &args)?
+                // A generic instance carries its nullability on the generic type; a nullable
+                // one is the oblivious instance's syntax, annotated with it, made nullable.
+                let (definition, nullability) = match *ts.data(generic) {
+                    TypeData::Annotated { inner, nullability } => (inner, nullability),
+                    _ => (generic, Nullability::Oblivious),
+                };
+                let syntax = self.convert_generic(definition, &args)?;
+                if nullability == Nullability::Nullable {
+                    let mut syntax = syntax;
+                    syntax.annotations.push(ts.find(&TypeData::Inst {
+                        generic: definition,
+                        args: args.clone(),
+                    })?);
+                    return Some(syntax.make_nullable());
+                }
+                syntax
             }
             TypeData::Dynamic => TypeSyntax::new(TypeSyntaxKind::Primitive("dynamic".to_owned())),
             TypeData::NInt => TypeSyntax::new(TypeSyntaxKind::Primitive("nint".to_owned())),

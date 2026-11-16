@@ -1551,6 +1551,10 @@ pub fn read_function(
             Some(Err(reason)) => Some(Err(reason)),
             None => None,
         };
+    if matches!(translated, Some(Ok(_))) {
+        ts.intern_oblivious_instances();
+        ts.intern_constant_types();
+    }
     let mut w = ModuleWriter::new(ts);
     w.function(method.row, &f, translated.as_ref())?;
     if matches!(translated, Some(Ok(_))) {
@@ -2028,7 +2032,9 @@ pub fn field_syntax(
 ) -> Result<Vec<u8>, String> {
     // The unbound type argument the type syntax of a generic definition names.
     ts.intern(crate::typesystem::types::TypeData::Unbound);
+    ts.intern_constant_types();
     let syntax = crate::csharp::entity_syntax::convert_field(ts, module, row, options);
+    ts.intern_oblivious_instances();
     let ts = &*ts;
     let mut tables = Tables::default();
     let empty = Function::default();

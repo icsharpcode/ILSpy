@@ -4596,6 +4596,24 @@ ratchet corpus; 59 fall back, for types without syntax and constants it does not
 
 The share stayed at 100.0 %.
 
+### 3.202 Nullable generic instances and the fresh type system of an entity request (item 68z3a)
+
+The engine keeps the nullability of a generic instance on its generic type
+(`Inst { generic: Annotated { Def, n } }`), which the host decodes as a `ParameterizedType` over a
+nullability-annotated definition. `ConvertType` writes the definition's name with the type
+arguments, and for a nullable instance adds the `TypeResolveResult` of the oblivious instance
+(`type.ChangeNullability(Nullability.Oblivious)`) before `MakeNullableType`; the type syntax did
+not see through the annotation and gave such instances no syntax, which the host then converted.
+
+The type syntax and the constant syntax are written with a read-only type system, so every type
+they name has to be interned before: an entity request starts from a fresh type system, where
+the oblivious instances, the literal and enum underlying types and `System.Math` may not exist
+yet. Both requests now intern them first (`intern_oblivious_instances`,
+`intern_constant_types`). The engine writes all 338 field declarations of the ratchet corpus,
+and served bodies need no managed type syntax.
+
+The share stayed at 100.0 %.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |
