@@ -39,6 +39,7 @@
 //        dotnet run nugetfuzz.cs -- [--pdb] <PackageId[@Version]>... | @packagelist.txt
 //        dotnet run nugetfuzz.cs -- --pdb-lint <file.dll|dir>... | @corpus.txt
 
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO.Compression;
@@ -99,7 +100,7 @@ var versionCache = new Dictionary<string, List<NuGetVersion>>();
 var noSuchPackage = new HashSet<string>();
 // Guards failures, the counters, versionCache, noSuchPackage and corpusDirs when packages run concurrently.
 var stateLock = new object();
-var downloadGate = new SemaphoreSlim(1);
+var downloadGates = new ConcurrentDictionary<string, SemaphoreSlim>(StringComparer.OrdinalIgnoreCase);
 
 // Legacy framework-satellite assemblies whose nuget package id differs from the assembly name.
 var assemblyPackageAlias = new Dictionary<string, string> {
@@ -322,11 +323,11 @@ async Task ProcessPackage(string spec)
 	searchDirs.Insert(0, libDir);
 	if (downloadOnly)
 	{
-		// The package and its dependency closure are in the cache now, which is all a
-		// corpus needs; decompiling every type is what the sweep is for.
-		Console.WriteLine($"  cached: {libDir}");
+		// Include the dependency closure in the corpus so consumers such as decompdiff can
+		// exercise those assemblies and resolve references from the same downloaded set.
+		Console.WriteLine($"  cached: {searchDirs.Count} lib directories");
 		lock (stateLock)
-			corpusDirs.Add(libDir);
+			corpusDirs.AddRange(searchDirs);
 		return;
 	}
 	// The installed runtime dir is a last-resort fallback only: Microsoft.NETCore.App
@@ -733,7 +734,8 @@ async Task<string> GetPackage(string id, NuGetVersion version)
 	if (Directory.Exists(globalDir))
 		return globalDir;
 	var dir = Path.Combine(cacheRoot, idLower, v);
-	// Serialized so two packages sharing a dependency do not extract into the same .tmp directory.
+	// Serialize only callers fetching this package; unrelated packages can download concurrently.
+	var downloadGate = downloadGates.GetOrAdd(dir, _ => new SemaphoreSlim(1));
 	await downloadGate.WaitAsync();
 	try
 	{
