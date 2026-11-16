@@ -4680,6 +4680,17 @@ The engine writes 1712 declarations of the ratchet corpus.
 
 The share stayed at 100.0 %.
 
+### 3.206 Overrides of one accessor (item 68z3c)
+
+The engine already had `MetadataProperty.ComputeAccessibility` (`member_accessibility`, from
+item 67): an override that declares one accessor takes the accessibility of its nearest base
+property that is no override, with `protected internal` reduced to `protected` across
+assemblies, and otherwise the union of its accessors'. Property declarations use it, so the 18
+single-accessor overrides of the ratchet corpus no longer fall back; the engine writes 1730
+declarations, and only the 30 members of types with extension blocks stay with the host.
+
+The share stayed at 100.0 %.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

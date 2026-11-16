@@ -706,13 +706,6 @@ pub struct PropertySyntax {
     pub private_implementation_type: Option<TypeId>,
 }
 
-/// `AccessibilityExtensions.Union` of managed `Accessibility` values.
-fn accessibility_union(a: u8, b: u8) -> u8 {
-    let (a, b) = if a > b { (b, a) } else { (a, b) };
-    // Protected (3) and Internal (4) make ProtectedOrInternal (5).
-    if a == 3 && b == 4 { 5 } else { b }
-}
-
 /// `ModifierFromAccessibility` of a managed `Accessibility` value.
 fn modifier_of_accessibility(value: u8, private_protected: bool) -> u32 {
     use modifiers::*;
@@ -907,23 +900,13 @@ pub fn convert_property(
         .property_symbol_kind(module, row)
         .map_err(|e| e.to_string())?;
     let any_method = MethodDefId { module, row: any };
-    let modifiers_info = ts
-        .method_modifiers_of(any_method)
+    // `MetadataProperty.ComputeAccessibility`, with an override of one accessor copying the
+    // base member's.
+    let accessibility = ts
+        .member_accessibility(crate::typesystem::inheritance::MemberDef::Property(
+            module, row,
+        ))
         .map_err(|e| e.to_string())?;
-    // `ComputeAccessibility`: an override of one accessor copies the base member's.
-    if modifiers_info.is_override && (getter == 0 || setter == 0) {
-        return Err("an override of one accessor".to_owned());
-    }
-    let accessibility_of = |ts: &TypeSystem<'_, '_>, r: u32| {
-        if r == 0 {
-            Ok(0)
-        } else {
-            ts.method_accessibility_of(MethodDefId { module, row: r })
-                .map_err(|e| e.to_string())
-        }
-    };
-    let accessibility =
-        accessibility_union(accessibility_of(ts, getter)?, accessibility_of(ts, setter)?);
     let in_interface = ts
         .comp
         .type_def(declaring)
