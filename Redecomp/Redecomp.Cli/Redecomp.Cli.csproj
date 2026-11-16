@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <AssemblyName>redecomp</AssemblyName>
+    <RedecompReferencesDecompiler>true</RedecompReferencesDecompiler>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../Redecomp.Core/Redecomp.Core.csproj" />
+  </ItemGroup>
+</Project>

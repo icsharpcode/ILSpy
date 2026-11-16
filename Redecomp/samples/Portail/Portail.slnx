@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="Portail.App/Portail.App.csproj" />
+  <Project Path="Portail.Metier/Portail.Metier.csproj" />
+</Solution>

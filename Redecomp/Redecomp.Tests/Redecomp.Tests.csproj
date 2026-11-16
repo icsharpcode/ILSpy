@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- A plain console runner keeps the tests runnable without any NuGet package. -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <RedecompReferencesDecompiler>true</RedecompReferencesDecompiler>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../Redecomp.Bench/Redecomp.Bench.csproj" />
+  </ItemGroup>
+</Project>

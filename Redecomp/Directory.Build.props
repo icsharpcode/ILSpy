@@ -1,0 +1,25 @@
+<Project>
+  <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <!-- Redecomp projects carry no NuGet packages of their own; lock files would only mirror the
+         decompiler's and churn whenever the engine is referenced as a prebuilt assembly. -->
+    <RestorePackagesWithLockFile>false</RestorePackagesWithLockFile>
+  </PropertyGroup>
+
+  <!--
+    The decompiler engine is consumed as a project reference by default. Setting
+    RedecompDecompilerAssembly to the path of a prebuilt ICSharpCode.Decompiler.dll references
+    that assembly instead, which allows building Redecomp on machines without NuGet access.
+  -->
+  <ItemGroup Condition="'$(RedecompReferencesDecompiler)' == 'true' and '$(RedecompDecompilerAssembly)' == ''">
+    <ProjectReference Include="$(MSBuildThisFileDirectory)../ICSharpCode.Decompiler/ICSharpCode.Decompiler.csproj" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(RedecompReferencesDecompiler)' == 'true' and '$(RedecompDecompilerAssembly)' != ''">
+    <Reference Include="ICSharpCode.Decompiler" HintPath="$(RedecompDecompilerAssembly)" />
+  </ItemGroup>
+</Project>
