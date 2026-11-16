@@ -15,7 +15,7 @@ use crate::typesystem::types::{TypeId, TypeSystem};
 
 use super::{Bytes, Tables};
 
-pub const VERSION: u32 = 4;
+pub const VERSION: u32 = 5;
 
 /// Node tags; `IlAstMaterializer.cs` mirrors them.
 mod op {

@@ -1042,6 +1042,29 @@ fn constant_syntax_node(
             w.out.u8(9);
             constant_syntax_node(w, e);
         }
+        K::Divide(l, r) => {
+            w.out.u8(10);
+            constant_syntax_node(w, l);
+            constant_syntax_node(w, r);
+        }
+        K::Multiply(l, r) => {
+            w.out.u8(11);
+            constant_syntax_node(w, l);
+            constant_syntax_node(w, r);
+        }
+        K::MathMember { ty, field, name } => {
+            w.out.u8(12);
+            w.ty(*ty);
+            match field {
+                Some(f) => {
+                    w.out.u8(1);
+                    w.out.len(f.module.0 as usize);
+                    w.out.uvar(u64::from(f.row));
+                }
+                None => w.out.u8(0),
+            }
+            w.string(name);
+        }
     }
     match &s.rr {
         None => w.out.u8(0),

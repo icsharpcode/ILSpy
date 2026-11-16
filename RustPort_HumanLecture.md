@@ -4550,6 +4550,25 @@ counted (`shortcut:`): 9 constants in the ratchet corpus.
 
 The share stayed at 100.0 %.
 
+### 3.200 Floating point constants as syntax (item 68z2b)
+
+A float or double is first a special constant (`double.NaN`, `float.MaxValue`, `-double.Epsilon`
+as a negated member), or with `UseSpecialConstants` off an infinity or NaN as the division
+`1.0 / 0.0`, `-1.0 / 0.0` or `0.0 / 0.0`. Otherwise `ConvertFloatingPointLiteral` decides by the
+length of the value's round-trip string (`ToString("r")`): an integral value is a literal; a
+value of more than five significant characters may become a fraction found by continued
+fractions (denominators up to 1000 for doubles, 200 for floats), possibly replaced by one with a
+preferred binary scale (powers of two and 2^n-1) when that is no longer; and failing a fraction,
+a double may be a simple multiple or divisor of `Math.PI` or `Math.E`. The engine ports the
+.NET round-trip format (shortest digits, fixed notation for decimal exponents above -5 and below
+the precision, 15 for double and 7 for float, otherwise `d.dddE+XX`), `Math.Round`'s rounding
+half to even, and the comparisons in each type's precision. A float that reaches the PI and E
+search chooses between `MathF` and `Math` by `IsDirectImportOf`, which compares full assembly
+names; such a float stays with the host's builder and is counted (`shortcut:`), as does a null
+of a type parameter's type. The ratchet corpus has none of either.
+
+The share stayed at 100.0 %.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

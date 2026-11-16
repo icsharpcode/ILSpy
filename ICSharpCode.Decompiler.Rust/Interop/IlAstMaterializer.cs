@@ -351,7 +351,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 	/// </summary>
 	internal sealed class IlAstMaterializer : WireReader
 	{
-		public const uint Version = 4;
+		public const uint Version = 5;
 
 		readonly MetadataModule mainModule;
 		readonly DecompilerSettings settings;
@@ -1606,6 +1606,31 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				case 9:
 					result = new CSharp.Syntax.UnaryOperatorExpression(CSharp.Syntax.UnaryOperatorType.BitNot, ConstantSyntax(ref complete));
 					break;
+				case 10:
+				case 11:
+				{
+					var op = tag == 10 ? CSharp.Syntax.BinaryOperatorType.Divide : CSharp.Syntax.BinaryOperatorType.Multiply;
+					var left = ConstantSyntax(ref complete);
+					result = new CSharp.Syntax.BinaryOperatorExpression(left, op, ConstantSyntax(ref complete));
+					break;
+				}
+				case 12:
+				{
+					// `Math.PI`: the member's target is the type syntax's resolve result.
+					var type = Type();
+					IField? field = null;
+					if (Bool())
+					{
+						var module = modules[Len()];
+						field = module.GetDefinition(MetadataTokens.FieldDefinitionHandle(Len()));
+					}
+					var typeSyntax = SyntaxOf(type, ref complete);
+					var reference = new CSharp.Syntax.MemberReferenceExpression(new CSharp.Syntax.TypeReferenceExpression(typeSyntax), Str());
+					if (field != null)
+						reference.AddAnnotation(new MemberResolveResult(typeSyntax.Annotation<ResolveResult>(), field));
+					result = reference;
+					break;
+				}
 				default:
 					throw new InvalidOperationException("Unknown wire constant syntax tag");
 			}

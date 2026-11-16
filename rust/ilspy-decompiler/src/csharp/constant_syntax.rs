@@ -53,6 +53,18 @@ pub enum ConstSyntaxKind {
     },
     /// `left | right`.
     BitwiseOr(Box<ConstSyntax>, Box<ConstSyntax>),
+    /// `left / right`.
+    Divide(Box<ConstSyntax>, Box<ConstSyntax>),
+    /// `left * right`.
+    Multiply(Box<ConstSyntax>, Box<ConstSyntax>),
+    /// `Math.PI` or `Math.E`: the type reference unannotated (its type syntax carries the
+    /// `TypeResolveResult`), the member reference with `MemberResolveResult` where the field
+    /// exists.
+    MathMember {
+        ty: TypeId,
+        field: Option<FieldRef>,
+        name: &'static str,
+    },
     /// `-expression`.
     Minus(Box<ConstSyntax>),
     /// `~expression`.
@@ -289,9 +301,12 @@ impl<'t, 'c, 'a> ConstantSyntaxBuilder<'t, 'c, 'a> {
         }
         let code = self.known_code(underlying);
         if matches!(code, KnownTypeCode::Single | KnownTypeCode::Double) {
-            // shortcut: floating point constants (special values, fractions, multiples of PI
-            // and E) stay with the host's builder; port ConvertFloatingPointLiteral next.
-            return None;
+            return self.convert_floating_point(
+                underlying,
+                code == KnownTypeCode::Double,
+                value,
+                special_constants,
+            );
         }
         let integer = matches!(
             code,
@@ -475,5 +490,510 @@ impl<'t, 'c, 'a> ConstantSyntaxBuilder<'t, 'c, 'a> {
             ty,
             Box::new(numeric),
         )))
+    }
+}
+
+/// A float or double constant, each in its own precision.
+#[derive(Clone, Copy)]
+enum Fp {
+    Single(f32),
+    Double(f64),
+}
+
+impl Fp {
+    fn value(self) -> f64 {
+        match self {
+            Fp::Single(v) => f64::from(v),
+            Fp::Double(v) => v,
+        }
+    }
+
+    fn constant(self) -> ConstValue {
+        match self {
+            Fp::Single(v) => ConstValue::Single(v.to_bits()),
+            Fp::Double(v) => ConstValue::Double(v.to_bits()),
+        }
+    }
+
+    /// The same type with another value.
+    fn with(self, f: f64) -> Fp {
+        match self {
+            Fp::Single(_) => Fp::Single(f as f32),
+            Fp::Double(_) => Fp::Double(f),
+        }
+    }
+
+    /// `MakeConstant(type, c)`: the integer as a literal of the floating point type.
+    fn of(self, c: i64) -> ConstValue {
+        match self {
+            Fp::Single(_) => ConstValue::Single((c as f32).to_bits()),
+            Fp::Double(_) => ConstValue::Double((c as f64).to_bits()),
+        }
+    }
+
+    /// `IsEqual(num, den, constantValue, isDouble)`: `num / den` in the type's precision.
+    fn equals_fraction(self, num: i64, den: i64) -> bool {
+        match self {
+            Fp::Single(v) => v == num as f32 / den as f32,
+            Fp::Double(v) => v == num as f64 / den as f64,
+        }
+    }
+
+    /// `ToString("r")`: the shortest round-trip digits, in fixed notation for decimal exponents
+    /// above -5 and below the type's precision (15 for double, 7 for float), otherwise as
+    /// `d.dddE+XX`.
+    fn round_trip_string(self) -> String {
+        let (scientific, precision) = match self {
+            Fp::Single(v) => (format!("{v:e}"), 7),
+            Fp::Double(v) => (format!("{v:e}"), 15),
+        };
+        let (mantissa, exponent) = scientific.split_once('e').expect("an exponent");
+        let exponent: i32 = exponent.parse().expect("a decimal exponent");
+        let digits: String = mantissa.chars().filter(char::is_ascii_digit).collect();
+        let mut s = String::new();
+        if mantissa.starts_with('-') {
+            s.push('-');
+        }
+        if exponent > -5 && exponent < precision {
+            if exponent >= 0 {
+                let int_len = exponent as usize + 1;
+                if digits.len() <= int_len {
+                    s.push_str(&digits);
+                    s.extend(std::iter::repeat_n('0', int_len - digits.len()));
+                } else {
+                    s.push_str(&digits[..int_len]);
+                    s.push('.');
+                    s.push_str(&digits[int_len..]);
+                }
+            } else {
+                s.push_str("0.");
+                s.extend(std::iter::repeat_n('0', (-exponent - 1) as usize));
+                s.push_str(&digits);
+            }
+        } else {
+            s.push_str(&digits[..1]);
+            if digits.len() > 1 {
+                s.push('.');
+                s.push_str(&digits[1..]);
+            }
+            s.push('E');
+            s.push(if exponent < 0 { '-' } else { '+' });
+            s.push_str(&format!("{:02}", exponent.unsigned_abs()));
+        }
+        s
+    }
+}
+
+const MAX_DENOMINATOR_DOUBLE: i64 = 1000;
+/// `preferredFractionDenominators`: powers of two and 2^n-1 scales.
+const PREFERRED_FRACTION_DENOMINATORS: [i64; 15] = [
+    127, 128, 255, 256, 1023, 1024, 4095, 4096, 8192, 16384, 32767, 32768, 65535, 65536, 1048576,
+];
+
+fn is_valid_fraction(num: i64, den: i64) -> bool {
+    if !(den > 0 && num != 0) {
+        return false;
+    }
+    if den == 1 || num.abs() == 1 {
+        return true;
+    }
+    num.abs() < den && [2, 3, 5].iter().any(|x| den % x == 0)
+}
+
+fn integer_literal_length(mut value: i64) -> i64 {
+    let mut length = i64::from(value < 0);
+    loop {
+        length += 1;
+        value /= 10;
+        if value == 0 {
+            return length;
+        }
+    }
+}
+
+fn fraction_display_length(num: i64, den: i64, is_double: bool) -> i64 {
+    let suffix = if is_double { 2 } else { 1 };
+    integer_literal_length(num) + integer_literal_length(den) + 3 + 2 * suffix
+}
+
+fn is_simple_fraction(num: i64, mut den: i64) -> bool {
+    if num == 1 || num == -1 {
+        return true;
+    }
+    for p in [2, 3, 5] {
+        while den % p == 0 {
+            den /= p;
+        }
+    }
+    den == 1
+}
+
+fn preferred_fraction_score(num: i64, den: i64, is_double: bool) -> i64 {
+    let bonus = if den & (den - 1) == 0 { 1 } else { 2 };
+    fraction_display_length(num, den, is_double) - bonus
+}
+
+/// `TryGetPreferredFraction`: the numerator, denominator and score.
+fn preferred_fraction(v: Fp, is_double: bool) -> Option<(i64, i64, i64)> {
+    let value = v.value();
+    if value.is_nan() || value.abs() >= 1.0 {
+        return None;
+    }
+    let mut best: Option<(i64, i64, i64)> = None;
+    for den in PREFERRED_FRACTION_DENOMINATORS {
+        // `Math.Round` rounds half to even.
+        let num = (value * den as f64).round_ties_even() as i64;
+        if num == 0 || num <= -den || num >= den || !v.equals_fraction(num, den) {
+            continue;
+        }
+        let score = preferred_fraction_score(num, den, is_double);
+        if best.is_none_or(|(_, d, s)| score < s || (score == s && den < d)) {
+            best = Some((num, den, score));
+        }
+    }
+    best
+}
+
+/// `FractionApprox`: the best rational approximation with a bounded denominator, by continued
+/// fractions.
+fn fraction_approx(value: f64, max_denominator: i64) -> (i64, i64) {
+    if value.abs() > f64::from(0x7FFF_FFFF) {
+        return (0, 0);
+    }
+    let start = value;
+    let value = value.abs();
+    let (mut m00, mut m01, mut m10, mut m11) = (1i64, 0i64, 0i64, 1i64);
+    let mut v = value;
+    loop {
+        let ai = v as i64;
+        if m10 * ai + m11 > max_denominator {
+            break;
+        }
+        let t = m00 * ai + m01;
+        m01 = m00;
+        m00 = t;
+        let t = m10 * ai + m11;
+        m11 = m10;
+        m10 = t;
+        if v - ai as f64 == 0.0 {
+            break;
+        }
+        v = 1.0 / (v - ai as f64);
+        if v.abs() >= i64::MAX as f64 {
+            break;
+        }
+    }
+    if m10 == 0 {
+        return (0, 0);
+    }
+    let (first_n, first_d) = (m00, m10);
+    let ai = (max_denominator - m11) / m10;
+    let (second_n, second_d) = (m00 * ai + m01, m10 * ai + m11);
+    let first_delta = (value - first_n as f64 / first_d as f64).abs();
+    let second_delta = (value - second_n as f64 / second_d as f64).abs();
+    let sign = |n: i64| if start < 0.0 { -n } else { n };
+    if first_delta < second_delta {
+        (sign(first_n), first_d)
+    } else {
+        (sign(second_n), second_d)
+    }
+}
+
+impl ConstantSyntaxBuilder<'_, '_, '_> {
+    fn literal(value: ConstValue) -> ConstSyntax {
+        ConstSyntax::new(ConstSyntaxKind::Literal { value, hex: false })
+    }
+
+    /// `MakeFraction(type, num, den)`.
+    fn fraction(v: Fp, num: i64, den: i64) -> ConstSyntax {
+        ConstSyntax::new(ConstSyntaxKind::Divide(
+            Box::new(Self::literal(v.of(num))),
+            Box::new(Self::literal(v.of(den))),
+        ))
+    }
+
+    /// The special constants and `ConvertFloatingPointLiteral` of a float or double.
+    fn convert_floating_point(
+        &self,
+        ty: TypeId,
+        is_double: bool,
+        value: &ConstValue,
+        special_constants: bool,
+    ) -> Option<ConstSyntax> {
+        // `CSharpPrimitiveCast.Cast(type.GetTypeCode(), constantValue)`: some compilers embed
+        // other numeric types in float and double constants.
+        let wide = match *value {
+            ConstValue::Single(b) => f64::from(f32::from_bits(b)),
+            ConstValue::Double(b) => f64::from_bits(b),
+            ref other => as_i64(other)? as f64,
+        };
+        let v = if is_double {
+            Fp::Double(wide)
+        } else {
+            Fp::Single(wide as f32)
+        };
+        if let Some(special) = self.special_floating_point(ty, v, special_constants) {
+            return Some(special);
+        }
+        let s = v.round_trip_string();
+        let integral = v.value().floor() == v.value();
+        let mut expr = integral.then(|| Self::literal(v.constant()));
+        let digits = s.len() as i64 - if s.starts_with('-') { 2 } else { 1 };
+        let use_fraction = digits > 5;
+        if use_fraction && expr.is_none() {
+            // A smaller bound for floats avoids coincidences such as 1f/MathF.PI == 113f/355f.
+            let (mut num, mut den) = fraction_approx(
+                v.value(),
+                if is_double {
+                    MAX_DENOMINATOR_DOUBLE
+                } else {
+                    200
+                },
+            );
+            let has_regular =
+                is_valid_fraction(num, den) && v.equals_fraction(num, den) && den.abs() != 1;
+            if let Some((pn, pd, score)) = preferred_fraction(v, is_double) {
+                let baseline = if has_regular {
+                    fraction_display_length(num, den, is_double)
+                } else {
+                    s.len() as i64 + i64::from(!is_double)
+                };
+                let regular_is_simple = has_regular && is_simple_fraction(num, den);
+                if !regular_is_simple && score <= baseline {
+                    if has_regular {
+                        (num, den) = (pn, pd);
+                    } else {
+                        expr = Some(Self::fraction(v, pn, pd));
+                    }
+                }
+            }
+            if has_regular {
+                expr = Some(Self::fraction(v, num, den));
+            }
+        }
+        if use_fraction && expr.is_none() && special_constants {
+            // shortcut: a float chooses between MathF and Math by `IsDirectImportOf`, which
+            // compares full assembly names; such a float stays with the host until that check
+            // is ported.
+            if !is_double {
+                return None;
+            }
+            expr = self.math_expression(v, "PI")?;
+            if expr.is_none() {
+                expr = self.math_expression(v, "E")?;
+            }
+        }
+        let mut expr = expr.unwrap_or_else(|| Self::literal(v.constant()));
+        expr.rr = Some(ConstRr::Constant(ty, v.constant()));
+        Some(expr)
+    }
+
+    /// `IsSpecialConstant` of a float or double: `float.NaN` and the like where the field
+    /// exists and `UseSpecialConstants` holds, otherwise the infinities and NaN as divisions.
+    fn special_floating_point(
+        &self,
+        ty: TypeId,
+        v: Fp,
+        special_constants: bool,
+    ) -> Option<ConstSyntax> {
+        let x = v.value();
+        let (epsilon, min, max) = match v {
+            Fp::Single(_) => (
+                f64::from(f32::from_bits(1)),
+                f64::from(f32::MIN),
+                f64::from(f32::MAX),
+            ),
+            Fp::Double(_) => (f64::from_bits(1), f64::MIN, f64::MAX),
+        };
+        let (member, negate) = if x.is_nan() {
+            ("NaN", false)
+        } else if x == f64::NEG_INFINITY {
+            ("NegativeInfinity", false)
+        } else if x == f64::INFINITY {
+            ("PositiveInfinity", false)
+        } else if x == min {
+            ("MinValue", false)
+        } else if x == max {
+            ("MaxValue", false)
+        } else if x == epsilon {
+            ("Epsilon", false)
+        } else if x == -epsilon {
+            ("Epsilon", true)
+        } else {
+            return None;
+        };
+        let code = match v {
+            Fp::Single(_) => KnownTypeCode::Single,
+            Fp::Double(_) => KnownTypeCode::Double,
+        };
+        let field = self
+            .known_def(code)
+            .and_then(|def| self.field_named(def, member))
+            .filter(|_| special_constants);
+        let Some(field) = field else {
+            // +Infinity, -Infinity and NaN cannot be literals; other values are ordinary ones.
+            let left = if x.is_nan() {
+                0.0
+            } else if x == f64::INFINITY {
+                1.0
+            } else if x == f64::NEG_INFINITY {
+                -1.0
+            } else {
+                return None;
+            };
+            let operand = |f: f64| {
+                ConstSyntax::with(
+                    ConstSyntaxKind::Literal {
+                        value: v.with(f).constant(),
+                        hex: false,
+                    },
+                    ConstRr::Constant(ty, v.with(f).constant()),
+                )
+            };
+            return Some(ConstSyntax::with(
+                ConstSyntaxKind::Divide(Box::new(operand(left)), Box::new(operand(0.0))),
+                ConstRr::Constant(ty, v.constant()),
+            ));
+        };
+        let reference = ConstSyntax::new(ConstSyntaxKind::SpecialConstant {
+            ty,
+            field,
+            name: member.to_owned(),
+        });
+        Some(if negate {
+            ConstSyntax::with(
+                ConstSyntaxKind::Minus(Box::new(reference)),
+                ConstRr::Constant(ty, v.constant()),
+            )
+        } else {
+            reference
+        })
+    }
+
+    /// `TryExtractExpression(Math, double, value, member, isDouble: true)`: the value as a simple
+    /// multiple or divisor of `Math.PI` or `Math.E`. `None` when the syntax cannot be written,
+    /// `Some(None)` when the value is no such multiple.
+    fn math_expression(&self, v: Fp, member: &'static str) -> Option<Option<ConstSyntax>> {
+        let constant = if member == "PI" {
+            std::f64::consts::PI
+        } else {
+            std::f64::consts::E
+        };
+        let value = v.value();
+        let name = crate::typesystem::names::FullTypeName::top_level(
+            crate::typesystem::names::TopLevelTypeName::new("System", "Math", 0),
+        );
+        let comp = self.ts.comp;
+        let math_def = comp.module_ids().find_map(|m| {
+            comp.find_type_definition(m, &name, &mut Vec::new())
+                .ok()
+                .flatten()
+        })?;
+        let math = self.ts.find(&TypeData::Def(math_def))?;
+        let field = self.first_field_named(math_def, member);
+        let reference = || {
+            ConstSyntax::new(ConstSyntaxKind::MathMember {
+                ty: math,
+                field,
+                name: member,
+            })
+        };
+        let extract = |n: i64, d: i64| -> Option<ConstSyntax> {
+            // `field * n / d`, `-field / d` or `field / d`
+            let mut expr = reference();
+            if n != 1 {
+                expr = if n == -1 {
+                    ConstSyntax::new(ConstSyntaxKind::Minus(Box::new(expr)))
+                } else {
+                    ConstSyntax::new(ConstSyntaxKind::Multiply(
+                        Box::new(expr),
+                        Box::new(Self::literal(v.of(n))),
+                    ))
+                };
+            }
+            if d != 1 {
+                expr = ConstSyntax::new(ConstSyntaxKind::Divide(
+                    Box::new(expr),
+                    Box::new(Self::literal(v.of(d))),
+                ));
+            }
+            if constant * n as f64 / d as f64 == value {
+                return Some(expr);
+            }
+            // `n / field` or `n / (d * field)`
+            let divisor = if d == 1 {
+                reference()
+            } else {
+                ConstSyntax::new(ConstSyntaxKind::Multiply(
+                    Box::new(Self::literal(v.of(d))),
+                    Box::new(reference()),
+                ))
+            };
+            let expr = ConstSyntax::new(ConstSyntaxKind::Divide(
+                Box::new(Self::literal(v.of(n))),
+                Box::new(divisor),
+            ));
+            (n as f64 / (d as f64 * constant) == value).then_some(expr)
+        };
+        let (num, den) = fraction_approx(value / constant, MAX_DENOMINATOR_DOUBLE);
+        if is_valid_fraction(num, den)
+            && let Some(e) = extract(num, den)
+        {
+            return Some(Some(e));
+        }
+        let (num, den) = fraction_approx(value * constant, MAX_DENOMINATOR_DOUBLE);
+        Some(if is_valid_fraction(num, den) {
+            extract(num, den)
+        } else {
+            None
+        })
+    }
+
+    /// `GetFields(f => f.Name == name).FirstOrDefault()`.
+    fn first_field_named(&self, def: TypeDefId, name: &str) -> Option<FieldRef> {
+        let md = &self.ts.comp.module(def.module).md;
+        md.type_fields(def.row).ok()?.into_iter().find_map(|f| {
+            md.get::<rows::Field>(f)
+                .ok()
+                .and_then(|r| md.string(r.name).ok())
+                .is_some_and(|n| n == name)
+                .then_some(FieldRef {
+                    module: def.module,
+                    row: f,
+                })
+        })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{Fp, fraction_approx};
+
+    #[test]
+    fn round_trip_strings_match_dotnet() {
+        assert_eq!(Fp::Double(0.1).round_trip_string(), "0.1");
+        assert_eq!(Fp::Double(0.0001).round_trip_string(), "0.0001");
+        assert_eq!(Fp::Double(0.00001).round_trip_string(), "1E-05");
+        assert_eq!(Fp::Double(1e14).round_trip_string(), "100000000000000");
+        assert_eq!(Fp::Double(1e15).round_trip_string(), "1E+15");
+        assert_eq!(Fp::Double(-2.5).round_trip_string(), "-2.5");
+        assert_eq!(
+            Fp::Double(0.1 + 0.2).round_trip_string(),
+            "0.30000000000000004"
+        );
+        assert_eq!(Fp::Single(1e7).round_trip_string(), "1E+07");
+        assert_eq!(Fp::Single(9_999_999.0).round_trip_string(), "9999999");
+        assert_eq!(Fp::Single(0.1).round_trip_string(), "0.1");
+        assert_eq!(
+            Fp::Double(1.2345678901234568e17).round_trip_string(),
+            "1.2345678901234568E+17"
+        );
+    }
+
+    #[test]
+    fn fraction_approx_finds_small_fractions() {
+        assert_eq!(fraction_approx(1.0 / 3.0, 1000), (1, 3));
+        assert_eq!(fraction_approx(-0.75, 1000), (-3, 4));
+        assert_eq!(fraction_approx(std::f64::consts::PI, 1000), (355, 113));
     }
 }
