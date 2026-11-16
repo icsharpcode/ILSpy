@@ -213,8 +213,11 @@ impl<'t, 'c, 'a> TypeSyntaxBuilder<'t, 'c, 'a> {
                 let count = ts.type_parameter_count(t) as usize;
                 // `IsUnbound`: a generic definition names its type parameters as unbound
                 // arguments.
-                let unbound = ts.find(&TypeData::Unbound);
-                let args = vec![unbound?; count];
+                let args = if count > 0 {
+                    vec![ts.find(&TypeData::Unbound)?; count]
+                } else {
+                    Vec::new()
+                };
                 self.convert_generic(t, &args)?
             }
             TypeData::Unknown { ref name, .. } => {

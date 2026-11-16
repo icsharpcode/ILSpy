@@ -165,6 +165,200 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 			return result;
 		}
 
+		protected object? Constant()
+		{
+			switch (U8())
+			{
+				case 0:
+					return null;
+				case 1:
+					return Bool();
+				case 2:
+					return (char)UVar();
+				case 3:
+					return (sbyte)IVar();
+				case 4:
+					return (byte)UVar();
+				case 5:
+					return (short)IVar();
+				case 6:
+					return (ushort)UVar();
+				case 7:
+					return (int)IVar();
+				case 8:
+					return (uint)UVar();
+				case 9:
+					return IVar();
+				case 10:
+					return UVar();
+				case 11:
+					return BitConverter.ToSingle(Raw(4), 0);
+				case 12:
+					return BitConverter.ToDouble(Raw(8), 0);
+				case 13:
+					return String();
+				case 14:
+				{
+					var bits = Raw(16);
+					return new decimal([BitConverter.ToInt32(bits, 0), BitConverter.ToInt32(bits, 4),
+						BitConverter.ToInt32(bits, 8), BitConverter.ToInt32(bits, 12)]);
+				}
+				default:
+					throw new InvalidOperationException("Unknown constant tag");
+			}
+		}
+
+		protected string String()
+		{
+			var chars = new char[Len()];
+			var bytes = Raw(chars.Length * 2);
+			for (int i = 0; i < chars.Length; i++)
+				chars[i] = (char)(bytes[2 * i] | bytes[2 * i + 1] << 8);
+			return new string(chars);
+		}
+
+		/// <summary>
+		/// A constant as the engine wrote it (rust/ilspy-decompiler/src/csharp/constant_syntax.rs);
+		/// <paramref name="complete"/> turns false where a type has no syntax entry.
+		/// </summary>
+		protected CSharp.Syntax.Expression ConstantSyntax(ref bool complete)
+		{
+			CSharp.Syntax.Expression result;
+			byte tag = U8();
+			switch (tag)
+			{
+				case 0:
+				{
+					var value = Constant()!;
+					result = new CSharp.Syntax.PrimitiveExpression(value,
+						Bool() ? CSharp.Syntax.LiteralFormat.HexadecimalNumber : CSharp.Syntax.LiteralFormat.None);
+					break;
+				}
+				case 1:
+					result = new CSharp.Syntax.NullReferenceExpression();
+					break;
+				case 2:
+					result = new CSharp.Syntax.DefaultValueExpression(SyntaxOf(Type(), ref complete));
+					break;
+				case 3:
+				{
+					var type = SyntaxOf(Type(), ref complete);
+					result = new CSharp.Syntax.CastExpression(type, ConstantSyntax(ref complete));
+					break;
+				}
+				case 4:
+				{
+					var keyword = Str();
+					result = new CSharp.Syntax.CastExpression(new CSharp.Syntax.PrimitiveType(keyword), ConstantSyntax(ref complete));
+					break;
+				}
+				case 5:
+				case 6:
+				{
+					bool special = tag == 5;
+					var type = Type();
+					var module = modules[Len()];
+					var field = module.GetDefinition(MetadataTokens.FieldDefinitionHandle(Len()));
+					var target = new CSharp.Syntax.TypeReferenceExpression(SyntaxOf(type, ref complete));
+					if (special)
+						target.AddAnnotation(new TypeResolveResult(type));
+					var reference = new CSharp.Syntax.MemberReferenceExpression(target, Str());
+					reference.AddAnnotation(new MemberResolveResult(
+						special ? new TypeResolveResult(type) : ErrorResolveResult.UnknownError, field));
+					result = reference;
+					break;
+				}
+				case 7:
+				{
+					var left = ConstantSyntax(ref complete);
+					result = new CSharp.Syntax.BinaryOperatorExpression(left, CSharp.Syntax.BinaryOperatorType.BitwiseOr, ConstantSyntax(ref complete));
+					break;
+				}
+				case 8:
+					result = new CSharp.Syntax.UnaryOperatorExpression(CSharp.Syntax.UnaryOperatorType.Minus, ConstantSyntax(ref complete));
+					break;
+				case 9:
+					result = new CSharp.Syntax.UnaryOperatorExpression(CSharp.Syntax.UnaryOperatorType.BitNot, ConstantSyntax(ref complete));
+					break;
+				case 10:
+				case 11:
+				{
+					var op = tag == 10 ? CSharp.Syntax.BinaryOperatorType.Divide : CSharp.Syntax.BinaryOperatorType.Multiply;
+					var left = ConstantSyntax(ref complete);
+					result = new CSharp.Syntax.BinaryOperatorExpression(left, op, ConstantSyntax(ref complete));
+					break;
+				}
+				case 13:
+					result = new CSharp.Syntax.TypeOfExpression(SyntaxOf(Type(), ref complete));
+					break;
+				case 14:
+				{
+					// An attribute's array argument: the array type's specifiers follow the element type.
+					var creation = new CSharp.Syntax.ArrayCreateExpression { Type = SyntaxOf(Type(), ref complete) };
+					if (creation.Type is CSharp.Syntax.ComposedType composedType)
+					{
+						composedType.ArraySpecifiers.MoveTo(creation.AdditionalArraySpecifiers);
+						if (!composedType.HasNullableSpecifier && composedType.PointerRank == 0)
+							creation.Type = composedType.BaseType;
+					}
+					int count = Len();
+					var initializer = new CSharp.Syntax.ArrayInitializerExpression();
+					for (int i = 0; i < count; i++)
+						initializer.Elements.Add(ConstantSyntax(ref complete));
+					creation.Initializer = initializer;
+					result = creation;
+					break;
+				}
+				case 12:
+				{
+					// `Math.PI`: the member's target is the type syntax's resolve result.
+					var type = Type();
+					IField? field = null;
+					if (Bool())
+					{
+						var module = modules[Len()];
+						field = module.GetDefinition(MetadataTokens.FieldDefinitionHandle(Len()));
+					}
+					var typeSyntax = SyntaxOf(type, ref complete);
+					var reference = new CSharp.Syntax.MemberReferenceExpression(new CSharp.Syntax.TypeReferenceExpression(typeSyntax), Str());
+					if (field != null)
+						reference.AddAnnotation(new MemberResolveResult(typeSyntax.Annotation<ResolveResult>(), field));
+					result = reference;
+					break;
+				}
+				default:
+					throw new InvalidOperationException("Unknown wire constant syntax tag");
+			}
+			switch (U8())
+			{
+				case 1:
+				{
+					var type = Type();
+					result.AddAnnotation(new ConstantResolveResult(type, Constant()));
+					break;
+				}
+				case 2:
+					result.AddAnnotation(new ConstantResolveResult(SpecialType.NullType, null));
+					break;
+				case 3:
+				{
+					var type = Type();
+					result.AddAnnotation(new TypeOfResolveResult(type, Type()));
+					break;
+				}
+			}
+			return result;
+		}
+
+		/// <summary>The engine's syntax of <paramref name="type"/>, a placeholder where it has none.</summary>
+		protected CSharp.Syntax.AstType SyntaxOf(IType type, ref bool complete)
+		{
+			if (TypeSyntax(type) is { } syntax)
+				return syntax;
+			complete = false;
+			return new CSharp.Syntax.SimpleType("?");
+		}
+
 		public bool AtEnd => pos == data.Length;
 
 		public byte U8() => data[pos++];
@@ -342,6 +536,89 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				default:
 					throw new InvalidOperationException("Unknown wire type tag");
 			}
+		}
+	}
+
+	/// <summary>
+	/// Builds the declaration syntax of a member from <c>wire::ilast::field_syntax</c>
+	/// (rust/ilspy-decompiler/src/csharp/entity_syntax.rs).
+	/// </summary>
+	internal sealed class EntitySyntaxReader : WireReader
+	{
+		public EntitySyntaxReader(byte[] data, ICompilation compilation, IReadOnlyList<MetadataModule> modules)
+			: base(data, IlAstMaterializer.Version, compilation, modules)
+		{
+		}
+
+		/// <summary><c>ConvertField(field)</c>; null with the reason where the engine did not write it.</summary>
+		public CSharp.Syntax.EntityDeclaration? Field(IField field, out string? unsupportedReason)
+		{
+			unsupportedReason = null;
+			if (U8() == 0)
+			{
+				unsupportedReason = Str();
+				return null;
+			}
+			bool complete = true;
+			var decl = new CSharp.Syntax.FieldDeclaration { Modifiers = (CSharp.Syntax.Modifiers)UVar() };
+			int attributes = Len();
+			for (int i = 0; i < attributes; i++)
+				decl.Attributes.Add(new CSharp.Syntax.AttributeSection(Attribute(ref complete)));
+			decl.AddAnnotation(new MemberResolveResult(null, field));
+			decl.ReturnType = SyntaxOf(Type(), ref complete);
+			if (Bool() && decl.ReturnType is CSharp.Syntax.ComposedType ct && ct.HasRefSpecifier)
+				ct.HasReadOnlySpecifier = true;
+			var initializer = Bool() ? ConstantSyntax(ref complete) : null;
+			decl.Variables.Add(new CSharp.Syntax.VariableInitializer(field.Name, initializer));
+			if (!complete)
+			{
+				unsupportedReason = "a type without syntax";
+				return null;
+			}
+			return decl;
+		}
+
+		/// <summary><c>ConvertAttribute</c>.</summary>
+		CSharp.Syntax.Attribute Attribute(ref bool complete)
+		{
+			var attributeType = Type();
+			var attr = new CSharp.Syntax.Attribute { Type = SyntaxOf(attributeType, ref complete) };
+			// `ConvertAttributeType` with short names: the identifier without `Attribute`.
+			bool rename = Bool();
+			string? identifier = rename ? Str() : null;
+			if (attr.Type is CSharp.Syntax.SimpleType st)
+				st.Identifier = identifier!;
+			if (Bool())
+			{
+				var declaring = Type();
+				var module = modules[Len()];
+				IMethod constructor = module.GetDefinition(MetadataTokens.MethodDefinitionHandle(Len()));
+				if (declaring is ParameterizedType pt)
+					constructor = constructor.Specialize(new TypeParameterSubstitution(pt.TypeArguments, null));
+				attr.AddAnnotation(new MemberResolveResult(null, constructor));
+			}
+			int count = Len();
+			for (int i = 0; i < count; i++)
+				attr.Arguments.Add(ConstantSyntax(ref complete));
+			int named = Len();
+			for (int i = 0; i < named; i++)
+			{
+				string name = Str();
+				var kind = Bool() ? CustomAttributeNamedArgumentKind.Field : CustomAttributeNamedArgumentKind.Property;
+				var type = Type();
+				var argument = new CSharp.Syntax.NamedExpression(name, ConstantSyntax(ref complete));
+				var member = ICSharpCode.Decompiler.TypeSystem.Implementation.CustomAttribute.MemberForNamedArgument(attributeType,
+					new CustomAttributeNamedArgument<IType>(name, kind, type, null));
+				if (member != null)
+					argument.AddAnnotation(new MemberResolveResult(new InitializedObjectResolveResult(attributeType), member));
+				attr.Arguments.Add(argument);
+			}
+			if (Bool())
+			{
+				attr.HasArgumentList = true;
+				attr.Arguments.Add(new CSharp.Syntax.ErrorExpression("Could not decode attribute arguments."));
+			}
+			return attr;
 		}
 	}
 
@@ -1403,48 +1680,6 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		}
 
 		/// <summary>A constant of the body translation, as the CLR value <see cref="ConstantResolveResult"/> holds.</summary>
-		object? Constant()
-		{
-			switch (U8())
-			{
-				case 0:
-					return null;
-				case 1:
-					return Bool();
-				case 2:
-					return (char)UVar();
-				case 3:
-					return (sbyte)IVar();
-				case 4:
-					return (byte)UVar();
-				case 5:
-					return (short)IVar();
-				case 6:
-					return (ushort)UVar();
-				case 7:
-					return (int)IVar();
-				case 8:
-					return (uint)UVar();
-				case 9:
-					return IVar();
-				case 10:
-					return UVar();
-				case 11:
-					return BitConverter.ToSingle(Raw(4), 0);
-				case 12:
-					return BitConverter.ToDouble(Raw(8), 0);
-				case 13:
-					return String();
-				case 14:
-				{
-					var bits = Raw(16);
-					return new decimal([BitConverter.ToInt32(bits, 0), BitConverter.ToInt32(bits, 4),
-						BitConverter.ToInt32(bits, 8), BitConverter.ToInt32(bits, 12)]);
-				}
-				default:
-					throw new InvalidOperationException("Unknown constant tag");
-			}
-		}
 
 		ILVariable ReadVariable()
 		{
@@ -1541,121 +1776,6 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 			return candidates
 				.FirstOrDefault(m => m.Parameters.Select(p => Oblivious(p.Type)).SequenceEqual(parameterTypes.Select(Oblivious)))
 				?? throw new InvalidOperationException($"No method {name} of {type} matches the sent parameter types");
-		}
-
-		/// <summary>
-		/// A constant as the engine wrote it (rust/ilspy-decompiler/src/csharp/constant_syntax.rs);
-		/// <paramref name="complete"/> turns false where a type has no syntax entry.
-		/// </summary>
-		CSharp.Syntax.Expression ConstantSyntax(ref bool complete)
-		{
-			CSharp.Syntax.Expression result;
-			byte tag = U8();
-			switch (tag)
-			{
-				case 0:
-				{
-					var value = Constant()!;
-					result = new CSharp.Syntax.PrimitiveExpression(value,
-						Bool() ? CSharp.Syntax.LiteralFormat.HexadecimalNumber : CSharp.Syntax.LiteralFormat.None);
-					break;
-				}
-				case 1:
-					result = new CSharp.Syntax.NullReferenceExpression();
-					break;
-				case 2:
-					result = new CSharp.Syntax.DefaultValueExpression(SyntaxOf(Type(), ref complete));
-					break;
-				case 3:
-				{
-					var type = SyntaxOf(Type(), ref complete);
-					result = new CSharp.Syntax.CastExpression(type, ConstantSyntax(ref complete));
-					break;
-				}
-				case 4:
-				{
-					var keyword = Str();
-					result = new CSharp.Syntax.CastExpression(new CSharp.Syntax.PrimitiveType(keyword), ConstantSyntax(ref complete));
-					break;
-				}
-				case 5:
-				case 6:
-				{
-					bool special = tag == 5;
-					var type = Type();
-					var module = modules[Len()];
-					var field = module.GetDefinition(MetadataTokens.FieldDefinitionHandle(Len()));
-					var target = new CSharp.Syntax.TypeReferenceExpression(SyntaxOf(type, ref complete));
-					if (special)
-						target.AddAnnotation(new TypeResolveResult(type));
-					var reference = new CSharp.Syntax.MemberReferenceExpression(target, Str());
-					reference.AddAnnotation(new MemberResolveResult(
-						special ? new TypeResolveResult(type) : ErrorResolveResult.UnknownError, field));
-					result = reference;
-					break;
-				}
-				case 7:
-				{
-					var left = ConstantSyntax(ref complete);
-					result = new CSharp.Syntax.BinaryOperatorExpression(left, CSharp.Syntax.BinaryOperatorType.BitwiseOr, ConstantSyntax(ref complete));
-					break;
-				}
-				case 8:
-					result = new CSharp.Syntax.UnaryOperatorExpression(CSharp.Syntax.UnaryOperatorType.Minus, ConstantSyntax(ref complete));
-					break;
-				case 9:
-					result = new CSharp.Syntax.UnaryOperatorExpression(CSharp.Syntax.UnaryOperatorType.BitNot, ConstantSyntax(ref complete));
-					break;
-				case 10:
-				case 11:
-				{
-					var op = tag == 10 ? CSharp.Syntax.BinaryOperatorType.Divide : CSharp.Syntax.BinaryOperatorType.Multiply;
-					var left = ConstantSyntax(ref complete);
-					result = new CSharp.Syntax.BinaryOperatorExpression(left, op, ConstantSyntax(ref complete));
-					break;
-				}
-				case 12:
-				{
-					// `Math.PI`: the member's target is the type syntax's resolve result.
-					var type = Type();
-					IField? field = null;
-					if (Bool())
-					{
-						var module = modules[Len()];
-						field = module.GetDefinition(MetadataTokens.FieldDefinitionHandle(Len()));
-					}
-					var typeSyntax = SyntaxOf(type, ref complete);
-					var reference = new CSharp.Syntax.MemberReferenceExpression(new CSharp.Syntax.TypeReferenceExpression(typeSyntax), Str());
-					if (field != null)
-						reference.AddAnnotation(new MemberResolveResult(typeSyntax.Annotation<ResolveResult>(), field));
-					result = reference;
-					break;
-				}
-				default:
-					throw new InvalidOperationException("Unknown wire constant syntax tag");
-			}
-			switch (U8())
-			{
-				case 1:
-				{
-					var type = Type();
-					result.AddAnnotation(new ConstantResolveResult(type, Constant()));
-					break;
-				}
-				case 2:
-					result.AddAnnotation(new ConstantResolveResult(SpecialType.NullType, null));
-					break;
-			}
-			return result;
-		}
-
-		/// <summary>The engine's syntax of <paramref name="type"/>, a placeholder where it has none.</summary>
-		CSharp.Syntax.AstType SyntaxOf(IType type, ref bool complete)
-		{
-			if (TypeSyntax(type) is { } syntax)
-				return syntax;
-			complete = false;
-			return new CSharp.Syntax.SimpleType("?");
 		}
 
 		IField Field()
@@ -2040,15 +2160,6 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 			var sign = (Sign)U8();
 			var input = (StackType)U8();
 			return new Comp(kind, lifting, input, sign, Node(), Node());
-		}
-
-		string String()
-		{
-			var chars = new char[Len()];
-			var bytes = Raw(chars.Length * 2);
-			for (int i = 0; i < chars.Length; i++)
-				chars[i] = (char)(bytes[2 * i] | bytes[2 * i + 1] << 8);
-			return new string(chars);
 		}
 
 		ILInstruction WithType(Func<ILInstruction, IType, ILInstruction> create)

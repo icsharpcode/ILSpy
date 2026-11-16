@@ -4569,6 +4569,33 @@ of a type parameter's type. The ratchet corpus has none of either.
 
 The share stayed at 100.0 %.
 
+### 3.201 The entity request and field declarations (item 68z3a)
+
+Declarations come from `TypeSystemAstBuilder.ConvertEntity`, which no engine request reached so
+far. `ilspy_session_field_syntax` is the first entity request: the host asks it at the
+`ConvertEntity(field)` call of `DoDecompile(IField)` with the options the declaration depends on
+(`UseSpecialConstants` as `DoDecompile` sets it, `SortCustomAttributes`,
+`IntroducePrivateProtectedAccessibility`, `LiftNullables`), and the engine answers with the
+declaration and the type syntax of every type it names (`csharp/entity_syntax.rs`). The rest of
+`DoDecompile(IField)` (enum members, `new`, `required`, fixed buffers, RVA data) stays managed
+until the type declarations move (68z4). A declaration the engine does not write falls back to
+the managed builder and is counted with its reason.
+
+`ConvertField` is the modifiers (the accessibility, which a public member of an interface goes
+without; `static`, or `const` for a constant; `readonly` or `volatile`), the attributes, the type
+(with `HasReadOnlySpecifier` on a `ref readonly` field) and the constant as
+`TypeSystemAstBuilder.ConvertConstantValue` writes it, without the expression builder's casts.
+`ConvertAttribute` writes the attribute type with short names, which leaves the identifier
+without its `Attribute` suffix (or none for a name without it), the constructor's
+`MemberResolveResult`, the arguments by `ConvertConstantValue(expectedType, type, value)` with
+the parameter type as the expected one (a small integer of another expected type keeps a cast),
+`typeof` and argument arrays, and the named arguments with the member the host finds by name.
+Sorted attribute lists (`SortCustomAttributes`), whose comparison is culture dependent for
+strings, stay with the host (`shortcut:`). The engine serves 279 field declarations of the
+ratchet corpus; 59 fall back, for types without syntax and constants it does not write.
+
+The share stayed at 100.0 %.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

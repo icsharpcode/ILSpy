@@ -144,6 +144,31 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		}
 
 		/// <summary>
+		/// <c>TypeSystemAstBuilder.ConvertEntity(field)</c> as the engine writes it with the options
+		/// <c>CSharpDecompiler.CreateAstBuilder</c> gives the builder; null with
+		/// <paramref name="unsupportedReason"/> where the engine does not write the declaration.
+		/// </summary>
+		public CSharp.Syntax.EntityDeclaration? FieldSyntax(IField field, bool useSpecialConstants, DecompilerSettings settings, out string? unsupportedReason)
+		{
+			unsupportedReason = null;
+			uint flags = (useSpecialConstants ? 1u : 0u)
+				| (settings.SortCustomAttributes ? 2u : 0u)
+				| (settings.IntroducePrivateProtectedAccessibility ? 4u : 0u)
+				| (settings.LiftNullables ? 8u : 0u);
+			var status = NativeMethods.ilspy_session_field_syntax(session, (uint)MetadataTokens.GetToken(field.MetadataToken), flags, out var buffer);
+			byte[] bytes = NativeMethods.TakeBuffer(buffer);
+			switch (status)
+			{
+				case RustStatus.Ok:
+					return new EntitySyntaxReader(bytes, typeSystem, modules).Field(field, out unsupportedReason);
+				case RustStatus.Cancelled:
+					throw new OperationCanceledException();
+				default:
+					throw new RustEngineException($"{status}: {NativeMethods.LastError}");
+			}
+		}
+
+		/// <summary>
 		/// The names AssignVariableNames' root scope collects around a method of <paramref name="type"/>, which
 		/// the managed type system and using scope list: first the lower-case member names (inherited ones
 		/// included), which it only avoids, then the names it also reserves (the parameters of a primary

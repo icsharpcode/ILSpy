@@ -2017,6 +2017,97 @@ fn query_message(
     Ok(tables.finish(VERSION, payload))
 }
 
+/// `TypeSystemAstBuilder.ConvertEntity` of a field (`csharp::entity_syntax`) as a message: the
+/// tables with the type syntax, then 1 and the declaration, or 0 and why the engine does not
+/// write it (the host converts it, counted).
+pub fn field_syntax(
+    ts: &mut TypeSystem<'_, '_>,
+    module: crate::typesystem::compilation::ModuleId,
+    row: u32,
+    options: crate::csharp::entity_syntax::EntityOptions,
+) -> Result<Vec<u8>, String> {
+    // The unbound type argument the type syntax of a generic definition names.
+    ts.intern(crate::typesystem::types::TypeData::Unbound);
+    let syntax = crate::csharp::entity_syntax::convert_field(ts, module, row, options);
+    let ts = &*ts;
+    let mut tables = Tables::default();
+    let empty = Function::default();
+    let mut w = FunctionWriter {
+        ts,
+        tables: &mut tables,
+        f: &empty,
+        out: Bytes::default(),
+        vars: HashMap::new(),
+        blocks: HashMap::new(),
+        block_order: Vec::new(),
+        containers: HashMap::new(),
+        written: HashMap::new(),
+        special_constants: true,
+    };
+    match syntax {
+        Err(reason) => {
+            w.out.u8(0);
+            w.string(&reason);
+        }
+        Ok(field) => {
+            w.out.u8(1);
+            w.out.uvar(u64::from(field.modifiers));
+            w.out.len(field.attributes.len());
+            for a in &field.attributes {
+                write_attribute(&mut w, a);
+            }
+            w.ty(field.return_type);
+            w.out.bool(field.ref_readonly);
+            match &field.initializer {
+                Some(c) => {
+                    w.out.u8(1);
+                    super::ast::constant_syntax_node(&mut w, c);
+                }
+                None => w.out.u8(0),
+            }
+        }
+    }
+    let payload = std::mem::take(&mut w.out);
+    tables.type_syntax(ts, options.nullable_specifier);
+    Ok(tables.finish(VERSION, payload))
+}
+
+/// One attribute of `csharp::entity_syntax`.
+fn write_attribute(
+    w: &mut FunctionWriter<'_, '_, '_, '_>,
+    a: &crate::csharp::entity_syntax::AttributeSyntax,
+) {
+    w.ty(a.ty);
+    match &a.identifier {
+        Some(id) => {
+            w.out.u8(1);
+            w.string(id);
+        }
+        None => w.out.u8(0),
+    }
+    match a.constructor {
+        Some((declaring, module, row)) => {
+            w.out.u8(1);
+            w.ty(declaring);
+            w.out.len(module.0 as usize);
+            w.out.uvar(u64::from(row));
+        }
+        None => w.out.u8(0),
+    }
+    w.out.len(a.arguments.len());
+    for c in &a.arguments {
+        super::ast::constant_syntax_node(w, c);
+    }
+    w.out.len(a.named.len());
+    for n in &a.named {
+        w.string(&n.name);
+        w.out.bool(n.is_field);
+        w.ty(n.ty);
+        super::ast::constant_syntax_node(w, &n.value);
+    }
+    w.out.bool(a.has_decode_errors);
+}
+
 /// The variables of the nested functions (lambdas) in `f`, in tree order.
 fn nested_variables(f: &crate::il::ast::Function) -> Vec<VarId> {
     // The body, then the top-level function's local functions.

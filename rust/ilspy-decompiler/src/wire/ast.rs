@@ -989,7 +989,7 @@ fn constant_syntax(
     Ok(())
 }
 
-fn constant_syntax_node(
+pub(super) fn constant_syntax_node(
     w: &mut FunctionWriter<'_, '_, '_, '_>,
     s: &crate::csharp::constant_syntax::ConstSyntax,
 ) {
@@ -1052,6 +1052,18 @@ fn constant_syntax_node(
             constant_syntax_node(w, l);
             constant_syntax_node(w, r);
         }
+        K::TypeOf(t) => {
+            w.out.u8(13);
+            w.ty(*t);
+        }
+        K::ArrayCreate(t, elements) => {
+            w.out.u8(14);
+            w.ty(*t);
+            w.out.len(elements.len());
+            for e in elements {
+                constant_syntax_node(w, e);
+            }
+        }
         K::MathMember { ty, field, name } => {
             w.out.u8(12);
             w.ty(*ty);
@@ -1074,6 +1086,11 @@ fn constant_syntax_node(
             constant(w, v);
         }
         Some(ConstRr::NullLiteral) => w.out.u8(2),
+        Some(ConstRr::TypeOf(t, referenced)) => {
+            w.out.u8(3);
+            w.ty(*t);
+            w.ty(*referenced);
+        }
     }
 }
 

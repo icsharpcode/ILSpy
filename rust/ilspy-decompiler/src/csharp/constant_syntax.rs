@@ -23,6 +23,8 @@ pub enum ConstRr {
     Constant(TypeId, ConstValue),
     /// `ConstantResolveResult(SpecialType.NullType, null)`.
     NullLiteral,
+    /// `TypeOfResolveResult(type, referencedType)`.
+    TypeOf(TypeId, TypeId),
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -51,6 +53,11 @@ pub enum ConstSyntaxKind {
         field: FieldRef,
         name: String,
     },
+    /// `typeof(T)`.
+    TypeOf(TypeId),
+    /// `new T[] { elements }` of an attribute's array argument: the array type's syntax with its
+    /// array specifiers moved after the element type.
+    ArrayCreate(TypeId, Vec<ConstSyntax>),
     /// `left | right`.
     BitwiseOr(Box<ConstSyntax>, Box<ConstSyntax>),
     /// `left / right`.
@@ -214,7 +221,7 @@ impl<'t, 'c, 'a> ConstantSyntaxBuilder<'t, 'c, 'a> {
         hex: bool,
         special_constants: bool,
     ) -> Option<ConstSyntax> {
-        let mut expr = self.convert_constant_value(ty, value, hex, special_constants)?;
+        let mut expr = self.convert_constant_value(ty, ty, value, hex, special_constants)?;
         if !allow_implicit_conversion {
             let ts = self.ts;
             if matches!(expr.kind, ConstSyntaxKind::Null) && !matches!(ts.data(ty), TypeData::Null)
@@ -262,6 +269,68 @@ impl<'t, 'c, 'a> ConstantSyntaxBuilder<'t, 'c, 'a> {
         })
     }
 
+    /// `ConvertConstantValue(expectedType, type, value)` of an attribute argument: a constant,
+    /// `typeof`, or an array of arguments.
+    pub fn convert_argument(
+        &self,
+        expected: TypeId,
+        arg: &crate::typesystem::attrvalue::TypedArg,
+    ) -> Option<ConstSyntax> {
+        use crate::typesystem::attrvalue::ArgValue as A;
+        let ty = arg.ty;
+        let value = match &arg.value {
+            A::Type(t) => {
+                return Some(ConstSyntax::with(
+                    ConstSyntaxKind::TypeOf(*t),
+                    ConstRr::TypeOf(ty, *t),
+                ));
+            }
+            A::Array(elements) => {
+                let element_type = match self.ts.data(ty) {
+                    TypeData::Array { elem, .. } => Some(*elem),
+                    _ => None,
+                };
+                let mut converted = Vec::with_capacity(elements.len());
+                for e in elements {
+                    // `(type as ArrayType)?.ElementType ?? SpecialType.UnknownType`
+                    let expected =
+                        element_type.or_else(|| self.ts.find(&TypeData::UnknownSpecial))?;
+                    converted.push(self.convert_argument(expected, e)?);
+                }
+                return Some(ConstSyntax::new(ConstSyntaxKind::ArrayCreate(
+                    ty, converted,
+                )));
+            }
+            A::Null => ConstValue::Null,
+            A::Bool(v) => ConstValue::Boolean(*v),
+            A::Char(v) => ConstValue::Char(*v),
+            A::SByte(v) => ConstValue::SByte(*v),
+            A::Byte(v) => ConstValue::Byte(*v),
+            A::Int16(v) => ConstValue::Int16(*v),
+            A::UInt16(v) => ConstValue::UInt16(*v),
+            A::Int32(v) => ConstValue::Int32(*v),
+            A::UInt32(v) => ConstValue::UInt32(*v),
+            A::Int64(v) => ConstValue::Int64(*v),
+            A::UInt64(v) => ConstValue::UInt64(*v),
+            A::Single(v) => ConstValue::Single(*v),
+            A::Double(v) => ConstValue::Double(*v),
+            A::String(v) => ConstValue::String(v.clone()),
+            A::Decimal(v) => ConstValue::Decimal(*v),
+        };
+        self.convert_constant_value(expected, ty, &value, false, true)
+    }
+
+    /// `TypeSystemAstBuilder.ConvertConstantValue(type, value)` without the expression
+    /// builder's casts: a field's constant initializer.
+    pub fn convert_raw(
+        &self,
+        ty: TypeId,
+        value: &ConstValue,
+        special_constants: bool,
+    ) -> Option<ConstSyntax> {
+        self.convert_constant_value(ty, ty, value, false, special_constants)
+    }
+
     /// `IsCSharpSmallIntegerType`, as its keyword.
     fn small_integer_keyword(&self, t: TypeId) -> Option<&'static str> {
         Some(match self.known_code(t) {
@@ -276,6 +345,7 @@ impl<'t, 'c, 'a> ConstantSyntaxBuilder<'t, 'c, 'a> {
     /// `TypeSystemAstBuilder.ConvertConstantValue(type, type, constantValue)`.
     fn convert_constant_value(
         &self,
+        expected: TypeId,
         ty: TypeId,
         value: &ConstValue,
         hex: bool,
@@ -294,7 +364,8 @@ impl<'t, 'c, 'a> ConstantSyntaxBuilder<'t, 'c, 'a> {
             });
         }
         let underlying = ts.nullable_underlying(ty);
-        if let TypeData::Def(d) = *ts.data(underlying)
+        // `GetDefinition()`: an enum nested in a generic type is an instance of it.
+        if let Some(d) = ts.definition(underlying)
             && ts.comp.type_def(d).ok()?.kind == TypeKind::Enum
         {
             return self.convert_enum_value(underlying, d, as_i64(value)?, hex, special_constants);
@@ -356,11 +427,14 @@ impl<'t, 'c, 'a> ConstantSyntaxBuilder<'t, 'c, 'a> {
             },
             ConstRr::Constant(literal_type, literal_value),
         );
-        // An unresolved type keeps its name on the literal.
-        if matches!(
-            ts.data(underlying),
-            TypeData::Unknown { .. } | TypeData::UnknownSpecial
-        ) {
+        // A small or native integer literal of another expected type, or one of an unresolved
+        // type, keeps its type as a cast.
+        if (small || native) && ty != expected
+            || matches!(
+                ts.data(underlying),
+                TypeData::Unknown { .. } | TypeData::UnknownSpecial
+            )
+        {
             return Some(ConstSyntax::new(ConstSyntaxKind::Cast(
                 ty,
                 Box::new(literal),
@@ -481,6 +555,7 @@ impl<'t, 'c, 'a> ConstantSyntaxBuilder<'t, 'c, 'a> {
         let underlying_def = self.known_def(base_code)?;
         let underlying = ts.find(&TypeData::Def(underlying_def))?;
         let numeric = self.convert_constant_value(
+            underlying,
             underlying,
             &cast_integer(base_code, val)?,
             hex,

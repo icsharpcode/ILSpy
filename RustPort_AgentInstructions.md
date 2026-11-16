@@ -731,7 +731,14 @@ the reasons. This file holds only the ordered steps, their gates and their rules
         choosing MathF by `IsDirectImportOf` and nulls of type parameter types stay counted. Subject: `Port floating point constant syntax to Rust`.
       - [ ] 68z3. Member declarations: `ConvertEntity` for methods, constructors, fields,
         properties, indexers, events and operators, with modifiers, parameters and attributes.
-        Subject: `Port member declarations of TypeSystemAstBuilder to Rust`.
+        Subject: `Port member declarations of TypeSystemAstBuilder to Rust`. Split (agent
+        recommendation): 68z3a the entity request (an FFI entry, the wire message, the host
+        asking at each `ConvertEntity` call site with counted fallback), `ConvertAttributes`
+        and field declarations; 68z3b methods, constructors, destructors and operators with
+        parameters, type parameters and constraints; 68z3c properties, indexers, events and
+        accessors.
+      - [x] 68z3a. The entity request and field declarations (lecture 3.201). Subject:
+        `Write field declarations in the engine`.
       - [ ] 68z4. Type declarations, namespaces and usings: the request-level `SyntaxTree`
         through `Interop/AstMaterializer.cs`, with `ExtensionInfo` and `ExtensionEverything`.
         Subject: `Add the Rust C# AST builders and the AST materializer`.

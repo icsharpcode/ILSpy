@@ -71,6 +71,9 @@ public class PortStatusRatchetTests
 			TestContext.Out.WriteLine($"seam 2 fallback: {count,6} {reason}");
 		TestContext.Out.WriteLine($"seam 2 type syntax fallback: {RustSeam2.TypeSyntaxFallbacks,6}");
 		TestContext.Out.WriteLine($"seam 2 constant syntax fallback: {RustSeam2.ConstantSyntaxFallbacks,6}");
+		TestContext.Out.WriteLine($"seam 2 declarations served: {RustSeam2.DeclarationsServed,6}");
+		foreach (var (reason, count) in RustSeam2.DeclarationFallbackReasons.OrderByDescending(r => r.Value))
+			TestContext.Out.WriteLine($"seam 2 declaration fallback: {count,6} {reason}");
 		Assert.That(bodiesTotal, Is.GreaterThan(0), "no method body went through seam 2");
 		return (Math.Floor(served * 1000.0 / total) / 10, Math.Floor(bodiesServed * 1000.0 / bodiesTotal) / 10);
 	}

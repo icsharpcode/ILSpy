@@ -2766,6 +2766,9 @@ namespace ICSharpCode.Decompiler.CSharp
 				bool isMathPIOrE = ((field.Name == "PI" || field.Name == "E") && (field.DeclaringType.FullName == "System.Math" || field.DeclaringType.FullName == "System.MathF"));
 				typeSystemAstBuilder.UseSpecialConstants = !(field.DeclaringType.Equals(field.ReturnType) || isMathPIOrE);
 				var fieldDecl = typeSystemAstBuilder.ConvertEntity(field);
+				// RUST-SEAM-2 BEGIN
+				fieldDecl = Rust.Interop.RustSeam2.ConvertField(typeSystem, field, typeSystemAstBuilder, settings, fieldDecl);
+				// RUST-SEAM-2 END
 				SetNewModifier(fieldDecl);
 				if (settings.RequiredMembers && RemoveAttribute(fieldDecl, KnownAttribute.Required))
 				{

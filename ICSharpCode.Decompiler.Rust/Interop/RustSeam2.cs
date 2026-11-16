@@ -197,6 +197,41 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		/// </summary>
 		public static long TypeSyntaxFallbacks => Interlocked.Read(ref typeSyntaxFallbacks);
 
+		static long declarationsServed;
+		static long declarationFallbacks;
+		static readonly ConcurrentDictionary<string, int> declarationFallbackReasons = new ConcurrentDictionary<string, int>();
+
+		/// <summary>Member declarations the engine wrote.</summary>
+		public static long DeclarationsServed => Interlocked.Read(ref declarationsServed);
+
+		/// <summary>Member declarations the engine was asked for but the managed builder wrote.</summary>
+		public static long DeclarationFallbacks => Interlocked.Read(ref declarationFallbacks);
+
+		/// <summary>Why the engine did not write the declarations that fell back, with how often.</summary>
+		public static IReadOnlyDictionary<string, int> DeclarationFallbackReasons => declarationFallbackReasons;
+
+		/// <summary>
+		/// <c>typeSystemAstBuilder.ConvertEntity(field)</c> from the engine; <paramref name="managed"/>, the
+		/// managed builder's, counted, where the engine does not write it.
+		/// </summary>
+		internal static EntityDeclaration ConvertField(IDecompilerTypeSystem typeSystem, IField field, TypeSystemAstBuilder typeSystemAstBuilder, DecompilerSettings settings, EntityDeclaration managed)
+		{
+			if (Enabled && RustEngine.For(typeSystem, out _) is { } engine
+				&& field.ParentModule == typeSystem.MainModule
+				&& !field.MetadataToken.IsNil)
+			{
+				var decl = engine.FieldSyntax(field, typeSystemAstBuilder.UseSpecialConstants, settings, out string? reason);
+				if (decl != null)
+				{
+					Interlocked.Increment(ref declarationsServed);
+					return decl;
+				}
+				Interlocked.Increment(ref declarationFallbacks);
+				declarationFallbackReasons.AddOrUpdate(reason ?? "unknown", 1, (_, n) => n + 1);
+			}
+			return managed;
+		}
+
 		static long constantSyntaxFallbacks;
 
 		/// <summary>Constants of a served body the engine sent no syntax for, which the managed builder converted.</summary>
@@ -208,6 +243,9 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 			Interlocked.Exchange(ref fallbacks, 0);
 			Interlocked.Exchange(ref typeSyntaxFallbacks, 0);
 			Interlocked.Exchange(ref constantSyntaxFallbacks, 0);
+			Interlocked.Exchange(ref declarationsServed, 0);
+			Interlocked.Exchange(ref declarationFallbacks, 0);
+			declarationFallbackReasons.Clear();
 			fallbackReasons.Clear();
 		}
 

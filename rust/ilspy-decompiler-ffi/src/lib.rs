@@ -851,6 +851,55 @@ pub unsafe extern "C" fn ilspy_session_read_function(
     }
 }
 
+/// The declaration syntax of the field `field_token` of the main module
+/// (`wire::ilast::field_syntax`). `flags`: bit 0 `UseSpecialConstants`, bit 1
+/// `SortCustomAttributes`, bit 2 `IntroducePrivateProtectedAccessibility`, bit 3
+/// `LiftNullables`. Safe to call from several threads at once.
+///
+/// # Safety
+/// `session` must be a live, loaded session; `out` must be writable.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn ilspy_session_field_syntax(
+    session: *const FfiSession,
+    field_token: u32,
+    flags: u32,
+    out: *mut Buf,
+) -> Status {
+    // SAFETY: the caller guarantees `out` is writable.
+    unsafe { out.write(Buf::EMPTY) };
+    match run(|| {
+        // SAFETY: the caller guarantees a live session.
+        let session = unsafe { session.as_ref() }.ok_or("null session")?;
+        let comp = session
+            .compilation
+            .get()
+            .ok_or("the session has no compilation")?;
+        if field_token >> 24 != 0x04 {
+            return Err(format!("0x{field_token:08x} is not a Field token"));
+        }
+        let mut ts = TypeSystem::new(comp);
+        let options = ilspy_decompiler::csharp::entity_syntax::EntityOptions {
+            special_constants: flags & 1 != 0,
+            sort_attributes: flags & 2 != 0,
+            private_protected: flags & 4 != 0,
+            nullable_specifier: flags & 8 != 0,
+        };
+        ilspy_decompiler::wire::ilast::field_syntax(
+            &mut ts,
+            ModuleId(0),
+            field_token & 0x00FF_FFFF,
+            options,
+        )
+    }) {
+        Ok(bytes) => {
+            // SAFETY: as above.
+            unsafe { out.write(Buf::from_vec(bytes)) };
+            Status::Ok
+        }
+        Err(status) => status,
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
