@@ -37,6 +37,7 @@ pub const BUILT_IN: &[&str] = &[
 
 /// The ported transforms, by their index in `BUILT_IN`.
 const TRANSFORMS: &[(usize, Transform)] = &[
+    (1, super::transforms::rewrite_visual_basic_with_events::run),
     (
         2,
         super::transforms::replace_method_calls_with_operators::run,

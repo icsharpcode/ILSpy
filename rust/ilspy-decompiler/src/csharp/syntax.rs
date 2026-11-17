@@ -346,6 +346,61 @@ impl SyntaxTree {
         self.host_handles + self.new_annotations.len() as u32 - 1
     }
 
+    /// A copy of `id` and its subtree (trivia included), without parent; the copies keep the
+    /// annotation handles of the originals.
+    pub fn deep_clone(&mut self, id: SyntaxId) -> SyntaxId {
+        let mut node = self.node(id).clone();
+        node.parent = None;
+        node.leading_trivia = node
+            .leading_trivia
+            .iter()
+            .map(|&t| self.deep_clone(t))
+            .collect();
+        node.trailing_trivia = node
+            .trailing_trivia
+            .iter()
+            .map(|&t| self.deep_clone(t))
+            .collect();
+        for slot in &mut node.slots {
+            match slot {
+                SlotValue::Single(Some(c)) => *c = self.deep_clone(*c),
+                SlotValue::Single(None) => {}
+                SlotValue::Many(cs) => {
+                    for c in cs.iter_mut() {
+                        *c = self.deep_clone(*c);
+                    }
+                }
+            }
+        }
+        self.nodes.push(node);
+        let copy = SyntaxId(self.nodes.len() as u32 - 1);
+        let node = self.node(copy).clone();
+        for c in node
+            .leading_trivia
+            .iter()
+            .chain(&node.trailing_trivia)
+            .copied()
+            .chain(self.all_children(copy))
+        {
+            self.node_mut(c).parent = Some(copy);
+        }
+        copy
+    }
+
+    /// Reads a single node and its subtree in the wire format into the arena, without parent;
+    /// its handles are taken as they are written.
+    pub fn decode_subtree(&mut self, bytes: &[u8]) -> Result<SyntaxId, String> {
+        let mut r = Reader { bytes, pos: 0 };
+        let id = decode_node(&mut r, self, None)?;
+        if r.pos != bytes.len() {
+            return Err(format!(
+                "{} bytes after the syntax node",
+                bytes.len() - r.pos
+            ));
+        }
+        Ok(id)
+    }
+
     /// Reads a tree the host wrote, whose handles refer to `host_handles` objects.
     pub fn decode(bytes: &[u8], host_handles: u32) -> Result<SyntaxTree, String> {
         let mut r = Reader { bytes, pos: 0 };
@@ -362,17 +417,6 @@ impl SyntaxTree {
         }
         tree.root = Some(root);
         Ok(tree)
-    }
-
-    /// Reads a detached subtree in the wire format (a node, without the list of new annotations)
-    /// into the arena; its handles are taken as they are.
-    pub fn decode_subtree(&mut self, bytes: &[u8]) -> Result<SyntaxId, String> {
-        let mut r = Reader { bytes, pos: 0 };
-        let id = decode_node(&mut r, self, None)?;
-        if r.pos != bytes.len() {
-            return Err(format!("{} bytes after the subtree", bytes.len() - r.pos));
-        }
-        Ok(id)
     }
 
     /// The nodes of the subtree of `id` in pre-order (children in child order), with `id` and
@@ -559,7 +603,8 @@ impl Reader<'_> {
     }
 }
 
-fn uvar(out: &mut Vec<u8>, mut v: u64) {
+/// Appends `v` as unsigned LEB128.
+pub(crate) fn uvar(out: &mut Vec<u8>, mut v: u64) {
     loop {
         let b = (v & 0x7F) as u8;
         v >>= 7;
@@ -582,7 +627,9 @@ fn unzigzag(v: u64) -> i64 {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::csharp::syntax_schema::{binary_operator_expression, kind, primitive_expression};
+    use crate::csharp::syntax_schema::{
+        binary_operator_expression, expression_statement, kind, primitive_expression,
+    };
 
     #[test]
     fn a_tree_survives_encoding() {
@@ -654,5 +701,36 @@ mod tests {
         assert_eq!(tree.node(rc).parent, Some(copy));
         assert_eq!(tree.node(copy).parent, None);
         assert_eq!(tree.node(rc).annotations, vec![5]);
+    }
+
+    #[test]
+    fn a_deep_clone_and_a_decoded_subtree_are_detached_copies() {
+        let mut tree = SyntaxTree::default();
+        let binary = tree.new_node(kind::BINARY_OPERATOR_EXPRESSION);
+        let left = tree.new_node(kind::PRIMITIVE_EXPRESSION);
+        tree.node_mut(left).annotations = vec![4];
+        tree.set_child(binary, binary_operator_expression::slot::LEFT, Some(left));
+        let root = tree.new_node(kind::EXPRESSION_STATEMENT);
+        tree.set_child(root, expression_statement::slot::EXPRESSION, Some(binary));
+        tree.root = Some(root);
+
+        let copy = tree.deep_clone(binary);
+        assert_ne!(copy, binary);
+        assert_eq!(tree.node(copy).parent, None);
+        let l = tree
+            .child(copy, binary_operator_expression::slot::LEFT)
+            .unwrap();
+        assert_ne!(l, left);
+        assert_eq!(tree.node(l).parent, Some(copy));
+        assert_eq!(tree.node(l).annotations, vec![4]);
+
+        let mut bytes = Vec::new();
+        tree.encode_node(binary, &mut bytes);
+        let decoded = tree.decode_subtree(&bytes).unwrap();
+        assert_eq!(tree.node(decoded).parent, None);
+        let mut again = Vec::new();
+        tree.encode_node(decoded, &mut again);
+        assert_eq!(again, bytes);
+        assert!(tree.decode_subtree(&bytes[..bytes.len() - 1]).is_err());
     }
 }

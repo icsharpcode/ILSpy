@@ -5,3 +5,4 @@ pub mod add_checked_blocks;
 pub mod declare_variables;
 pub mod introduce_unsafe_modifier;
 pub mod replace_method_calls_with_operators;
+pub mod rewrite_visual_basic_with_events;

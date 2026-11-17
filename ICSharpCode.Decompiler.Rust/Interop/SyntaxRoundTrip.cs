@@ -52,6 +52,11 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 
 		/// <summary>The settings of the request, which the engine may ask about; null where unknown.</summary>
 		public DecompilerSettings? Settings => context?.Settings;
+		/// <summary>The transform context's builder, for the queries that convert types.</summary>
+		CSharp.Syntax.TypeSystemAstBuilder? astBuilder => context?.TypeSystemAstBuilder;
+		readonly List<TypeSystem.ISymbol> symbols = new List<TypeSystem.ISymbol>();
+		readonly Dictionary<TypeSystem.ISymbol, int> symbolIds = new Dictionary<TypeSystem.ISymbol, int>();
+		readonly List<object> answerObjects = new List<object>();
 
 		/// <summary>The host objects the tree refers to by handle.</summary>
 		public IReadOnlyList<object> Handles => handles;
@@ -277,6 +282,8 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		/// </summary>
 		object CreateAnnotation(byte kind, ArraySegment<byte> payload)
 		{
+			if (CreateWithEventsAnnotation(kind, payload) is { } withEvents)
+				return withEvents;
 			if (CreateDeclareVariablesAnnotation(kind, payload) is { } declareVariables)
 				return declareVariables;
 			switch (kind)
@@ -305,6 +312,26 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		const byte AnnotationUnchecked = 50;
 		const byte AnnotationDecimalOne = 51;
 
+		/// <summary>
+		/// The annotations <c>RewriteVisualBasicWithEventsInInitializeComponent</c> creates (kinds 32..47);
+		/// null for another kind.
+		/// </summary>
+		object? CreateWithEventsAnnotation(byte kind, ArraySegment<byte> payload)
+		{
+			int pos = payload.Offset;
+			switch (kind)
+			{
+				case AnnotationMemberResolveResult:
+					return new Semantics.MemberResolveResult(null, (TypeSystem.IMember)symbols[(int)ReadUVar(payload.Array!, ref pos)]);
+				case AnnotationReturnTypeResolveResult:
+					return new Semantics.TypeResolveResult(((TypeSystem.IMember)symbols[(int)ReadUVar(payload.Array!, ref pos)]).ReturnType);
+				case AnnotationHostObject:
+					return answerObjects[(int)ReadUVar(payload.Array!, ref pos)];
+				default:
+					return null;
+			}
+		}
+
 		/// <summary>The query kinds of <c>csharp/syntax_oracle.rs</c>.</summary>
 		const byte QueryClassName = 0;
 		const byte QueryResolveResultType = 1;
@@ -319,6 +346,115 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		const byte QueryCheckedState = 80;
 		const byte QueryCheckForOverflowUnderflow = 81;
 		const byte QueryUnsafeFacts = 64;
+		const byte QueryNodeSymbol = 32;
+		const byte QueryMemberFacts = 33;
+		const byte QueryAccessedThroughPropertyField = 34;
+		const byte QueryFieldMatchesProperty = 35;
+		const byte QueryAccessedThroughPropertyNames = 36;
+		const byte QueryReturnTypeSyntax = 37;
+
+		/// <summary>The annotation kinds the engine creates (<c>csharp/syntax_oracle.rs</c>).</summary>
+		const byte AnnotationMemberResolveResult = 32;
+		const byte AnnotationReturnTypeResolveResult = 33;
+		const byte AnnotationHostObject = 34;
+
+		/// <summary>The id of <paramref name="symbol"/> in the table the symbol queries refer to;
+		/// equal symbols share it.</summary>
+		int SymbolId(TypeSystem.ISymbol symbol)
+		{
+			if (!symbolIds.TryGetValue(symbol, out int id))
+			{
+				id = symbols.Count;
+				symbols.Add(symbol);
+				symbolIds.Add(symbol, id);
+			}
+			return id;
+		}
+
+		/// <summary>
+		/// The answer to a query about the symbol table (kinds 33 to 37), whose first argument is a
+		/// symbol id; null where it does not apply.
+		/// </summary>
+		byte[]? AnswerSymbolQuery(byte kind, TypeSystem.ISymbol symbol, byte[] query, ref int pos)
+		{
+			var s = new MemoryStream();
+			switch (kind)
+			{
+				case QueryMemberFacts:
+				{
+					s.WriteByte(symbol switch {
+						TypeSystem.IProperty => 1,
+						TypeSystem.IField => 2,
+						TypeSystem.IEvent => 3,
+						TypeSystem.IMethod => 4,
+						_ => 0
+					});
+					UVar(s, (ulong)SymbolId(symbol is TypeSystem.IMember m ? m.MemberDefinition : symbol));
+					byte flags = 0;
+					if (symbol is TypeSystem.IEntity { IsStatic: true })
+						flags |= 1;
+					if (symbol is TypeSystem.IProperty { Setter: not null })
+						flags |= 2;
+					if (symbol is TypeSystem.IMethod method && CSharp.CSharpDecompiler.IsWindowsFormsInitializeComponentMethod(method))
+						flags |= 4;
+					s.WriteByte(flags);
+					UVar(s, (ulong)(symbol is TypeSystem.IProperty p ? p.Parameters.Count : 0));
+					WriteUtf16(s, symbol.Name);
+					return s.ToArray();
+				}
+				case QueryAccessedThroughPropertyField:
+				{
+					if (symbol is not TypeSystem.IProperty property
+						|| !CSharp.Transforms.PatternStatementTransform.TryGetBackingField(property, out var field)
+						|| !CSharp.Transforms.PatternStatementTransform.HasAccessedThroughPropertyAttribute(field))
+						return null;
+					UVar(s, (ulong)SymbolId(field));
+					return s.ToArray();
+				}
+				case QueryFieldMatchesProperty:
+				{
+					var field = symbols[(int)ReadUVar(query, ref pos)] as TypeSystem.IField;
+					bool matches = symbol is TypeSystem.IProperty property && field != null
+						&& field.DeclaringTypeDefinition != null && field.DeclaringTypeDefinition.Equals(property.DeclaringTypeDefinition)
+						&& TypeSystem.NormalizeTypeVisitor.IgnoreNullability.EquivalentTypes(field.ReturnType, property.ReturnType);
+					return new[] { matches ? (byte)1 : (byte)0 };
+				}
+				case QueryAccessedThroughPropertyNames:
+				{
+					if (symbol is not TypeSystem.IField field)
+						return null;
+					var names = new List<string>();
+					foreach (var attr in field.GetAttributes())
+					{
+						if (attr.AttributeType.FullName == "Microsoft.VisualBasic.CompilerServices.AccessedThroughPropertyAttribute"
+							&& attr.FixedArguments.Length == 1 && attr.FixedArguments[0].Value is string name)
+						{
+							names.Add(name);
+						}
+					}
+					UVar(s, (ulong)names.Count);
+					foreach (var name in names)
+					{
+						UVar(s, (ulong)name.Length);
+						WriteUtf16(s, name);
+					}
+					return s.ToArray();
+				}
+				case QueryReturnTypeSyntax:
+				{
+					if (astBuilder == null || symbol is not TypeSystem.IMember member)
+						return null;
+					var node = new SyntaxRoundTrip();
+					byte[] bytes = node.Write(astBuilder.ConvertType(member.ReturnType));
+					UVar(s, (ulong)answerObjects.Count);
+					answerObjects.AddRange(node.Handles);
+					s.Write(bytes, 0, bytes.Length);
+					return s.ToArray();
+				}
+				default:
+					return null;
+			}
+		}
 
 		/// <summary>
 		/// The answer to the engine's question <paramref name="query"/> about one of the tree's host
@@ -330,6 +466,11 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 			if (query[0] is >= DeclareVariablesFirstQuery and <= DeclareVariablesLastQuery)
 				return AnswerDeclareVariables(query);
 			int pos = 1;
+			if (query[0] is >= QueryMemberFacts and <= QueryReturnTypeSyntax)
+			{
+				int id = (int)ReadUVar(query, ref pos);
+				return id >= 0 && id < symbols.Count ? AnswerSymbolQuery(query[0], symbols[id], query, ref pos) : null;
+			}
 			int handle = (int)ReadUVar(query, ref pos);
 			if (query[0] == QuerySetting)
 			{
@@ -423,6 +564,15 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					var s = new MemoryStream();
 					WriteUtf8(s, trr.Type.Namespace);
 					WriteUtf8(s, trr.Type.Name);
+					return s.ToArray();
+				}
+				case QueryNodeSymbol:
+				{
+					if (target is not Semantics.ResolveResult nodeRR)
+						return null;
+					var symbol = nodeRR is Semantics.MethodGroupResolveResult mgrr ? mgrr.ChosenMethod : TypeSystem.TypeSystemExtensions.GetSymbol(nodeRR);
+					var s = new MemoryStream();
+					UVar(s, symbol == null ? 0 : (ulong)SymbolId(symbol) + 1);
 					return s.ToArray();
 				}
 				case QueryClassName:
@@ -559,6 +709,12 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				return;
 			}
 			UVar(s, (ulong)value.Length + 1);
+			WriteUtf16(s, value);
+		}
+
+		/// <summary>The UTF-16 code units of <paramref name="value"/>, little-endian.</summary>
+		static void WriteUtf16(MemoryStream s, string value)
+		{
 			foreach (char c in value)
 			{
 				s.WriteByte(unchecked((byte)c));

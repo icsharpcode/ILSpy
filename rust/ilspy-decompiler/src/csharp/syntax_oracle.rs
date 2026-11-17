@@ -368,6 +368,181 @@ pub fn check_for_overflow_underflow(oracle: &dyn SyntaxOracle) -> Option<bool> {
         .map(|&b| b != 0)
 }
 
+// Queries 32..47 (`RewriteVisualBasicWithEventsInInitializeComponent`). The host keeps a table of
+// the symbols it names; a symbol id is an index into it, and two ids are equal exactly where the
+// symbols are (`Equals`). Except for `QUERY_NODE_SYMBOL`, these queries take a symbol id where the
+// others take a handle.
+
+/// For a `ResolveResult`: the symbol `AstNode.GetSymbol` takes from it (`ChosenMethod` for a
+/// method group), as its id plus one, 0 for none. No answer for any other object.
+pub const QUERY_NODE_SYMBOL: u8 = 32;
+/// For a symbol id: its role (`MemberRole`), the id of its `MemberDefinition` (its own for a
+/// non-member), a flags byte (`MEMBER_STATIC`, ...), the parameter count of a property (LEB128)
+/// and the name as UTF-16 code units.
+pub const QUERY_MEMBER_FACTS: u8 = 33;
+/// For a property id: the id of its backing field (`PatternStatementTransform.TryGetBackingField`)
+/// where that field has an `AccessedThroughProperty` attribute; no answer otherwise.
+pub const QUERY_ACCESSED_THROUGH_PROPERTY_FIELD: u8 = 34;
+/// For a property id and a field id: one byte, whether the field is declared in the property's
+/// type definition and has its type (ignoring nullability).
+pub const QUERY_FIELD_MATCHES_PROPERTY: u8 = 35;
+/// For a field id: the string arguments of its single-argument
+/// `Microsoft.VisualBasic.CompilerServices.AccessedThroughPropertyAttribute`s, as a count and
+/// each as a count of UTF-16 code units and the units.
+pub const QUERY_ACCESSED_THROUGH_PROPERTY_NAMES: u8 = 36;
+/// For a member id: its return type as the transform context's `TypeSystemAstBuilder` writes it,
+/// as the index of the host's first object for its handles (LEB128), then the node in the wire
+/// format of `syntax.rs`, whose handles count from that index (`ANNOTATION_HOST_OBJECT`).
+pub const QUERY_RETURN_TYPE_SYNTAX: u8 = 37;
+
+/// The annotation `new MemberResolveResult(null, member)`; payload: the member's symbol id.
+pub const ANNOTATION_MEMBER_RESOLVE_RESULT: u8 = 32;
+/// The annotation `new TypeResolveResult(member.ReturnType)`; payload: the member's symbol id.
+pub const ANNOTATION_RETURN_TYPE_RESOLVE_RESULT: u8 = 33;
+/// An object the host made while answering `QUERY_RETURN_TYPE_SYNTAX`; payload: its index.
+pub const ANNOTATION_HOST_OBJECT: u8 = 34;
+
+/// `MemberFacts::flags`: the member is static.
+pub const MEMBER_STATIC: u8 = 1;
+/// `MemberFacts::flags`: the property has a setter.
+pub const MEMBER_HAS_SETTER: u8 = 2;
+/// `MemberFacts::flags`: the method is a Windows Forms `InitializeComponent`
+/// (`CSharpDecompiler.IsWindowsFormsInitializeComponentMethod`).
+pub const MEMBER_WINDOWS_FORMS_INITIALIZE_COMPONENT: u8 = 4;
+
+/// The interface a symbol implements, as far as `QUERY_MEMBER_FACTS` tells them apart.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum MemberRole {
+    Other,
+    Property,
+    Field,
+    Event,
+    Method,
+}
+
+/// The answer to `QUERY_MEMBER_FACTS`.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct MemberFacts {
+    pub role: MemberRole,
+    pub member_definition: u32,
+    pub flags: u8,
+    pub parameter_count: u32,
+    pub name: Vec<u16>,
+}
+
+fn query_args(kind: u8, args: &[u32]) -> Vec<u8> {
+    let mut q = vec![kind];
+    for &a in args {
+        super::syntax::uvar(&mut q, u64::from(a));
+    }
+    q
+}
+
+fn read_uvar(bytes: &mut &[u8]) -> Option<u64> {
+    let mut v = 0u64;
+    let mut shift = 0;
+    loop {
+        let (&x, rest) = bytes.split_first()?;
+        *bytes = rest;
+        v |= u64::from(x & 0x7F) << shift;
+        if x & 0x80 == 0 {
+            return Some(v);
+        }
+        shift += 7;
+        if shift > 63 {
+            return None;
+        }
+    }
+}
+
+fn read_utf16(bytes: &[u8]) -> Vec<u16> {
+    bytes
+        .as_chunks::<2>()
+        .0
+        .iter()
+        .map(|c| u16::from_le_bytes([c[0], c[1]]))
+        .collect()
+}
+
+/// `QUERY_NODE_SYMBOL`: `None` where the object `handle` is no `ResolveResult`, else its symbol id.
+pub fn node_symbol(oracle: &dyn SyntaxOracle, handle: u32) -> Option<Option<u32>> {
+    let b = oracle.ask(&query(QUERY_NODE_SYMBOL, handle))?;
+    let id = read_uvar(&mut b.as_slice())?;
+    Some(id.checked_sub(1).map(|id| id as u32))
+}
+
+/// `QUERY_MEMBER_FACTS` of the symbol `id`.
+pub fn member_facts(oracle: &dyn SyntaxOracle, id: u32) -> Option<MemberFacts> {
+    let b = oracle.ask(&query_args(QUERY_MEMBER_FACTS, &[id]))?;
+    let mut rest = b.as_slice();
+    let (&role, r) = rest.split_first()?;
+    rest = r;
+    let role = match role {
+        1 => MemberRole::Property,
+        2 => MemberRole::Field,
+        3 => MemberRole::Event,
+        4 => MemberRole::Method,
+        _ => MemberRole::Other,
+    };
+    let member_definition = read_uvar(&mut rest)? as u32;
+    let (&flags, r) = rest.split_first()?;
+    rest = r;
+    let parameter_count = read_uvar(&mut rest)? as u32;
+    Some(MemberFacts {
+        role,
+        member_definition,
+        flags,
+        parameter_count,
+        name: read_utf16(rest),
+    })
+}
+
+/// `QUERY_ACCESSED_THROUGH_PROPERTY_FIELD` of the property `id`.
+pub fn accessed_through_property_field(oracle: &dyn SyntaxOracle, id: u32) -> Option<u32> {
+    let b = oracle.ask(&query_args(QUERY_ACCESSED_THROUGH_PROPERTY_FIELD, &[id]))?;
+    read_uvar(&mut b.as_slice()).map(|v| v as u32)
+}
+
+/// `QUERY_FIELD_MATCHES_PROPERTY` of the property `property` and the field `field`.
+pub fn field_matches_property(oracle: &dyn SyntaxOracle, property: u32, field: u32) -> bool {
+    oracle
+        .ask(&query_args(
+            QUERY_FIELD_MATCHES_PROPERTY,
+            &[property, field],
+        ))
+        .is_some_and(|b| b.first() == Some(&1))
+}
+
+/// `QUERY_ACCESSED_THROUGH_PROPERTY_NAMES` of the field `id`.
+pub fn accessed_through_property_names(oracle: &dyn SyntaxOracle, id: u32) -> Vec<Vec<u16>> {
+    let Some(b) = oracle.ask(&query_args(QUERY_ACCESSED_THROUGH_PROPERTY_NAMES, &[id])) else {
+        return Vec::new();
+    };
+    let mut rest = b.as_slice();
+    let mut names = Vec::new();
+    let count = read_uvar(&mut rest).unwrap_or(0);
+    for _ in 0..count {
+        let Some(len) = read_uvar(&mut rest) else {
+            break;
+        };
+        let Some((s, r)) = rest.split_at_checked(len as usize * 2) else {
+            break;
+        };
+        rest = r;
+        names.push(read_utf16(s));
+    }
+    names
+}
+
+/// `QUERY_RETURN_TYPE_SYNTAX` of the member `id`: the index of the host's first object for the
+/// node's handles, and the node's bytes.
+pub fn return_type_syntax(oracle: &dyn SyntaxOracle, id: u32) -> Option<(u32, Vec<u8>)> {
+    let b = oracle.ask(&query_args(QUERY_RETURN_TYPE_SYNTAX, &[id]))?;
+    let mut rest = b.as_slice();
+    let base = read_uvar(&mut rest)? as u32;
+    Some((base, rest.to_vec()))
+}
+
 /// An oracle that knows nothing, for trees without host objects.
 pub struct NoOracle;
 
