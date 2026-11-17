@@ -924,6 +924,45 @@ pub unsafe extern "C" fn ilspy_session_entity_syntax(
     }
 }
 
+/// `CSharpDecompiler.MemberIsHidden` of a TypeDef, MethodDef or Field token of the main
+/// module, written to `out` as 0 or 1. `flags` are the settings it reads
+/// (`csharp::member_hidden::HiddenSettings`). Safe to call from several threads at once.
+///
+/// # Safety
+/// `session` must be a live, loaded session; `out` must be writable.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn ilspy_session_member_is_hidden(
+    session: *const FfiSession,
+    token: u32,
+    flags: u32,
+    out: *mut u8,
+) -> Status {
+    // SAFETY: the caller guarantees `out` is writable.
+    unsafe { out.write(0) };
+    match run(|| {
+        // SAFETY: the caller guarantees a live session.
+        let session = unsafe { session.as_ref() }.ok_or("null session")?;
+        let comp = session
+            .compilation
+            .get()
+            .ok_or("the session has no compilation")?;
+        let mut ts = TypeSystem::new(comp);
+        Ok(ilspy_decompiler::csharp::member_hidden::member_is_hidden(
+            &mut ts,
+            ModuleId(0),
+            token,
+            ilspy_decompiler::csharp::member_hidden::HiddenSettings(flags),
+        ))
+    }) {
+        Ok(hidden) => {
+            // SAFETY: as above.
+            unsafe { out.write(u8::from(hidden)) };
+            Status::Ok
+        }
+        Err(status) => status,
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

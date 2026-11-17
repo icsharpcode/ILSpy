@@ -738,9 +738,9 @@ impl<'c, 'a> TypeSystem<'c, 'a> {
     /// `MethodSemanticsLookup.GetSemantics`: the property or event a method is a C# accessor
     /// of (getter, setter, adder, remover; not raisers).
     pub fn accessor_owner(&mut self, m: MethodDefId) -> Option<(u32, u16)> {
-        let comp = self.comp;
-        let map = self.accessor_owners.entry(m.module).or_insert_with(|| {
-            let md = &comp.module(m.module).md;
+        let module = self.comp.module(m.module);
+        let map = module.accessor_owners.get_or_init(|| {
+            let md = &module.md;
             let mut map = std::collections::HashMap::new();
             let token = crate::metadata::tables::token;
             for p in 1..=md.tables.rows(TableId::Property) {

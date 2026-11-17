@@ -4798,6 +4798,26 @@ corpus has no extension blocks. With this, every declaration `ConvertEntity` and
 
 The share stayed at 100.0 %.
 
+### 3.213 Hidden members (item 68z4c1)
+
+`CSharpDecompiler.MemberIsHidden` decides which types, methods and fields a decompilation leaves
+out: accessors, closures and their display classes, state machines, local functions, backing
+fields, delegate and anonymous-method caches, `<PrivateImplementationDetails>`, and the
+forwarding stubs that implement an interface accessor explicitly. The engine's port
+(`csharp/member_hidden.rs`) takes the settings it reads as a bit set and reuses the detectors
+the IL transforms already had (`is_local_function_method`, `is_anonymous_type`); the stub check
+brings a port of `SignatureBlobComparer.EqualsMethodSignature` for signatures of one module,
+including its quirk that only a slot's top-level modifiers are skipped. `DoDecompileTypes` asks
+the engine for each top-level type of the main module; the managed decision is computed beside
+it and a difference is counted, and the ratchet test fails on any. `MemberIsHiddenEquality`
+compares both decisions on every type, method and field of every corpus image, with the default
+and the C# 1 settings: they agree everywhere. The accessor lookup
+(`MethodSemanticsLookup`) moved from the per-request type system to the module, since a
+per-call rebuild made the comparison quadratic. The namespace grouping of `DoDecompileTypes`
+stays with the host until the engine assembles the syntax tree.
+
+The share stayed at 100.0 %.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

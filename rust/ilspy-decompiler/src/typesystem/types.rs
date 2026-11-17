@@ -199,7 +199,6 @@ pub struct TypeSystem<'c, 'a> {
     map: HashMap<TypeData, TypeId>,
     known: HashMap<KnownTypeCode, TypeId>,
     /// Per module: method row to `(owner token, semantics)` of C# accessors.
-    pub(super) accessor_owners: HashMap<ModuleId, HashMap<u32, (u32, u16)>>,
     explicit_contexts: Vec<ExplicitContext>,
     /// The type parameters of `TypeParamOwner::Synthetic`, by id.
     synthetic_type_parameters: Vec<super::members::TypeParamInfo>,
@@ -212,7 +211,6 @@ impl<'c, 'a> TypeSystem<'c, 'a> {
             data: Vec::new(),
             map: HashMap::new(),
             known: HashMap::new(),
-            accessor_owners: HashMap::new(),
             explicit_contexts: Vec::new(),
             synthetic_type_parameters: Vec::new(),
         }

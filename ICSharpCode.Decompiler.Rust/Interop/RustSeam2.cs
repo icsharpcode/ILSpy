@@ -22,12 +22,15 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection.Metadata;
+using System.Reflection.Metadata.Ecma335;
 using System.Runtime.CompilerServices;
 using System.Threading;
 
 using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.CSharp.Resolver;
 using ICSharpCode.Decompiler.CSharp.Syntax;
+using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Semantics;
 using ICSharpCode.Decompiler.TypeSystem;
@@ -339,6 +342,40 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				return syntax;
 			Interlocked.Increment(ref typeSyntaxFallbacks);
 			return exprBuilder.ConvertType(type);
+		}
+
+		static long hiddenDecisions;
+		static long hiddenDivergences;
+		static readonly ConcurrentDictionary<string, int> hiddenDivergenceMembers = new ConcurrentDictionary<string, int>();
+
+		/// <summary><c>MemberIsHidden</c> decisions the engine made.</summary>
+		public static long HiddenDecisions => Interlocked.Read(ref hiddenDecisions);
+
+		/// <summary>Engine <c>MemberIsHidden</c> decisions that differ from the managed one.</summary>
+		public static long HiddenDivergences => Interlocked.Read(ref hiddenDivergences);
+
+		/// <summary>The members whose <c>MemberIsHidden</c> decisions differ, with how often.</summary>
+		public static IReadOnlyDictionary<string, int> HiddenDivergenceMembers => hiddenDivergenceMembers;
+
+		/// <summary>
+		/// <c>CSharpDecompiler.MemberIsHidden</c> from the engine for a member of the main module;
+		/// null where the host decides it (the engine is off or the member is of another module).
+		/// Each decision is checked against the managed one, and a difference is counted.
+		/// </summary>
+		internal static bool? MemberIsHidden(IDecompilerTypeSystem typeSystem, MetadataFile? module, EntityHandle member, DecompilerSettings settings)
+		{
+			if (!Enabled || module == null || member.IsNil
+				|| typeSystem.MainModule is not MetadataModule { MetadataFile: var mainFile } || mainFile != module
+				|| RustEngine.For(typeSystem, out _) is not { } engine)
+				return null;
+			bool hidden = engine.MemberIsHidden(member, settings);
+			Interlocked.Increment(ref hiddenDecisions);
+			if (hidden != CSharp.CSharpDecompiler.MemberIsHidden(module, member, settings))
+			{
+				Interlocked.Increment(ref hiddenDivergences);
+				hiddenDivergenceMembers.AddOrUpdate($"{module.Name} 0x{MetadataTokens.GetToken(member):x8}", 1, (_, n) => n + 1);
+			}
+			return hidden;
 		}
 
 		static readonly AsyncLocal<bool> disabled = new AsyncLocal<bool>();

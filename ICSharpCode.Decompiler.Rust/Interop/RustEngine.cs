@@ -187,6 +187,41 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		}
 
 		/// <summary>
+		/// <c>CSharpDecompiler.MemberIsHidden</c> of a type, method or field of the main module as the
+		/// engine decides it.
+		/// </summary>
+		public bool MemberIsHidden(EntityHandle member, DecompilerSettings settings)
+		{
+			uint flags = (settings.LocalFunctions ? 1u << 0 : 0u)
+				| (settings.AnonymousMethods ? 1u << 1 : 0u)
+				| (settings.YieldReturn ? 1u << 2 : 0u)
+				| (settings.AsyncAwait ? 1u << 3 : 0u)
+				| (settings.AsyncEnumerator ? 1u << 4 : 0u)
+				| (settings.FixedBuffers ? 1u << 5 : 0u)
+				| (settings.InlineArrays ? 1u << 6 : 0u)
+				| (settings.ExtensionMembers ? 1u << 7 : 0u)
+				| (settings.ArrayInitializers ? 1u << 8 : 0u)
+				| (settings.AnonymousTypes ? 1u << 9 : 0u)
+				| (settings.Dynamic ? 1u << 10 : 0u)
+				| (settings.SwitchStatementOnString ? 1u << 11 : 0u)
+				| (settings.UsePrimaryConstructorSyntaxForNonRecordTypes ? 1u << 12 : 0u)
+				| (settings.AutomaticProperties ? 1u << 13 : 0u)
+				| (settings.FieldKeyword ? 1u << 14 : 0u)
+				| (settings.GetterOnlyAutomaticProperties ? 1u << 15 : 0u)
+				| (settings.AutomaticEvents ? 1u << 16 : 0u);
+			var status = NativeMethods.ilspy_session_member_is_hidden(session, (uint)MetadataTokens.GetToken(member), flags, out byte hidden);
+			switch (status)
+			{
+				case RustStatus.Ok:
+					return hidden != 0;
+				case RustStatus.Cancelled:
+					throw new OperationCanceledException();
+				default:
+					throw new RustEngineException($"{status}: {NativeMethods.LastError}");
+			}
+		}
+
+		/// <summary>
 		/// The names AssignVariableNames' root scope collects around a method of <paramref name="type"/>, which
 		/// the managed type system and using scope list: first the lower-case member names (inherited ones
 		/// included), which it only avoids, then the names it also reserves (the parameters of a primary

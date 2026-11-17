@@ -753,7 +753,16 @@ the reasons. This file holds only the ordered steps, their gates and their rules
           members of extension blocks, with the loader test `ExtensionEverything` (lectures
           3.209-3.212).
         - [ ] 68z4c. The request-level `SyntaxTree`: namespaces, usings, the member order and
-          the rest of `DoDecompile` through `Interop/AstMaterializer.cs`.
+          the rest of `DoDecompile` through `Interop/AstMaterializer.cs`. Split (agent
+          recommendation), each step gated by G-ast(0) with the host still decompiling what the
+          engine does not yet:
+          - [x] 68z4c1. The request skeleton: `MemberIsHidden` and the top-level types of a
+            request (`DoDecompileTypes`; lecture 3.213). The namespace grouping stays with the
+            host until the engine assembles the syntax tree.
+          - [ ] 68z4c2. The member walk of `DoDecompile(ITypeDefinition)`: which members, in
+            which order, and the nested types.
+          - [ ] 68z4c3. The per-member post-processing of `DoDecompile`: enum members, fixed
+            buffers, `new` and `required`, RVA data comments, interface implementation helpers.
       - [ ] 68z5. The request-level seam 2 block: recognized early transforms as engine flags,
         `RecordSteps` requests managed, fallback counted per request. Subject:
         `Serve whole decompile requests through seam 2`.

@@ -1055,7 +1055,7 @@ pub(crate) fn is_local_function_method(ts: &mut TypeSystem<'_, '_>, method: Meth
 /// type has a local function method with parameters. (The managed code decodes the signature
 /// with a `FindTypeDecoder` for the type but then only asks `ParameterTypes.Any()`, so any
 /// parameter counts.)
-fn is_local_function_display_class(ts: &mut TypeSystem<'_, '_>, def: TypeDefId) -> bool {
+pub(crate) fn is_local_function_display_class(ts: &mut TypeSystem<'_, '_>, def: TypeDefId) -> bool {
     let Ok(info) = ts.comp.type_def(def) else {
         return false;
     };

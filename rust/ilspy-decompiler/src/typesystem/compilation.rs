@@ -84,6 +84,9 @@ pub struct Module<'a> {
     top_level: OnceLock<HashMap<TopLevelTypeName, u32>>,
     forwarders: OnceLock<HashMap<FullTypeName, u32>>,
     nested: OnceLock<HashMap<u32, Vec<u32>>>,
+    /// `MethodSemanticsLookup`: the property or event (token, semantics) a MethodDef row is a C#
+    /// accessor of.
+    pub(crate) accessor_owners: OnceLock<HashMap<u32, (u32, u16)>>,
 }
 
 pub struct Compilation<'a> {
@@ -115,6 +118,7 @@ impl<'a> Compilation<'a> {
                     top_level: OnceLock::new(),
                     forwarders: OnceLock::new(),
                     nested: OnceLock::new(),
+                    accessor_owners: OnceLock::new(),
                 })
             })
             .collect::<Result<_>>()?;

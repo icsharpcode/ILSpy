@@ -1028,8 +1028,19 @@ namespace ICSharpCode.Decompiler.CSharp
 				var typeDef = module.GetDefinition(typeDefHandle);
 				if (typeDef.Name == "<Module>" && typeDef.Members.Count == 0)
 					continue;
+				// RUST-SEAM-2 BEGIN
+				if (Rust.Interop.RustSeam2.MemberIsHidden(typeSystem, module.MetadataFile, typeDefHandle, settings) is { } hiddenByEngine)
+				{
+					if (hiddenByEngine)
+						continue;
+					goto visibleByEngine;
+				}
+				// RUST-SEAM-2 END
 				if (MemberIsHidden(module.MetadataFile, typeDefHandle, settings))
 					continue;
+				// RUST-SEAM-2 BEGIN
+				visibleByEngine:
+				// RUST-SEAM-2 END
 				if (string.IsNullOrEmpty(typeDef.Namespace))
 				{
 					groupNode = syntaxTree;

@@ -15,6 +15,7 @@ mod foreach;
 mod lambda;
 mod local_function;
 mod member_access;
+pub mod member_hidden;
 mod statement_builder;
 mod switch;
 mod translated_expression;
