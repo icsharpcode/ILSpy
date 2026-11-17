@@ -318,6 +318,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		const byte QueryTypeResolveResultName = 54;
 		const byte QueryCheckedState = 80;
 		const byte QueryCheckForOverflowUnderflow = 81;
+		const byte QueryUnsafeFacts = 64;
 
 		/// <summary>
 		/// The answer to the engine's question <paramref name="query"/> about one of the tree's host
@@ -451,6 +452,8 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					if (ReferenceEquals(target, CSharp.Transforms.AddCheckedBlocks.ExplicitUncheckedAnnotation))
 						return new byte[] { 2 };
 					return null;
+				case QueryUnsafeFacts:
+					return target is Semantics.ResolveResult u ? new[] { UnsafeFacts(u) } : null;
 				default:
 					return null;
 			}
@@ -481,6 +484,50 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 			string text = System.Text.Encoding.UTF8.GetString(b, pos, length);
 			pos += length;
 			return text;
+		}
+
+		/// <summary>The <c>UNSAFE_*</c> flags of <c>QUERY_UNSAFE_FACTS</c> for <paramref name="rr"/>.</summary>
+		static byte UnsafeFacts(Semantics.ResolveResult rr)
+		{
+			int facts = 0;
+			if (IsUnsafeType(rr.Type))
+				facts |= 1;
+			TypeSystem.IParameterizedMember? member = null;
+			if ((rr as Semantics.MemberResolveResult)?.Member is TypeSystem.IParameterizedMember pm)
+			{
+				facts |= 2;
+				member = pm;
+			}
+			else if (rr is Semantics.MethodGroupResolveResult mgrr)
+			{
+				facts |= 4;
+				member = mgrr.ChosenMethod;
+			}
+			if (member != null)
+			{
+				if (member.Parameters.Any(p => IsUnsafeType(p.Type)))
+					facts |= 8;
+				if (IsUnsafeType(member.ReturnType))
+					facts |= 16;
+			}
+			if (rr is Semantics.OperatorResolveResult orr && orr.Operands.FirstOrDefault()?.Type.Kind == TypeSystem.TypeKind.Pointer)
+				facts |= 32;
+			return (byte)facts;
+		}
+
+		static bool IsUnsafeType(TypeSystem.IType? type)
+		{
+			switch (type?.Kind)
+			{
+				case TypeSystem.TypeKind.Pointer:
+				case TypeSystem.TypeKind.FunctionPointer:
+					return true;
+				case TypeSystem.TypeKind.ByReference:
+				case TypeSystem.TypeKind.Array:
+					return IsUnsafeType(((TypeSystem.Implementation.TypeWithElementType)type).ElementType);
+				default:
+					return false;
+			}
 		}
 
 		static readonly System.Collections.Concurrent.ConcurrentDictionary<Type, System.Reflection.ConstructorInfo> constructors = new();

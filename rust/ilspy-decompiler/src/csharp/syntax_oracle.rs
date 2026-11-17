@@ -50,6 +50,25 @@ pub const QUERY_DV_DECONSTRUCTION: u8 = 103;
 pub const QUERY_DV_DESIGNATION: u8 = 104;
 /// The tag of every host annotation, one byte per handle.
 pub const QUERY_DV_ANNOTATION_TAGS: u8 = 105;
+/// For a `ResolveResult` (none for any other object): one byte of `UNSAFE_*` flags, the facts
+/// `IntroduceUnsafeModifier` reads about it. A type is unsafe if it is a pointer or function
+/// pointer, or a by-reference or array type of an unsafe element type.
+pub const QUERY_UNSAFE_FACTS: u8 = 64;
+
+/// The resolve result's type is unsafe.
+pub const UNSAFE_TYPE: u8 = 1;
+/// A `MemberResolveResult` whose member is an `IParameterizedMember`.
+pub const UNSAFE_PARAMETERIZED_MEMBER: u8 = 2;
+/// A `MethodGroupResolveResult`.
+pub const UNSAFE_METHOD_GROUP: u8 = 4;
+/// The parameterized member (or the chosen method of the method group) has a parameter of
+/// unsafe type.
+pub const UNSAFE_PARAMETER: u8 = 8;
+/// The parameterized member (or the chosen method of the method group) has an unsafe return
+/// type.
+pub const UNSAFE_RETURN_TYPE: u8 = 16;
+/// An `OperatorResolveResult` whose first operand is of pointer type.
+pub const UNSAFE_POINTER_OPERAND: u8 = 32;
 
 fn query(kind: u8, handle: u32) -> Vec<u8> {
     let mut q = vec![kind];
@@ -78,6 +97,13 @@ pub fn resolve_result_type(oracle: &dyn SyntaxOracle, handle: u32) -> Option<Str
     oracle
         .ask(&query(QUERY_RESOLVE_RESULT_TYPE, handle))
         .map(|b| String::from_utf8_lossy(&b).into_owned())
+}
+
+/// The `UNSAFE_*` flags of the host object `handle`, `None` if it is no resolve result.
+pub fn unsafe_facts(oracle: &dyn SyntaxOracle, handle: u32) -> Option<u8> {
+    oracle
+        .ask(&query(QUERY_UNSAFE_FACTS, handle))
+        .and_then(|b| b.first().copied())
 }
 
 /// The symbol of a resolve result: its kind (`SymbolKind` value), declaring type and name.

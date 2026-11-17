@@ -41,6 +41,7 @@ const TRANSFORMS: &[(usize, Transform)] = &[
         2,
         super::transforms::replace_method_calls_with_operators::run,
     ),
+    (3, super::transforms::introduce_unsafe_modifier::run),
     (4, super::transforms::add_checked_blocks::run),
     (5, super::transforms::declare_variables::run),
 ];
