@@ -798,7 +798,9 @@ the reasons. This file holds only the ordered steps, their gates and their rules
         `RecordSteps` requests managed, fallback counted per request (lecture 3.219). Subject:
         `Serve whole decompile requests through seam 2`.
 
-- [ ] **69-84. One AST transform per commit, in order.** Subject pattern:
+- [ ] **69-84. One AST transform per commit, in order.** Ported in parallel by agents against
+  `AstTransformEqualityTests` (2026-11-17: indices 0-5 in a first batch, 6-15 in a second) and served
+  in order by raising `AST_PREFIX` under G-ast(K). Subject pattern:
   `Port <TransformName> to Rust (AST prefix <K>)`. Gate per commit: G-rust, G-oracle,
   G-ast(K), G-ratchet.
   - [ ] 69. PatternStatementTransform, with hand-written matchers instead of a port of
@@ -809,7 +811,9 @@ the reasons. This file holds only the ordered steps, their gates and their rules
   - [ ] 73. AddCheckedBlocks (M)
   - [ ] 74. DeclareVariables (L)
   - [ ] 68z6. `RecordDecompiler` (agent recommendation: moved before the AST transform
-        that consumes it, `TransformFieldAndConstructorInitializers`): the member order of
+        that consumes it, `TransformFieldAndConstructorInitializers`). With the round trip (68z8) the transform
+        reads the host's RecordDecompiler through the oracle, so 75 no longer waits for this port;
+        it remains for the engine-side member walk of records: the member order of
         records, the record members the decompiler leaves out, and the analysis the transform reads;
         records keep the host's member walk, counted, until then. About 1,460 managed lines that
         decompile and match the generated equality, printing, clone and deconstruction members.
