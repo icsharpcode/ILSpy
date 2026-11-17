@@ -772,12 +772,20 @@ the reasons. This file holds only the ordered steps, their gates and their rules
               writes for `.override` directives move to 68z4c5 (agent recommendation): the host
               builds them by cloning the member's declaration, so a seam would duplicate that code,
               while 68z4c5 writes the type declaration's remaining parts in the engine.
-          - [ ] 68z4c5. The rest of `DoDecompile(ITypeDefinition)` the host still decides: the
+          - [x] 68z4c5. The rest of `DoDecompile(ITypeDefinition)` the host still decides: the
             `.override` forwarders, the type attributes it removes (`DefaultMember` with an
             indexer, the ref struct `Obsolete` and `CompilerFeatureRequired`, `Required`; done,
             lecture 3.220), the
             `partial` modifier, the comment on types nested in an enum, and the work list of
             compiler-generated members that decompiled bodies reference.
+            The forwarders, the nested-in-enum comment and the work list need the finished member
+            declarations with their bodies, so they come with 68z4c6 (agent recommendation).
+          - [ ] 68z4c6. The type declaration assembled in the engine: declaration nodes in the
+            engine's AST arena beside the body nodes, one request per type that translates the
+            members' bodies (the resolver callbacks stay per method) and returns the whole
+            declaration, and `Interop/AstMaterializer.cs` building it; with it the work list of
+            referenced compiler-generated members, the `.override` forwarders and the comment on
+            types nested in an enum. Prerequisite for 69, whose transforms run on the engine's tree.
       - [x] 68z5. The request-level seam 2 block: recognized early transforms as engine flags,
         `RecordSteps` requests managed, fallback counted per request (lecture 3.219). Subject:
         `Serve whole decompile requests through seam 2`.
