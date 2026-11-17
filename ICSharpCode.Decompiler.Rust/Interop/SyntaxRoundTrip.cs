@@ -511,6 +511,8 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				return AnswerFixNameCollisions(query);
 			if (query[0] is QueryXmlDocumentationEnabled or QueryXmlDocumentation)
 				return AnswerAddXmlDocumentation(query);
+			if (query[0] is >= PrettifyAssignmentsFirstQuery and <= PrettifyAssignmentsLastQuery)
+				return AnswerPrettifyAssignments(query);
 			int pos = 1;
 			if (query[0] is >= QueryMemberFacts and <= QueryReturnTypeSyntax)
 			{
