@@ -46,6 +46,10 @@ const TRANSFORMS: &[(usize, Transform)] = &[
     (3, super::transforms::introduce_unsafe_modifier::run),
     (4, super::transforms::add_checked_blocks::run),
     (5, super::transforms::declare_variables::run),
+    (
+        6,
+        super::transforms::field_and_constructor_initializers::run,
+    ),
 ];
 
 fn transform(index: usize) -> Option<Transform> {

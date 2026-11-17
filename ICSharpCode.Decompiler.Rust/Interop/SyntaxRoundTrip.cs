@@ -290,6 +290,8 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				return declareVariables;
 			if (kind is >= 16 and < 32 && CreatePatternStatementAnnotation(kind, payload) is { } patternStatement)
 				return patternStatement;
+			if (CreateFieldInitializersAnnotation(kind, payload) is { } fieldInitializers)
+				return fieldInitializers;
 			switch (kind)
 			{
 				case AnnotationAnswered:
@@ -485,6 +487,8 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				return AnswerDeclareVariables(query);
 			if (query[0] is >= 16 and < 32)
 				return AnswerPatternStatementTransform(query);
+			if (query[0] is >= FieldInitializersFirstQuery and <= FieldInitializersLastQuery)
+				return AnswerFieldInitializers(query);
 			int pos = 1;
 			if (query[0] is >= QueryMemberFacts and <= QueryReturnTypeSyntax)
 			{

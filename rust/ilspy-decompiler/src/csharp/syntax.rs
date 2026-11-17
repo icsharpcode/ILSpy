@@ -472,7 +472,8 @@ impl SyntaxTree {
         out
     }
 
-    fn encode_node(&self, id: SyntaxId, out: &mut Vec<u8>) {
+    /// Appends the subtree `id` (trivia included) in the wire format.
+    pub fn encode_node(&self, id: SyntaxId, out: &mut Vec<u8>) {
         let node = self.node(id);
         uvar(out, u64::from(node.kind));
         for s in &node.scalars {
