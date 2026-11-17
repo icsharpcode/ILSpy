@@ -525,8 +525,9 @@ pub fn convert_method(
         .full_name
         .name()
         .to_owned();
-    // shortcut: the members of a C# 14 extension block take their type parameters' names from
-    // `ExtensionInfo`, which the engine does not build yet; they stay with the host.
+    // shortcut: the members of a C# 14 extension block are specialized with the type parameters
+    // of their extension group (`ExtensionInfo.GetMembersOfGroup`), which the engine does not
+    // build yet; they stay with the host.
     let enclosing = ts
         .comp
         .type_def(declaring)
@@ -539,8 +540,8 @@ pub fn convert_method(
                 row: enclosing,
             })
             .has_extensions;
-    if ts.type_flags(declaring).has_extensions || in_extension_block {
-        return Err("a member of a type with extension blocks".to_owned());
+    if in_extension_block {
+        return Err("a member of an extension block".to_owned());
     }
     let method_kind = match kind {
         S::Method => MethodKindSyntax::Method,

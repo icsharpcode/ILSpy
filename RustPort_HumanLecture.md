@@ -4733,6 +4733,19 @@ writes 1896 declarations of the ratchet corpus.
 
 The share stayed at 100.0 %.
 
+### 3.209 Members of types with extension blocks (item 68z4b)
+
+The ordinary members of a static class that declares C# 14 extension blocks reach
+`DoDecompile` unspecialized, as any member does; only the members of an extension block are
+specialized with the type parameters of their extension group
+(`ExtensionInfo.GetMembersOfGroup`), which renames the grouping type's `$T0` to the group's `T`.
+The engine therefore writes the ordinary members, and keeps refusing the members declared in an
+extension block's grouping type (`shortcut:` until the group substitution is sent with the
+request). The ratchet corpus has none of the latter at this seam: the engine writes all 1926
+declarations it is asked for.
+
+The share stayed at 100.0 %.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |
