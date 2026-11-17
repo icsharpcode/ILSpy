@@ -943,7 +943,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				// A request the engine may serve goes through it: it runs the first AST transforms
 				// on the tree, which the loop then skips.
 				var engineTransforms = Rust.Interop.RustSeam2.AstRequest(astTransforms, RecordSteps) is { } astRequestFlags
-					? Rust.Interop.RustSeam2.RunAstTransforms(typeSystem, rootNode, astRequestFlags, astTransforms)
+					? Rust.Interop.RustSeam2.RunAstTransforms(typeSystem, rootNode, astRequestFlags, astTransforms, context)
 					: null;
 				// RUST-SEAM-2 END
 				foreach (var transform in astTransforms)

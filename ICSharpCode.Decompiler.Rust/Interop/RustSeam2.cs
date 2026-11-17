@@ -656,13 +656,13 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		/// engine for every request it serves, so the round trip itself is under test even where it
 		/// runs no transform.
 		/// </summary>
-		internal static HashSet<CSharp.Transforms.IAstTransform> RunAstTransforms(IDecompilerTypeSystem typeSystem, AstNode root, AstRequestFlags flags, IReadOnlyList<CSharp.Transforms.IAstTransform> transforms)
+		internal static HashSet<CSharp.Transforms.IAstTransform> RunAstTransforms(IDecompilerTypeSystem typeSystem, AstNode root, AstRequestFlags flags, IReadOnlyList<CSharp.Transforms.IAstTransform> transforms, CSharp.Transforms.TransformContext context)
 		{
 			var served = new HashSet<CSharp.Transforms.IAstTransform>();
 			if (RustEngine.For(typeSystem, out _) is not { } engine)
 				return served;
 			int prefix = RustEngine.ASTPrefix;
-			engine.RunAstTransforms(root, prefix, prefix > 0 ? flags : AstRequestFlags.None);
+			engine.RunAstTransforms(root, prefix, prefix > 0 ? flags : AstRequestFlags.None, context: context);
 			Interlocked.Increment(ref roundTrips);
 			if (prefix == 0)
 				return served;

@@ -37,6 +37,18 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 	{
 		readonly List<object> handles = new List<object>();
 		readonly List<object> created = new List<object>();
+		/// <summary>The handle tables of the subtrees the host built for the engine's queries.</summary>
+		readonly List<IReadOnlyList<object>> answered = new List<IReadOnlyList<object>>();
+		readonly CSharp.Transforms.TransformContext? context;
+
+		/// <summary>
+		/// A round trip for the transform context <paramref name="context"/>, which answers the
+		/// queries about settings and builds type syntax; without one those queries have no answer.
+		/// </summary>
+		public SyntaxRoundTrip(CSharp.Transforms.TransformContext? context = null)
+		{
+			this.context = context;
+		}
 
 		/// <summary>The host objects the tree refers to by handle.</summary>
 		public IReadOnlyList<object> Handles => handles;
@@ -249,15 +261,45 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		/// (<c>SyntaxTree::new_annotations</c> in <c>csharp/syntax.rs</c>). A transform that creates a
 		/// new kind of annotation adds its case here.
 		/// </summary>
-		static object CreateAnnotation(byte kind, ArraySegment<byte> payload)
+		object CreateAnnotation(byte kind, ArraySegment<byte> payload)
 		{
-			throw new RustEngineException($"the engine created an annotation of the unknown kind {kind}");
+			switch (kind)
+			{
+				case AnnotationAnswered:
+				{
+					var bytes = payload.ToArray();
+					int pos = 0;
+					int table = (int)ReadUVar(bytes, ref pos);
+					return answered[table][(int)ReadUVar(bytes, ref pos)];
+				}
+				case AnnotationChecked:
+					return CSharp.Transforms.AddCheckedBlocks.CheckedAnnotation;
+				case AnnotationUnchecked:
+					return CSharp.Transforms.AddCheckedBlocks.UncheckedAnnotation;
+				case AnnotationDecimalOne:
+					return 1m;
+				default:
+					throw new RustEngineException($"the engine created an annotation of the unknown kind {kind}");
+			}
 		}
+
+		/// <summary>The annotation kinds of <c>csharp/transforms/replace_method_calls_with_operators.rs</c>.</summary>
+		const byte AnnotationAnswered = 48;
+		const byte AnnotationChecked = 49;
+		const byte AnnotationUnchecked = 50;
+		const byte AnnotationDecimalOne = 51;
 
 		/// <summary>The query kinds of <c>csharp/syntax_oracle.rs</c>.</summary>
 		const byte QueryClassName = 0;
 		const byte QueryResolveResultType = 1;
 		const byte QuerySymbol = 2;
+		const byte QueryResolveResultFacts = 48;
+		const byte QueryMethod = 49;
+		const byte QueryHasOperator = 50;
+		const byte QuerySetting = 51;
+		const byte QueryConvertType = 52;
+		const byte QueryILInstruction = 53;
+		const byte QueryTypeResolveResultName = 54;
 
 		/// <summary>
 		/// The answer to the engine's question <paramref name="query"/> about one of the tree's host
@@ -268,11 +310,98 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		{
 			int pos = 1;
 			int handle = (int)ReadUVar(query, ref pos);
+			if (query[0] == QuerySetting)
+			{
+				// Not about a host object: the handle is 0 and the argument names the setting.
+				if (context == null)
+					return null;
+				string name = ReadUtf8(query, ref pos);
+				return typeof(DecompilerSettings).GetProperty(name) is { PropertyType: var t } p && t == typeof(bool)
+					? new[] { (bool)p.GetValue(context.Settings)! ? (byte)1 : (byte)0 }
+					: throw new RustEngineException($"the engine asked for the setting '{name}', which is no boolean DecompilerSettings property");
+			}
 			if (handle < 0 || handle >= handles.Count)
 				return null;
 			object target = handles[handle];
 			switch (query[0])
 			{
+				case QueryResolveResultFacts:
+				{
+					if (target is not Semantics.ResolveResult result)
+						return null;
+					var type = result.Type;
+					return new[] {
+						KnownCode(type),
+						KnownCode(TypeSystem.NullableType.GetUnderlyingType(type)),
+						type.IsByRefLike ? (byte)1 : (byte)0,
+						type.IsReferenceType switch { false => (byte)0, true => (byte)1, null => (byte)2 },
+						result is Semantics.InvocationResolveResult { Member: TypeSystem.IMethod { Name: "Concat" } concat }
+							&& TypeSystem.TypeSystemExtensions.IsKnownType(concat.DeclaringType, TypeSystem.KnownTypeCode.String) ? (byte)1 : (byte)0,
+					};
+				}
+				case QueryMethod:
+				{
+					if (MethodOf(target) is not { } method)
+						return null;
+					var s = new MemoryStream();
+					WriteUtf8(s, method.Name);
+					WriteUtf8(s, method.FullName);
+					s.WriteByte(KnownCode(method.DeclaringType));
+					s.WriteByte(IL.Transforms.ILInlining.MethodRequiresCopyForReadonlyLValue(method) ? (byte)1 : (byte)0);
+					UVar(s, (ulong)method.TypeArguments.Count);
+					s.WriteByte(method.TypeArguments.Count > 0 && method.TypeArguments[0] is TypeSystem.ITypeParameter { HasDefaultConstructorConstraint: true } ? (byte)1 : (byte)0);
+					UVar(s, (ulong)method.Parameters.Count);
+					foreach (var p in method.Parameters)
+					{
+						s.WriteByte(KnownCode(p.Type));
+						s.WriteByte(p.IsParams ? (byte)1 : (byte)0);
+						var element = (p.Type as TypeSystem.ArrayType)?.ElementType;
+						s.WriteByte(element != null ? (byte)1 : (byte)0);
+						s.WriteByte(element != null ? KnownCode(element) : (byte)0);
+					}
+					return s.ToArray();
+				}
+				case QueryHasOperator:
+				{
+					if (MethodOf(target) is not { } method)
+						return null;
+					string name = ReadUtf8(query, ref pos);
+					return new[] { method.DeclaringType.GetMethods(m => m.IsOperator && m.Name == name).Any() ? (byte)1 : (byte)0 };
+				}
+				case QueryConvertType:
+				{
+					if (context == null || MethodOf(target) is not { } method)
+						return null;
+					int which = (int)ReadUVar(query, ref pos);
+					var type = which switch {
+						0 => method.TypeArguments[0],
+						1 => method.ReturnType,
+						_ => method.Parameters[which - 2].Type,
+					};
+					var sub = new SyntaxRoundTrip();
+					byte[] tree = sub.Write(context.TypeSystemAstBuilder.ConvertType(type));
+					answered.Add(sub.handles);
+					var s = new MemoryStream();
+					UVar(s, (ulong)(answered.Count - 1));
+					UVar(s, (ulong)sub.handles.Count);
+					s.Write(tree, 0, tree.Length);
+					return s.ToArray();
+				}
+				case QueryILInstruction:
+					return target switch {
+						IL.ILFunction f => new[] { (byte)f.Kind },
+						IL.ILInstruction => new byte[] { 0xFF },
+						_ => null
+					};
+				case QueryTypeResolveResultName:
+				{
+					if (target is not Semantics.TypeResolveResult trr)
+						return null;
+					var s = new MemoryStream();
+					WriteUtf8(s, trr.Type.Namespace);
+					WriteUtf8(s, trr.Type.Name);
+					return s.ToArray();
+				}
 				case QueryClassName:
 					return System.Text.Encoding.UTF8.GetBytes(target.GetType().Name);
 				case QueryResolveResultType:
@@ -295,6 +424,33 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				default:
 					return null;
 			}
+		}
+
+		/// <summary>The method of a resolve result, as <c>AstNode.GetSymbol</c> reads it.</summary>
+		static TypeSystem.IMethod? MethodOf(object target)
+		{
+			return target switch {
+				Semantics.MethodGroupResolveResult mgrr => mgrr.ChosenMethod,
+				Semantics.ResolveResult rr => TypeSystem.TypeSystemExtensions.GetSymbol(rr) as TypeSystem.IMethod,
+				_ => null
+			};
+		}
+
+		static byte KnownCode(TypeSystem.IType type) => (byte)(type.GetDefinition()?.KnownTypeCode ?? TypeSystem.KnownTypeCode.None);
+
+		static void WriteUtf8(MemoryStream s, string text)
+		{
+			var utf8 = System.Text.Encoding.UTF8.GetBytes(text);
+			UVar(s, (ulong)utf8.Length);
+			s.Write(utf8, 0, utf8.Length);
+		}
+
+		static string ReadUtf8(byte[] b, ref int pos)
+		{
+			int length = (int)ReadUVar(b, ref pos);
+			string text = System.Text.Encoding.UTF8.GetString(b, pos, length);
+			pos += length;
+			return text;
 		}
 
 		static readonly System.Collections.Concurrent.ConcurrentDictionary<Type, System.Reflection.ConstructorInfo> constructors = new();

@@ -51,7 +51,7 @@ public class AstTransformEqualityTests
 		{
 			var engine = RustEngine.For(context.TypeSystem, out string? reason)
 				?? throw new InvalidOperationException(reason);
-			engine.RunAstTransforms(rootNode, 0, AstRequestFlags.None, single: Index);
+			engine.RunAstTransforms(rootNode, 0, AstRequestFlags.None, single: Index, context: context);
 		}
 	}
 

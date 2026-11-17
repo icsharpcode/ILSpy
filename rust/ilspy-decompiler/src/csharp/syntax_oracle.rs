@@ -87,6 +87,214 @@ pub fn symbol(oracle: &dyn SyntaxOracle, handle: u32) -> Option<SymbolInfo> {
     })
 }
 
+/// For a `ResolveResult`: the `KnownTypeCode` of the definition of its `Type` and of the
+/// definition of the type's nullable underlying type (0 for none), `IsByRefLike`,
+/// `IsReferenceType` (0 false, 1 true, 2 unknown), and whether it is an
+/// `InvocationResolveResult` of `string.Concat`; one byte each.
+pub const QUERY_RESOLVE_RESULT_FACTS: u8 = 48;
+/// For a `ResolveResult` whose symbol (as `AstNode.GetSymbol` reads it) is a method: its name,
+/// its full name (each a length and UTF-8), the `KnownTypeCode` of its declaring type, whether
+/// `ILInlining.MethodRequiresCopyForReadonlyLValue` holds (a byte), its type argument count
+/// (LEB128), whether the first type argument is a type parameter with the default constructor
+/// constraint (a byte), its parameter count (LEB128), and per parameter the `KnownTypeCode` of
+/// its type, `IsParams`, whether the type is an `ArrayType` and the `KnownTypeCode` of the
+/// element type (one byte each).
+pub const QUERY_METHOD: u8 = 49;
+/// For a `ResolveResult` with a method symbol, with an operator name argument (a length and
+/// UTF-8): whether the method's declaring type has an operator of that name (a byte).
+pub const QUERY_HAS_OPERATOR: u8 = 50;
+/// Not about a host object (handle 0), with a setting name argument (a length and UTF-8): the
+/// boolean `DecompilerSettings` property of that name in the transform context (a byte).
+pub const QUERY_SETTING: u8 = 51;
+/// For a `ResolveResult` with a method symbol, with an argument (LEB128) that selects the
+/// method's first type argument (0), its return type (1) or the type of parameter `i` (`2 + i`):
+/// that type as the transform context's `TypeSystemAstBuilder.ConvertType` builds it, as the
+/// table number of its handles (LEB128), their count (LEB128), and the subtree in the wire
+/// format of the host's tree.
+pub const QUERY_CONVERT_TYPE: u8 = 52;
+/// For an `ILInstruction`: the `ILFunctionKind` of an `ILFunction`, 0xFF for any other
+/// instruction (a byte).
+pub const QUERY_IL_INSTRUCTION: u8 = 53;
+/// For a `TypeResolveResult`: the namespace and the name of its type, each a length and UTF-8.
+pub const QUERY_TYPE_RESOLVE_RESULT_NAME: u8 = 54;
+
+fn push_text(q: &mut Vec<u8>, text: &str) {
+    let mut v = text.len();
+    loop {
+        let b = (v & 0x7F) as u8;
+        v >>= 7;
+        if v == 0 {
+            q.push(b);
+            break;
+        }
+        q.push(b | 0x80);
+    }
+    q.extend_from_slice(text.as_bytes());
+}
+
+/// Reads the answers of the queries above.
+struct AnswerReader<'a>(&'a [u8]);
+
+impl AnswerReader<'_> {
+    fn byte(&mut self) -> Option<u8> {
+        let (&b, rest) = self.0.split_first()?;
+        self.0 = rest;
+        Some(b)
+    }
+
+    fn uvar(&mut self) -> Option<usize> {
+        let mut v = 0usize;
+        let mut shift = 0;
+        loop {
+            let b = self.byte()?;
+            v |= usize::from(b & 0x7F) << shift;
+            if b & 0x80 == 0 {
+                return Some(v);
+            }
+            shift += 7;
+        }
+    }
+
+    fn text(&mut self) -> Option<String> {
+        let len = self.uvar()?;
+        let (s, rest) = self.0.split_at_checked(len)?;
+        self.0 = rest;
+        Some(String::from_utf8_lossy(s).into_owned())
+    }
+}
+
+/// The facts of `QUERY_RESOLVE_RESULT_FACTS`.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct ResolveResultFacts {
+    pub known_type: u8,
+    pub underlying_known_type: u8,
+    pub is_by_ref_like: bool,
+    pub is_reference_type: Option<bool>,
+    pub is_string_concat_invocation: bool,
+}
+
+/// The facts about the resolve result `handle`, `None` where it is no `ResolveResult`.
+pub fn resolve_result_facts(oracle: &dyn SyntaxOracle, handle: u32) -> Option<ResolveResultFacts> {
+    let b = oracle.ask(&query(QUERY_RESOLVE_RESULT_FACTS, handle))?;
+    let mut r = AnswerReader(&b);
+    Some(ResolveResultFacts {
+        known_type: r.byte()?,
+        underlying_known_type: r.byte()?,
+        is_by_ref_like: r.byte()? != 0,
+        is_reference_type: match r.byte()? {
+            0 => Some(false),
+            1 => Some(true),
+            _ => None,
+        },
+        is_string_concat_invocation: r.byte()? != 0,
+    })
+}
+
+/// A parameter in `MethodInfo`.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct ParameterInfo {
+    pub known_type: u8,
+    pub is_params: bool,
+    /// The `KnownTypeCode` of the element type where the type is an `ArrayType`.
+    pub array_element: Option<u8>,
+}
+
+/// The facts of `QUERY_METHOD`.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct MethodInfo {
+    pub name: String,
+    pub full_name: String,
+    pub declaring_known_type: u8,
+    pub requires_copy_for_readonly_lvalue: bool,
+    pub type_argument_count: usize,
+    pub first_type_argument_is_instantiable: bool,
+    pub parameters: Vec<ParameterInfo>,
+}
+
+/// The method symbol of the resolve result `handle`, `None` where it has none.
+pub fn method(oracle: &dyn SyntaxOracle, handle: u32) -> Option<MethodInfo> {
+    let b = oracle.ask(&query(QUERY_METHOD, handle))?;
+    let mut r = AnswerReader(&b);
+    let name = r.text()?;
+    let full_name = r.text()?;
+    let declaring_known_type = r.byte()?;
+    let requires_copy_for_readonly_lvalue = r.byte()? != 0;
+    let type_argument_count = r.uvar()?;
+    let first_type_argument_is_instantiable = r.byte()? != 0;
+    let count = r.uvar()?;
+    let mut parameters = Vec::with_capacity(count);
+    for _ in 0..count {
+        let known_type = r.byte()?;
+        let is_params = r.byte()? != 0;
+        let is_array = r.byte()? != 0;
+        let element = r.byte()?;
+        parameters.push(ParameterInfo {
+            known_type,
+            is_params,
+            array_element: is_array.then_some(element),
+        });
+    }
+    Some(MethodInfo {
+        name,
+        full_name,
+        declaring_known_type,
+        requires_copy_for_readonly_lvalue,
+        type_argument_count,
+        first_type_argument_is_instantiable,
+        parameters,
+    })
+}
+
+/// Whether the declaring type of the method of the resolve result `handle` has an operator
+/// named `name`.
+pub fn has_operator(oracle: &dyn SyntaxOracle, handle: u32, name: &str) -> bool {
+    let mut q = query(QUERY_HAS_OPERATOR, handle);
+    push_text(&mut q, name);
+    oracle.ask(&q).is_some_and(|b| b.first() == Some(&1))
+}
+
+/// The boolean decompiler setting `name` of the transform, `None` where the host has no
+/// transform context.
+pub fn setting(oracle: &dyn SyntaxOracle, name: &str) -> Option<bool> {
+    let mut q = query(QUERY_SETTING, 0);
+    push_text(&mut q, name);
+    oracle.ask(&q).map(|b| b.first() == Some(&1))
+}
+
+/// The type syntax the host builds for a type of the method of the resolve result `handle`
+/// (`which` as in `QUERY_CONVERT_TYPE`): the table number of its handles, their count and the
+/// encoded subtree.
+pub fn convert_type(
+    oracle: &dyn SyntaxOracle,
+    handle: u32,
+    which: usize,
+) -> Option<(usize, u32, Vec<u8>)> {
+    let mut q = query(QUERY_CONVERT_TYPE, handle);
+    q.extend_from_slice(&query(0, which as u32)[1..]);
+    let b = oracle.ask(&q)?;
+    let mut r = AnswerReader(&b);
+    let table = r.uvar()?;
+    let count = r.uvar()? as u32;
+    Some((table, count, r.0.to_vec()))
+}
+
+/// For the host object `handle`: `None` where it is no `ILInstruction`, else `Some(kind)` with
+/// the `ILFunctionKind` of an `ILFunction` and `None` for any other instruction.
+pub fn il_instruction(oracle: &dyn SyntaxOracle, handle: u32) -> Option<Option<u8>> {
+    let b = oracle.ask(&query(QUERY_IL_INSTRUCTION, handle))?;
+    Some(b.first().copied().filter(|&k| k != 0xFF))
+}
+
+/// The namespace and name of the type of the `TypeResolveResult` `handle`.
+pub fn type_resolve_result_name(
+    oracle: &dyn SyntaxOracle,
+    handle: u32,
+) -> Option<(String, String)> {
+    let b = oracle.ask(&query(QUERY_TYPE_RESOLVE_RESULT_NAME, handle))?;
+    let mut r = AnswerReader(&b);
+    Some((r.text()?, r.text()?))
+}
+
 /// An oracle that knows nothing, for trees without host objects.
 pub struct NoOracle;
 

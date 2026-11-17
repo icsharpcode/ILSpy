@@ -244,6 +244,91 @@ impl SyntaxTree {
         self.node_mut(id).parent = None;
     }
 
+    /// The slot of its parent that holds `id`; `None` for a node without parent or a trivia.
+    pub fn parent_slot(&self, id: SyntaxId) -> Option<usize> {
+        let parent = self.node(id).parent?;
+        self.node(parent).slots.iter().position(|slot| match slot {
+            SlotValue::Single(c) => *c == Some(id),
+            SlotValue::Many(cs) => cs.contains(&id),
+        })
+    }
+
+    /// A deep copy of the subtree `id` (trivia included), without parent; the copies refer to
+    /// the same annotation and literal handles.
+    pub fn clone_subtree(&mut self, id: SyntaxId) -> SyntaxId {
+        let mut node = self.node(id).clone();
+        node.parent = None;
+        node.leading_trivia = node
+            .leading_trivia
+            .iter()
+            .map(|&t| self.clone_subtree(t))
+            .collect();
+        node.trailing_trivia = node
+            .trailing_trivia
+            .iter()
+            .map(|&t| self.clone_subtree(t))
+            .collect();
+        for slot in &mut node.slots {
+            match slot {
+                SlotValue::Single(Some(c)) => *c = self.clone_subtree(*c),
+                SlotValue::Single(None) => {}
+                SlotValue::Many(cs) => {
+                    for c in cs.iter_mut() {
+                        *c = self.clone_subtree(*c);
+                    }
+                }
+            }
+        }
+        self.nodes.push(node);
+        let copy = SyntaxId(self.nodes.len() as u32 - 1);
+        let children: Vec<SyntaxId> = {
+            let n = self.node(copy);
+            n.leading_trivia
+                .iter()
+                .chain(&n.trailing_trivia)
+                .copied()
+                .chain(self.all_children(copy))
+                .collect()
+        };
+        for c in children {
+            self.node_mut(c).parent = Some(copy);
+        }
+        copy
+    }
+
+    /// Moves the whole tree `source` (a subtree the host built, decoded on its own) into this
+    /// tree; each of its annotation and literal handles `h` becomes `map(self, h)`. Returns the
+    /// root of the moved tree, without parent.
+    pub fn import(
+        &mut self,
+        source: SyntaxTree,
+        mut map: impl FnMut(&mut SyntaxTree, u32) -> u32,
+    ) -> Option<SyntaxId> {
+        let base = self.nodes.len() as u32;
+        let shift = |id: &mut SyntaxId| id.0 += base;
+        for mut node in source.nodes {
+            node.parent.as_mut().map(shift);
+            node.leading_trivia.iter_mut().for_each(shift);
+            node.trailing_trivia.iter_mut().for_each(shift);
+            for slot in &mut node.slots {
+                match slot {
+                    SlotValue::Single(c) => {
+                        c.as_mut().map(shift);
+                    }
+                    SlotValue::Many(cs) => cs.iter_mut().for_each(shift),
+                }
+            }
+            node.annotations = node.annotations.iter().map(|&h| map(self, h)).collect();
+            for s in &mut node.scalars {
+                if let Scalar::Object(h) = s {
+                    *h = map(self, *h);
+                }
+            }
+            self.nodes.push(node);
+        }
+        source.root.map(|r| SyntaxId(r.0 + base))
+    }
+
     /// An annotation the engine creates, of the host object kind `kind` with `payload`; its
     /// handle.
     pub fn new_annotation(&mut self, kind: u8, payload: Vec<u8>) -> u32 {
@@ -491,5 +576,49 @@ mod tests {
             None
         );
         assert_eq!(unzigzag(zigzag(i64::MIN)), i64::MIN);
+    }
+
+    #[test]
+    fn subtrees_are_cloned_and_imported() {
+        let mut source = SyntaxTree::default();
+        let binary = source.new_node(kind::BINARY_OPERATOR_EXPRESSION);
+        let right = source.new_node(kind::PRIMITIVE_EXPRESSION);
+        source.node_mut(right).scalars[primitive_expression::scalar::VALUE] = Scalar::Object(1);
+        source.node_mut(right).annotations = vec![0];
+        source.set_child(binary, binary_operator_expression::slot::RIGHT, Some(right));
+        source.root = Some(binary);
+
+        let mut tree = SyntaxTree {
+            host_handles: 5,
+            ..SyntaxTree::default()
+        };
+        let other = tree.new_node(kind::PRIMITIVE_EXPRESSION);
+        let imported = tree
+            .import(source, |t, h| t.new_annotation(48, vec![h as u8]))
+            .unwrap();
+        assert_ne!(imported, other);
+        let r = tree
+            .child(imported, binary_operator_expression::slot::RIGHT)
+            .unwrap();
+        assert_eq!(tree.node(r).parent, Some(imported));
+        assert_eq!(tree.node(r).annotations, vec![5]);
+        assert_eq!(
+            tree.node(r).scalars[primitive_expression::scalar::VALUE],
+            Scalar::Object(6)
+        );
+        assert_eq!(tree.new_annotations, vec![(48, vec![0]), (48, vec![1])]);
+        assert_eq!(
+            tree.parent_slot(r),
+            Some(binary_operator_expression::slot::RIGHT)
+        );
+
+        let copy = tree.clone_subtree(imported);
+        let rc = tree
+            .child(copy, binary_operator_expression::slot::RIGHT)
+            .unwrap();
+        assert_ne!(rc, r);
+        assert_eq!(tree.node(rc).parent, Some(copy));
+        assert_eq!(tree.node(copy).parent, None);
+        assert_eq!(tree.node(rc).annotations, vec![5]);
     }
 }

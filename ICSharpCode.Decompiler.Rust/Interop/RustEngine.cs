@@ -66,11 +66,12 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		/// The round trip of seam 2: sends <paramref name="root"/> to the engine, which runs the first
 		/// <paramref name="prefix"/> built-in AST transforms (after the early ones in
 		/// <paramref name="flags"/>), and rebuilds the tree from what it returns. With <paramref name="single"/>
-		/// at or above 0 it runs only that built-in transform instead.
+		/// at or above 0 it runs only that built-in transform instead. <paramref name="context"/> answers
+		/// the engine's questions about settings and type syntax.
 		/// </summary>
-		public unsafe void RunAstTransforms(CSharp.Syntax.AstNode root, int prefix, AstRequestFlags flags, int single = -1)
+		public unsafe void RunAstTransforms(CSharp.Syntax.AstNode root, int prefix, AstRequestFlags flags, int single = -1, CSharp.Transforms.TransformContext? context = null)
 		{
-			var roundTrip = new SyntaxRoundTrip();
+			var roundTrip = new SyntaxRoundTrip(context);
 			byte[] tree = roundTrip.Write(root);
 			Exception? failure = null;
 			RustResolver.Callback oracle = (context, query, length, answer, capacity) => {

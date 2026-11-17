@@ -36,7 +36,10 @@ pub const BUILT_IN: &[&str] = &[
 ];
 
 /// The ported transforms, by their index in `BUILT_IN`.
-const TRANSFORMS: &[(usize, Transform)] = &[];
+const TRANSFORMS: &[(usize, Transform)] = &[(
+    2,
+    super::transforms::replace_method_calls_with_operators::run,
+)];
 
 fn transform(index: usize) -> Option<Transform> {
     TRANSFORMS
