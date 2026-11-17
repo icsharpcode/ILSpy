@@ -21,6 +21,30 @@ pub const QUERY_RESOLVE_RESULT_TYPE: u8 = 1;
 /// each as a length (LEB128) and UTF-8.
 pub const QUERY_SYMBOL: u8 = 2;
 
+// The query kinds of `DeclareVariables` (96..=111); `transforms::declare_variables` documents
+// their arguments and answers.
+/// What an annotation is to `DeclareVariables`: an ILVariable, a scope, a function, ...
+pub const QUERY_DV_ANNOTATION: u8 = 96;
+/// The facts of an ILVariable, by its object id.
+pub const QUERY_DV_VARIABLE: u8 = 97;
+/// The decompiler settings `DeclareVariables` reads.
+pub const QUERY_DV_SETTINGS: u8 = 98;
+/// `ExpressionBuilder.HidesVariableWithName(function, "_")`, by the function's object id.
+pub const QUERY_DV_HIDES_DISCARD: u8 = 99;
+/// Registers the temporary of an invalid expression statement; its object id.
+pub const QUERY_DV_TEMPORARY_VARIABLE: u8 = 100;
+/// `TypeSystemAstBuilder.ConvertType` of an ILVariable's type, as a subtree.
+pub const QUERY_DV_VARIABLE_TYPE: u8 = 101;
+/// `TypeSystemAstBuilder.ConvertType` of `System.Runtime.CompilerServices.Unsafe`, as a subtree.
+pub const QUERY_DV_UNSAFE_TYPE: u8 = 102;
+/// The assignments of a `DeconstructInstruction` annotation.
+pub const QUERY_DV_DECONSTRUCTION: u8 = 103;
+/// `StatementBuilder.TranslateDeconstructionDesignation` of a `DeconstructInstruction`, as a
+/// subtree.
+pub const QUERY_DV_DESIGNATION: u8 = 104;
+/// The tag of every host annotation, one byte per handle.
+pub const QUERY_DV_ANNOTATION_TAGS: u8 = 105;
+
 fn query(kind: u8, handle: u32) -> Vec<u8> {
     let mut q = vec![kind];
     let mut v = handle;

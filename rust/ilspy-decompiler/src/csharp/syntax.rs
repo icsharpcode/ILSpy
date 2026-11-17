@@ -354,6 +354,30 @@ impl SyntaxTree {
         Ok(tree)
     }
 
+    /// Reads a detached subtree in the wire format (a node, without the list of new annotations)
+    /// into the arena; its handles are taken as they are.
+    pub fn decode_subtree(&mut self, bytes: &[u8]) -> Result<SyntaxId, String> {
+        let mut r = Reader { bytes, pos: 0 };
+        let id = decode_node(&mut r, self, None)?;
+        if r.pos != bytes.len() {
+            return Err(format!("{} bytes after the subtree", bytes.len() - r.pos));
+        }
+        Ok(id)
+    }
+
+    /// The nodes of the subtree of `id` in pre-order (children in child order), with `id` and
+    /// without trivia.
+    pub fn descendants_and_self(&self, id: SyntaxId) -> Vec<SyntaxId> {
+        let mut result = Vec::new();
+        let mut stack = vec![id];
+        while let Some(n) = stack.pop() {
+            result.push(n);
+            let children = self.all_children(n);
+            stack.extend(children.into_iter().rev());
+        }
+        result
+    }
+
     /// Writes the tree for the host, from the root.
     pub fn encode(&self) -> Vec<u8> {
         let mut out = Vec::new();

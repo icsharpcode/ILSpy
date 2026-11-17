@@ -33,7 +33,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 	/// Annotations and literal values stay host objects, sent as handles into <see cref="Handles"/>
 	/// and attached again to the rebuilt nodes.
 	/// </summary>
-	internal sealed class SyntaxRoundTrip
+	internal sealed partial class SyntaxRoundTrip
 	{
 		readonly List<object> handles = new List<object>();
 		readonly List<object> created = new List<object>();
@@ -53,8 +53,19 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		/// <summary>The host objects the tree refers to by handle.</summary>
 		public IReadOnlyList<object> Handles => handles;
 
+		/// <summary>
+		/// Where <see cref="Handle"/> puts objects while the oracle writes a subtree into an answer
+		/// (see <c>SyntaxRoundTrip.DeclareVariables.cs</c>), instead of the tree's handles.
+		/// </summary>
+		List<object>? mintTarget;
+
 		int Handle(object value)
 		{
+			if (mintTarget != null)
+			{
+				mintTarget.Add(value);
+				return mintTarget.Count - 1;
+			}
 			handles.Add(value);
 			return handles.Count - 1;
 		}
@@ -263,6 +274,8 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		/// </summary>
 		object CreateAnnotation(byte kind, ArraySegment<byte> payload)
 		{
+			if (CreateDeclareVariablesAnnotation(kind, payload) is { } declareVariables)
+				return declareVariables;
 			switch (kind)
 			{
 				case AnnotationAnswered:
@@ -308,6 +321,8 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		/// </summary>
 		public byte[]? Answer(byte[] query)
 		{
+			if (query[0] is >= DeclareVariablesFirstQuery and <= DeclareVariablesLastQuery)
+				return AnswerDeclareVariables(query);
 			int pos = 1;
 			int handle = (int)ReadUVar(query, ref pos);
 			if (query[0] == QuerySetting)
