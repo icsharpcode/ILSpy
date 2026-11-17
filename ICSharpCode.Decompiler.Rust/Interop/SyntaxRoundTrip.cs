@@ -505,6 +505,8 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				return AnswerIntroduceUsingDeclarations(query);
 			if (query[0] == QueryQueryExpressionsAnnotation)
 				return AnswerQueryExpressionsAnnotation(query);
+			if (query[0] == QueryVisualBasicAnonymousEntity)
+				return AnswerRenameVisualBasicAnonymousTypes(query);
 			int pos = 1;
 			if (query[0] is >= QueryMemberFacts and <= QueryReturnTypeSyntax)
 			{
