@@ -857,7 +857,7 @@ pub unsafe extern "C" fn ilspy_session_read_function(
 /// `IntroducePrivateProtectedAccessibility`, bit 3 `LiftNullables`, bit 4 `UseCustomEvents`,
 /// bit 5 `InitAccessors`, bit 6 `RecordClasses`, bit 7 `RecordStructs`; bit 8 asks for the
 /// extension block of a TypeDef (`ConvertExtension`), bit 9 the enum member declaration of a
-/// Field. `context_token` is the marker type of the
+/// Field; bit 10 `RequiredMembers`, bit 11 `FixedBuffers`. `context_token` is the marker type of the
 /// extension block a member belongs to, 0 otherwise. Safe to call from several threads at once.
 ///
 /// # Safety
@@ -887,6 +887,8 @@ pub unsafe extern "C" fn ilspy_session_entity_syntax(
             nullable_specifier: flags & 8 != 0,
             // The marker type (a TypeDef token) of the extension block a member is specialized for.
             extension_marker: (context_token >> 24 == 0x02).then_some(context_token & 0x00FF_FFFF),
+            required_members: flags & 1024 != 0,
+            fixed_buffers: flags & 2048 != 0,
         };
         let row = token & 0x00FF_FFFF;
         match token >> 24 {

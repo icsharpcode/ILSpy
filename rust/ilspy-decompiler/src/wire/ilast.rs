@@ -2082,6 +2082,11 @@ pub fn field_syntax(
             w.ty(field.return_type);
             w.out.bool(field.ref_readonly);
             write_optional_constant(w, field.initializer.as_ref());
+            w.out.bool(field.fixed_buffer.is_some());
+            if let Some((element, length)) = field.fixed_buffer {
+                w.ty(element);
+                w.out.uvar(u64::from(length as u32));
+            }
         },
     )
 }

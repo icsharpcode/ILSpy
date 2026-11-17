@@ -4885,6 +4885,21 @@ the constant as it is. The ratchet corpus has 79 enum members, all written by th
 
 The share stayed at 100.0 %.
 
+### 3.218 Fixed size buffers and required fields (item 68z4c3c, second part)
+
+`DoDecompile(IField)` rewrites two kinds of field declarations after `ConvertEntity`: with
+`RequiredMembers`, `[RequiredMember]` goes and the field takes `required`; with `FixedBuffers`, a
+field with `[FixedBuffer(typeof(T), n)]` (`IsFixedField`) becomes a `FixedFieldDeclaration`
+of `T` with the length `n`, which keeps the field declaration's attributes (less the
+`FixedBuffer` one), modifiers and annotations. The engine now does both in the field
+declaration it writes: it drops the attributes by type name as `RemoveAttribute` does, adds the
+modifier, and sends the element type and length, from which the host builds the fixed
+declaration. The host's own rewrite is skipped for a declaration that already is one, through
+an additive seam. The full gates of this commit also cover the new modifier and the enum member
+declarations, which went in on the filtered checks.
+
+The share stayed at 100.0 %.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

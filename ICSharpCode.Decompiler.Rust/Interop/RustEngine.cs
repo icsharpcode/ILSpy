@@ -160,7 +160,9 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				| (settings.RecordClasses ? 64u : 0u)
 				| (settings.RecordStructs ? 128u : 0u)
 				| (asExtension ? 256u : 0u)
-				| (asEnumMember ? 512u : 0u);
+				| (asEnumMember ? 512u : 0u)
+				| (settings.RequiredMembers ? 1024u : 0u)
+				| (settings.FixedBuffers ? 2048u : 0u);
 			// A member of an extension block comes specialized with the block's type parameters,
 			// which belong to the block's marker type (`ExtensionInfo.GetMembersOfGroup`).
 			uint contextToken = 0;

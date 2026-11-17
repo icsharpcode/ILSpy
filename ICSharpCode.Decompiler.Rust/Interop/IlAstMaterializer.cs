@@ -648,12 +648,24 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				ct.HasReadOnlySpecifier = true;
 			var initializer = Bool() ? ConstantSyntax(ref complete) : null;
 			decl.Variables.Add(new CSharp.Syntax.VariableInitializer(field.Name, initializer));
+			CSharp.Syntax.EntityDeclaration result = decl;
+			if (Bool())
+			{
+				// A fixed size buffer, as DoDecompile(IField) rewrites the field declaration.
+				var fixedDecl = new CSharp.Syntax.FixedFieldDeclaration();
+				decl.Attributes.MoveTo(fixedDecl.Attributes);
+				fixedDecl.Modifiers = decl.Modifiers;
+				fixedDecl.ReturnType = NextTypeSyntax(ref complete);
+				fixedDecl.Variables.Add(new CSharp.Syntax.FixedVariableInitializer(field.Name, new CSharp.Syntax.PrimitiveExpression(unchecked((int)(uint)UVar()))));
+				CSharp.AnnotationExtensions.CopyAnnotationsFrom(fixedDecl, decl);
+				result = fixedDecl;
+			}
 			if (!complete)
 			{
 				unsupportedReason = "a type without syntax";
 				return null;
 			}
-			return decl;
+			return result;
 		}
 
 		/// <summary>

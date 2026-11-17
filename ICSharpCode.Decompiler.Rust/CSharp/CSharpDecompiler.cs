@@ -2831,6 +2831,10 @@ namespace ICSharpCode.Decompiler.CSharp
 				{
 					fieldDecl.Modifiers |= Modifiers.Required;
 				}
+				// RUST-SEAM-2 BEGIN
+				if (fieldDecl is FixedFieldDeclaration)
+					return fieldDecl;
+				// RUST-SEAM-2 END
 				if (settings.FixedBuffers && IsFixedField(field, out var elementType, out var elementCount))
 				{
 					var fixedFieldDecl = new FixedFieldDeclaration();

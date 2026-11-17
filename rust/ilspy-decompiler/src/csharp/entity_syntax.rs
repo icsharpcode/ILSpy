@@ -25,6 +25,10 @@ pub struct EntityOptions {
     /// For a member of an extension block, the block's marker type (its row): the member is
     /// specialized with the block's type parameters (`ExtensionInfo.GetMembersOfGroup`).
     pub extension_marker: Option<u32>,
+    /// `RequiredMembers`: a field with `[RequiredMember]` takes `required` instead.
+    pub required_members: bool,
+    /// `FixedBuffers`: a field with `[FixedBuffer]` is written as a fixed size buffer.
+    pub fixed_buffers: bool,
 }
 
 /// The type parameters of the extension block whose marker type is `marker_type`, created from
@@ -107,6 +111,7 @@ pub mod modifiers {
     pub const CONST: u32 = 0x0400;
     pub const VOLATILE: u32 = 0x4000;
     pub const REF: u32 = 0x20000;
+    pub const REQUIRED: u32 = 0x40000;
 }
 
 /// A named argument of an attribute.
@@ -143,6 +148,9 @@ pub struct FieldSyntax {
     /// `HasReadOnlySpecifier` of a `ref readonly` field's type.
     pub ref_readonly: bool,
     pub initializer: Option<ConstSyntax>,
+    /// For a fixed size buffer (`DoDecompile(IField)` with `FixedBuffers`), its element type
+    /// and length: the declaration becomes a `FixedFieldDeclaration`.
+    pub fixed_buffer: Option<(TypeId, i32)>,
 }
 
 /// `ModifierFromAccessibility` of a metadata access mask (field or method: the same values).
@@ -308,10 +316,42 @@ pub fn convert_field(
     } else if volatile {
         m |= modifiers::VOLATILE;
     }
-    let attributes = ts
+    let raw_attributes = ts
         .field_attributes(module, row)
         .map_err(|e| e.to_string())?;
-    let attributes = convert_attributes(ts, &attributes, options)?;
+    let mut attributes = convert_attributes(ts, &raw_attributes, options)?;
+    // `DoDecompile(IField)`: `[RequiredMember]` becomes `required`; a `[FixedBuffer]` field is
+    // a fixed size buffer of the attribute's element type and length (`IsFixedField`), and the
+    // attribute goes.
+    let compiler_services = "System.Runtime.CompilerServices";
+    if options.required_members
+        && remove_attributes(
+            ts,
+            &mut attributes,
+            compiler_services,
+            "RequiredMemberAttribute",
+        )
+    {
+        m |= modifiers::REQUIRED;
+    }
+    let mut fixed_buffer = None;
+    if options.fixed_buffers
+        && let Some(a) = raw_attributes.iter().find(|a| {
+            ts.name_and_namespace(a.ty)
+                .is_some_and(|(n, ns)| n == "FixedBufferAttribute" && ns == compiler_services)
+        })
+        && let [element, length] = a.fixed.as_slice()
+        && let crate::typesystem::attrvalue::ArgValue::Type(element) = element.value
+        && let crate::typesystem::attrvalue::ArgValue::Int32(length) = length.value
+    {
+        fixed_buffer = Some((element, length));
+        remove_attributes(
+            ts,
+            &mut attributes,
+            compiler_services,
+            "FixedBufferAttribute",
+        );
+    }
     let ref_readonly = matches!(ts.data(ty), TypeData::ByRef(_)) && is_ref_readonly_attribute;
     let initializer = if is_const {
         let value = ts.field_constant(module, row);
@@ -329,7 +369,24 @@ pub fn convert_field(
         return_type: ty,
         ref_readonly,
         initializer,
+        fixed_buffer,
     })
+}
+
+/// `RemoveAttribute(entityDecl, attributeType)`: drops every attribute of the type `ns.name`,
+/// whether known or unresolved; whether there was one.
+fn remove_attributes(
+    ts: &TypeSystem<'_, '_>,
+    attributes: &mut Vec<AttributeSyntax>,
+    ns: &str,
+    name: &str,
+) -> bool {
+    let before = attributes.len();
+    attributes.retain(|a| {
+        !ts.name_and_namespace(a.ty)
+            .is_some_and(|(n, s)| n == name && s == ns)
+    });
+    attributes.len() != before
 }
 
 /// The `EnumMemberDeclaration` `DoDecompile(IField)` writes for a constant of an enum: its
