@@ -23,6 +23,7 @@ mod statement_builder;
 mod switch;
 pub mod syntax;
 pub mod syntax_oracle;
+pub mod transforms;
 #[rustfmt::skip]
 pub mod syntax_schema;
 mod translated_expression;
