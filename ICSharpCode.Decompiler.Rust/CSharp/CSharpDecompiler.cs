@@ -2003,6 +2003,10 @@ namespace ICSharpCode.Decompiler.CSharp
 				{
 					Debug.Assert(typeDef.Kind == TypeKind.Enum);
 					EnumValueDisplayMode displayMode = DetectBestEnumValueDisplayMode(typeDef, module.MetadataFile);
+					// RUST-SEAM-2 BEGIN
+					if (engineWalk != null)
+						displayMode = engineWalk.EnumDisplayMode(typeDef, displayMode);
+					// RUST-SEAM-2 END
 					switch (displayMode)
 					{
 						case EnumValueDisplayMode.FirstOnly:
@@ -2844,6 +2848,9 @@ namespace ICSharpCode.Decompiler.CSharp
 					{
 						message = ex.Message;
 					}
+					// RUST-SEAM-2 BEGIN
+					message = Rust.Interop.RustSeam2.FieldDataComment(typeSystem, field, message);
+					// RUST-SEAM-2 END
 					((FieldDeclaration)fieldDecl).Variables.Single().AddTrailingTrivia(new Comment(message, CommentType.MultiLine));
 				}
 				return fieldDecl;

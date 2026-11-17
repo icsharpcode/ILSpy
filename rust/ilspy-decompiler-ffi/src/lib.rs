@@ -967,7 +967,8 @@ pub unsafe extern "C" fn ilspy_session_member_is_hidden(
 /// (`csharp::member_walk`): status byte 0 and then, per entity in order, its token (u32, little
 /// endian) and the walk's decision (u8); or status byte 1 and the UTF-8 reason the engine does
 /// not walk the type. `flags` are the hidden-member settings plus `RecordClasses` (bit 17) and
-/// `RecordStructs` (bit 18). Safe to call from several threads at once.
+/// `RecordStructs` (bit 18), `AlwaysShowEnumMemberValues` (bit 19); after a status byte 0 comes the
+/// enum display mode (`DetectBestEnumValueDisplayMode`, 255 for none). Safe to call from several threads at once.
 ///
 /// # Safety
 /// `session` must be a live, loaded session; `out` must be writable.
@@ -988,7 +989,7 @@ pub unsafe extern "C" fn ilspy_session_member_walk(
             .get()
             .ok_or("the session has no compilation")?;
         if token >> 24 != 0x02 {
-            return Err(format!("0x{token:08x} is no TypeDef token").into());
+            return Err(format!("0x{token:08x} is no TypeDef token"));
         }
         let mut ts = TypeSystem::new(comp);
         let mut bytes = Vec::new();
@@ -1000,6 +1001,28 @@ pub unsafe extern "C" fn ilspy_session_member_walk(
         ) {
             Ok(walk) => {
                 bytes.push(0);
+                // The enum display mode (`DetectBestEnumValueDisplayMode`), 255 for no enum or where
+                // the host decides it.
+                let row = token & 0x00FF_FFFF;
+                let is_enum = comp
+                    .type_def(ilspy_decompiler::typesystem::compilation::TypeDefId {
+                        module: ModuleId(0),
+                        row,
+                    })
+                    .is_ok_and(|i| {
+                        i.kind == ilspy_decompiler::typesystem::compilation::TypeKind::Enum
+                    });
+                let mode = if is_enum {
+                    ilspy_decompiler::csharp::member_walk::enum_display_mode(
+                        &mut ts,
+                        ModuleId(0),
+                        row,
+                        flags,
+                    )
+                } else {
+                    None
+                };
+                bytes.push(mode.map_or(255, |m| m as u8));
                 for (t, decision) in walk {
                     bytes.extend_from_slice(&t.to_le_bytes());
                     bytes.push(decision as u8);
@@ -1011,6 +1034,47 @@ pub unsafe extern "C" fn ilspy_session_member_walk(
             }
         }
         Ok(bytes)
+    }) {
+        Ok(bytes) => {
+            // SAFETY: as above.
+            unsafe { out.write(Buf::from_vec(bytes)) };
+            Status::Ok
+        }
+        Err(status) => status,
+    }
+}
+
+/// The comment `DoDecompile(IField)` writes after a field of the main module with an RVA
+/// (`csharp::member_walk::field_data_comment`), as UTF-8. Safe to call from several threads
+/// at once.
+///
+/// # Safety
+/// `session` must be a live, loaded session; `out` must be writable.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn ilspy_session_field_data_comment(
+    session: *const FfiSession,
+    token: u32,
+    out: *mut Buf,
+) -> Status {
+    // SAFETY: the caller guarantees `out` is writable.
+    unsafe { out.write(Buf::EMPTY) };
+    match run(|| {
+        // SAFETY: the caller guarantees a live session.
+        let session = unsafe { session.as_ref() }.ok_or("null session")?;
+        let comp = session
+            .compilation
+            .get()
+            .ok_or("the session has no compilation")?;
+        if token >> 24 != 0x04 {
+            return Err(format!("0x{token:08x} is no Field token"));
+        }
+        let mut ts = TypeSystem::new(comp);
+        Ok(ilspy_decompiler::csharp::member_walk::field_data_comment(
+            &mut ts,
+            ModuleId(0),
+            token & 0x00FF_FFFF,
+        )
+        .into_bytes())
     }) {
         Ok(bytes) => {
             // SAFETY: as above.

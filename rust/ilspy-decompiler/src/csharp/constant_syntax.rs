@@ -95,7 +95,7 @@ impl ConstSyntax {
 }
 
 /// `ReflectionHelper.GetTypeCode`-ordered integer kinds the conversions work with.
-fn as_i64(v: &ConstValue) -> Option<i64> {
+pub(crate) fn as_i64(v: &ConstValue) -> Option<i64> {
     Some(match *v {
         ConstValue::Boolean(b) => i64::from(b),
         ConstValue::Char(c) => i64::from(c),

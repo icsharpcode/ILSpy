@@ -480,16 +480,24 @@ fn has_field_rva(ctx: &mut Context<'_, '_, '_>, field: &ResolvedField) -> bool {
 }
 
 /// `FieldValueSizeDecoder`: the size of the data a field of type `t` has.
-fn field_value_size(ctx: &mut Context<'_, '_, '_>, t: TypeId, pointer_size: i32) -> i32 {
-    match ctx.ts.data(t).clone() {
+fn field_value_size(
+    ts: &mut crate::typesystem::types::TypeSystem<'_, '_>,
+    t: TypeId,
+    pointer_size: i32,
+) -> i32 {
+    match ts.data(t).clone() {
         TypeData::Modified { inner, .. } | TypeData::Pinned(inner) => {
-            field_value_size(ctx, inner, pointer_size)
+            field_value_size(ts, inner, pointer_size)
         }
         TypeData::Pointer(_) | TypeData::ByRef(_) | TypeData::FnPtr(_) => pointer_size,
         TypeData::NInt | TypeData::NUInt => pointer_size,
         TypeData::Array { .. } | TypeData::TypeParam { .. } | TypeData::Dynamic => 0,
-        TypeData::Inst { generic, .. } => field_value_size(ctx, generic, pointer_size),
-        _ => match known(ctx, t) {
+        TypeData::Inst { generic, .. } => field_value_size(ts, generic, pointer_size),
+        _ => match ts
+            .definition(t)
+            .and_then(|d| ts.comp.type_def(d).ok())
+            .map(|i| i.known)
+        {
             Some(KnownTypeCode::Boolean | KnownTypeCode::Byte | KnownTypeCode::SByte) => 1,
             Some(KnownTypeCode::Char | KnownTypeCode::Int16 | KnownTypeCode::UInt16) => 2,
             Some(KnownTypeCode::Int32 | KnownTypeCode::UInt32 | KnownTypeCode::Single) => 4,
@@ -501,9 +509,8 @@ fn field_value_size(ctx: &mut Context<'_, '_, '_>, t: TypeId, pointer_size: i32)
                 | KnownTypeCode::TypedReference
                 | KnownTypeCode::Void,
             ) => 0,
-            _ => match ctx.ts.definition(t) {
-                Some(def) => ctx
-                    .ts
+            _ => match ts.definition(t) {
+                Some(def) => ts
                     .comp
                     .module(def.module)
                     .md
@@ -521,27 +528,44 @@ fn field_value_size(ctx: &mut Context<'_, '_, '_>, t: TypeId, pointer_size: i32)
 // on the transform.
 fn initial_value<'m>(ctx: &mut Context<'_, '_, 'm>, field: &ResolvedField) -> Option<&'m [u8]> {
     let row = field_row(field)?;
-    let comp = ctx.ts.comp;
-    let md = &comp.module(ModuleId(0)).md;
-    if md.get::<rows::Field>(row).ok()?.flags & HAS_FIELD_RVA == 0 {
-        return Some(&[]);
+    field_data(ctx.ts, ModuleId(0), row, field.ty).ok()
+}
+
+/// `FieldDefinition.GetInitialValue` of the Field `row` of `module`, whose type is `ty`: its
+/// data, empty without an RVA; `Err` with the message of the `BadImageFormatException` the
+/// managed code throws where the image does not hold the data.
+pub(crate) fn field_data<'m>(
+    ts: &mut crate::typesystem::types::TypeSystem<'_, 'm>,
+    module: ModuleId,
+    row: u32,
+    ty: TypeId,
+) -> Result<&'m [u8], String> {
+    let comp = ts.comp;
+    let md = &comp.module(module).md;
+    let def = md.get::<rows::Field>(row).map_err(|e| e.to_string())?;
+    if def.flags & HAS_FIELD_RVA == 0 {
+        return Ok(&[]);
     }
-    let rva = md.field_rva(row).ok()?;
+    let rva = md.field_rva(row).map_err(|e| e.to_string())?;
     if rva == 0 {
-        return Some(&[]);
+        return Ok(&[]);
     }
     let pe = md.pe.as_ref();
     let pointer_size = match pe {
         Some(pe) if !pe.is_pe32_plus => 4,
         _ => 8,
     };
-    let size = field_value_size(ctx, field.ty, pointer_size);
-    let section = pe?.section_data(rva).ok()?;
+    let size = field_value_size(ts, ty, pointer_size);
+    let section = pe.and_then(|pe| pe.section_data(rva).ok()).unwrap_or(&[]);
     if section.is_empty() && size != 0 {
-        return None;
+        return Err(format!(
+            "Field data (rva=0x{rva:x}) could not be found in any section!"
+        ));
     }
-    let size = usize::try_from(size).ok()?;
-    section.get(..size)
+    match usize::try_from(size) {
+        Ok(n) if n <= section.len() => Ok(&section[..n]),
+        _ => Err(format!("Invalid size {size} for field data!")),
+    }
 }
 
 /// `DoTransformMultiDim`.

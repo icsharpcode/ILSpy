@@ -98,6 +98,9 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		internal static extern RustStatus ilspy_session_member_walk(RustSession session, uint token, uint flags, out RustBuffer walk);
 
 		[DllImport(Library, CallingConvention = CallingConvention.Cdecl)]
+		internal static extern RustStatus ilspy_session_field_data_comment(RustSession session, uint token, out RustBuffer comment);
+
+		[DllImport(Library, CallingConvention = CallingConvention.Cdecl)]
 		internal static extern RustStatus ilspy_session_read_function(RustSession session, uint methodToken, uint ilPrefix, uint readerFlags, ulong settings, ulong settingsHigh, IntPtr debugContext, RustDebugInfo.Callback? debugInfo, IntPtr resolverContext, RustResolver.Callback? resolver, byte[] rootNames, UIntPtr rootNamesLength, out RustBuffer wire);
 
 		[DllImport(Library, CallingConvention = CallingConvention.Cdecl)]

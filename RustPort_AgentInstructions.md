@@ -762,8 +762,13 @@ the reasons. This file holds only the ordered steps, their gates and their rules
           - [x] 68z4c2. The member walk of `DoDecompile(ITypeDefinition)`: which members, in
             which order, and the nested types (lecture 3.214). Records keep the host's walk,
             counted, until 68z4c4.
-          - [ ] 68z4c3. The per-member post-processing of `DoDecompile`: enum members, fixed
-            buffers, `new` and `required`, RVA data comments, interface implementation helpers.
+          - [ ] 68z4c3. The per-member post-processing of `DoDecompile`. Split (agent
+            recommendation):
+            - [x] 68z4c3a. The enum display mode and the comment after field data (lecture
+              3.215).
+            - [ ] 68z4c3b. The `new` modifier (`SetNewModifier`).
+            - [ ] 68z4c3c. Syntax the engine writes: enum member declarations, fixed buffers,
+              `required`, the forwarders of explicit interface implementations.
           - [ ] 68z4c4. `RecordDecompiler`: the member order of records and the record members
             the decompiler leaves out.
       - [ ] 68z5. The request-level seam 2 block: recognized early transforms as engine flags,

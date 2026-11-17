@@ -204,6 +204,24 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 			}
 		}
 
+		/// <summary>
+		/// The comment <c>DoDecompile(IField)</c> writes after a field of the main module with an RVA.
+		/// </summary>
+		public string FieldDataComment(EntityHandle field)
+		{
+			var status = NativeMethods.ilspy_session_field_data_comment(session, (uint)MetadataTokens.GetToken(field), out var buffer);
+			byte[] bytes = NativeMethods.TakeBuffer(buffer);
+			switch (status)
+			{
+				case RustStatus.Ok:
+					return System.Text.Encoding.UTF8.GetString(bytes);
+				case RustStatus.Cancelled:
+					throw new OperationCanceledException();
+				default:
+					throw new RustEngineException($"{status}: {NativeMethods.LastError}");
+			}
+		}
+
 		/// <summary>The settings <c>MemberIsHidden</c> reads, as <c>csharp::member_hidden::HiddenSettings</c>.</summary>
 		static uint HiddenFlags(DecompilerSettings settings)
 		{
@@ -229,15 +247,19 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		/// <summary>
 		/// The member walk of <c>DoDecompile(ITypeDefinition)</c> for a type of the main module: its
 		/// entities in <c>allOrderedEntities</c> order with the walk's decision for each
-		/// (0 decompiled, 1 hidden, 2 hidden unless it backs an event that is not automatic); null
+		/// (0 decompiled, 1 hidden, 2 hidden unless it backs an event that is not automatic), and
+		/// for an enum <paramref name="enumDisplayMode"/> (<c>EnumValueDisplayMode</c>, 255 where the
+		/// host decides it); null
 		/// with <paramref name="unsupportedReason"/> where the engine does not walk the type.
 		/// </summary>
-		public List<(EntityHandle Entity, byte Decision)>? MemberWalk(ITypeDefinition type, DecompilerSettings settings, out string? unsupportedReason)
+		public List<(EntityHandle Entity, byte Decision)>? MemberWalk(ITypeDefinition type, DecompilerSettings settings, out string? unsupportedReason, out byte enumDisplayMode)
 		{
 			unsupportedReason = null;
+			enumDisplayMode = 255;
 			uint flags = HiddenFlags(settings)
 				| (settings.RecordClasses ? 1u << 17 : 0u)
-				| (settings.RecordStructs ? 1u << 18 : 0u);
+				| (settings.RecordStructs ? 1u << 18 : 0u)
+				| (settings.AlwaysShowEnumMemberValues ? 1u << 19 : 0u);
 			var status = NativeMethods.ilspy_session_member_walk(session, (uint)MetadataTokens.GetToken(type.MetadataToken), flags, out var buffer);
 			byte[] bytes = NativeMethods.TakeBuffer(buffer);
 			switch (status)
@@ -248,8 +270,9 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 						unsupportedReason = System.Text.Encoding.UTF8.GetString(bytes, 1, bytes.Length - 1);
 						return null;
 					}
-					var walk = new List<(EntityHandle, byte)>((bytes.Length - 1) / 5);
-					for (int i = 1; i + 5 <= bytes.Length; i += 5)
+					enumDisplayMode = bytes[1];
+					var walk = new List<(EntityHandle, byte)>((bytes.Length - 2) / 5);
+					for (int i = 2; i + 5 <= bytes.Length; i += 5)
 						walk.Add((MetadataTokens.EntityHandle(BitConverter.ToInt32(bytes, i)), bytes[i + 4]));
 					return walk;
 				case RustStatus.Cancelled:

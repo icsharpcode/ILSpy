@@ -4836,6 +4836,22 @@ corpus and fixtures the engine walked 27,214 types; 441 records fell back.
 
 The share stayed at 100.0 %.
 
+### 3.215 Enum display mode and field data (item 68z4c3a)
+
+Two decisions of the type and field post-processing come from the engine, each checked against
+the managed one on every type. `DetectBestEnumValueDisplayMode` picks which enum member values
+the declaration shows: hex for `[Flags]` or powers of two above 8, all for values out of order
+or neither consecutive nor powers of two, else none or only the first (all with
+`AlwaysShowEnumMemberValues`); the engine adds it to the member walk message, and leaves to the
+host only an enum with a constant that is no integer. A field with an RVA gets a comment with
+its bytes (`GetInitialValue`, sized by the field's type), or the message of the
+`BadImageFormatException` reading them throws; the engine's array initializer transform already
+read that data, and the reader now takes the type system instead of the transform context so
+the declaration can share it. Fixed buffers moved to 68z4c3c with the other declarations the
+engine has to write as syntax.
+
+The share stayed at 100.0 %.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

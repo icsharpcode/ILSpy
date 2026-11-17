@@ -123,3 +123,98 @@ pub fn member_walk(
         })
         .collect())
 }
+
+/// `AlwaysShowEnumMemberValues`, which `DetectBestEnumValueDisplayMode` reads.
+pub const ALWAYS_SHOW_ENUM_MEMBER_VALUES: u32 = 1 << 19;
+
+/// `EnumValueDisplayMode`.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum EnumValueDisplayMode {
+    None = 0,
+    All = 1,
+    AllHex = 2,
+    FirstOnly = 3,
+}
+
+/// `DetectBestEnumValueDisplayMode` of the enum `row` of `module`: which enum member values the
+/// declaration shows. `None` where a constant is no integer (`CSharpPrimitiveCast` to `long`
+/// would truncate or fail), which the host decides.
+pub fn enum_display_mode(
+    ts: &mut TypeSystem<'_, '_>,
+    module: ModuleId,
+    row: u32,
+    flags: u32,
+) -> Option<EnumValueDisplayMode> {
+    let comp = ts.comp;
+    let md = &comp.module(module).md;
+    let flags_attribute = md
+        .custom_attributes(TableId::TypeDef, row)
+        .into_iter()
+        .any(|ca| {
+            md.attribute_type(ca).is_ok_and(|t| {
+                crate::typesystem::compilation::is_known_type_name(
+                    md,
+                    t,
+                    "System",
+                    "FlagsAttribute",
+                    0,
+                )
+            })
+        });
+    if flags_attribute {
+        return Some(EnumValueDisplayMode::AllHex);
+    }
+    let fields = comp.visible_fields(TypeDefId { module, row }).ok()?;
+    let settings = HiddenSettings(flags);
+    let (mut first, mut first_value, mut previous) = (true, 0i64, 0i64);
+    let (mut all_powers_of_two, mut all_consecutive) = (true, true);
+    for f in fields {
+        if member_is_hidden(ts, module, token(TableId::Field, f), settings) {
+            continue;
+        }
+        let value = ts.field_constant(module, f);
+        if value == crate::typesystem::members::ConstValue::Null {
+            continue;
+        }
+        let current = super::constant_syntax::as_i64(&value)?;
+        all_consecutive = all_consecutive && (first || previous.wrapping_add(1) == current);
+        // N & (N - 1) == 0 iff N is a power of two, for all N != 0; 0 counts as one here.
+        all_powers_of_two = all_powers_of_two && current & current.wrapping_sub(1) == 0;
+        if first {
+            first_value = current;
+            first = false;
+        } else if current <= previous || (!all_consecutive && !all_powers_of_two) {
+            return Some(EnumValueDisplayMode::All);
+        }
+        previous = current;
+    }
+    if all_powers_of_two {
+        if previous > 8 {
+            return Some(EnumValueDisplayMode::AllHex);
+        } else if !all_consecutive {
+            return Some(EnumValueDisplayMode::All);
+        }
+    }
+    if flags & ALWAYS_SHOW_ENUM_MEMBER_VALUES != 0 {
+        return Some(EnumValueDisplayMode::All);
+    }
+    Some(if first_value == 0 {
+        EnumValueDisplayMode::None
+    } else {
+        EnumValueDisplayMode::FirstOnly
+    })
+}
+
+/// The comment `DoDecompile(IField)` puts after a field with an RVA (`.data`): its bytes as
+/// `BitConverter.ToString` writes them, or the message of the `BadImageFormatException` reading
+/// them throws.
+pub fn field_data_comment(ts: &mut TypeSystem<'_, '_>, module: ModuleId, row: u32) -> String {
+    let (ty, _) = ts.field_type(module, row);
+    match crate::il::transforms::transform_array_initializers::field_data(ts, module, row, ty) {
+        Ok(bytes) => {
+            let hex: Vec<String> = bytes.iter().map(|b| format!("{b:02X}")).collect();
+            format!(" Not supported: data({}) ", hex.join(" "))
+        }
+        Err(message) => message,
+    }
+}

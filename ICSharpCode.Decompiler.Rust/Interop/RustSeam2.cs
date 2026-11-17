@@ -181,10 +181,27 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 	{
 		readonly Dictionary<IEntity, byte> decisions;
 
-		internal MemberWalkResult(IEntity[] entities, Dictionary<IEntity, byte> decisions)
+		readonly byte enumDisplayMode;
+
+		internal MemberWalkResult(IEntity[] entities, Dictionary<IEntity, byte> decisions, byte enumDisplayMode)
 		{
 			Entities = entities;
 			this.decisions = decisions;
+			this.enumDisplayMode = enumDisplayMode;
+		}
+
+		/// <summary>
+		/// The engine's <c>DetectBestEnumValueDisplayMode</c> of an enum, or <paramref name="managed"/>
+		/// where the host decides it; a difference from <paramref name="managed"/> is counted.
+		/// </summary>
+		internal EnumValueDisplayMode EnumDisplayMode(ITypeDefinition typeDef, EnumValueDisplayMode managed)
+		{
+			if (enumDisplayMode == 255)
+				return managed;
+			var mode = (EnumValueDisplayMode)enumDisplayMode;
+			if (mode != managed)
+				RustSeam2.CountWalkDivergence(typeDef, $"enum display mode {mode}, managed {managed}");
+			return mode;
 		}
 
 		/// <summary><c>allOrderedEntities</c>.</summary>
@@ -428,7 +445,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 			if (!Enabled || typeDef.ParentModule != typeSystem.MainModule || typeDef.MetadataToken.IsNil
 				|| RustEngine.For(typeSystem, out _) is not { } engine)
 				return null;
-			var walk = engine.MemberWalk(typeDef, settings, out string? reason);
+			var walk = engine.MemberWalk(typeDef, settings, out string? reason, out byte enumDisplayMode);
 			if (walk == null)
 			{
 				Interlocked.Increment(ref walkFallbacks);
@@ -459,9 +476,27 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 			else if (managed.FirstOrDefault(e => (decisions[e] != 0) != CSharp.CSharpDecompiler.MemberIsHidden(module.MetadataFile, e.MetadataToken, settings)) is { } wrong)
 				difference = $"hidden 0x{MetadataTokens.GetToken(wrong.MetadataToken):x8}";
 			if (difference != null)
-				walkDivergences.AddOrUpdate($"{module.MetadataFile.Name} {typeDef.FullName}: {difference}", 1, (_, n) => n + 1);
-			return new MemberWalkResult(entities, decisions);
+				CountWalkDivergence(typeDef, difference);
+			return new MemberWalkResult(entities, decisions, enumDisplayMode);
 		}
+
+		/// <summary>
+		/// The engine's comment after the data of <paramref name="field"/>, a field of the main module
+		/// with an RVA; <paramref name="managed"/> where the host writes it. A difference is counted.
+		/// </summary>
+		internal static string FieldDataComment(IDecompilerTypeSystem typeSystem, IField field, string managed)
+		{
+			if (!Enabled || field.ParentModule != typeSystem.MainModule || field.MetadataToken.IsNil
+				|| RustEngine.For(typeSystem, out _) is not { } engine)
+				return managed;
+			string comment = engine.FieldDataComment(field.MetadataToken);
+			if (comment != managed && field.DeclaringTypeDefinition is { } type)
+				CountWalkDivergence(type, $"data comment of {field.Name}");
+			return comment;
+		}
+
+		internal static void CountWalkDivergence(ITypeDefinition typeDef, string difference)
+			=> walkDivergences.AddOrUpdate($"{typeDef.ParentModule?.AssemblyName} {typeDef.FullName}: {difference}", 1, (_, n) => n + 1);
 
 		static readonly AsyncLocal<bool> disabled = new AsyncLocal<bool>();
 
