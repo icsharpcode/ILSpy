@@ -4761,6 +4761,26 @@ signature equals the member's after the substitution up to type erasure. The eng
 with the loader test `ExtensionEverything` (every method of the container implements a member,
 and the information is the same from both sides); the declarations do not use it yet.
 
+### 3.211 Extension declarations (item 68z4b)
+
+`ConvertExtension(group)` writes an extension block: its type parameters, the receiver (the
+marker method's parameter) and the constraints. The host asks the engine for it with a TypeDef
+token and the extension flag at both places that convert a block: when a container is
+decompiled (`typeDef.ExtensionInfo.ExtensionGroups`, the path of whole-module decompilation)
+and when a marker type is decompiled itself. A block's type parameters are created from the
+marker type's own GenericParam rows (`MetadataTypeParameter.Create(module, markerType, index,
+handle)`), named as the marker type declares them (`T`), where the type system gives a nested
+type's leading parameters to the enclosing grouping type (`$T0`); the receiver is the marker
+method specialized with them. The engine writes such a parameter as owned by the marker type,
+which it does nowhere else, and the host decodes exactly that case the way `ExtensionInfo`
+creates it: a parameter of its own, not the shared one of the enclosing type, since the AST
+transforms read the type back from its `TypeResolveResult`. The host also looks a written
+type's syntax up by its entry in the message, not by the decoded type, which two entries may
+share. The extension fixtures (`ExtensionEverything`, `ExtensionEncodingV2`) are written by the
+engine; the ratchet corpus has no extension blocks.
+
+The share stayed at 100.0 %.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

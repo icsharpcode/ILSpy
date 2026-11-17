@@ -855,7 +855,8 @@ pub unsafe extern "C" fn ilspy_session_read_function(
 /// module (`wire::ilast::field_syntax`, `method_syntax`, `property_syntax`). `flags`: bit 0
 /// `UseSpecialConstants`, bit 1 `SortCustomAttributes`, bit 2
 /// `IntroducePrivateProtectedAccessibility`, bit 3 `LiftNullables`, bit 4 `UseCustomEvents`,
-/// bit 5 `InitAccessors`, bit 6 `RecordClasses`, bit 7 `RecordStructs`. Safe to call from several threads at once.
+/// bit 5 `InitAccessors`, bit 6 `RecordClasses`, bit 7 `RecordStructs`; bit 8 asks for the
+/// extension block of a TypeDef (`ConvertExtension`). Safe to call from several threads at once.
 ///
 /// # Safety
 /// `session` must be a live, loaded session; `out` must be writable.
@@ -887,6 +888,9 @@ pub unsafe extern "C" fn ilspy_session_entity_syntax(
             0x04 => ilspy_decompiler::wire::ilast::field_syntax(&mut ts, ModuleId(0), row, options),
             0x06 => {
                 ilspy_decompiler::wire::ilast::method_syntax(&mut ts, ModuleId(0), row, options)
+            }
+            0x02 if flags & 256 != 0 => {
+                ilspy_decompiler::wire::ilast::extension_syntax(&mut ts, row, options)
             }
             0x02 => ilspy_decompiler::wire::ilast::type_syntax(
                 &mut ts,

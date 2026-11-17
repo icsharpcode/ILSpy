@@ -1537,3 +1537,126 @@ fn is_equatable_of(ts: &TypeSystem<'_, '_>, t: TypeId, self_type: TypeId) -> boo
         && args.len() == 1
         && args[0] == self_type
 }
+
+/// `ConvertExtension(group)`: an extension block's declaration, without its members.
+#[derive(Clone, Debug)]
+pub struct ExtensionSyntax {
+    pub type_parameters: Vec<TypeParameterSyntax>,
+    /// The receiver: the marker method's parameter.
+    pub receiver: ParameterSyntax,
+    pub constraints: Vec<ConstraintSyntax>,
+}
+
+/// `ConvertExtension` of the block whose marker is declared in `marker_type` (the `<M>$` marker
+/// type of encoding V2, or the `<>E__` group type of V1).
+pub fn convert_extension(
+    ts: &mut TypeSystem<'_, '_>,
+    module: ModuleId,
+    marker_type: u32,
+    options: EntityOptions,
+) -> Result<ExtensionSyntax, Unsupported> {
+    use crate::typesystem::compilation::TypeDefId;
+    let marker_type = TypeDefId {
+        module,
+        row: marker_type,
+    };
+    // The container is the enclosing type (V1) or the enclosing type's (V2).
+    let mut container = enclosing(ts, marker_type);
+    if container.is_some_and(|c| !ts.type_flags(c).has_extensions) {
+        container = container.and_then(|c| enclosing(ts, c));
+    }
+    let container = container.ok_or("an extension block outside a container")?;
+    let info = ts
+        .extension_info(container)
+        .ok_or("an extension block of a type without extensions")?;
+    let group = info
+        .groups
+        .iter()
+        .find(|g| {
+            ts.comp
+                .module(g.marker.module)
+                .md
+                .method_declaring_type(g.marker.row)
+                .is_ok_and(|d| d == marker_type.row)
+        })
+        .ok_or("an extension block without marker")?
+        .clone();
+    // The block's type parameters are the marker type's.
+    let type_params = ts
+        .type_parameters(module, TableId::TypeDef, marker_type.row)
+        .map_err(|e| e.to_string())?;
+    let gp_rows: Vec<u32> = ts
+        .comp
+        .module(module)
+        .md
+        .generic_params(TableId::TypeDef, marker_type.row)
+        .collect();
+    if type_params.len() != group.type_parameters.len() {
+        return Err("an extension block with other type parameters".to_owned());
+    }
+    // `MetadataTypeParameter.Create(module, markerType, index, handle)`: the block's type
+    // parameters are the marker type's own, named by its own GenericParam rows, where the type
+    // system gives a nested type's leading parameters to the enclosing grouping type (`$T0`).
+    let own_names: Vec<String> = gp_rows
+        .iter()
+        .map(|&gp| {
+            let md = &ts.comp.module(module).md;
+            md.get::<rows::GenericParam>(gp)
+                .ok()
+                .and_then(|r| md.string(r.name).ok())
+                .map(|n| n.into_owned())
+                .unwrap_or_default()
+        })
+        .collect();
+    let own: Vec<TypeId> = (0..own_names.len() as u32)
+        .map(|index| {
+            ts.intern(TypeData::TypeParam {
+                owner: crate::typesystem::types::TypeParamOwner::Type(marker_type),
+                index,
+            })
+        })
+        .collect();
+    let mut type_parameters = Vec::new();
+    let mut constraints = Vec::new();
+    for ((tp, &gp), name) in type_params.iter().zip(&gp_rows).zip(&own_names) {
+        let a = ts
+            .type_parameter_attributes(module, gp)
+            .map_err(|e| e.to_string())?;
+        type_parameters.push(TypeParameterSyntax {
+            variance: match tp.variance {
+                "Covariant" => 1,
+                "Contravariant" => (-1i8) as u8,
+                _ => 0,
+            },
+            name: name.clone(),
+            attributes: convert_attributes(ts, &a, options)?,
+        });
+        let constraint_attributes = has_constraint_attributes(&ts.comp.module(module).md, gp);
+        if let Some(mut c) = convert_constraint(ts, tp, constraint_attributes)? {
+            c.type_parameter = if name == "_" {
+                "".to_owned()
+            } else {
+                name.clone()
+            };
+            for b in &mut c.base_types {
+                if let ConstraintTypeSyntax::Type(t) = b {
+                    *t = ts.substitute(*t, Some(&own), None);
+                }
+            }
+            constraints.push(c);
+        }
+    }
+    // `group.MarkerMethod.Specialize(subst).Parameters.Single()`, the block's own parameters
+    // substituted for the marker type's.
+    let (_, params) = ts.method_signature(group.marker);
+    let mut receiver = convert_parameters(ts, module, &params, marker_type, options)?;
+    let mut receiver = receiver
+        .pop()
+        .ok_or("an extension marker without parameter")?;
+    receiver.ty = ts.substitute(receiver.ty, Some(&own), None);
+    Ok(ExtensionSyntax {
+        type_parameters,
+        receiver,
+        constraints,
+    })
+}

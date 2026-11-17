@@ -103,6 +103,18 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		{
 			if (typeSyntaxOffsets == null || !typeIndex.TryGetValue(type, out int index))
 				return null;
+			return TypeSyntaxAt(index);
+		}
+
+		/// <summary>
+		/// The syntax of entry <paramref name="index"/>. Two entries may decode to the same
+		/// <see cref="IType"/> (a nested type shares its enclosing type's type parameters) and differ
+		/// in syntax, so a type read only to be written is looked up by its entry.
+		/// </summary>
+		CSharp.Syntax.AstType? TypeSyntaxAt(int index)
+		{
+			if (typeSyntaxOffsets == null)
+				return null;
 			int saved = pos;
 			pos = typeSyntaxOffsets[index];
 			var syntax = TypeSyntaxNode();
@@ -238,11 +250,11 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					result = new CSharp.Syntax.NullReferenceExpression();
 					break;
 				case 2:
-					result = new CSharp.Syntax.DefaultValueExpression(SyntaxOf(Type(), ref complete));
+					result = new CSharp.Syntax.DefaultValueExpression(NextTypeSyntax(ref complete));
 					break;
 				case 3:
 				{
-					var type = SyntaxOf(Type(), ref complete);
+					var type = NextTypeSyntax(ref complete);
 					result = new CSharp.Syntax.CastExpression(type, ConstantSyntax(ref complete));
 					break;
 				}
@@ -289,12 +301,12 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					break;
 				}
 				case 13:
-					result = new CSharp.Syntax.TypeOfExpression(SyntaxOf(Type(), ref complete));
+					result = new CSharp.Syntax.TypeOfExpression(NextTypeSyntax(ref complete));
 					break;
 				case 14:
 				{
 					// An attribute's array argument: the array type's specifiers follow the element type.
-					var creation = new CSharp.Syntax.ArrayCreateExpression { Type = SyntaxOf(Type(), ref complete) };
+					var creation = new CSharp.Syntax.ArrayCreateExpression { Type = NextTypeSyntax(ref complete) };
 					if (creation.Type is CSharp.Syntax.ComposedType composedType)
 					{
 						composedType.ArraySpecifiers.MoveTo(creation.AdditionalArraySpecifiers);
@@ -348,6 +360,17 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				}
 			}
 			return result;
+		}
+
+		/// <summary>The syntax of the next type of the message, a placeholder where it has none.</summary>
+		protected CSharp.Syntax.AstType NextTypeSyntax(ref bool complete)
+		{
+			int index = Len();
+			TypeAt(index);
+			if (TypeSyntaxAt(index) is { } syntax)
+				return syntax;
+			complete = false;
+			return new CSharp.Syntax.SimpleType("?");
 		}
 
 		/// <summary>The engine's syntax of <paramref name="type"/>, a placeholder where it has none.</summary>
@@ -462,7 +485,21 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					switch (owner)
 					{
 						case 0:
-							return TypeDefinition().TypeParameters[Len()];
+						{
+							var definition = TypeDefinition();
+							int index = Len();
+							// The engine names a nested type's leading type parameter after the nested
+							// type only for an extension block's own parameters, which
+							// `ExtensionInfo` creates from the marker type's GenericParam rows where
+							// the type system shares the enclosing type's.
+							if (definition.DeclaringTypeDefinition is { } outer && index < outer.TypeParameterCount
+								&& definition.ParentModule is MetadataModule module)
+							{
+								var handles = module.MetadataFile.Metadata.GetTypeDefinition((TypeDefinitionHandle)definition.MetadataToken).GetGenericParameters();
+								return MetadataTypeParameter.Create(module, definition, index, handles[index]);
+							}
+							return definition.TypeParameters[index];
+						}
 						case 1:
 						{
 							var module = Module();
@@ -565,7 +602,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 			for (int i = 0; i < attributes; i++)
 				decl.Attributes.Add(new CSharp.Syntax.AttributeSection(Attribute(ref complete)));
 			decl.AddAnnotation(new MemberResolveResult(null, field));
-			decl.ReturnType = SyntaxOf(Type(), ref complete);
+			decl.ReturnType = NextTypeSyntax(ref complete);
 			if (Bool() && decl.ReturnType is CSharp.Syntax.ComposedType ct && ct.HasRefSpecifier)
 				ct.HasReadOnlySpecifier = true;
 			var initializer = Bool() ? ConstantSyntax(ref complete) : null;
@@ -596,7 +633,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 			var modifiers = (CSharp.Syntax.Modifiers)UVar();
 			var attributes = Sections(null, ref complete);
 			var returnAttributes = Sections("return", ref complete);
-			CSharp.Syntax.AstType? returnType = Bool() ? SyntaxOf(Type(), ref complete) : null;
+			CSharp.Syntax.AstType? returnType = Bool() ? NextTypeSyntax(ref complete) : null;
 			if (Bool() && returnType is CSharp.Syntax.ComposedType ct && ct.HasRefSpecifier)
 				ct.HasReadOnlySpecifier = true;
 			string name = Str();
@@ -627,12 +664,12 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					}
 					else
 					{
-						c.BaseTypes.Add(SyntaxOf(Type(), ref complete));
+						c.BaseTypes.Add(NextTypeSyntax(ref complete));
 					}
 				}
 				constraints.Add(c);
 			}
-			CSharp.Syntax.AstType? privateImplementationType = Bool() ? SyntaxOf(Type(), ref complete) : null;
+			CSharp.Syntax.AstType? privateImplementationType = Bool() ? NextTypeSyntax(ref complete) : null;
 			if (!complete)
 			{
 				unsupportedReason = "a type without syntax";
@@ -706,7 +743,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					IsScopedRef = Bool()
 				};
 				p.Attributes.AddRange(Sections(null, ref complete));
-				p.Type = SyntaxOf(Type(), ref complete);
+				p.Type = NextTypeSyntax(ref complete);
 				p.Name = Str();
 				if (Bool())
 					p.DefaultExpression = ConstantSyntax(ref complete);
@@ -731,7 +768,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 			byte kind = U8();
 			var modifiers = (CSharp.Syntax.Modifiers)UVar();
 			var attributes = Sections(null, ref complete);
-			var returnType = SyntaxOf(Type(), ref complete);
+			var returnType = NextTypeSyntax(ref complete);
 			if (Bool() && returnType is CSharp.Syntax.ComposedType ct && ct.HasRefSpecifier)
 				ct.HasReadOnlySpecifier = true;
 			string name = Str();
@@ -755,7 +792,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					accessor.AddAnnotation(new MemberResolveResult(null, method));
 				accessors[slot] = accessor;
 			}
-			CSharp.Syntax.AstType? privateImplementationType = Bool() ? SyntaxOf(Type(), ref complete) : null;
+			CSharp.Syntax.AstType? privateImplementationType = Bool() ? NextTypeSyntax(ref complete) : null;
 			if (!complete)
 			{
 				unsupportedReason = "a type without syntax";
@@ -827,10 +864,10 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 			var baseTypes = new List<CSharp.Syntax.AstType>();
 			count = Len();
 			for (int i = 0; i < count; i++)
-				baseTypes.Add(SyntaxOf(Type(), ref complete));
+				baseTypes.Add(NextTypeSyntax(ref complete));
 			var constraints = Constraints(ref complete);
 			var returnAttributes = Sections("return", ref complete);
-			CSharp.Syntax.AstType? returnType = Bool() ? SyntaxOf(Type(), ref complete) : null;
+			CSharp.Syntax.AstType? returnType = Bool() ? NextTypeSyntax(ref complete) : null;
 			if (Bool() && returnType is CSharp.Syntax.ComposedType ct && ct.HasRefSpecifier)
 				ct.HasReadOnlySpecifier = true;
 			var parameters = Parameters(ref complete);
@@ -863,6 +900,34 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 			return decl;
 		}
 
+		/// <summary><c>ConvertExtension</c>; null with the reason where the engine did not write it.</summary>
+		public CSharp.Syntax.EntityDeclaration? Extension(out string? unsupportedReason)
+		{
+			unsupportedReason = null;
+			if (U8() == 0)
+			{
+				unsupportedReason = Str();
+				return null;
+			}
+			bool complete = true;
+			var ext = new CSharp.Syntax.ExtensionDeclaration();
+			int count = Len();
+			for (int i = 0; i < count; i++)
+			{
+				var tp = new CSharp.Syntax.TypeParameterDeclaration { Variance = (VarianceModifier)unchecked((sbyte)U8()), Name = Str() };
+				tp.Attributes.AddRange(Sections(null, ref complete));
+				ext.TypeParameters.Add(tp);
+			}
+			ext.ReceiverParameters.AddRange(Parameters(ref complete));
+			ext.Constraints.AddRange(Constraints(ref complete));
+			if (!complete)
+			{
+				unsupportedReason = "a type without syntax";
+				return null;
+			}
+			return ext;
+		}
+
 		/// <summary><c>ConvertTypeParameterConstraint</c> of each constrained type parameter.</summary>
 		List<CSharp.Syntax.Constraint> Constraints(ref bool complete)
 		{
@@ -883,7 +948,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					}
 					else
 					{
-						c.BaseTypes.Add(SyntaxOf(Type(), ref complete));
+						c.BaseTypes.Add(NextTypeSyntax(ref complete));
 					}
 				}
 				constraints.Add(c);

@@ -2284,6 +2284,31 @@ pub fn type_syntax(
     )
 }
 
+/// `TypeSystemAstBuilder.ConvertExtension` of the extension block of a marker type
+/// (`csharp::entity_syntax`) as a message.
+pub fn extension_syntax(
+    ts: &mut TypeSystem<'_, '_>,
+    row: u32,
+    options: crate::csharp::entity_syntax::EntityOptions,
+) -> Result<Vec<u8>, String> {
+    let module = crate::typesystem::compilation::ModuleId(0);
+    entity_message(
+        ts,
+        options,
+        |ts| crate::csharp::entity_syntax::convert_extension(ts, module, row, options),
+        |w, e| {
+            w.out.len(e.type_parameters.len());
+            for tp in &e.type_parameters {
+                w.out.u8(tp.variance);
+                w.string(&tp.name);
+                write_attributes(w, &tp.attributes);
+            }
+            write_parameters(w, std::slice::from_ref(&e.receiver));
+            write_constraints(w, &e.constraints);
+        },
+    )
+}
+
 fn write_constraints(
     w: &mut FunctionWriter<'_, '_, '_, '_>,
     constraints: &[crate::csharp::entity_syntax::ConstraintSyntax],

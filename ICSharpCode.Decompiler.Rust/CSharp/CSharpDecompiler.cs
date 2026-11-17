@@ -1850,6 +1850,9 @@ namespace ICSharpCode.Decompiler.CSharp
 					Debug.Assert(extensionInfo != null);
 					extensionInfo.IsExtensionMarkerType(typeDef, out var extensionGroup);
 					entityDecl = typeSystemAstBuilder.ConvertExtension(extensionGroup);
+					// RUST-SEAM-2 BEGIN
+					entityDecl = Rust.Interop.RustSeam2.ConvertExtension(typeSystem, typeDef, typeSystemAstBuilder, settings, entityDecl);
+					// RUST-SEAM-2 END
 				}
 				else
 				{
@@ -1906,6 +1909,9 @@ namespace ICSharpCode.Decompiler.CSharp
 					foreach (var group in typeDef.ExtensionInfo?.ExtensionGroups ?? [])
 					{
 						var ext = (ExtensionDeclaration)typeSystemAstBuilder.ConvertExtension(group);
+						// RUST-SEAM-2 BEGIN
+						ext = (ExtensionDeclaration)Rust.Interop.RustSeam2.ConvertExtension(typeSystem, group.Marker.DeclaringTypeDefinition!, typeSystemAstBuilder, settings, ext);
+						// RUST-SEAM-2 END
 						DoDecompileExtensionMembers(ext, group.Marker, typeDef.ExtensionInfo!);
 
 						typeDecl.Members.Add(ext);

@@ -260,6 +260,29 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		/// <paramref name="managed"/>, the managed builder's, counted, where the engine does not
 		/// write it.
 		/// </summary>
+		/// <summary>
+		/// <c>typeSystemAstBuilder.ConvertExtension(group)</c> of the extension block of
+		/// <paramref name="markerType"/> from the engine; <paramref name="managed"/>, counted, where
+		/// the engine does not write it.
+		/// </summary>
+		internal static EntityDeclaration ConvertExtension(IDecompilerTypeSystem typeSystem, ITypeDefinition markerType, TypeSystemAstBuilder typeSystemAstBuilder, DecompilerSettings settings, EntityDeclaration managed)
+		{
+			if (Enabled && RustEngine.For(typeSystem, out _) is { } engine
+				&& markerType.ParentModule == typeSystem.MainModule
+				&& !markerType.MetadataToken.IsNil)
+			{
+				var decl = engine.EntitySyntax(markerType, typeSystemAstBuilder.UseSpecialConstants, settings, out string? reason, asExtension: true);
+				if (decl != null)
+				{
+					Interlocked.Increment(ref declarationsServed);
+					return decl;
+				}
+				Interlocked.Increment(ref declarationFallbacks);
+				declarationFallbackReasons.AddOrUpdate(reason ?? "unknown", 1, (_, n) => n + 1);
+			}
+			return managed;
+		}
+
 		internal static EntityDeclaration ConvertDeclaration(IDecompilerTypeSystem typeSystem, IEntity member, TypeSystemAstBuilder typeSystemAstBuilder, DecompilerSettings settings, EntityDeclaration managed)
 		{
 			if (Enabled && RustEngine.For(typeSystem, out _) is { } engine
