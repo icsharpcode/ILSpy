@@ -148,7 +148,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		/// it with the options <c>CSharpDecompiler.CreateAstBuilder</c> gives the builder; null with
 		/// <paramref name="unsupportedReason"/> where the engine does not write the declaration.
 		/// </summary>
-		public CSharp.Syntax.EntityDeclaration? EntitySyntax(IEntity entity, bool useSpecialConstants, DecompilerSettings settings, out string? unsupportedReason, bool useCustomEvents = false, bool asExtension = false)
+		public CSharp.Syntax.EntityDeclaration? EntitySyntax(IEntity entity, bool useSpecialConstants, DecompilerSettings settings, out string? unsupportedReason, bool useCustomEvents = false, bool asExtension = false, bool asEnumMember = false)
 		{
 			unsupportedReason = null;
 			uint flags = (useSpecialConstants ? 1u : 0u)
@@ -159,7 +159,8 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				| (settings.InitAccessors ? 32u : 0u)
 				| (settings.RecordClasses ? 64u : 0u)
 				| (settings.RecordStructs ? 128u : 0u)
-				| (asExtension ? 256u : 0u);
+				| (asExtension ? 256u : 0u)
+				| (asEnumMember ? 512u : 0u);
 			// A member of an extension block comes specialized with the block's type parameters,
 			// which belong to the block's marker type (`ExtensionInfo.GetMembersOfGroup`).
 			uint contextToken = 0;
@@ -172,6 +173,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				case RustStatus.Ok:
 					var reader = new EntitySyntaxReader(bytes, typeSystem, modules);
 					return entity switch {
+						IField field when asEnumMember => reader.EnumMember(field, out unsupportedReason),
 						IField field => reader.Field(field, out unsupportedReason),
 						IMethod method => reader.Method(method, settings, out unsupportedReason),
 						IProperty or IEvent => reader.Property((IMember)entity, out unsupportedReason),

@@ -53,6 +53,9 @@ pub enum ConstSyntaxKind {
         field: FieldRef,
         name: String,
     },
+    /// `Member` of an enum member initializer: an identifier annotated with
+    /// `MemberResolveResult(null, field)`.
+    EnumMemberIdentifier { field: FieldRef, name: String },
     /// `typeof(T)`.
     TypeOf(TypeId),
     /// `new T[] { elements }` of an attribute's array argument: the array type's syntax with its
@@ -409,7 +412,14 @@ impl<'t, 'c, 'a> ConstantSyntaxBuilder<'t, 'c, 'a> {
         if let Some(d) = ts.definition(underlying)
             && ts.comp.type_def(d).ok()?.kind == TypeKind::Enum
         {
-            return self.convert_enum_value(underlying, d, as_i64(value)?, hex, special_constants);
+            return self.convert_enum_value(
+                underlying,
+                d,
+                as_i64(value)?,
+                hex,
+                special_constants,
+                None,
+            );
         }
         let code = self.known_code(underlying);
         if let Some(special) =
@@ -464,7 +474,23 @@ impl<'t, 'c, 'a> ConstantSyntaxBuilder<'t, 'c, 'a> {
         Some(literal)
     }
 
-    /// `ConvertEnumValue(type, val)` outside an enum declaration.
+    /// The initializer of the enum member `field` (a Field row of the enum `def`, whose type is
+    /// `ty`) with the value `val`: `ConvertEnumValue(type, val, declaringEnumMember)`.
+    pub fn convert_enum_member_initializer(
+        &self,
+        ty: TypeId,
+        def: TypeDefId,
+        val: i64,
+        field: u32,
+        special_constants: bool,
+    ) -> Option<ConstSyntax> {
+        self.convert_enum_value(ty, def, val, false, special_constants, Some(field))
+    }
+
+    /// `ConvertEnumValue(type, val, declaringEnumMember)`. Inside the declaration of the member
+    /// `declaring` (its Field row), the members are named unqualified, only those declared before
+    /// it, and in a `[Flags]` enum only single-bit members directly; a value the members do not
+    /// spell stays numeric, without a cast.
     fn convert_enum_value(
         &self,
         ty: TypeId,
@@ -472,6 +498,7 @@ impl<'t, 'c, 'a> ConstantSyntaxBuilder<'t, 'c, 'a> {
         val: i64,
         hex: bool,
         special_constants: bool,
+        declaring: Option<u32>,
     ) -> Option<ConstSyntax> {
         let ts = self.ts;
         let info = ts.comp.type_def(def).ok()?;
@@ -508,16 +535,45 @@ impl<'t, 'c, 'a> ConstantSyntaxBuilder<'t, 'c, 'a> {
             ));
         }
         let member = |f: &(i64, FieldRef, String, u32)| {
-            ConstSyntax::new(ConstSyntaxKind::EnumMember {
-                ty,
-                field: f.1,
-                name: f.2.clone(),
+            ConstSyntax::new(match declaring {
+                None => ConstSyntaxKind::EnumMember {
+                    ty,
+                    field: f.1,
+                    name: f.2.clone(),
+                },
+                Some(_) => ConstSyntaxKind::EnumMemberIdentifier {
+                    field: f.1,
+                    name: f.2.clone(),
+                },
             })
         };
-        if let Some(f) = fields.iter().find(|f| f.0 == val) {
+        let declaring_row = declaring.unwrap_or(u32::MAX);
+        let underlying_def = self.known_def(base_code)?;
+        let underlying = ts.find(&TypeData::Def(underlying_def))?;
+        let numeric = |hex: bool| {
+            self.convert_constant_value(
+                underlying,
+                underlying,
+                &cast_integer(base_code, val)?,
+                hex,
+                special_constants,
+            )
+        };
+        if let Some(f) = fields
+            .iter()
+            .find(|f| f.0 == val && (declaring.is_none() || !is_flags || f.3 == 1))
+        {
+            // A member does not name itself or a member declared after it.
+            if Some(f.1.row) == declaring || declaring_row < f.1.row {
+                return numeric(hex);
+            }
             return Some(member(f));
         }
         if is_flags {
+            // The complement of a byte- or ushort-based member is computed in int, which an
+            // enum member initializer cannot convert back implicitly.
+            let complement_compiles = declaring.is_none()
+                || !matches!(base_code, KnownTypeCode::Byte | KnownTypeCode::UInt16);
             let mut enum_value = val;
             let mut negated = !val;
             match base_code {
@@ -534,7 +590,7 @@ impl<'t, 'c, 'a> ConstantSyntaxBuilder<'t, 'c, 'a> {
             ordered.sort_by_key(|f| std::cmp::Reverse(f.3));
             for f in ordered {
                 let field_value = f.0;
-                if field_value == 0 {
+                if field_value == 0 || Some(f.1.row) == declaring || declaring_row < f.1.row {
                     continue;
                 }
                 if field_value & enum_value == field_value {
@@ -548,7 +604,7 @@ impl<'t, 'c, 'a> ConstantSyntaxBuilder<'t, 'c, 'a> {
                     terms += 1;
                     enum_value &= !field_value;
                 }
-                if field_value & negated == field_value {
+                if complement_compiles && field_value & negated == field_value {
                     negated_expr = Some(match negated_expr {
                         None => member(f),
                         Some(e) => ConstSyntax::new(ConstSyntaxKind::BitwiseOr(
@@ -560,28 +616,34 @@ impl<'t, 'c, 'a> ConstantSyntaxBuilder<'t, 'c, 'a> {
                     negated &= !field_value;
                 }
             }
+            // A multi-bit value inside a larger, earlier member is a field encoding within that
+            // mask, not a union of flags: it stays numeric.
+            let encoded_in_earlier_mask = declaring.is_some()
+                && fields.iter().any(|f| {
+                    Some(f.1.row) != declaring
+                        && f.1.row < declaring_row
+                        && f.0 & val == val
+                        && f.0 != val
+                });
             // The complement wins only with fewer nodes, that is with fewer members.
             if enum_value == 0
+                && !encoded_in_earlier_mask
                 && let Some(e) = expr
                 && !(negated == 0 && negated_expr.is_some() && negated_terms < terms)
             {
                 return Some(e);
             }
-            if negated == 0
+            if complement_compiles
+                && negated == 0
                 && let Some(n) = negated_expr
             {
                 return Some(ConstSyntax::new(ConstSyntaxKind::BitNot(Box::new(n))));
             }
         }
-        let underlying_def = self.known_def(base_code)?;
-        let underlying = ts.find(&TypeData::Def(underlying_def))?;
-        let numeric = self.convert_constant_value(
-            underlying,
-            underlying,
-            &cast_integer(base_code, val)?,
-            hex,
-            special_constants,
-        )?;
+        let numeric = numeric(hex)?;
+        if declaring.is_some() {
+            return Some(numeric);
+        }
         Some(ConstSyntax::new(ConstSyntaxKind::Cast(
             ty,
             Box::new(numeric),

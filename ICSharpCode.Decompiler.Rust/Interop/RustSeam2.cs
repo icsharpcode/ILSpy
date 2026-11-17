@@ -258,6 +258,28 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		/// <c>typeSystemAstBuilder.ConvertEntity(field)</c> from the engine; <paramref name="managed"/>, the
 		/// managed builder's, counted, where the engine does not write it.
 		/// </summary>
+		/// <summary>
+		/// The <c>EnumMemberDeclaration</c> of the enum constant <paramref name="field"/> from the
+		/// engine; <paramref name="managed"/>, counted, where the engine does not write it.
+		/// </summary>
+		internal static EntityDeclaration ConvertEnumMember(IDecompilerTypeSystem typeSystem, IField field, TypeSystemAstBuilder typeSystemAstBuilder, DecompilerSettings settings, EntityDeclaration managed)
+		{
+			if (Enabled && RustEngine.For(typeSystem, out _) is { } engine
+				&& field.ParentModule == typeSystem.MainModule
+				&& !field.MetadataToken.IsNil)
+			{
+				var decl = engine.EntitySyntax(field, typeSystemAstBuilder.UseSpecialConstants, settings, out string? reason, asEnumMember: true);
+				if (decl != null)
+				{
+					Interlocked.Increment(ref declarationsServed);
+					return decl;
+				}
+				Interlocked.Increment(ref declarationFallbacks);
+				declarationFallbackReasons.AddOrUpdate(reason ?? "unknown", 1, (_, n) => n + 1);
+			}
+			return managed;
+		}
+
 		internal static EntityDeclaration ConvertField(IDecompilerTypeSystem typeSystem, IField field, TypeSystemAstBuilder typeSystemAstBuilder, DecompilerSettings settings, EntityDeclaration managed)
 		{
 			if (Enabled && RustEngine.For(typeSystem, out _) is { } engine

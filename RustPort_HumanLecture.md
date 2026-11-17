@@ -4869,6 +4869,22 @@ all equal to the managed ones, and fell back on none.
 
 The share stayed at 100.0 %.
 
+### 3.217 Enum member declarations (item 68z4c3c, first part)
+
+`DoDecompile(IField)` writes an enum constant as an `EnumMemberDeclaration`: the name, the
+attributes each in a section of its own and unsorted, and an initializer. For an underlying type
+from `sbyte` to `ulong` the initializer is `ConvertEnumValue(type, value, declaringEnumMember)`,
+whose rules inside a declaration differ from those for an enum value in code: members are named
+unqualified (an identifier with `MemberResolveResult(null, field)`), never the member itself or
+a member declared after it, in a `[Flags]` enum only single-bit members directly, the complement
+`~X` only where it compiles (not for `byte` and `ushort` enums, whose complement is an `int`),
+a multi-bit value inside an earlier, larger member (a field encoding within a mask) stays
+numeric, and a numeric value goes without the cast to the enum type. The engine's
+`convert_enum_value` takes the declaring member for these rules; any other underlying type writes
+the constant as it is. The ratchet corpus has 79 enum members, all written by the engine.
+
+The share stayed at 100.0 %.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

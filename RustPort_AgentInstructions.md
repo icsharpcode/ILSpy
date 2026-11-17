@@ -767,8 +767,8 @@ the reasons. This file holds only the ordered steps, their gates and their rules
             - [x] 68z4c3a. The enum display mode and the comment after field data (lecture
               3.215).
             - [x] 68z4c3b. The `new` modifier (`SetNewModifier`; lecture 3.216).
-            - [ ] 68z4c3c. Syntax the engine writes: enum member declarations, fixed buffers,
-              `required`, the forwarders of explicit interface implementations.
+            - [ ] 68z4c3c. Syntax the engine writes: enum member declarations (lecture 3.217),
+              fixed buffers, `required`, the forwarders of explicit interface implementations.
           - [ ] 68z4c4. `RecordDecompiler`: the member order of records and the record members
             the decompiler leaves out.
       - [ ] 68z5. The request-level seam 2 block: recognized early transforms as engine flags,

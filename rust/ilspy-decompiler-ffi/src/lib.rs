@@ -856,7 +856,8 @@ pub unsafe extern "C" fn ilspy_session_read_function(
 /// `UseSpecialConstants`, bit 1 `SortCustomAttributes`, bit 2
 /// `IntroducePrivateProtectedAccessibility`, bit 3 `LiftNullables`, bit 4 `UseCustomEvents`,
 /// bit 5 `InitAccessors`, bit 6 `RecordClasses`, bit 7 `RecordStructs`; bit 8 asks for the
-/// extension block of a TypeDef (`ConvertExtension`). `context_token` is the marker type of the
+/// extension block of a TypeDef (`ConvertExtension`), bit 9 the enum member declaration of a
+/// Field. `context_token` is the marker type of the
 /// extension block a member belongs to, 0 otherwise. Safe to call from several threads at once.
 ///
 /// # Safety
@@ -889,6 +890,12 @@ pub unsafe extern "C" fn ilspy_session_entity_syntax(
         };
         let row = token & 0x00FF_FFFF;
         match token >> 24 {
+            0x04 if flags & 512 != 0 => ilspy_decompiler::wire::ilast::enum_member_syntax(
+                &mut ts,
+                ModuleId(0),
+                row,
+                options,
+            ),
             0x04 => ilspy_decompiler::wire::ilast::field_syntax(&mut ts, ModuleId(0), row, options),
             0x06 => {
                 ilspy_decompiler::wire::ilast::method_syntax(&mut ts, ModuleId(0), row, options)

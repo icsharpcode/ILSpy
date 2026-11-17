@@ -49,12 +49,12 @@ public class ForkedSourceDriftTests
 		string fork = ReadNormalized(Path.Combine(root, "ICSharpCode.Decompiler.Rust", "CSharp", "CSharpDecompiler.cs"));
 
 		// Seam 1 has four blocks: a field, the analysis body, the handover before the RunTransforms
-		// call and the restore after it. Seam 2 has eighteen: the AST transform loop, the engine's new modifier, the engine's choice of hidden top-level types with the label after the managed check it skips, the engine's member walk of a type and its decisions with their label, the engine's enum display mode, the engine's comment after field data, the engine's extension
+		// call and the restore after it. Seam 2 has nineteen: the AST transform loop, the engine's enum member declarations, the engine's new modifier, the engine's choice of hidden top-level types with the label after the managed check it skips, the engine's member walk of a type and its decisions with their label, the engine's enum display mode, the engine's comment after field data, the engine's extension
 		// (of a marker type and of a container's block), type and method declarations and body translation with the label after the statement builder it
 		// skips, and the engine's field, property and event declarations; each declaration
 		// replaces the managed one.
 		var blocks = SeamBlock.Matches(fork);
-		Assert.That(blocks.Select(m => m.Groups["n"].Value), Is.EqualTo(new[] { "1", "1", "2", "2", "2", "2", "2", "2", "2", "2", "2", "2", "2", "2", "1", "1", "2", "2", "2", "2", "2", "2" }), "the RUST-SEAM blocks in file order");
+		Assert.That(blocks.Select(m => m.Groups["n"].Value), Is.EqualTo(new[] { "1", "1", "2", "2", "2", "2", "2", "2", "2", "2", "2", "2", "2", "2", "1", "1", "2", "2", "2", "2", "2", "2", "2" }), "the RUST-SEAM blocks in file order");
 		Assert.That(SeamBlock.Replace(fork, ""), Is.EqualTo(original));
 	}
 }

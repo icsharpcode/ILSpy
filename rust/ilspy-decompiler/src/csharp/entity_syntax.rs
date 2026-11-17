@@ -332,6 +332,83 @@ pub fn convert_field(
     })
 }
 
+/// The `EnumMemberDeclaration` `DoDecompile(IField)` writes for a constant of an enum: its
+/// attributes, each in a section of its own and in metadata order, and its initializer.
+pub struct EnumMemberSyntax {
+    pub attributes: Vec<AttributeSyntax>,
+    pub initializer: Option<ConstSyntax>,
+}
+
+/// The declaration of the enum member `row` of `module` (`DoDecompile(IField)` for a constant
+/// of an enum): an underlying type from `sbyte` to `ulong` names the value through the other
+/// members (`ConvertEnumValue`), any other one writes the constant (`ConvertConstantValue`).
+pub fn convert_enum_member(
+    ts: &mut TypeSystem<'_, '_>,
+    module: ModuleId,
+    row: u32,
+    options: EntityOptions,
+) -> Result<EnumMemberSyntax, Unsupported> {
+    let md = &ts.comp.module(module).md;
+    let declaring = md.field_declaring_type(row).map_err(|e| e.to_string())?;
+    let def = crate::typesystem::compilation::TypeDefId {
+        module,
+        row: declaring,
+    };
+    let underlying = ts
+        .comp
+        .type_def(def)
+        .map_err(|e| e.to_string())?
+        .enum_underlying
+        .ok_or("an enum member of a type that is no enum")?;
+    let attributes = ts
+        .field_attributes(module, row)
+        .map_err(|e| e.to_string())?;
+    let attributes = attributes
+        .iter()
+        .map(|a| convert_attribute(ts, a))
+        .collect::<Result<Vec<_>, _>>()?;
+    let value = ts.field_constant(module, row);
+    let initializer = if value == crate::typesystem::members::ConstValue::Null {
+        None
+    } else if matches!(
+        underlying,
+        crate::typesystem::known::KnownTypeCode::SByte
+            | crate::typesystem::known::KnownTypeCode::Byte
+            | crate::typesystem::known::KnownTypeCode::Int16
+            | crate::typesystem::known::KnownTypeCode::UInt16
+            | crate::typesystem::known::KnownTypeCode::Int32
+            | crate::typesystem::known::KnownTypeCode::UInt32
+            | crate::typesystem::known::KnownTypeCode::Int64
+            | crate::typesystem::known::KnownTypeCode::UInt64
+    ) {
+        let enum_type = ts.intern_def(def);
+        let val = super::constant_syntax::as_i64(&value)
+            .ok_or("an enum member whose constant is no integer")?;
+        Some(
+            ConstantSyntaxBuilder::new(ts)
+                .convert_enum_member_initializer(
+                    enum_type,
+                    def,
+                    val,
+                    row,
+                    options.special_constants,
+                )
+                .ok_or("an enum member value the engine does not write")?,
+        )
+    } else {
+        let ty = ts.known_type(underlying);
+        Some(
+            ConstantSyntaxBuilder::new(ts)
+                .convert_raw(ty, &value, options.special_constants)
+                .ok_or("a constant the engine does not write")?,
+        )
+    };
+    Ok(EnumMemberSyntax {
+        attributes,
+        initializer,
+    })
+}
+
 /// `ConvertParameter`.
 #[derive(Clone, Debug)]
 pub struct ParameterSyntax {

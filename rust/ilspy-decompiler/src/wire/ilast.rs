@@ -2086,6 +2086,25 @@ pub fn field_syntax(
     )
 }
 
+/// The `EnumMemberDeclaration` of an enum constant (`csharp::entity_syntax::convert_enum_member`)
+/// as a message: its attributes and its optional initializer.
+pub fn enum_member_syntax(
+    ts: &mut TypeSystem<'_, '_>,
+    module: crate::typesystem::compilation::ModuleId,
+    row: u32,
+    options: crate::csharp::entity_syntax::EntityOptions,
+) -> Result<Vec<u8>, String> {
+    entity_message(
+        ts,
+        options,
+        |ts| crate::csharp::entity_syntax::convert_enum_member(ts, module, row, options),
+        |w, member| {
+            write_attributes(w, &member.attributes);
+            write_optional_constant(w, member.initializer.as_ref());
+        },
+    )
+}
+
 /// `TypeSystemAstBuilder.ConvertEntity` of a method, operator, constructor or destructor
 /// (`csharp::entity_syntax`) as a message.
 pub fn method_syntax(

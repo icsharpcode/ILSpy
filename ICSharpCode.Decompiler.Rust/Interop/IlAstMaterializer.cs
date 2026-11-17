@@ -303,6 +303,16 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				case 13:
 					result = new CSharp.Syntax.TypeOfExpression(NextTypeSyntax(ref complete));
 					break;
+				case 15:
+				{
+					// A member named in an enum member initializer.
+					var module = modules[Len()];
+					var field = module.GetDefinition(MetadataTokens.FieldDefinitionHandle(Len()));
+					var identifier = new CSharp.Syntax.IdentifierExpression(Str());
+					identifier.AddAnnotation(new MemberResolveResult(null, field));
+					result = identifier;
+					break;
+				}
 				case 14:
 				{
 					// An attribute's array argument: the array type's specifiers follow the element type.
@@ -588,6 +598,37 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		}
 
 		/// <summary><c>ConvertField(field)</c>; null with the reason where the engine did not write it.</summary>
+		/// <summary>
+		/// The <c>EnumMemberDeclaration</c> <c>DoDecompile(IField)</c> writes for an enum constant;
+		/// null with the reason where the engine did not write it.
+		/// </summary>
+		public CSharp.Syntax.EntityDeclaration? EnumMember(IField field, out string? unsupportedReason)
+		{
+			unsupportedReason = null;
+			if (U8() == 0)
+			{
+				unsupportedReason = Str();
+				return null;
+			}
+			bool complete = true;
+			var sections = new List<CSharp.Syntax.AttributeSection>();
+			int attributes = Len();
+			for (int i = 0; i < attributes; i++)
+				sections.Add(new CSharp.Syntax.AttributeSection(Attribute(ref complete)));
+			var initializer = Bool() ? ConstantSyntax(ref complete) : null;
+			var decl = new CSharp.Syntax.EnumMemberDeclaration { Name = field.Name };
+			if (initializer != null)
+				decl.Initializer = initializer;
+			decl.Attributes.AddRange(sections);
+			decl.AddAnnotation(new MemberResolveResult(null, field));
+			if (!complete)
+			{
+				unsupportedReason = "a type without syntax";
+				return null;
+			}
+			return decl;
+		}
+
 		public CSharp.Syntax.EntityDeclaration? Field(IField field, out string? unsupportedReason)
 		{
 			unsupportedReason = null;

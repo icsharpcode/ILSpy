@@ -1052,6 +1052,12 @@ pub(super) fn constant_syntax_node(
             constant_syntax_node(w, l);
             constant_syntax_node(w, r);
         }
+        K::EnumMemberIdentifier { field, name } => {
+            w.out.u8(15);
+            w.out.len(field.module.0 as usize);
+            w.out.uvar(u64::from(field.row));
+            w.string(name);
+        }
         K::TypeOf(t) => {
             w.out.u8(13);
             w.ty(*t);

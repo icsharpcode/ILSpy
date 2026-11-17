@@ -2815,6 +2815,9 @@ namespace ICSharpCode.Decompiler.CSharp
 					}
 					enumDec.Attributes.AddRange(field.GetAttributes().Select(a => new AttributeSection(typeSystemAstBuilder.ConvertAttribute(a))));
 					enumDec.AddAnnotation(new MemberResolveResult(null, field));
+					// RUST-SEAM-2 BEGIN
+					enumDec = (EnumMemberDeclaration)Rust.Interop.RustSeam2.ConvertEnumMember(typeSystem, field, typeSystemAstBuilder, settings, enumDec);
+					// RUST-SEAM-2 END
 					return enumDec;
 				}
 				bool isMathPIOrE = ((field.Name == "PI" || field.Name == "E") && (field.DeclaringType.FullName == "System.Math" || field.DeclaringType.FullName == "System.MathF"));
