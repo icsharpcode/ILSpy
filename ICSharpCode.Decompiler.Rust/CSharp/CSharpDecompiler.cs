@@ -1752,6 +1752,14 @@ namespace ICSharpCode.Decompiler.CSharp
 
 			const GetMemberOptions options = GetMemberOptions.IgnoreInheritedMembers | GetMemberOptions.ReturnMemberDefinitions;
 
+			// RUST-SEAM-2 BEGIN
+			if (Rust.Interop.RustSeam2.HidesBaseMember(typeSystem, entity, HidesMemberOrTypeOfBaseType) is { } hidesByEngine)
+			{
+				if (hidesByEngine)
+					member.Modifiers |= Modifiers.New;
+				return;
+			}
+			// RUST-SEAM-2 END
 			if (HidesMemberOrTypeOfBaseType())
 				member.Modifiers |= Modifiers.New;
 

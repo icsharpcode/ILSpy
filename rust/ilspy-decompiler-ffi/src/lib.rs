@@ -1085,6 +1085,53 @@ pub unsafe extern "C" fn ilspy_session_field_data_comment(
     }
 }
 
+/// `SetNewModifier` of a TypeDef, Field, MethodDef, Property or Event token of the main module
+/// (`csharp::new_modifier::hides_base_member`): byte 1 when the declaration takes `new`, 0 when
+/// not, or 2 and the UTF-8 reason the engine leaves the decision to the host. Safe to call
+/// from several threads at once.
+///
+/// # Safety
+/// `session` must be a live, loaded session; `out` must be writable.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn ilspy_session_new_modifier(
+    session: *const FfiSession,
+    token: u32,
+    out: *mut Buf,
+) -> Status {
+    // SAFETY: the caller guarantees `out` is writable.
+    unsafe { out.write(Buf::EMPTY) };
+    match run(|| {
+        // SAFETY: the caller guarantees a live session.
+        let session = unsafe { session.as_ref() }.ok_or("null session")?;
+        let comp = session
+            .compilation
+            .get()
+            .ok_or("the session has no compilation")?;
+        let mut ts = TypeSystem::new(comp);
+        Ok(
+            match ilspy_decompiler::csharp::new_modifier::hides_base_member(
+                &mut ts,
+                ModuleId(0),
+                token,
+            ) {
+                Ok(hides) => vec![u8::from(hides)],
+                Err(reason) => {
+                    let mut bytes = vec![2];
+                    bytes.extend_from_slice(reason.as_bytes());
+                    bytes
+                }
+            },
+        )
+    }) {
+        Ok(bytes) => {
+            // SAFETY: as above.
+            unsafe { out.write(Buf::from_vec(bytes)) };
+            Status::Ok
+        }
+        Err(status) => status,
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

@@ -222,6 +222,31 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 			}
 		}
 
+		/// <summary>
+		/// <c>SetNewModifier</c>: whether the declaration of an entity of the main module takes
+		/// <c>new</c>; null with <paramref name="unsupportedReason"/> where the host decides it.
+		/// </summary>
+		public bool? HidesBaseMember(EntityHandle entity, out string? unsupportedReason)
+		{
+			unsupportedReason = null;
+			var status = NativeMethods.ilspy_session_new_modifier(session, (uint)MetadataTokens.GetToken(entity), out var buffer);
+			byte[] bytes = NativeMethods.TakeBuffer(buffer);
+			switch (status)
+			{
+				case RustStatus.Ok:
+					if (bytes[0] == 2)
+					{
+						unsupportedReason = System.Text.Encoding.UTF8.GetString(bytes, 1, bytes.Length - 1);
+						return null;
+					}
+					return bytes[0] != 0;
+				case RustStatus.Cancelled:
+					throw new OperationCanceledException();
+				default:
+					throw new RustEngineException($"{status}: {NativeMethods.LastError}");
+			}
+		}
+
 		/// <summary>The settings <c>MemberIsHidden</c> reads, as <c>csharp::member_hidden::HiddenSettings</c>.</summary>
 		static uint HiddenFlags(DecompilerSettings settings)
 		{

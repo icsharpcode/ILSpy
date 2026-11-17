@@ -17,6 +17,7 @@ mod local_function;
 mod member_access;
 pub mod member_hidden;
 pub mod member_walk;
+pub mod new_modifier;
 mod statement_builder;
 mod switch;
 mod translated_expression;

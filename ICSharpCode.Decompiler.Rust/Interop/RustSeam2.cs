@@ -495,6 +495,37 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 			return comment;
 		}
 
+		static long newModifierDecisions;
+		static readonly ConcurrentDictionary<string, int> newModifierFallbackReasons = new ConcurrentDictionary<string, int>();
+
+		/// <summary><c>SetNewModifier</c> decisions the engine made.</summary>
+		public static long NewModifierDecisions => Interlocked.Read(ref newModifierDecisions);
+
+		/// <summary>Why the host made the <c>SetNewModifier</c> decisions it made, with how often.</summary>
+		public static IReadOnlyDictionary<string, int> NewModifierFallbackReasons => newModifierFallbackReasons;
+
+		/// <summary>
+		/// The engine's <c>SetNewModifier</c> decision for <paramref name="entity"/>; null, counted,
+		/// where the host decides it. The managed decision (<paramref name="managed"/>) is computed
+		/// beside it and a difference is counted.
+		/// </summary>
+		internal static bool? HidesBaseMember(IDecompilerTypeSystem typeSystem, IEntity entity, Func<bool> managed)
+		{
+			if (!Enabled || entity.ParentModule != typeSystem.MainModule || entity.MetadataToken.IsNil
+				|| RustEngine.For(typeSystem, out _) is not { } engine)
+				return null;
+			var hides = engine.HidesBaseMember(entity.MetadataToken, out string? reason);
+			if (hides == null)
+			{
+				newModifierFallbackReasons.AddOrUpdate(reason ?? "unknown", 1, (_, n) => n + 1);
+				return null;
+			}
+			Interlocked.Increment(ref newModifierDecisions);
+			if (hides != managed() && entity.DeclaringTypeDefinition is { } type)
+				CountWalkDivergence(type, $"new modifier of {entity.Name}");
+			return hides;
+		}
+
 		internal static void CountWalkDivergence(ITypeDefinition typeDef, string difference)
 			=> walkDivergences.AddOrUpdate($"{typeDef.ParentModule?.AssemblyName} {typeDef.FullName}: {difference}", 1, (_, n) => n + 1);
 

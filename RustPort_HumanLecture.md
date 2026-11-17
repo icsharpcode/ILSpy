@@ -4852,6 +4852,23 @@ engine has to write as syntax.
 
 The share stayed at 100.0 %.
 
+### 3.216 The new modifier (item 68z4c3b)
+
+`SetNewModifier` adds `new` to a declaration that hides an accessible member of a base class:
+a field, property, event or nested type hides every member and nested type of its name (looked
+up on each base type's own declarations), a method hides the non-method members of its name and
+the methods of its signature, an indexer the indexers of its signature; for the last two the
+base members come specialized by the base type's type arguments, as `GetMembers` without options
+returns them, and the signatures compare as `ParameterListComparer` with modifiers does
+(reference kind, `params`, the types with method type parameters normalized). Accessibility is
+`MemberLookup.IsAccessible` from the declaring type with protected access allowed, which
+`csharp/new_modifier.rs` ports for members, generalizing the type-only port of 68z4a; an internal
+candidate of another module stays with the host, counted, because the engine does not read
+`InternalsVisibleTo`. The engine made 150,637 decisions in the ratchet corpus and fixtures,
+all equal to the managed ones, and fell back on none.
+
+The share stayed at 100.0 %.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |
