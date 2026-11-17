@@ -774,7 +774,8 @@ the reasons. This file holds only the ordered steps, their gates and their rules
               while 68z4c5 writes the type declaration's remaining parts in the engine.
           - [ ] 68z4c5. The rest of `DoDecompile(ITypeDefinition)` the host still decides: the
             `.override` forwarders, the type attributes it removes (`DefaultMember` with an
-            indexer, the ref struct `Obsolete` and `CompilerFeatureRequired`, `Required`), the
+            indexer, the ref struct `Obsolete` and `CompilerFeatureRequired`, `Required`; done,
+            lecture 3.220), the
             `partial` modifier, the comment on types nested in an enum, and the work list of
             compiler-generated members that decompiled bodies reference.
       - [x] 68z5. The request-level seam 2 block: recognized early transforms as engine flags,

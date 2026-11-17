@@ -162,7 +162,8 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				| (asExtension ? 256u : 0u)
 				| (asEnumMember ? 512u : 0u)
 				| (settings.RequiredMembers ? 1024u : 0u)
-				| (settings.FixedBuffers ? 2048u : 0u);
+				| (settings.FixedBuffers ? 2048u : 0u)
+				| (settings.IntroduceRefModifiersOnStructs ? 4096u : 0u);
 			// A member of an extension block comes specialized with the block's type parameters,
 			// which belong to the block's marker type (`ExtensionInfo.GetMembersOfGroup`).
 			uint contextToken = 0;
@@ -278,13 +279,15 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		/// entities in <c>allOrderedEntities</c> order with the walk's decision for each
 		/// (0 decompiled, 1 hidden, 2 hidden unless it backs an event that is not automatic), and
 		/// for an enum <paramref name="enumDisplayMode"/> (<c>EnumValueDisplayMode</c>, 255 where the
-		/// host decides it); null
+		/// host decides it), and whether the declaration drops <c>[DefaultMember]</c>
+		/// (<paramref name="removesDefaultMember"/>); null
 		/// with <paramref name="unsupportedReason"/> where the engine does not walk the type.
 		/// </summary>
-		public List<(EntityHandle Entity, byte Decision)>? MemberWalk(ITypeDefinition type, DecompilerSettings settings, out string? unsupportedReason, out byte enumDisplayMode)
+		public List<(EntityHandle Entity, byte Decision)>? MemberWalk(ITypeDefinition type, DecompilerSettings settings, out string? unsupportedReason, out byte enumDisplayMode, out bool removesDefaultMember)
 		{
 			unsupportedReason = null;
 			enumDisplayMode = 255;
+			removesDefaultMember = false;
 			uint flags = HiddenFlags(settings)
 				| (settings.RecordClasses ? 1u << 17 : 0u)
 				| (settings.RecordStructs ? 1u << 18 : 0u)
@@ -300,8 +303,9 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 						return null;
 					}
 					enumDisplayMode = bytes[1];
-					var walk = new List<(EntityHandle, byte)>((bytes.Length - 2) / 5);
-					for (int i = 2; i + 5 <= bytes.Length; i += 5)
+					removesDefaultMember = bytes[2] != 0;
+					var walk = new List<(EntityHandle, byte)>((bytes.Length - 3) / 5);
+					for (int i = 3; i + 5 <= bytes.Length; i += 5)
 						walk.Add((MetadataTokens.EntityHandle(BitConverter.ToInt32(bytes, i)), bytes[i + 4]));
 					return walk;
 				case RustStatus.Cancelled:

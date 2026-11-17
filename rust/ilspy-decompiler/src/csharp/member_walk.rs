@@ -218,3 +218,24 @@ pub fn field_data_comment(ts: &mut TypeSystem<'_, '_>, module: ModuleId, row: u3
         Err(message) => message,
     }
 }
+
+/// Whether `DoDecompile(ITypeDefinition)` removes `[DefaultMember]` from the declaration of a
+/// type whose member walk is `walk`: it does when the declaration has an indexer that is no
+/// explicit interface implementation, that is, when the walk decompiles such an indexer.
+pub fn removes_default_member(
+    ts: &mut TypeSystem<'_, '_>,
+    module: ModuleId,
+    walk: &[(u32, WalkDecision)],
+) -> bool {
+    walk.iter().any(|&(t, decision)| {
+        if decision != WalkDecision::Decompile || t >> 24 != 0x17 {
+            return false;
+        }
+        let row = t & 0x00FF_FFFF;
+        ts.property_symbol_kind(module, row)
+            .is_ok_and(|k| k == crate::typesystem::members::SymbolKind::Indexer)
+            && !ts
+                .property_any_accessor(module, row)
+                .is_some_and(|a| ts.is_explicit_interface_implementation(a).unwrap_or(false))
+    })
+}

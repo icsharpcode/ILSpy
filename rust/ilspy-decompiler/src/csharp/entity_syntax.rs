@@ -29,6 +29,9 @@ pub struct EntityOptions {
     pub required_members: bool,
     /// `FixedBuffers`: a field with `[FixedBuffer]` is written as a fixed size buffer.
     pub fixed_buffers: bool,
+    /// `IntroduceRefModifiersOnStructs`: a type drops the attributes the compiler adds to a
+    /// `ref struct`.
+    pub ref_struct_attributes: bool,
 }
 
 /// The type parameters of the extension block whose marker type is `marker_type`, created from
@@ -464,6 +467,36 @@ pub fn convert_enum_member(
         attributes,
         initializer,
     })
+}
+
+/// `RemoveObsoleteAttribute` (`only` false) and `RemoveCompilerFeatureRequiredAttribute`
+/// (`only` true): drops each attribute of the defined type `ns.name` whose first argument (with
+/// `only`, whose only argument) is the string `text`.
+fn remove_attributes_with_string(
+    ts: &TypeSystem<'_, '_>,
+    attributes: &mut Vec<AttributeSyntax>,
+    (ns, name): (&str, &str),
+    text: &str,
+    only: bool,
+) {
+    let text: Vec<u16> = text.encode_utf16().collect();
+    attributes.retain(|a| {
+        let defined = ts.definition(a.ty).is_some()
+            && ts
+                .name_and_namespace(a.ty)
+                .is_some_and(|(n, s)| n == name && s == ns);
+        let count = a.arguments.len() + a.named.len();
+        let first_is_text = a.arguments.first().is_some_and(|first| {
+            matches!(
+                &first.kind,
+                super::constant_syntax::ConstSyntaxKind::Literal {
+                    value: crate::typesystem::members::ConstValue::String(s),
+                    ..
+                } if *s == text
+            )
+        });
+        !(defined && first_is_text && if only { count == 1 } else { count >= 1 })
+    });
 }
 
 /// `ConvertParameter`.
@@ -1635,7 +1668,37 @@ pub fn convert_type_definition(
             .type_parameter_count as usize
     };
     let attributes = ts.type_attributes(def).map_err(|e| e.to_string())?;
-    let attributes = convert_attributes(ts, &attributes, options)?;
+    let mut attributes = convert_attributes(ts, &attributes, options)?;
+    // `DoDecompile(ITypeDefinition)` removes these from a type declaration (not a delegate's).
+    if kind != TypeKind::Delegate {
+        if options.ref_struct_attributes {
+            remove_attributes_with_string(
+                ts,
+                &mut attributes,
+                ("System", "ObsoleteAttribute"),
+                "Types with embedded references are not supported in this version of your compiler.",
+                false,
+            );
+            remove_attributes_with_string(
+                ts,
+                &mut attributes,
+                (
+                    "System.Runtime.CompilerServices",
+                    "CompilerFeatureRequiredAttribute",
+                ),
+                "RefStructs",
+                true,
+            );
+        }
+        if options.required_members {
+            remove_attributes(
+                ts,
+                &mut attributes,
+                "System.Runtime.CompilerServices",
+                "RequiredMemberAttribute",
+            );
+        }
+    }
     let type_params = ts
         .type_parameters(module, TableId::TypeDef, row)
         .map_err(|e| e.to_string())?;

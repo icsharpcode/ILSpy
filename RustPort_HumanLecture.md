@@ -4920,6 +4920,23 @@ removes, `partial`, the work list of referenced compiler-generated members) is 6
 
 The share stayed at 100.0 %.
 
+### 3.220 Type attributes the declaration drops (item 68z4c5, first part)
+
+After the members are in place, `DoDecompile(ITypeDefinition)` removes attributes a C#
+declaration states otherwise: `[DefaultMember]` when the type has an indexer that is no explicit
+interface implementation, the `Obsolete` and `CompilerFeatureRequired("RefStructs")` attributes
+the compiler puts on a `ref struct` (with `IntroduceRefModifiersOnStructs`), and
+`[RequiredMember]` (with `RequiredMembers`). The last three depend on the attributes alone, so the
+engine's type declaration leaves them out, matching each as the managed removers do (a defined
+attribute type, the string as the first argument, for `CompilerFeatureRequired` the only one);
+the host's removers then find nothing. `[DefaultMember]` depends on the assembled members: the
+engine decides it from its member walk (a decompiled indexer whose accessors implement no
+interface explicitly), the host checks the decision against its own and the ratchet test fails on
+a difference. A partial type stays with the host, since which of its members are declared
+elsewhere is the caller's input.
+
+The share stayed at 100.0 %.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

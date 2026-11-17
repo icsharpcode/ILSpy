@@ -195,12 +195,25 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		readonly Dictionary<IEntity, byte> decisions;
 
 		readonly byte enumDisplayMode;
+		readonly bool removesDefaultMember;
 
-		internal MemberWalkResult(IEntity[] entities, Dictionary<IEntity, byte> decisions, byte enumDisplayMode)
+		internal MemberWalkResult(IEntity[] entities, Dictionary<IEntity, byte> decisions, byte enumDisplayMode, bool removesDefaultMember)
 		{
 			Entities = entities;
 			this.decisions = decisions;
 			this.enumDisplayMode = enumDisplayMode;
+			this.removesDefaultMember = removesDefaultMember;
+		}
+
+		/// <summary>
+		/// Whether the declaration of <paramref name="typeDef"/> drops <c>[DefaultMember]</c>, as the
+		/// engine decides it from the walk; a difference from <paramref name="managed"/> is counted.
+		/// </summary>
+		internal bool RemovesDefaultMember(ITypeDefinition typeDef, bool managed)
+		{
+			if (removesDefaultMember != managed)
+				RustSeam2.CountWalkDivergence(typeDef, $"DefaultMember removal {removesDefaultMember}, managed {managed}");
+			return removesDefaultMember;
 		}
 
 		/// <summary>
@@ -480,7 +493,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 			if (!Enabled || typeDef.ParentModule != typeSystem.MainModule || typeDef.MetadataToken.IsNil
 				|| RustEngine.For(typeSystem, out _) is not { } engine)
 				return null;
-			var walk = engine.MemberWalk(typeDef, settings, out string? reason, out byte enumDisplayMode);
+			var walk = engine.MemberWalk(typeDef, settings, out string? reason, out byte enumDisplayMode, out bool removesDefaultMember);
 			if (walk == null)
 			{
 				Interlocked.Increment(ref walkFallbacks);
@@ -512,7 +525,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				difference = $"hidden 0x{MetadataTokens.GetToken(wrong.MetadataToken):x8}";
 			if (difference != null)
 				CountWalkDivergence(typeDef, difference);
-			return new MemberWalkResult(entities, decisions, enumDisplayMode);
+			return new MemberWalkResult(entities, decisions, enumDisplayMode, removesDefaultMember);
 		}
 
 		/// <summary>

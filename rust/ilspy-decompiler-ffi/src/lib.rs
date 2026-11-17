@@ -857,7 +857,8 @@ pub unsafe extern "C" fn ilspy_session_read_function(
 /// `IntroducePrivateProtectedAccessibility`, bit 3 `LiftNullables`, bit 4 `UseCustomEvents`,
 /// bit 5 `InitAccessors`, bit 6 `RecordClasses`, bit 7 `RecordStructs`; bit 8 asks for the
 /// extension block of a TypeDef (`ConvertExtension`), bit 9 the enum member declaration of a
-/// Field; bit 10 `RequiredMembers`, bit 11 `FixedBuffers`. `context_token` is the marker type of the
+/// Field; bit 10 `RequiredMembers`, bit 11 `FixedBuffers`, bit 12
+/// `IntroduceRefModifiersOnStructs`. `context_token` is the marker type of the
 /// extension block a member belongs to, 0 otherwise. Safe to call from several threads at once.
 ///
 /// # Safety
@@ -889,6 +890,7 @@ pub unsafe extern "C" fn ilspy_session_entity_syntax(
             extension_marker: (context_token >> 24 == 0x02).then_some(context_token & 0x00FF_FFFF),
             required_members: flags & 1024 != 0,
             fixed_buffers: flags & 2048 != 0,
+            ref_struct_attributes: flags & 4096 != 0,
         };
         let row = token & 0x00FF_FFFF;
         match token >> 24 {
@@ -977,7 +979,8 @@ pub unsafe extern "C" fn ilspy_session_member_is_hidden(
 /// endian) and the walk's decision (u8); or status byte 1 and the UTF-8 reason the engine does
 /// not walk the type. `flags` are the hidden-member settings plus `RecordClasses` (bit 17) and
 /// `RecordStructs` (bit 18), `AlwaysShowEnumMemberValues` (bit 19); after a status byte 0 comes the
-/// enum display mode (`DetectBestEnumValueDisplayMode`, 255 for none). Safe to call from several threads at once.
+/// enum display mode (`DetectBestEnumValueDisplayMode`, 255 for none), then whether the
+/// declaration drops `[DefaultMember]` (1) or not (0). Safe to call from several threads at once.
 ///
 /// # Safety
 /// `session` must be a live, loaded session; `out` must be writable.
@@ -1032,6 +1035,14 @@ pub unsafe extern "C" fn ilspy_session_member_walk(
                     None
                 };
                 bytes.push(mode.map_or(255, |m| m as u8));
+                // Whether the declaration drops `[DefaultMember]` for an indexer.
+                bytes.push(u8::from(
+                    ilspy_decompiler::csharp::member_walk::removes_default_member(
+                        &mut ts,
+                        ModuleId(0),
+                        &walk,
+                    ),
+                ));
                 for (t, decision) in walk {
                     bytes.extend_from_slice(&t.to_le_bytes());
                     bytes.push(decision as u8);

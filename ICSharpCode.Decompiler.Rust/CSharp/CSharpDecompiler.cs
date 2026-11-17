@@ -1992,11 +1992,24 @@ namespace ICSharpCode.Decompiler.CSharp
 					typeDecl.Members.AddRange(entityMap[member]);
 				}
 
+				// RUST-SEAM-2 BEGIN
+				// The members of a partial type declared elsewhere are the caller's input, which the
+				// engine's walk does not see.
+				if (engineWalk != null && partialTypeInfo == null)
+				{
+					if (engineWalk.RemovesDefaultMember(typeDef, typeDecl.Members.OfType<IndexerDeclaration>().Any(idx => idx.PrivateImplementationType is null)))
+						RemoveAttribute(typeDecl, KnownAttribute.DefaultMember);
+					goto defaultMemberDecidedByEngine;
+				}
+				// RUST-SEAM-2 END
 				if (typeDecl.Members.OfType<IndexerDeclaration>().Any(idx => idx.PrivateImplementationType is null))
 				{
 					// Remove the [DefaultMember] attribute if the class contains indexers
 					RemoveAttribute(typeDecl, KnownAttribute.DefaultMember);
 				}
+				// RUST-SEAM-2 BEGIN
+				defaultMemberDecidedByEngine:
+				// RUST-SEAM-2 END
 				if (partialTypeInfo != null)
 				{
 					typeDecl.Modifiers |= Modifiers.Partial;
