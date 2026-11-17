@@ -22,6 +22,74 @@ pub struct EntityOptions {
     pub private_protected: bool,
     /// `UseNullableSpecifierForValueTypes` (`LiftNullables`).
     pub nullable_specifier: bool,
+    /// For a member of an extension block, the block's marker type (its row): the member is
+    /// specialized with the block's type parameters (`ExtensionInfo.GetMembersOfGroup`).
+    pub extension_marker: Option<u32>,
+}
+
+/// The type parameters of the extension block whose marker type is `marker_type`, created from
+/// its own GenericParam rows (`MetadataTypeParameter.Create`), with their names.
+fn extension_block_parameters(
+    ts: &mut TypeSystem<'_, '_>,
+    module: ModuleId,
+    marker_type: u32,
+) -> (Vec<TypeId>, Vec<String>) {
+    let marker = crate::typesystem::compilation::TypeDefId {
+        module,
+        row: marker_type,
+    };
+    let gp_rows: Vec<u32> = ts
+        .comp
+        .module(module)
+        .md
+        .generic_params(TableId::TypeDef, marker_type)
+        .collect();
+    let names = gp_rows
+        .iter()
+        .map(|&gp| {
+            let md = &ts.comp.module(module).md;
+            md.get::<rows::GenericParam>(gp)
+                .ok()
+                .and_then(|r| md.string(r.name).ok())
+                .map(|n| n.into_owned())
+                .unwrap_or_default()
+        })
+        .collect();
+    let own = (0..gp_rows.len() as u32)
+        .map(|index| {
+            ts.intern(TypeData::TypeParam {
+                owner: crate::typesystem::types::TypeParamOwner::Type(marker),
+                index,
+            })
+        })
+        .collect();
+    (own, names)
+}
+
+/// `IMember.Specialize(new TypeParameterSubstitution(groupTypeParameters, null))` of a
+/// declaration's signature types: the class type parameters become the block's.
+fn specialize_parameters(
+    ts: &mut TypeSystem<'_, '_>,
+    parameters: &mut [ParameterSyntax],
+    class: &[TypeId],
+) {
+    for p in parameters {
+        p.ty = ts.substitute(p.ty, Some(class), None);
+    }
+}
+
+fn specialize_constraints(
+    ts: &mut TypeSystem<'_, '_>,
+    constraints: &mut [ConstraintSyntax],
+    class: &[TypeId],
+) {
+    for c in constraints {
+        for b in &mut c.base_types {
+            if let ConstraintTypeSyntax::Type(t) = b {
+                *t = ts.substitute(*t, Some(class), None);
+            }
+        }
+    }
 }
 
 /// `Modifiers` of the C# syntax tree.
@@ -525,9 +593,8 @@ pub fn convert_method(
         .full_name
         .name()
         .to_owned();
-    // shortcut: the members of a C# 14 extension block are specialized with the type parameters
-    // of their extension group (`ExtensionInfo.GetMembersOfGroup`), which the engine does not
-    // build yet; they stay with the host.
+    // The members of a C# 14 extension block are specialized with the type parameters of their
+    // block (`ExtensionInfo.GetMembersOfGroup`), whose marker type the host names.
     let enclosing = ts
         .comp
         .type_def(declaring)
@@ -540,9 +607,20 @@ pub fn convert_method(
                 row: enclosing,
             })
             .has_extensions;
-    if in_extension_block {
-        return Err("a member of an extension block".to_owned());
-    }
+    let extension_parameters = match (in_extension_block, options.extension_marker) {
+        (false, _) => None,
+        (true, Some(marker)) => Some(extension_block_parameters(ts, module, marker).0),
+        // A block without type parameters specializes nothing.
+        (true, None)
+            if ts
+                .comp
+                .type_def(declaring)
+                .is_ok_and(|i| i.type_parameter_count == 0) =>
+        {
+            None
+        }
+        (true, None) => return Err("a member of an extension block outside its block".to_owned()),
+    };
     let method_kind = match kind {
         S::Method => MethodKindSyntax::Method,
         S::Operator => {
@@ -659,6 +737,12 @@ pub fn convert_method(
         });
     }
     let has_return = !matches!(kind, S::Constructor | S::Destructor);
+    let mut ret = ret;
+    if let Some(class) = &extension_parameters {
+        ret = ts.substitute(ret, Some(class), None);
+        specialize_parameters(ts, &mut parameters, class);
+        specialize_constraints(ts, &mut constraints, class);
+    }
     Ok(MethodSyntax {
         kind: method_kind,
         modifiers,
@@ -998,6 +1082,25 @@ pub fn convert_property(
     };
     let mut accessors = [get, set];
     merge_read_only(&mut modifiers, &mut accessors);
+    // A property of an extension block is specialized with the block's type parameters.
+    let mut ty = ty;
+    if enclosing(ts, declaring).is_some_and(|e| ts.type_flags(e).has_extensions) {
+        let generic = ts
+            .comp
+            .type_def(declaring)
+            .is_ok_and(|i| i.type_parameter_count > 0);
+        match options.extension_marker {
+            Some(marker) => {
+                let (class, _) = extension_block_parameters(ts, module, marker);
+                ty = ts.substitute(ty, Some(&class), None);
+                specialize_parameters(ts, &mut parameters, &class);
+            }
+            None if generic => {
+                return Err("a member of an extension block outside its block".to_owned());
+            }
+            None => {}
+        }
+    }
     Ok(PropertySyntax {
         kind: if indexer { 1 } else { 0 },
         modifiers,

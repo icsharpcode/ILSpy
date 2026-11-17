@@ -749,8 +749,9 @@ the reasons. This file holds only the ordered steps, their gates and their rules
         Split (agent recommendation):
         - [x] 68z4a. Type declarations (lecture 3.207). Subject:
           `Write type declarations in the engine`.
-        - [ ] 68z4b. C# 14 extension blocks: `ExtensionInfo`, extension declarations and the
-          members of types with extension blocks, with the loader test `ExtensionEverything`.
+        - [x] 68z4b. C# 14 extension blocks: `ExtensionInfo`, extension declarations and the
+          members of extension blocks, with the loader test `ExtensionEverything` (lectures
+          3.209-3.212).
         - [ ] 68z4c. The request-level `SyntaxTree`: namespaces, usings, the member order and
           the rest of `DoDecompile` through `Interop/AstMaterializer.cs`.
       - [ ] 68z5. The request-level seam 2 block: recognized early transforms as engine flags,

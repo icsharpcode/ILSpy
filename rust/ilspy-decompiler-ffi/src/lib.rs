@@ -856,7 +856,8 @@ pub unsafe extern "C" fn ilspy_session_read_function(
 /// `UseSpecialConstants`, bit 1 `SortCustomAttributes`, bit 2
 /// `IntroducePrivateProtectedAccessibility`, bit 3 `LiftNullables`, bit 4 `UseCustomEvents`,
 /// bit 5 `InitAccessors`, bit 6 `RecordClasses`, bit 7 `RecordStructs`; bit 8 asks for the
-/// extension block of a TypeDef (`ConvertExtension`). Safe to call from several threads at once.
+/// extension block of a TypeDef (`ConvertExtension`). `context_token` is the marker type of the
+/// extension block a member belongs to, 0 otherwise. Safe to call from several threads at once.
 ///
 /// # Safety
 /// `session` must be a live, loaded session; `out` must be writable.
@@ -865,6 +866,7 @@ pub unsafe extern "C" fn ilspy_session_entity_syntax(
     session: *const FfiSession,
     token: u32,
     flags: u32,
+    context_token: u32,
     out: *mut Buf,
 ) -> Status {
     // SAFETY: the caller guarantees `out` is writable.
@@ -882,6 +884,8 @@ pub unsafe extern "C" fn ilspy_session_entity_syntax(
             sort_attributes: flags & 2 != 0,
             private_protected: flags & 4 != 0,
             nullable_specifier: flags & 8 != 0,
+            // The marker type (a TypeDef token) of the extension block a member is specialized for.
+            extension_marker: (context_token >> 24 == 0x02).then_some(context_token & 0x00FF_FFFF),
         };
         let row = token & 0x00FF_FFFF;
         match token >> 24 {

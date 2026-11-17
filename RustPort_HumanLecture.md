@@ -4781,6 +4781,23 @@ engine; the ratchet corpus has no extension blocks.
 
 The share stayed at 100.0 %.
 
+### 3.212 Members of extension blocks (item 68z4b)
+
+`DoDecompileExtensionMembers` decompiles each member of a block specialized with the block's type
+parameters (`ExtensionInfo.GetMembersOfGroup`: `member.Specialize(new
+TypeParameterSubstitution(groupTypeParameters, null))`), which belong to the block's marker
+type. The entity request now carries a context token: the host names the marker type, the owner
+of the specialized member's first class type argument, and the engine substitutes the block's
+own type parameters (as `convert_extension` creates them) into the signature types of the
+declaration: a method's return type, parameters and constraint types, a property's type and
+parameters. A block without type parameters specializes nothing and needs no marker. The
+extension fixtures' members are written by the engine (12 method declarations of
+`ExtensionEverything` and `ExtensionEncodingV2`, checked with a temporary log); the ratchet
+corpus has no extension blocks. With this, every declaration `ConvertEntity` and
+`ConvertExtension` write comes from the engine where the request reaches it.
+
+The share stayed at 100.0 %.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

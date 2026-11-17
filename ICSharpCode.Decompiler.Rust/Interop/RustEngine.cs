@@ -160,7 +160,12 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				| (settings.RecordClasses ? 64u : 0u)
 				| (settings.RecordStructs ? 128u : 0u)
 				| (asExtension ? 256u : 0u);
-			var status = NativeMethods.ilspy_session_entity_syntax(session, (uint)MetadataTokens.GetToken(entity.MetadataToken), flags, out var buffer);
+			// A member of an extension block comes specialized with the block's type parameters,
+			// which belong to the block's marker type (`ExtensionInfo.GetMembersOfGroup`).
+			uint contextToken = 0;
+			if (entity is IMember { Substitution.ClassTypeArguments: [ITypeParameter { Owner: ITypeDefinition marker }, ..] })
+				contextToken = (uint)MetadataTokens.GetToken(marker.MetadataToken);
+			var status = NativeMethods.ilspy_session_entity_syntax(session, (uint)MetadataTokens.GetToken(entity.MetadataToken), flags, contextToken, out var buffer);
 			byte[] bytes = NativeMethods.TakeBuffer(buffer);
 			switch (status)
 			{
