@@ -761,7 +761,7 @@ the reasons. This file holds only the ordered steps, their gates and their rules
             host until the engine assembles the syntax tree.
           - [x] 68z4c2. The member walk of `DoDecompile(ITypeDefinition)`: which members, in
             which order, and the nested types (lecture 3.214). Records keep the host's walk,
-            counted, until 68z4c4.
+            counted, until 68z6.
           - [x] 68z4c3. The per-member post-processing of `DoDecompile`. Split (agent
             recommendation):
             - [x] 68z4c3a. The enum display mode and the comment after field data (lecture
@@ -772,8 +772,6 @@ the reasons. This file holds only the ordered steps, their gates and their rules
               writes for `.override` directives move to 68z5 (agent recommendation): the host builds
               them by cloning the member's declaration, so a seam would duplicate that code, while
               68z5 assembles the type declaration in the engine and writes them there.
-          - [ ] 68z4c4. `RecordDecompiler`: the member order of records and the record members
-            the decompiler leaves out.
       - [ ] 68z5. The request-level seam 2 block: recognized early transforms as engine flags,
         `RecordSteps` requests managed, fallback counted per request. Subject:
         `Serve whole decompile requests through seam 2`.
@@ -788,6 +786,11 @@ the reasons. This file holds only the ordered steps, their gates and their rules
   - [ ] 72. IntroduceUnsafeModifier (S)
   - [ ] 73. AddCheckedBlocks (M)
   - [ ] 74. DeclareVariables (L)
+  - [ ] 68z6. `RecordDecompiler` (agent recommendation: moved before the AST transform
+        that consumes it, `TransformFieldAndConstructorInitializers`): the member order of
+        records, the record members the decompiler leaves out, and the analysis the transform reads;
+        records keep the host's member walk, counted, until then. About 1,460 managed lines that
+        decompile and match the generated equality, printing, clone and deconstruction members.
   - [ ] 75. TransformFieldAndConstructorInitializers (M)
   - [ ] 76. PrettifyAssignments (M)
   - [ ] 77. IntroduceUsingDeclarations (L)
