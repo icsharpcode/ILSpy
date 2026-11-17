@@ -144,6 +144,16 @@ impl SyntaxTree {
         result
     }
 
+    /// The index of the slot of its parent that holds `id` (`AstNode.Slot`); `None` for a node
+    /// without parent or for trivia.
+    pub fn slot_of(&self, id: SyntaxId) -> Option<usize> {
+        let parent = self.node(id).parent?;
+        self.node(parent).slots.iter().position(|s| match s {
+            SlotValue::Single(c) => *c == Some(id),
+            SlotValue::Many(cs) => cs.contains(&id),
+        })
+    }
+
     /// A new node of `kind` with default scalars and empty slots, without parent.
     pub fn new_node(&mut self, kind: u16) -> SyntaxId {
         let schema = &KINDS[kind as usize];

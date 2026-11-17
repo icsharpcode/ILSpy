@@ -50,6 +50,9 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 			this.context = context;
 		}
 
+		/// <summary>The settings of the request, which the engine may ask about; null where unknown.</summary>
+		public DecompilerSettings? Settings => context?.Settings;
+
 		/// <summary>The host objects the tree refers to by handle.</summary>
 		public IReadOnlyList<object> Handles => handles;
 
@@ -313,6 +316,8 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		const byte QueryConvertType = 52;
 		const byte QueryILInstruction = 53;
 		const byte QueryTypeResolveResultName = 54;
+		const byte QueryCheckedState = 80;
+		const byte QueryCheckForOverflowUnderflow = 81;
 
 		/// <summary>
 		/// The answer to the engine's question <paramref name="query"/> about one of the tree's host
@@ -335,6 +340,8 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					? new[] { (bool)p.GetValue(context.Settings)! ? (byte)1 : (byte)0 }
 					: throw new RustEngineException($"the engine asked for the setting '{name}', which is no boolean DecompilerSettings property");
 			}
+			if (query[0] == QueryCheckForOverflowUnderflow)
+				return Settings == null ? null : new[] { Settings.CheckForOverflowUnderflow ? (byte)1 : (byte)0 };
 			if (handle < 0 || handle >= handles.Count)
 				return null;
 			object target = handles[handle];
@@ -436,6 +443,14 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					}
 					return s.ToArray();
 				}
+				case QueryCheckedState:
+					if (ReferenceEquals(target, CSharp.Transforms.AddCheckedBlocks.CheckedAnnotation))
+						return new byte[] { 0 };
+					if (ReferenceEquals(target, CSharp.Transforms.AddCheckedBlocks.UncheckedAnnotation))
+						return new byte[] { 1 };
+					if (ReferenceEquals(target, CSharp.Transforms.AddCheckedBlocks.ExplicitUncheckedAnnotation))
+						return new byte[] { 2 };
+					return null;
 				default:
 					return null;
 			}

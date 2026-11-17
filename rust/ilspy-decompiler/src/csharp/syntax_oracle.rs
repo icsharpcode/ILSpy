@@ -20,6 +20,12 @@ pub const QUERY_RESOLVE_RESULT_TYPE: u8 = 1;
 /// byte), then the reflection name of the declaring type (empty for none) and the symbol's name,
 /// each as a length (LEB128) and UTF-8.
 pub const QUERY_SYMBOL: u8 = 2;
+/// For one of the `AddCheckedBlocks` annotations: 0 for `CheckedAnnotation`, 1 for
+/// `UncheckedAnnotation`, 2 for `ExplicitUncheckedAnnotation`, as one byte.
+pub const QUERY_CHECKED_STATE: u8 = 80;
+/// The `CheckForOverflowUnderflow` setting of the request, as one byte (0 or 1); the handle is
+/// ignored. No answer where the host did not pass its settings.
+pub const QUERY_CHECK_FOR_OVERFLOW_UNDERFLOW: u8 = 81;
 
 // The query kinds of `DeclareVariables` (96..=111); `transforms::declare_variables` documents
 // their arguments and answers.
@@ -317,6 +323,23 @@ pub fn type_resolve_result_name(
     let b = oracle.ask(&query(QUERY_TYPE_RESOLVE_RESULT_NAME, handle))?;
     let mut r = AnswerReader(&b);
     Some((r.text()?, r.text()?))
+}
+
+/// The checked state of the `AddCheckedBlocks` annotation `handle` (see `QUERY_CHECKED_STATE`);
+/// `None` for any other object.
+pub fn checked_state(oracle: &dyn SyntaxOracle, handle: u32) -> Option<u8> {
+    oracle
+        .ask(&query(QUERY_CHECKED_STATE, handle))?
+        .first()
+        .copied()
+}
+
+/// The request's `CheckForOverflowUnderflow` setting, `None` where the host did not pass it.
+pub fn check_for_overflow_underflow(oracle: &dyn SyntaxOracle) -> Option<bool> {
+    oracle
+        .ask(&query(QUERY_CHECK_FOR_OVERFLOW_UNDERFLOW, 0))?
+        .first()
+        .map(|&b| b != 0)
 }
 
 /// An oracle that knows nothing, for trees without host objects.
