@@ -176,6 +176,19 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 	/// translates the ILAst it handed over through seam 1. A body with constructs the engine does
 	/// not translate yet falls back to the managed statement builder and is counted.
 	/// </summary>
+	/// <summary>
+	/// The transforms before the built-in AST transforms of a request that the engine performs
+	/// itself (<see cref="RustSeam2.AstRequest"/>).
+	/// </summary>
+	[Flags]
+	public enum AstRequestFlags
+	{
+		None = 0,
+		RemoveEmbeddedAttributes = 1,
+		RemoveCompilerAttribute = 2,
+		RemoveNamespaceMy = 4,
+	}
+
 	/// <summary>The engine's member walk of a type (<see cref="RustSeam2.MemberWalk"/>).</summary>
 	internal sealed class MemberWalkResult
 	{
@@ -546,6 +559,76 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 			if (hides != managed() && entity.DeclaringTypeDefinition is { } type)
 				CountWalkDivergence(type, $"new modifier of {entity.Name}");
 			return hides;
+		}
+
+		static long requestsServed;
+		static readonly ConcurrentDictionary<string, int> requestFallbackReasons = new ConcurrentDictionary<string, int>();
+
+		/// <summary>Decompile requests whose AST transform pipeline the engine may serve.</summary>
+		public static long RequestsServed => Interlocked.Read(ref requestsServed);
+
+		/// <summary>Why the AST transform pipeline of a request stays with the host, with how often.</summary>
+		public static IReadOnlyDictionary<string, int> RequestFallbackReasons => requestFallbackReasons;
+
+		/// <summary>
+		/// The transforms a caller may put before the built-in AST transforms that the engine knows,
+		/// by type name, and the flag each becomes.
+		/// </summary>
+		static readonly Dictionary<string, AstRequestFlags> recognizedEarlyTransforms = new Dictionary<string, AstRequestFlags> {
+			["RemoveEmbeddedAttributes"] = AstRequestFlags.RemoveEmbeddedAttributes,
+			["RemoveCompilerAttribute"] = AstRequestFlags.RemoveCompilerAttribute,
+			["RemoveNamespaceMy"] = AstRequestFlags.RemoveNamespaceMy,
+		};
+
+		/// <summary>
+		/// Whether the engine may serve the AST transform pipeline of a request that runs
+		/// <paramref name="transforms"/>: the built-in transforms in their order, after which a
+		/// caller may append any, and before which only the recognized ones, which become the
+		/// returned flags. A request that records its steps, puts another transform first, or
+		/// changes the built-in list stays with the host, counted per request.
+		/// </summary>
+		internal static AstRequestFlags? AstRequest(IReadOnlyList<CSharp.Transforms.IAstTransform> transforms, bool recordSteps)
+		{
+			if (!Enabled)
+				return null;
+			string? reason = null;
+			var flags = AstRequestFlags.None;
+			if (recordSteps)
+			{
+				reason = "a request that records its steps";
+			}
+			else
+			{
+				var builtIn = CSharp.CSharpDecompiler.GetAstTransforms().Select(t => t.GetType()).ToList();
+				int start = -1;
+				for (int i = 0; i + builtIn.Count <= transforms.Count && start < 0; i++)
+				{
+					if (builtIn.Select((t, k) => transforms[i + k].GetType() == t).All(same => same))
+						start = i;
+				}
+				if (start < 0)
+				{
+					reason = "a changed list of built-in AST transforms";
+				}
+				else
+				{
+					for (int i = 0; i < start && reason == null; i++)
+					{
+						string name = transforms[i].GetType().Name;
+						if (recognizedEarlyTransforms.TryGetValue(name, out var flag))
+							flags |= flag;
+						else
+							reason = $"the early AST transform {name}";
+					}
+				}
+			}
+			if (reason != null)
+			{
+				requestFallbackReasons.AddOrUpdate(reason, 1, (_, n) => n + 1);
+				return null;
+			}
+			Interlocked.Increment(ref requestsServed);
+			return flags;
 		}
 
 		internal static void CountWalkDivergence(ITypeDefinition typeDef, string difference)

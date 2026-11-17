@@ -78,6 +78,9 @@ public class PortStatusRatchetTests
 		TestContext.Out.WriteLine($"seam 2 member walks served: {RustSeam2.WalksServed,6}");
 		foreach (var (reason, count) in RustSeam2.WalkFallbackReasons.OrderByDescending(r => r.Value))
 			TestContext.Out.WriteLine($"seam 2 member walk fallback: {count,6} {reason}");
+		TestContext.Out.WriteLine($"seam 2 requests served: {RustSeam2.RequestsServed,6}");
+		foreach (var (reason, count) in RustSeam2.RequestFallbackReasons.OrderByDescending(r => r.Value))
+			TestContext.Out.WriteLine($"seam 2 request fallback: {count,6} {reason}");
 		TestContext.Out.WriteLine($"seam 2 new modifier decisions: {RustSeam2.NewModifierDecisions,6}");
 		foreach (var (reason, count) in RustSeam2.NewModifierFallbackReasons.OrderByDescending(r => r.Value))
 			TestContext.Out.WriteLine($"seam 2 new modifier fallback: {count,6} {reason}");

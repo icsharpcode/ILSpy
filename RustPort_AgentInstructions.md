@@ -769,11 +769,16 @@ the reasons. This file holds only the ordered steps, their gates and their rules
             - [x] 68z4c3b. The `new` modifier (`SetNewModifier`; lecture 3.216).
             - [x] 68z4c3c. Syntax the engine writes: enum member declarations (lecture 3.217),
               fixed buffers and `required` (lecture 3.218). The forwarders `AddInterfaceImplHelpers`
-              writes for `.override` directives move to 68z5 (agent recommendation): the host builds
-              them by cloning the member's declaration, so a seam would duplicate that code, while
-              68z5 assembles the type declaration in the engine and writes them there.
-      - [ ] 68z5. The request-level seam 2 block: recognized early transforms as engine flags,
-        `RecordSteps` requests managed, fallback counted per request. Subject:
+              writes for `.override` directives move to 68z4c5 (agent recommendation): the host
+              builds them by cloning the member's declaration, so a seam would duplicate that code,
+              while 68z4c5 writes the type declaration's remaining parts in the engine.
+          - [ ] 68z4c5. The rest of `DoDecompile(ITypeDefinition)` the host still decides: the
+            `.override` forwarders, the type attributes it removes (`DefaultMember` with an
+            indexer, the ref struct `Obsolete` and `CompilerFeatureRequired`, `Required`), the
+            `partial` modifier, the comment on types nested in an enum, and the work list of
+            compiler-generated members that decompiled bodies reference.
+      - [x] 68z5. The request-level seam 2 block: recognized early transforms as engine flags,
+        `RecordSteps` requests managed, fallback counted per request (lecture 3.219). Subject:
         `Serve whole decompile requests through seam 2`.
 
 - [ ] **69-84. One AST transform per commit, in order.** Subject pattern:

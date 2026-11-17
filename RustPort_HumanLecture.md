@@ -4900,6 +4900,26 @@ declarations, which went in on the filtered checks.
 
 The share stayed at 100.0 %.
 
+### 3.219 The request-level check (item 68z5)
+
+Seam 2 serves pieces of a request today: bodies, declarations, the member walk and the
+decisions of the type post-processing. The AST transforms that run over the assembled tree are
+still all managed; once the engine runs the first of them (items 69 to 84), it must know that the
+request runs exactly the transforms it ports, in their order. `RustSeam2.AstRequest` checks that
+at the start of `RunTransforms`, once per request: the built-in list (`GetAstTransforms`) must
+be there unchanged; a caller may append any transform after it (ILSpy's `EscapeInvalidIdentifiers`
+and member selection, the project decompiler's attribute removers), which runs after the
+engine's prefix anyway; before it, only the transforms the engine knows by type name, which
+become flags it will apply itself (`RemoveEmbeddedAttributes`, `RemoveCompilerAttribute`,
+`RemoveNamespaceMy`, which the decompiler tests insert). A request that records its steps, puts
+another transform first, or changes the built-in list stays with the host, counted per request.
+`AstRequestTests` covers the classification; the ratchet corpus's two requests are served. The
+check serves no transform yet: the AST prefix stays 0. Writing the tree assembly's last host
+decisions in the engine (the `.override` forwarders, the type attributes the post-processing
+removes, `partial`, the work list of referenced compiler-generated members) is 68z4c5.
+
+The share stayed at 100.0 %.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

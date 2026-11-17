@@ -940,6 +940,9 @@ namespace ICSharpCode.Decompiler.CSharp
 				// transform rather than the thing being shown and sits after every member's group.
 				context.Step("C# AST built from ILAst", rootNode);
 				// RUST-SEAM-2 BEGIN
+				// The engine serves no AST transform yet; the request-level check counts the requests
+				// whose pipeline it may serve.
+				Rust.Interop.RustSeam2.AstRequest(astTransforms, RecordSteps);
 				// RUST-SEAM-2 END
 				foreach (var transform in astTransforms)
 				{
