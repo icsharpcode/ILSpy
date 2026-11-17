@@ -184,7 +184,7 @@ fn visit_member_reference(tree: &mut SyntaxTree, oracle: &dyn SyntaxOracle, mre:
 }
 
 /// `Identifier.Create(name)`.
-fn new_identifier(tree: &mut SyntaxTree, name: &str) -> SyntaxId {
+pub(crate) fn new_identifier(tree: &mut SyntaxTree, name: &str) -> SyntaxId {
     let id = tree.new_node(kind::IDENTIFIER);
     let (name, verbatim) = match name.strip_prefix('@') {
         Some(rest) => (rest, true),

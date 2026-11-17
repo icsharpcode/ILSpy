@@ -50,6 +50,7 @@ const TRANSFORMS: &[(usize, Transform)] = &[
         6,
         super::transforms::field_and_constructor_initializers::run,
     ),
+    (8, super::transforms::introduce_using_declarations::run),
 ];
 
 fn transform(index: usize) -> Option<Transform> {

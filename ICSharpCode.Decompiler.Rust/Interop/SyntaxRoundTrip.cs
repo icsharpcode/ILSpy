@@ -186,6 +186,12 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 			var kind = SyntaxSchema.Of(root.GetType());
 			foreach (var scalar in kind.Scalars)
 				SyntaxSchema.SetScalar(scalar.Property, root, scalar.Property.GetValue(rebuilt));
+			// The root keeps its annotations and gains those the engine attached to it.
+			foreach (var annotation in rebuilt.Annotations)
+			{
+				if (annotation is not AstNode.NodeTrivia && !root.Annotations.Any(a => ReferenceEquals(a, annotation)))
+					root.AddAnnotation(annotation);
+			}
 			foreach (var child in new List<AstNode>(Children(root)))
 				child.Remove();
 			foreach (var (child, info) in ChildrenWithSlots(rebuilt))
@@ -292,6 +298,8 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				return patternStatement;
 			if (CreateFieldInitializersAnnotation(kind, payload) is { } fieldInitializers)
 				return fieldInitializers;
+			if (CreateIntroduceUsingDeclarationsAnnotation(kind) is { } introduceUsingDeclarations)
+				return introduceUsingDeclarations;
 			switch (kind)
 			{
 				case AnnotationAnswered:
@@ -489,6 +497,8 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				return AnswerPatternStatementTransform(query);
 			if (query[0] is >= FieldInitializersFirstQuery and <= FieldInitializersLastQuery)
 				return AnswerFieldInitializers(query);
+			if (query[0] is >= IntroduceUsingDeclarationsFirstQuery and <= IntroduceUsingDeclarationsLastQuery)
+				return AnswerIntroduceUsingDeclarations(query);
 			int pos = 1;
 			if (query[0] is >= QueryMemberFacts and <= QueryReturnTypeSyntax)
 			{
