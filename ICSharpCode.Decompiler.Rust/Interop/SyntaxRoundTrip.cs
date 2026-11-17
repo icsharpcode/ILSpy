@@ -1,0 +1,379 @@
+// Copyright (c) 2026 Christoph Wille
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy of this
+// software and associated documentation files (the "Software"), to deal in the Software
+// without restriction, including without limitation the rights to use, copy, modify, merge,
+// publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
+// to whom the Software is furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in all copies or
+// substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+// INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+// PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
+// FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+// DEALINGS IN THE SOFTWARE.
+
+#nullable enable
+
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+
+using ICSharpCode.Decompiler.CSharp.Syntax;
+
+namespace ICSharpCode.Decompiler.Rust.Interop
+{
+	/// <summary>
+	/// The C# syntax tree in the wire format of <c>csharp/syntax.rs</c>: the host writes the tree
+	/// it built, the engine transforms it and sends it back, and the host builds the nodes anew.
+	/// Annotations and literal values stay host objects, sent as handles into <see cref="Handles"/>
+	/// and attached again to the rebuilt nodes.
+	/// </summary>
+	internal sealed class SyntaxRoundTrip
+	{
+		readonly List<object> handles = new List<object>();
+		readonly List<object> created = new List<object>();
+
+		/// <summary>The host objects the tree refers to by handle.</summary>
+		public IReadOnlyList<object> Handles => handles;
+
+		int Handle(object value)
+		{
+			handles.Add(value);
+			return handles.Count - 1;
+		}
+
+		/// <summary>Writes <paramref name="root"/> and its subtree.</summary>
+		public byte[] Write(AstNode root)
+		{
+			var stream = new MemoryStream();
+			WriteNode(stream, root);
+			return stream.ToArray();
+		}
+
+		void WriteNode(MemoryStream s, AstNode node)
+		{
+			var kind = SyntaxSchema.Of(node.GetType());
+			UVar(s, (ulong)kind.Index);
+			foreach (var scalar in kind.Scalars)
+			{
+				var p = scalar.Property;
+				object? value = p.GetValue(node);
+				var type = Nullable.GetUnderlyingType(p.PropertyType) ?? p.PropertyType;
+				if (type == typeof(bool))
+					s.WriteByte((bool)value! ? (byte)1 : (byte)0);
+				else if (type == typeof(string))
+					WriteString(s, (string?)value);
+				else if (type == typeof(object))
+					UVar(s, (ulong)Handle(value!));
+				else if (type == typeof(TextLocation))
+				{
+					var location = (TextLocation)value!;
+					UVar(s, (ulong)location.Line);
+					UVar(s, (ulong)location.Column);
+				}
+				else
+					UVar(s, ZigZag(ToInt64(value!)));
+			}
+			var annotations = new List<int>();
+			foreach (var annotation in node.Annotations)
+			{
+				if (annotation is not AstNode.NodeTrivia)
+					annotations.Add(Handle(annotation));
+			}
+			UVar(s, (ulong)annotations.Count);
+			foreach (int h in annotations)
+				UVar(s, (ulong)h);
+			foreach (var trivia in new[] { new List<Trivia>(node.LeadingTrivia), new List<Trivia>(node.TrailingTrivia) })
+			{
+				UVar(s, (ulong)trivia.Count);
+				foreach (var t in trivia)
+					WriteNode(s, t);
+			}
+			// The children of each slot, in child order.
+			var bySlot = new List<AstNode>[kind.Slots.Count];
+			int count = node.GetChildCount();
+			for (int i = 0; i < count; i++)
+			{
+				var child = node.GetChild(i);
+				if (child == null)
+					continue;
+				int slot = kind.SlotIndex(node.GetChildSlotInfo(i));
+				(bySlot[slot] ??= new List<AstNode>()).Add(child);
+			}
+			for (int i = 0; i < kind.Slots.Count; i++)
+			{
+				var children = bySlot[i];
+				if (kind.Slots[i].Info.IsCollection)
+				{
+					UVar(s, (ulong)(children?.Count ?? 0));
+					if (children != null)
+					{
+						foreach (var c in children)
+							WriteNode(s, c);
+					}
+				}
+				else if (children == null)
+				{
+					s.WriteByte(0);
+				}
+				else
+				{
+					s.WriteByte(1);
+					WriteNode(s, children[0]);
+				}
+			}
+		}
+
+		/// <summary>
+		/// Replaces the children (and scalars) of <paramref name="root"/> by those of the tree in
+		/// <paramref name="bytes"/>, whose root must be of the same kind; the root object stays,
+		/// since the caller holds it.
+		/// </summary>
+		public void Rebuild(AstNode root, byte[] bytes)
+		{
+			int pos = 0;
+			int count = (int)ReadUVar(bytes, ref pos);
+			for (int i = 0; i < count; i++)
+			{
+				byte annotationKind = bytes[pos++];
+				int length = (int)ReadUVar(bytes, ref pos);
+				created.Add(CreateAnnotation(annotationKind, new ArraySegment<byte>(bytes, pos, length)));
+				pos += length;
+			}
+			var rebuilt = ReadNode(bytes, ref pos);
+			if (pos != bytes.Length)
+				throw new RustEngineException($"{bytes.Length - pos} bytes after the syntax tree");
+			if (rebuilt.GetType() != root.GetType())
+				throw new RustEngineException($"the engine returned a {rebuilt.GetType().Name} for a {root.GetType().Name}");
+			var kind = SyntaxSchema.Of(root.GetType());
+			foreach (var scalar in kind.Scalars)
+				SyntaxSchema.SetScalar(scalar.Property, root, scalar.Property.GetValue(rebuilt));
+			foreach (var child in new List<AstNode>(Children(root)))
+				child.Remove();
+			foreach (var (child, info) in ChildrenWithSlots(rebuilt))
+			{
+				child.Remove();
+				root.AddChildUnsafe(child, info.Kind ?? info);
+			}
+		}
+
+		static IEnumerable<AstNode> Children(AstNode node)
+		{
+			foreach (var (child, _) in ChildrenWithSlots(node))
+				yield return child;
+		}
+
+		static List<(AstNode, CSharpSlotInfo)> ChildrenWithSlots(AstNode node)
+		{
+			var result = new List<(AstNode, CSharpSlotInfo)>();
+			int count = node.GetChildCount();
+			for (int i = 0; i < count; i++)
+			{
+				var child = node.GetChild(i);
+				if (child != null)
+					result.Add((child, node.GetChildSlotInfo(i)));
+			}
+			return result;
+		}
+
+		AstNode ReadNode(byte[] b, ref int pos)
+		{
+			var kind = SyntaxSchema.Kinds[(int)ReadUVar(b, ref pos)];
+			var node = Create(kind.Type);
+			foreach (var scalar in kind.Scalars)
+			{
+				var p = scalar.Property;
+				var type = Nullable.GetUnderlyingType(p.PropertyType) ?? p.PropertyType;
+				object? value;
+				if (type == typeof(bool))
+					value = b[pos++] != 0;
+				else if (type == typeof(string))
+					value = ReadString(b, ref pos);
+				else if (type == typeof(object))
+					value = Lookup((int)ReadUVar(b, ref pos));
+				else if (type == typeof(TextLocation))
+				{
+					int line = (int)ReadUVar(b, ref pos);
+					value = new TextLocation(line, (int)ReadUVar(b, ref pos));
+				}
+				else
+				{
+					long v = UnZigZag(ReadUVar(b, ref pos));
+					value = type.IsEnum ? Enum.ToObject(type, v) : Convert.ChangeType(v, type, System.Globalization.CultureInfo.InvariantCulture);
+				}
+				SyntaxSchema.SetScalar(p, node, value);
+			}
+			int annotations = (int)ReadUVar(b, ref pos);
+			for (int i = 0; i < annotations; i++)
+				node.AddAnnotation(Lookup((int)ReadUVar(b, ref pos)));
+			int leading = (int)ReadUVar(b, ref pos);
+			for (int i = 0; i < leading; i++)
+				node.AddLeadingTrivia((Trivia)ReadNode(b, ref pos));
+			int trailing = (int)ReadUVar(b, ref pos);
+			for (int i = 0; i < trailing; i++)
+				node.AddTrailingTrivia((Trivia)ReadNode(b, ref pos));
+			foreach (var slot in kind.Slots)
+			{
+				var target = slot.Info.Kind ?? slot.Info;
+				if (slot.Info.IsCollection)
+				{
+					int count = (int)ReadUVar(b, ref pos);
+					for (int i = 0; i < count; i++)
+						node.AddChildUnsafe(ReadNode(b, ref pos), target);
+				}
+				else if (b[pos++] != 0)
+				{
+					node.AddChildUnsafe(ReadNode(b, ref pos), target);
+				}
+			}
+			return node;
+		}
+
+		/// <summary>An integer or enum value as a long, unsigned values above <c>long.MaxValue</c> wrapped.</summary>
+		static long ToInt64(object value)
+		{
+			var type = value.GetType();
+			var code = Type.GetTypeCode(type.IsEnum ? Enum.GetUnderlyingType(type) : type);
+			return code == TypeCode.UInt64 ? unchecked((long)Convert.ToUInt64(value, System.Globalization.CultureInfo.InvariantCulture)) : Convert.ToInt64(value, System.Globalization.CultureInfo.InvariantCulture);
+		}
+
+		object Lookup(int handle) => handle < handles.Count ? handles[handle] : created[handle - handles.Count];
+
+		/// <summary>
+		/// The host object for an annotation the engine created, of the kind <paramref name="kind"/>
+		/// (<c>SyntaxTree::new_annotations</c> in <c>csharp/syntax.rs</c>). A transform that creates a
+		/// new kind of annotation adds its case here.
+		/// </summary>
+		static object CreateAnnotation(byte kind, ArraySegment<byte> payload)
+		{
+			throw new RustEngineException($"the engine created an annotation of the unknown kind {kind}");
+		}
+
+		/// <summary>The query kinds of <c>csharp/syntax_oracle.rs</c>.</summary>
+		const byte QueryClassName = 0;
+		const byte QueryResolveResultType = 1;
+		const byte QuerySymbol = 2;
+
+		/// <summary>
+		/// The answer to the engine's question <paramref name="query"/> about one of the tree's host
+		/// objects (<c>csharp/syntax_oracle.rs</c>); null where it does not apply. A transform that needs
+		/// another fact adds its query kind here.
+		/// </summary>
+		public byte[]? Answer(byte[] query)
+		{
+			int pos = 1;
+			int handle = (int)ReadUVar(query, ref pos);
+			if (handle < 0 || handle >= handles.Count)
+				return null;
+			object target = handles[handle];
+			switch (query[0])
+			{
+				case QueryClassName:
+					return System.Text.Encoding.UTF8.GetBytes(target.GetType().Name);
+				case QueryResolveResultType:
+					return target is Semantics.ResolveResult rr ? System.Text.Encoding.UTF8.GetBytes(rr.Type.ReflectionName) : null;
+				case QuerySymbol:
+				{
+					if (target is not Semantics.ResolveResult r || TypeSystem.TypeSystemExtensions.GetSymbol(r) is not { } symbol)
+						return null;
+					var s = new MemoryStream();
+					s.WriteByte((byte)symbol.SymbolKind);
+					string declaring = symbol is TypeSystem.IEntity { DeclaringType: { } t } ? t.ReflectionName : string.Empty;
+					foreach (var text in new[] { declaring, symbol.Name })
+					{
+						var utf8 = System.Text.Encoding.UTF8.GetBytes(text);
+						UVar(s, (ulong)utf8.Length);
+						s.Write(utf8, 0, utf8.Length);
+					}
+					return s.ToArray();
+				}
+				default:
+					return null;
+			}
+		}
+
+		static readonly System.Collections.Concurrent.ConcurrentDictionary<Type, System.Reflection.ConstructorInfo> constructors = new();
+
+		/// <summary>
+		/// A node of <paramref name="type"/> without children, made with the constructor of the fewest
+		/// parameters (empty strings and default values for them); the reader sets its scalars and
+		/// fills its slots afterwards.
+		/// </summary>
+		static AstNode Create(Type type)
+		{
+			var ctor = constructors.GetOrAdd(type, t => t.GetConstructors(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+				.OrderBy(c => c.GetParameters().Length).First());
+			var arguments = ctor.GetParameters()
+				.Select(p => p.ParameterType == typeof(string) ? string.Empty : p.ParameterType.IsValueType ? Activator.CreateInstance(p.ParameterType) : null)
+				.ToArray();
+			var node = (AstNode)ctor.Invoke(arguments);
+			foreach (var child in Children(node).ToList())
+				child.Remove();
+			return node;
+		}
+
+		/// <summary>A string as its length plus one (0 for null) and its UTF-16 code units.</summary>
+		static void WriteString(MemoryStream s, string? value)
+		{
+			if (value == null)
+			{
+				s.WriteByte(0);
+				return;
+			}
+			UVar(s, (ulong)value.Length + 1);
+			foreach (char c in value)
+			{
+				s.WriteByte(unchecked((byte)c));
+				s.WriteByte(unchecked((byte)(c >> 8)));
+			}
+		}
+
+		static string? ReadString(byte[] b, ref int pos)
+		{
+			int encoded = (int)ReadUVar(b, ref pos);
+			if (encoded == 0)
+				return null;
+			int length = encoded - 1;
+			var chars = new char[length];
+			for (int i = 0; i < length; i++)
+			{
+				chars[i] = (char)(b[pos] | (b[pos + 1] << 8));
+				pos += 2;
+			}
+			return new string(chars);
+		}
+
+		static void UVar(MemoryStream s, ulong v)
+		{
+			while (v >= 0x80)
+			{
+				s.WriteByte(unchecked((byte)(v | 0x80)));
+				v >>= 7;
+			}
+			s.WriteByte(unchecked((byte)v));
+		}
+
+		static ulong ReadUVar(byte[] b, ref int pos)
+		{
+			ulong v = 0;
+			int shift = 0;
+			while (true)
+			{
+				byte x = b[pos++];
+				v |= (ulong)(x & 0x7F) << shift;
+				if ((x & 0x80) == 0)
+					return v;
+				shift += 7;
+			}
+		}
+
+		static ulong ZigZag(long v) => unchecked((ulong)((v << 1) ^ (v >> 63)));
+
+		static long UnZigZag(ulong v) => unchecked((long)(v >> 1) ^ -(long)(v & 1));
+	}
+}

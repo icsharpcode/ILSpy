@@ -56,6 +56,60 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 
 		static readonly ConditionalWeakTable<IDecompilerTypeSystem, Entry> engines = new();
 
+		/// <summary>The number of built-in AST transforms the engine runs (<c>AST_PREFIX</c>).</summary>
+		public static readonly int ASTPrefix = (int)NativeMethods.ilspy_ast_prefix();
+
+		/// <summary>Whether the engine has a port of the built-in AST transform <paramref name="index"/>.</summary>
+		public static bool IsAstTransformPorted(int index) => NativeMethods.ilspy_ast_transform_ported((uint)index) != 0;
+
+		/// <summary>
+		/// The round trip of seam 2: sends <paramref name="root"/> to the engine, which runs the first
+		/// <paramref name="prefix"/> built-in AST transforms (after the early ones in
+		/// <paramref name="flags"/>), and rebuilds the tree from what it returns. With <paramref name="single"/>
+		/// at or above 0 it runs only that built-in transform instead.
+		/// </summary>
+		public unsafe void RunAstTransforms(CSharp.Syntax.AstNode root, int prefix, AstRequestFlags flags, int single = -1)
+		{
+			var roundTrip = new SyntaxRoundTrip();
+			byte[] tree = roundTrip.Write(root);
+			Exception? failure = null;
+			RustResolver.Callback oracle = (context, query, length, answer, capacity) => {
+				try
+				{
+					var q = new byte[(int)length];
+					System.Runtime.InteropServices.Marshal.Copy((IntPtr)query, q, 0, q.Length);
+					var a = roundTrip.Answer(q);
+					if (a == null)
+						return -1;
+					System.Runtime.InteropServices.Marshal.Copy(a, 0, (IntPtr)answer, Math.Min(a.Length, (int)capacity));
+					return a.Length;
+				}
+				catch (Exception ex)
+				{
+					failure ??= ex;
+					return -1;
+				}
+			};
+			RustStatus status;
+			RustBuffer buffer;
+			fixed (byte* p = tree)
+				status = NativeMethods.ilspy_session_syntax_transforms(session, p, (UIntPtr)tree.Length, (uint)roundTrip.Handles.Count, (uint)prefix, (uint)flags, single, IntPtr.Zero, oracle, out buffer);
+			GC.KeepAlive(oracle);
+			byte[] bytes = NativeMethods.TakeBuffer(buffer);
+			if (failure != null)
+				System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(failure).Throw();
+			switch (status)
+			{
+				case RustStatus.Ok:
+					roundTrip.Rebuild(root, bytes);
+					return;
+				case RustStatus.Cancelled:
+					throw new OperationCanceledException();
+				default:
+					throw new RustEngineException($"{status}: {NativeMethods.LastError}");
+			}
+		}
+
 		/// <summary>The number of IL transforms the engine runs (<c>IL_PREFIX</c>).</summary>
 		public static readonly int ILPrefix = (int)NativeMethods.ilspy_il_prefix();
 

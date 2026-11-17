@@ -4937,6 +4937,30 @@ elsewhere is the caller's input.
 
 The share stayed at 100.0 %.
 
+### 3.221 The syntax tree round trip (item 68z8, agent decision under the user's "speed is a priority")
+
+The AST transforms read resolve results that the engine's own tree leaves to the host, and the
+first of them already reaches from a property to its sibling field declarations, so moving whole
+type declarations and all resolve results into the engine would have come before item 69. The
+round trip turns this around: at seam 2 the host sends the finished tree to the engine, which
+runs the ported AST transforms on it and sends it back, and the host builds the nodes anew.
+
+The tree's shape comes from the node classes. `SyntaxSchema` reads every concrete node class,
+its child slots (the generated `XxxSlot` fields, in child order) and its scalars (auto-properties,
+settable or get-only, plus an identifier's name, a primitive type's keyword and a literal's
+value), and `SyntaxSchemaTests` keeps the generated `csharp/syntax_schema.rs` in step. A node
+travels as its kind, its scalars, its annotations, its leading and trailing trivia and its slots;
+annotations and literal values stay host objects, sent as handles and attached again to the
+rebuilt nodes. The engine learns about them through the syntax oracle, a callback in the style of
+the resolver bridge whose query kinds grow with the transforms, and creates new ones as
+descriptors the host turns into objects. Every request the engine may serve goes through the
+round trip, so the codec is under the AST equality test even while `AST_PREFIX` is 0: all fixture
+images decompile alike. `AstTransformEqualityTests` checks a single ported transform against the
+managed one on the same tree (the managed transforms before it, then either side), so transforms
+can be ported in any order and in parallel; the prefix the engine serves grows in order.
+
+The share stayed at 100.0 %.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

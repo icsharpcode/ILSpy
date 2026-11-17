@@ -940,12 +940,18 @@ namespace ICSharpCode.Decompiler.CSharp
 				// transform rather than the thing being shown and sits after every member's group.
 				context.Step("C# AST built from ILAst", rootNode);
 				// RUST-SEAM-2 BEGIN
-				// The engine serves no AST transform yet; the request-level check counts the requests
-				// whose pipeline it may serve.
-				Rust.Interop.RustSeam2.AstRequest(astTransforms, RecordSteps);
+				// A request the engine may serve goes through it: it runs the first AST transforms
+				// on the tree, which the loop then skips.
+				var engineTransforms = Rust.Interop.RustSeam2.AstRequest(astTransforms, RecordSteps) is { } astRequestFlags
+					? Rust.Interop.RustSeam2.RunAstTransforms(typeSystem, rootNode, astRequestFlags, astTransforms)
+					: null;
 				// RUST-SEAM-2 END
 				foreach (var transform in astTransforms)
 				{
+					// RUST-SEAM-2 BEGIN
+					if (engineTransforms != null && engineTransforms.Contains(transform))
+						continue;
+					// RUST-SEAM-2 END
 					CancellationToken.ThrowIfCancellationRequested();
 					context.StepStartGroup(transform.GetType().Name, rootNode);
 					long traceStart = traceTransforms ? Stopwatch.GetTimestamp() : 0;

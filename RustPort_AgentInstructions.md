@@ -780,6 +780,14 @@ the reasons. This file holds only the ordered steps, their gates and their rules
             compiler-generated members that decompiled bodies reference.
             The forwarders, the nested-in-enum comment and the work list need the finished member
             declarations with their bodies, so they come with 68z4c6 (agent recommendation).
+          - [ ] 68z7 (open, found 2026-11-17): bodies that build a `params ReadOnlySpan<T>` argument in
+            an inline array (`LdElemaInlineArray`, e.g. `Path.Combine` with five or more arguments on
+            .NET 9) fall back to the statement builder, counted; the ratchet corpus avoids one such
+            call in `SyntaxSchemaTests` until the engine translates them.
+      - [x] 68z8. The syntax tree round trip (agent recommendation after the user chose speed, lecture
+        3.221): the host sends the finished tree, the engine runs the ported AST transforms and
+        sends it back. It replaces 68z4c6 and the resolve-result gap as prerequisites of 69-84,
+        which are ported in parallel against `AstTransformEqualityTests` and served in order.
           - [ ] 68z4c6. The type declaration assembled in the engine: declaration nodes in the
             engine's AST arena beside the body nodes, one request per type that translates the
             members' bodies (the resolver callbacks stay per method) and returns the whole

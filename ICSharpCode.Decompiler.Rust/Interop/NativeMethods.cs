@@ -83,6 +83,15 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		internal static extern uint ilspy_il_prefix();
 
 		[DllImport(Library, CallingConvention = CallingConvention.Cdecl)]
+		internal static extern uint ilspy_ast_prefix();
+
+		[DllImport(Library, CallingConvention = CallingConvention.Cdecl)]
+		internal static extern byte ilspy_ast_transform_ported(uint index);
+
+		[DllImport(Library, CallingConvention = CallingConvention.Cdecl)]
+		internal static extern unsafe RustStatus ilspy_session_syntax_transforms(RustSession session, byte* tree, UIntPtr len, uint handles, uint prefix, uint flags, int single, IntPtr oracleContext, RustResolver.Callback? oracle, out RustBuffer result);
+
+		[DllImport(Library, CallingConvention = CallingConvention.Cdecl)]
 		internal static extern IntPtr ilspy_setting_names();
 
 		[DllImport(Library, CallingConvention = CallingConvention.Cdecl)]

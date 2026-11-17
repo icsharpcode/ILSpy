@@ -644,6 +644,46 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 			return flags;
 		}
 
+		static long roundTrips;
+
+		/// <summary>Syntax trees that went through the engine (<see cref="RunAstTransforms"/>).</summary>
+		public static long RoundTrips => Interlocked.Read(ref roundTrips);
+
+		/// <summary>
+		/// The AST transforms of <paramref name="transforms"/> the engine ran on <paramref name="root"/>,
+		/// which the host skips: the early ones the request check turned into <paramref name="flags"/>
+		/// and the first <see cref="RustEngine.ASTPrefix"/> built-in ones. The tree goes through the
+		/// engine for every request it serves, so the round trip itself is under test even where it
+		/// runs no transform.
+		/// </summary>
+		internal static HashSet<CSharp.Transforms.IAstTransform> RunAstTransforms(IDecompilerTypeSystem typeSystem, AstNode root, AstRequestFlags flags, IReadOnlyList<CSharp.Transforms.IAstTransform> transforms)
+		{
+			var served = new HashSet<CSharp.Transforms.IAstTransform>();
+			if (RustEngine.For(typeSystem, out _) is not { } engine)
+				return served;
+			int prefix = RustEngine.ASTPrefix;
+			engine.RunAstTransforms(root, prefix, prefix > 0 ? flags : AstRequestFlags.None);
+			Interlocked.Increment(ref roundTrips);
+			if (prefix == 0)
+				return served;
+			// The early transforms, then the engine's built-in prefix.
+			int end = BuiltInStart(transforms) + prefix;
+			for (int i = 0; i < end; i++)
+				served.Add(transforms[i]);
+			return served;
+		}
+
+		static int BuiltInStart(IReadOnlyList<CSharp.Transforms.IAstTransform> transforms)
+		{
+			var builtIn = CSharp.CSharpDecompiler.GetAstTransforms().Select(t => t.GetType()).ToList();
+			for (int i = 0; i + builtIn.Count <= transforms.Count; i++)
+			{
+				if (builtIn.Select((t, k) => transforms[i + k].GetType() == t).All(same => same))
+					return i;
+			}
+			throw new InvalidOperationException("a request the check served without the built-in AST transforms");
+		}
+
 		internal static void CountWalkDivergence(ITypeDefinition typeDef, string difference)
 			=> walkDivergences.AddOrUpdate($"{typeDef.ParentModule?.AssemblyName} {typeDef.FullName}: {difference}", 1, (_, n) => n + 1);
 

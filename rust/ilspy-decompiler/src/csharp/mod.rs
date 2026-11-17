@@ -5,6 +5,7 @@
 //! not translated: `convert_body` answers why, and the host translates the body itself.
 
 pub mod ast;
+pub mod ast_transforms;
 mod call_builder;
 pub mod constant_syntax;
 mod deconstruct;
@@ -20,6 +21,10 @@ pub mod member_walk;
 pub mod new_modifier;
 mod statement_builder;
 mod switch;
+pub mod syntax;
+pub mod syntax_oracle;
+#[rustfmt::skip]
+pub mod syntax_schema;
 mod translated_expression;
 pub mod type_syntax;
 

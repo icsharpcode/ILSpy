@@ -457,6 +457,12 @@ fn decode_extra_type_info(mut b: &[u8]) -> Option<ExtraTypeInfo> {
     })
 }
 
+impl ilspy_decompiler::csharp::syntax_oracle::SyntaxOracle for HostResolver {
+    fn ask(&self, query: &[u8]) -> Option<Vec<u8>> {
+        self.ask_data(query)
+    }
+}
+
 impl Resolver for HostResolver {
     fn can_transform_to_extension_method_call(
         &self,
@@ -716,6 +722,96 @@ pub struct FfiSession {
 #[unsafe(no_mangle)]
 pub extern "C" fn ilspy_il_prefix() -> u32 {
     ilspy_decompiler::IL_PREFIX
+}
+
+/// Whether the built-in AST transform `index` is ported (1) or not (0).
+#[unsafe(no_mangle)]
+pub extern "C" fn ilspy_ast_transform_ported(index: u32) -> u8 {
+    u8::from(ilspy_decompiler::csharp::ast_transforms::is_ported(
+        index as usize,
+    ))
+}
+
+/// `ilspy_ast_prefix`: the number of built-in AST transforms the engine serves (`AST_PREFIX`).
+#[unsafe(no_mangle)]
+pub extern "C" fn ilspy_ast_prefix() -> u32 {
+    ilspy_decompiler::AST_PREFIX
+}
+
+/// The round trip of seam 2: decodes the C# syntax tree the host wrote (`csharp::syntax`), whose
+/// handles refer to `handles` host objects, runs the first `prefix` built-in AST transforms on
+/// it with the early transforms `flags` (`csharp::ast_transforms`), and writes it back to `out`. With
+/// `single` at or above 0 it runs only that built-in transform instead (`run_one`).
+/// `oracle` (with `oracle_ctx`) answers the engine's questions about those objects
+/// (`csharp::syntax_oracle`), with the contract of `ResolverCallback`. Safe to call from several
+/// threads at once.
+///
+/// # Safety
+/// `session` must be a live, loaded session; `tree` must point to `len` readable bytes; `out`
+/// must be writable; `oracle` must follow the `ResolverCallback` contract.
+#[unsafe(no_mangle)]
+#[allow(clippy::too_many_arguments)]
+pub unsafe extern "C" fn ilspy_session_syntax_transforms(
+    session: *const FfiSession,
+    tree: *const u8,
+    len: usize,
+    handles: u32,
+    prefix: u32,
+    flags: u32,
+    single: i32,
+    oracle_ctx: *mut c_void,
+    oracle: Option<ResolverCallback>,
+    out: *mut Buf,
+) -> Status {
+    // SAFETY: the caller guarantees `out` is writable.
+    unsafe { out.write(Buf::EMPTY) };
+    match run(|| {
+        // SAFETY: the caller guarantees a live session.
+        let session = unsafe { session.as_ref() }.ok_or("null session")?;
+        let comp = session
+            .compilation
+            .get()
+            .ok_or("the session has no compilation")?;
+        if tree.is_null() {
+            return Err("null syntax tree".to_owned());
+        }
+        // SAFETY: the caller guarantees `tree` points to `len` bytes for this call.
+        let bytes = unsafe { std::slice::from_raw_parts(tree, len) };
+        let mut syntax = ilspy_decompiler::csharp::syntax::SyntaxTree::decode(bytes, handles)?;
+        let mut ts = TypeSystem::new(comp);
+        let host = oracle.map(|callback| HostResolver {
+            ctx: oracle_ctx,
+            callback,
+        });
+        let oracle: &dyn ilspy_decompiler::csharp::syntax_oracle::SyntaxOracle = match &host {
+            Some(h) => h,
+            None => &ilspy_decompiler::csharp::syntax_oracle::NoOracle,
+        };
+        if single >= 0 {
+            ilspy_decompiler::csharp::ast_transforms::run_one(
+                &mut ts,
+                &mut syntax,
+                oracle,
+                single as usize,
+            )?;
+        } else {
+            ilspy_decompiler::csharp::ast_transforms::run(
+                &mut ts,
+                &mut syntax,
+                oracle,
+                prefix,
+                flags,
+            )?;
+        }
+        Ok(syntax.encode())
+    }) {
+        Ok(bytes) => {
+            // SAFETY: as above.
+            unsafe { out.write(Buf::from_vec(bytes)) };
+            Status::Ok
+        }
+        Err(status) => status,
+    }
 }
 
 /// The `DecompilerSettings` property names behind the bits of the `settings` argument of
