@@ -1909,6 +1909,11 @@ namespace ICSharpCode.Decompiler.CSharp
 					fieldsAndProperties.Concat(typeDef.Events).Concat(typeDef.Methods);
 
 				var allOrderedEntities = typeDef.NestedTypes.Concat<IEntity>(allOrderedMembers).ToArray();
+				// RUST-SEAM-2 BEGIN
+				var engineWalk = Rust.Interop.RustSeam2.MemberWalk(typeSystem, module, typeDef, settings, allOrderedEntities);
+				if (engineWalk != null)
+					allOrderedEntities = engineWalk.Entities;
+				// RUST-SEAM-2 END
 
 				if (!partialTypes.TryGetValue((TypeDefinitionHandle)typeDef.MetadataToken, out var partialTypeInfo))
 				{
@@ -1936,11 +1941,25 @@ namespace ICSharpCode.Decompiler.CSharp
 					{
 						continue;
 					}
+					// RUST-SEAM-2 BEGIN
+					if (engineWalk != null)
+					{
+						if (engineWalk.IsHidden(entity)
+							|| (engineWalk.IsHiddenUnlessEventIsCustom(entity) && !IsBackingFieldOfNonAutomaticEvent(entity)))
+						{
+							continue;
+						}
+						goto decidedByEngineWalk;
+					}
+					// RUST-SEAM-2 END
 					if (MemberIsHidden(module.MetadataFile, entity.MetadataToken, settings)
 						&& !IsBackingFieldOfNonAutomaticEvent(entity))
 					{
 						continue;
 					}
+					// RUST-SEAM-2 BEGIN
+					decidedByEngineWalk:
+					// RUST-SEAM-2 END
 					DoDecompileMember(entity, recordDecompiler, partialTypeInfo, typeDef.ExtensionInfo);
 				}
 

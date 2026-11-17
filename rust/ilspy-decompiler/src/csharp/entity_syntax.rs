@@ -1217,7 +1217,7 @@ pub struct TypeDeclarationSyntax {
 
 /// `MetadataTypeDefinition.ComputeIsRecord`: a class or struct with the members the compiler
 /// generates for records.
-fn is_record(md: &crate::metadata::Metadata<'_>, row: u32, kind: TypeKind) -> bool {
+pub(crate) fn is_record(md: &crate::metadata::Metadata<'_>, row: u32, kind: TypeKind) -> bool {
     if !matches!(kind, TypeKind::Class | TypeKind::Struct) {
         return false;
     }

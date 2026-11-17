@@ -75,6 +75,10 @@ public class PortStatusRatchetTests
 		foreach (var (reason, count) in RustSeam2.DeclarationFallbackReasons.OrderByDescending(r => r.Value))
 			TestContext.Out.WriteLine($"seam 2 declaration fallback: {count,6} {reason}");
 		TestContext.Out.WriteLine($"seam 2 hidden-member decisions: {RustSeam2.HiddenDecisions,6}");
+		TestContext.Out.WriteLine($"seam 2 member walks served: {RustSeam2.WalksServed,6}");
+		foreach (var (reason, count) in RustSeam2.WalkFallbackReasons.OrderByDescending(r => r.Value))
+			TestContext.Out.WriteLine($"seam 2 member walk fallback: {count,6} {reason}");
+		Assert.That(RustSeam2.WalkDivergences, Is.Empty, "engine member walks that differ from the managed ones");
 		Assert.That(RustSeam2.HiddenDivergenceMembers, Is.Empty, "engine MemberIsHidden decisions that differ from the managed ones");
 		Assert.That(bodiesTotal, Is.GreaterThan(0), "no method body went through seam 2");
 		return (Math.Floor(served * 1000.0 / total) / 10, Math.Floor(bodiesServed * 1000.0 / bodiesTotal) / 10);

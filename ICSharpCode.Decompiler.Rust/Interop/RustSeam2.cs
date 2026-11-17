@@ -176,6 +176,30 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 	/// translates the ILAst it handed over through seam 1. A body with constructs the engine does
 	/// not translate yet falls back to the managed statement builder and is counted.
 	/// </summary>
+	/// <summary>The engine's member walk of a type (<see cref="RustSeam2.MemberWalk"/>).</summary>
+	internal sealed class MemberWalkResult
+	{
+		readonly Dictionary<IEntity, byte> decisions;
+
+		internal MemberWalkResult(IEntity[] entities, Dictionary<IEntity, byte> decisions)
+		{
+			Entities = entities;
+			this.decisions = decisions;
+		}
+
+		/// <summary><c>allOrderedEntities</c>.</summary>
+		public IEntity[] Entities { get; }
+
+		/// <summary>Whether the walk leaves <paramref name="entity"/> out without further analysis.</summary>
+		public bool IsHidden(IEntity entity) => decisions[entity] == 1;
+
+		/// <summary>
+		/// Whether <paramref name="entity"/> is hidden only as the backing field of an event, which
+		/// the walk decompiles when the event is not automatic.
+		/// </summary>
+		public bool IsHiddenUnlessEventIsCustom(IEntity entity) => decisions[entity] == 2;
+	}
+
 	public static class RustSeam2
 	{
 		static long served;
@@ -376,6 +400,67 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				hiddenDivergenceMembers.AddOrUpdate($"{module.Name} 0x{MetadataTokens.GetToken(member):x8}", 1, (_, n) => n + 1);
 			}
 			return hidden;
+		}
+
+		static long walksServed;
+		static long walkFallbacks;
+		static readonly ConcurrentDictionary<string, int> walkFallbackReasons = new ConcurrentDictionary<string, int>();
+		static readonly ConcurrentDictionary<string, int> walkDivergences = new ConcurrentDictionary<string, int>();
+
+		/// <summary>Types whose member walk came from the engine.</summary>
+		public static long WalksServed => Interlocked.Read(ref walksServed);
+
+		/// <summary>Types whose member walk the host did, with why.</summary>
+		public static IReadOnlyDictionary<string, int> WalkFallbackReasons => walkFallbackReasons;
+
+		/// <summary>Types whose engine member walk differs from the managed one, with how often.</summary>
+		public static IReadOnlyDictionary<string, int> WalkDivergences => walkDivergences;
+
+		/// <summary>
+		/// The engine's member walk of <c>DoDecompile(ITypeDefinition)</c> for
+		/// <paramref name="typeDef"/>: its entities in order and, per entity, whether the walk
+		/// decompiles it. Null, counted, where the host walks the type. The order and the decisions
+		/// are checked against the managed <paramref name="managedOrder"/> and <c>MemberIsHidden</c>,
+		/// and a difference is counted.
+		/// </summary>
+		internal static MemberWalkResult? MemberWalk(IDecompilerTypeSystem typeSystem, MetadataModule module, ITypeDefinition typeDef, DecompilerSettings settings, IReadOnlyList<IEntity> managedOrder)
+		{
+			if (!Enabled || typeDef.ParentModule != typeSystem.MainModule || typeDef.MetadataToken.IsNil
+				|| RustEngine.For(typeSystem, out _) is not { } engine)
+				return null;
+			var walk = engine.MemberWalk(typeDef, settings, out string? reason);
+			if (walk == null)
+			{
+				Interlocked.Increment(ref walkFallbacks);
+				walkFallbackReasons.AddOrUpdate(reason ?? "unknown", 1, (_, n) => n + 1);
+				return null;
+			}
+			Interlocked.Increment(ref walksServed);
+			var entities = new IEntity[walk.Count];
+			var decisions = new Dictionary<IEntity, byte>();
+			for (int i = 0; i < walk.Count; i++)
+			{
+				var (handle, decision) = walk[i];
+				IEntity entity = handle.Kind switch {
+					HandleKind.TypeDefinition => module.GetDefinition((TypeDefinitionHandle)handle),
+					HandleKind.FieldDefinition => module.GetDefinition((FieldDefinitionHandle)handle),
+					HandleKind.MethodDefinition => module.GetDefinition((MethodDefinitionHandle)handle),
+					HandleKind.PropertyDefinition => module.GetDefinition((PropertyDefinitionHandle)handle),
+					HandleKind.EventDefinition => module.GetDefinition((EventDefinitionHandle)handle),
+					_ => throw new RustEngineException($"the member walk of {typeDef.FullName} names {handle.Kind}"),
+				};
+				entities[i] = entity;
+				decisions[entity] = decision;
+			}
+			var managed = managedOrder.Where(e => !e.MetadataToken.IsNil).ToList();
+			string? difference = null;
+			if (!managed.SequenceEqual(entities))
+				difference = "order";
+			else if (managed.FirstOrDefault(e => (decisions[e] != 0) != CSharp.CSharpDecompiler.MemberIsHidden(module.MetadataFile, e.MetadataToken, settings)) is { } wrong)
+				difference = $"hidden 0x{MetadataTokens.GetToken(wrong.MetadataToken):x8}";
+			if (difference != null)
+				walkDivergences.AddOrUpdate($"{module.MetadataFile.Name} {typeDef.FullName}: {difference}", 1, (_, n) => n + 1);
+			return new MemberWalkResult(entities, decisions);
 		}
 
 		static readonly AsyncLocal<bool> disabled = new AsyncLocal<bool>();

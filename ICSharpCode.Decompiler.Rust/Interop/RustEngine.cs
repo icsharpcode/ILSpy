@@ -192,7 +192,22 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		/// </summary>
 		public bool MemberIsHidden(EntityHandle member, DecompilerSettings settings)
 		{
-			uint flags = (settings.LocalFunctions ? 1u << 0 : 0u)
+			var status = NativeMethods.ilspy_session_member_is_hidden(session, (uint)MetadataTokens.GetToken(member), HiddenFlags(settings), out byte hidden);
+			switch (status)
+			{
+				case RustStatus.Ok:
+					return hidden != 0;
+				case RustStatus.Cancelled:
+					throw new OperationCanceledException();
+				default:
+					throw new RustEngineException($"{status}: {NativeMethods.LastError}");
+			}
+		}
+
+		/// <summary>The settings <c>MemberIsHidden</c> reads, as <c>csharp::member_hidden::HiddenSettings</c>.</summary>
+		static uint HiddenFlags(DecompilerSettings settings)
+		{
+			return (settings.LocalFunctions ? 1u << 0 : 0u)
 				| (settings.AnonymousMethods ? 1u << 1 : 0u)
 				| (settings.YieldReturn ? 1u << 2 : 0u)
 				| (settings.AsyncAwait ? 1u << 3 : 0u)
@@ -209,11 +224,34 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				| (settings.FieldKeyword ? 1u << 14 : 0u)
 				| (settings.GetterOnlyAutomaticProperties ? 1u << 15 : 0u)
 				| (settings.AutomaticEvents ? 1u << 16 : 0u);
-			var status = NativeMethods.ilspy_session_member_is_hidden(session, (uint)MetadataTokens.GetToken(member), flags, out byte hidden);
+		}
+
+		/// <summary>
+		/// The member walk of <c>DoDecompile(ITypeDefinition)</c> for a type of the main module: its
+		/// entities in <c>allOrderedEntities</c> order with the walk's decision for each
+		/// (0 decompiled, 1 hidden, 2 hidden unless it backs an event that is not automatic); null
+		/// with <paramref name="unsupportedReason"/> where the engine does not walk the type.
+		/// </summary>
+		public List<(EntityHandle Entity, byte Decision)>? MemberWalk(ITypeDefinition type, DecompilerSettings settings, out string? unsupportedReason)
+		{
+			unsupportedReason = null;
+			uint flags = HiddenFlags(settings)
+				| (settings.RecordClasses ? 1u << 17 : 0u)
+				| (settings.RecordStructs ? 1u << 18 : 0u);
+			var status = NativeMethods.ilspy_session_member_walk(session, (uint)MetadataTokens.GetToken(type.MetadataToken), flags, out var buffer);
+			byte[] bytes = NativeMethods.TakeBuffer(buffer);
 			switch (status)
 			{
 				case RustStatus.Ok:
-					return hidden != 0;
+					if (bytes[0] != 0)
+					{
+						unsupportedReason = System.Text.Encoding.UTF8.GetString(bytes, 1, bytes.Length - 1);
+						return null;
+					}
+					var walk = new List<(EntityHandle, byte)>((bytes.Length - 1) / 5);
+					for (int i = 1; i + 5 <= bytes.Length; i += 5)
+						walk.Add((MetadataTokens.EntityHandle(BitConverter.ToInt32(bytes, i)), bytes[i + 4]));
+					return walk;
 				case RustStatus.Cancelled:
 					throw new OperationCanceledException();
 				default:

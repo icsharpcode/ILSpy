@@ -4818,6 +4818,24 @@ stays with the host until the engine assembles the syntax tree.
 
 The share stayed at 100.0 %.
 
+### 3.214 The member walk of a type (item 68z4c2)
+
+`DoDecompile(ITypeDefinition)` walks `allOrderedEntities`: the nested types, then the fields and
+properties, events and methods as `ITypeDefinition` lists them (fields, properties and events
+with a visible accessor, methods that are no C# accessor), or for a COM import interface its
+members sorted stably by token, a property by its getter and an event by its adder, as the
+vtable fixes them. Each entity is decompiled unless `MemberIsHidden` hides it; a field that is
+hidden only as the backing field of an event is decompiled after all when the event is not
+automatic. The engine's walk (`csharp/member_walk.rs`) returns the tokens in that order with the
+decision; the one case it cannot settle, the backing field of an event, it marks for the host,
+whose automatic-event analysis reads the accessor bodies. The host checks order and decisions
+against the managed walk on every type and the ratchet test fails on a difference. Records keep
+the host's walk, counted: their field and property order is read back out of the decompiled
+`Equals` and `PrintMembers` (`RecordDecompiler`), which is a port of its own. In the ratchet
+corpus and fixtures the engine walked 27,214 types; 441 records fell back.
+
+The share stayed at 100.0 %.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

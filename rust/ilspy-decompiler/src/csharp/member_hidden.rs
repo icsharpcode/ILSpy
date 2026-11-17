@@ -357,6 +357,13 @@ fn property_of_backing_field(md: &Metadata<'_>, type_def: u32, field: u32) -> Op
     found
 }
 
+/// `PropertyAndEventBackingFieldLookup.IsEventBackingField` of a Field row of `module`.
+pub fn is_event_backing_field_of(ts: &TypeSystem<'_, '_>, module: ModuleId, field: u32) -> bool {
+    let md = &ts.comp.module(module).md;
+    let declaring = md.field_declaring_type(field).unwrap_or(0);
+    is_event_backing_field(md, declaring, field)
+}
+
 /// `PropertyAndEventBackingFieldLookup.IsEventBackingField`: a field named like an event of
 /// its type, or like it with an `Event` suffix where no event has that name.
 fn is_event_backing_field(md: &Metadata<'_>, type_def: u32, field: u32) -> bool {
