@@ -5,6 +5,7 @@ pub mod attributes;
 pub mod attrs;
 pub mod attrvalue;
 pub mod compilation;
+pub mod extension_info;
 pub mod flags;
 pub mod fnptr;
 pub mod inheritance;

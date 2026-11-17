@@ -4746,6 +4746,21 @@ declarations it is asked for.
 
 The share stayed at 100.0 %.
 
+### 3.210 ExtensionInfo (item 68z4b)
+
+`ExtensionInfo` describes the C# 14 extension blocks of a static class with extensions
+(`typesystem/extension_info.rs`). Two metadata encodings exist: V1 has one sealed `<>E__` class
+per block, holding the marker method `<Extension>$` (static, one parameter: the receiver) and
+the extension members; V2 has one sealed `<G>$` grouping class per receiver type, holding the
+members, and in it one static `<M>$` marker type per block, whose type parameters are the block's,
+with each member naming its marker type in an `[ExtensionMarker]`, which the type system's
+attribute lists leave out and the engine reads from the metadata. The implementation of a member
+is the container's static method of the same name with the block's and the member's type
+parameters as its own and the receiver as its first parameter for an instance member, whose
+signature equals the member's after the substitution up to type erasure. The engine ports it
+with the loader test `ExtensionEverything` (every method of the container implements a member,
+and the information is the same from both sides); the declarations do not use it yet.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

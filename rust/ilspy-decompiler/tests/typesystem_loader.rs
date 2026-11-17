@@ -2972,3 +2972,47 @@ fn metadata_block_references_list_like_images() {
     use ilspy_decompiler::typesystem::listing::listing;
     assert_eq!(listing(&blocks), listing(&full));
 }
+
+/// `ExtensionEverything`: every method of the extension container is the implementation of an
+/// extension member, whose information is the same from either side.
+#[test]
+fn extension_everything() {
+    let comp = loader();
+    let mut ts = TypeSystem::new(&comp);
+    let def = test_type(&mut ts, "ExtensionEverything");
+    assert!(
+        is_abstract(&ts, def) && is_sealed(&ts, def),
+        "ExtensionEverything should be static"
+    );
+    assert!(
+        ts.type_flags(def).has_extensions,
+        "ExtensionEverything should have extensions"
+    );
+    let info = ts
+        .extension_info(def)
+        .expect("ExtensionEverything should have ExtensionInfo");
+    let md = &comp.module(def.module).md;
+    for row in md.type_methods(def.row).unwrap() {
+        let m = MethodDefId {
+            module: def.module,
+            row,
+        };
+        let name = md
+            .string(md.get::<rows::MethodDef>(row).unwrap().name)
+            .unwrap()
+            .into_owned();
+        assert!(
+            ts.method_modifiers_of(m).unwrap().is_static,
+            "Method should be static: {name}"
+        );
+        let of_implementation = info
+            .of_implementation(m)
+            .unwrap_or_else(|| panic!("Method should have implementation info: {name}"));
+        let of_extension = info.of_extension(of_implementation.extension);
+        assert_eq!(
+            of_extension,
+            Some(of_implementation),
+            "Info of extension member should be equal to info of implementation member: {name}"
+        );
+    }
+}
