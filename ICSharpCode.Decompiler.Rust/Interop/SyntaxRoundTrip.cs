@@ -300,6 +300,8 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				return fieldInitializers;
 			if (CreateIntroduceUsingDeclarationsAnnotation(kind) is { } introduceUsingDeclarations)
 				return introduceUsingDeclarations;
+			if (CreateQueryExpressionsAnnotation(kind, payload) is { } queryExpressions)
+				return queryExpressions;
 			switch (kind)
 			{
 				case AnnotationAnswered:
@@ -499,6 +501,8 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				return AnswerFieldInitializers(query);
 			if (query[0] is >= IntroduceUsingDeclarationsFirstQuery and <= IntroduceUsingDeclarationsLastQuery)
 				return AnswerIntroduceUsingDeclarations(query);
+			if (query[0] == QueryQueryExpressionsAnnotation)
+				return AnswerQueryExpressionsAnnotation(query);
 			int pos = 1;
 			if (query[0] is >= QueryMemberFacts and <= QueryReturnTypeSyntax)
 			{

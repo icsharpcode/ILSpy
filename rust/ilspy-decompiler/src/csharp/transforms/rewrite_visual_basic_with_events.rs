@@ -542,7 +542,7 @@ fn member_reference(tree: &mut SyntaxTree, target: SyntaxId, name: &[u16]) -> Sy
 }
 
 /// `Identifier.Create(name)`: a leading `@` makes a verbatim identifier.
-fn new_identifier(tree: &mut SyntaxTree, name: &[u16]) -> SyntaxId {
+pub(crate) fn new_identifier(tree: &mut SyntaxTree, name: &[u16]) -> SyntaxId {
     let id = tree.new_node(kind::IDENTIFIER);
     let (name, verbatim) = match name.split_first() {
         Some((&c, rest)) if c == u16::from(b'@') => (rest, true),
@@ -560,7 +560,7 @@ fn operator(tree: &SyntaxTree, assignment: SyntaxId) -> i64 {
         .unwrap_or(-1)
 }
 
-fn identifier_name(tree: &SyntaxTree, identifier: SyntaxId) -> Vec<u16> {
+pub(crate) fn identifier_name(tree: &SyntaxTree, identifier: SyntaxId) -> Vec<u16> {
     match &tree.node(identifier).scalars[identifier::scalar::NAME] {
         Scalar::Str(s) => s.clone(),
         _ => Vec::new(),
@@ -568,7 +568,7 @@ fn identifier_name(tree: &SyntaxTree, identifier: SyntaxId) -> Vec<u16> {
 }
 
 /// `IdentifierExpression.Identifier` where `id` is an identifier expression.
-fn identifier_expression_name(tree: &SyntaxTree, id: SyntaxId) -> Option<Vec<u16>> {
+pub(crate) fn identifier_expression_name(tree: &SyntaxTree, id: SyntaxId) -> Option<Vec<u16>> {
     if tree.kind(id) != kind::IDENTIFIER_EXPRESSION {
         return None;
     }
@@ -576,7 +576,7 @@ fn identifier_expression_name(tree: &SyntaxTree, id: SyntaxId) -> Option<Vec<u16
     Some(identifier_name(tree, token))
 }
 
-fn utf16(s: &str) -> Vec<u16> {
+pub(crate) fn utf16(s: &str) -> Vec<u16> {
     s.encode_utf16().collect()
 }
 

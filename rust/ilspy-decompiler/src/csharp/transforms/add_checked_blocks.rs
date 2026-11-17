@@ -357,7 +357,7 @@ impl Search<'_> {
 
 /// Whether `node` is an `Expression`: the concrete expression classes are exactly the kinds
 /// whose name ends in "Expression" (`ExpressionStatement` and `SwitchExpressionSection` do not).
-fn is_expression(tree: &SyntaxTree, node: SyntaxId) -> bool {
+pub(crate) fn is_expression(tree: &SyntaxTree, node: SyntaxId) -> bool {
     tree.node(node).schema().name.ends_with("Expression")
 }
 

@@ -198,7 +198,7 @@ pub(crate) fn new_identifier(tree: &mut SyntaxTree, name: &str) -> SyntaxId {
 
 /// `CopyAnnotationsFrom`: appends the annotations of `source` to `target`, and copies of its
 /// leading and trailing trivia.
-fn copy_annotations_from(tree: &mut SyntaxTree, target: SyntaxId, source: SyntaxId) {
+pub(crate) fn copy_annotations_from(tree: &mut SyntaxTree, target: SyntaxId, source: SyntaxId) {
     let annotations = tree.node(source).annotations.clone();
     tree.node_mut(target).annotations.extend(annotations);
     for leading in [true, false] {
