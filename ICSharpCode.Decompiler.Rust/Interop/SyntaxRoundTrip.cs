@@ -89,6 +89,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		void WriteNode(MemoryStream s, AstNode node)
 		{
 			var kind = SyntaxSchema.Of(node.GetType());
+			PstRecordWritten(node);
 			UVar(s, (ulong)kind.Index);
 			foreach (var scalar in kind.Scalars)
 			{
@@ -286,6 +287,8 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				return withEvents;
 			if (CreateDeclareVariablesAnnotation(kind, payload) is { } declareVariables)
 				return declareVariables;
+			if (kind is >= 16 and < 32 && CreatePatternStatementAnnotation(kind, payload) is { } patternStatement)
+				return patternStatement;
 			switch (kind)
 			{
 				case AnnotationAnswered:
@@ -465,6 +468,8 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		{
 			if (query[0] is >= DeclareVariablesFirstQuery and <= DeclareVariablesLastQuery)
 				return AnswerDeclareVariables(query);
+			if (query[0] is >= 16 and < 32)
+				return AnswerPatternStatementTransform(query);
 			int pos = 1;
 			if (query[0] is >= QueryMemberFacts and <= QueryReturnTypeSyntax)
 			{
