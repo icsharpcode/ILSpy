@@ -432,6 +432,31 @@ impl SyntaxTree {
         result
     }
 
+    /// Hands the annotations created so far to the host through `oracle`, which builds their
+    /// objects and appends them to its handles in order, so their handles stay the same and a
+    /// later transform can ask the host about them like about any other annotation.
+    pub fn materialize_new_annotations(
+        &mut self,
+        oracle: &dyn super::syntax_oracle::SyntaxOracle,
+    ) -> Result<(), String> {
+        if self.new_annotations.is_empty() {
+            return Ok(());
+        }
+        let mut query = vec![super::syntax_oracle::QUERY_MATERIALIZE_ANNOTATIONS];
+        uvar(&mut query, self.new_annotations.len() as u64);
+        for (kind, payload) in &self.new_annotations {
+            query.push(*kind);
+            uvar(&mut query, payload.len() as u64);
+            query.extend_from_slice(payload);
+        }
+        oracle
+            .ask(&query)
+            .ok_or("the host did not take the engine's annotations")?;
+        self.host_handles += self.new_annotations.len() as u32;
+        self.new_annotations.clear();
+        Ok(())
+    }
+
     /// Writes the tree for the host, from the root.
     pub fn encode(&self) -> Vec<u8> {
         let mut out = Vec::new();

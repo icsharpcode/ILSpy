@@ -36,6 +36,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 	internal sealed partial class SyntaxRoundTrip
 	{
 		readonly List<object> handles = new List<object>();
+		const byte QueryMaterializeAnnotations = 255;
 		readonly List<object> created = new List<object>();
 		/// <summary>The handle tables of the subtrees the host built for the engine's queries.</summary>
 		readonly List<IReadOnlyList<object>> answered = new List<IReadOnlyList<object>>();
@@ -466,6 +467,20 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		/// </summary>
 		public byte[]? Answer(byte[] query)
 		{
+			if (query[0] == QueryMaterializeAnnotations)
+			{
+				// The annotations the engine created so far become host objects, at the handles the engine gave them.
+				int at = 1;
+				int count = (int)ReadUVar(query, ref at);
+				for (int i = 0; i < count; i++)
+				{
+					byte annotationKind = query[at++];
+					int length = (int)ReadUVar(query, ref at);
+					handles.Add(CreateAnnotation(annotationKind, new ArraySegment<byte>(query, at, length)));
+					at += length;
+				}
+				return Array.Empty<byte>();
+			}
 			if (query[0] is >= DeclareVariablesFirstQuery and <= DeclareVariablesLastQuery)
 				return AnswerDeclareVariables(query);
 			if (query[0] is >= 16 and < 32)

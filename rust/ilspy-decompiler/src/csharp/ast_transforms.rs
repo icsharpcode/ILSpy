@@ -78,6 +78,7 @@ pub fn run(
         let t =
             transform(index).ok_or_else(|| format!("the AST transform {name} is not ported"))?;
         t(ts, tree, oracle)?;
+        tree.materialize_new_annotations(oracle)?;
     }
     Ok(())
 }

@@ -96,7 +96,7 @@ public class PortStatusRatchetTests
 	{
 		var committed = Committed();
 		Assert.That(RustEngine.ILPrefix, Is.EqualTo(committed.IlPrefix), "il_prefix must equal the engine's IL_PREFIX");
-		Assert.That(committed.AstPrefix, Is.Zero, "seam 2 serves no AST transforms yet");
+		Assert.That(RustEngine.ASTPrefix, Is.EqualTo(committed.AstPrefix), "ast_prefix must equal the engine's AST_PREFIX");
 		var measured = MeasureServedPct();
 		Assert.That(measured.Methods, Is.GreaterThanOrEqualTo(committed.MethodsServedPct), "methods_served_pct dropped");
 		Assert.That(measured.Methods, Is.EqualTo(committed.MethodsServedPct), "methods_served_pct rose: commit the measured value");

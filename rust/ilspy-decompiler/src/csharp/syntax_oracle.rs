@@ -12,6 +12,10 @@ pub trait SyntaxOracle {
     fn ask(&self, query: &[u8]) -> Option<Vec<u8>>;
 }
 
+/// Hands the annotations the engine created to the host, which appends their objects to its
+/// handles in order (`SyntaxTree::materialize_new_annotations`): a count, then per annotation
+/// its kind, payload length and payload. The handle is absent; the answer is empty.
+pub const QUERY_MATERIALIZE_ANNOTATIONS: u8 = 255;
 /// The class name of the object (`GetType().Name`), as UTF-8.
 pub const QUERY_CLASS_NAME: u8 = 0;
 /// For a `ResolveResult`: the reflection name of its `Type` (`IType.ReflectionName`), as UTF-8.
