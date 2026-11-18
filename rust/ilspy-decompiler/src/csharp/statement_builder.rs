@@ -7,7 +7,7 @@ use crate::il::reader::ReadFunction;
 use crate::typesystem::known::KnownTypeCode;
 use crate::typesystem::types::{TypeData, TypeId, TypeSystem};
 
-use super::ast::{Ast, AstId, AstNode, Rr};
+use super::ast::{Ast, AstId, AstNode, Overflow, Rr};
 use super::{Builder, Unsupported};
 
 /// `new StatementBuilder(...).ConvertAsBlock(function.Body)` for a top-level function: the
@@ -957,7 +957,7 @@ impl Builder<'_, '_, '_, '_> {
                 let c = self.ast.add(AstNode::Cast {
                     ty: result_type,
                     expression: e.expression,
-                    unchecked: false,
+                    overflow: Overflow::None,
                 });
                 self.ast.with_rr(c, Rr::Conversion { ty: result_type });
                 Some(c)

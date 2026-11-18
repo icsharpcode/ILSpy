@@ -134,7 +134,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		public Leave? ImplicitReturn;
 		public RustBodyNode[] Children = [];
 		public IType? Type;
-		/// <summary>For an arithmetic operator: its <c>AddCheckedBlocks</c> annotation, 0 none, 1 checked, 2 unchecked.</summary>
+		/// <summary>For an arithmetic operator or a cast: its <c>AddCheckedBlocks</c> annotation, 0 none, 1 checked, 2 unchecked, 3 explicitly unchecked (casts only).</summary>
 		public byte Overflow;
 		/// <summary>For a member reference or name: whether its resolve result names the member the name is looked up to.</summary>
 		public bool LookUpMember;
@@ -789,14 +789,16 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 			return statement as BlockStatement ?? new BlockStatement { statement };
 		}
 
-		/// <summary>The checked or unchecked annotation of <see cref="RustBodyNode.Overflow"/> (1 checked, 2 unchecked).</summary>
+		/// <summary>The checked or unchecked annotation of <see cref="RustBodyNode.Overflow"/> (1 checked, 2 unchecked, 3 explicitly unchecked).</summary>
 		static T AddOverflowAnnotation<T>(T expression, RustBodyNode node) where T : Expression
 		{
 			if (node.Overflow != 0)
 			{
-				expression.AddAnnotation(node.Overflow == 1
-					? CSharp.Transforms.AddCheckedBlocks.CheckedAnnotation
-					: CSharp.Transforms.AddCheckedBlocks.UncheckedAnnotation);
+				expression.AddAnnotation(node.Overflow switch {
+					1 => CSharp.Transforms.AddCheckedBlocks.CheckedAnnotation,
+					2 => CSharp.Transforms.AddCheckedBlocks.UncheckedAnnotation,
+					_ => CSharp.Transforms.AddCheckedBlocks.ExplicitUncheckedAnnotation,
+				});
 			}
 			return expression;
 		}
@@ -1015,7 +1017,20 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 						.ToArray();
 					// A creation of `default(T)` or `Activator.CreateInstance<T>()` keeps its type's resolve result.
 					if (node.Call is { } call)
-						node.ResolveResult = new CSharpInvocationResolveResult(null!, call.Method, argumentResults, isExpandedForm: call.IsExpanded);
+					{
+						// `HandleConstructorCall`: where native integers need no attribute, a created IntPtr is nint.
+						IType? returnTypeOverride = null;
+						if (exprBuilder.compilation.MainModule is MetadataModule { TypeSystemOptions: var options }
+							&& options.HasFlag(TypeSystemOptions.NativeIntegersWithoutAttribute))
+						{
+							if (call.Method.DeclaringType.IsKnownType(KnownTypeCode.IntPtr))
+								returnTypeOverride = SpecialType.NInt;
+							else if (call.Method.DeclaringType.IsKnownType(KnownTypeCode.UIntPtr))
+								returnTypeOverride = SpecialType.NUInt;
+						}
+						node.ResolveResult = new CSharpInvocationResolveResult(null!, call.Method, argumentResults,
+							isExpandedForm: call.IsExpanded, returnTypeOverride: returnTypeOverride);
+					}
 					var creation = new ObjectCreateExpression(ConvertType(exprBuilder, node.Type!), arguments);
 					if (node.Initializer != null)
 						creation.Initializer = new ArrayInitializerExpression(node.Initializer.Select(e => (Expression)Build(e, exprBuilder)));
@@ -1495,13 +1510,12 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				{
 					var operand = (Expression)Build(node.Children[0], exprBuilder);
 					var cast = new CastExpression(ConvertType(exprBuilder, node.Type!), operand);
-					// `TranslatedExpression.ConvertTo` marks a cast to an integer type unchecked.
-					if (node.Flag)
-						cast.AddAnnotation(CSharp.Transforms.AddCheckedBlocks.UncheckedAnnotation);
+					// `TranslatedExpression.ConvertTo` marks a cast to an integer type checked or unchecked.
+					AddOverflowAnnotation(cast, node);
 					if (node.LambdaConversion)
 						node.ResolveResult = new ConversionResolveResult(node.Type!, operand.GetResolveResult(), Semantics.LambdaConversion.Instance);
 					if (node.ResolveCast)
-						node.ResolveResult = exprBuilder.resolver.WithCheckForOverflow(false).ResolveCast(node.Type!, operand.GetResolveResult());
+						node.ResolveResult = exprBuilder.resolver.WithCheckForOverflow(node.Overflow == 1).ResolveCast(node.Type!, operand.GetResolveResult());
 					// `HandleImplicitConversion`: the implicit conversion from the operand's type.
 					if (node.ImplicitConversion)
 					{

@@ -739,11 +739,11 @@ fn node(w: &mut FunctionWriter<'_, '_, '_, '_>, ast: &Ast, id: AstId) -> Result<
         AstNode::Cast {
             ty,
             expression,
-            unchecked,
+            overflow,
         } => {
             w.ty(ty);
             node(w, ast, expression)?;
-            w.out.bool(unchecked);
+            w.out.u8(overflow as u8);
         }
         AstNode::GenericIdentifier {
             name,

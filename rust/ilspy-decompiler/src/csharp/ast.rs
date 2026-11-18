@@ -138,12 +138,12 @@ pub enum AstNode {
         name: String,
         type_arguments: Vec<TypeId>,
     },
-    /// `CastExpression` to `ExpressionBuilder.ConvertType(ty)`, with
-    /// `AddCheckedBlocks.UncheckedAnnotation` when `unchecked`.
+    /// `CastExpression` to `ExpressionBuilder.ConvertType(ty)`, with the `AddCheckedBlocks`
+    /// annotation of `overflow`; the host resolves its cast checked where that is `Checked`.
     Cast {
         ty: TypeId,
         expression: AstId,
-        unchecked: bool,
+        overflow: Overflow,
     },
     /// `DirectionExpression` with `FieldDirection.Out`, with `UseImplicitlyTypedOutAnnotation`
     /// when `implicitly_typed` (`out var`).
@@ -326,6 +326,8 @@ pub enum Overflow {
     Checked = 1,
     /// `UncheckedAnnotation`.
     Unchecked = 2,
+    /// `ExplicitUncheckedAnnotation` (casts only).
+    ExplicitUnchecked = 3,
 }
 
 /// `BinaryOperatorType`, with its values.

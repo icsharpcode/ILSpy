@@ -1887,7 +1887,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				case RustBodyNode.Cast:
 					node.Type = Type();
 					node.Children = [BodyNode()];
-					node.Flag = Bool();
+					node.Overflow = U8();
 					break;
 				case RustBodyNode.GenericIdentifier:
 				case RustBodyNode.GenericMemberReference:

@@ -841,9 +841,9 @@ the reasons. This file holds only the ordered steps, their gates and their rules
     - [ ] **85a.** Declarations: sorted attributes (350).
     - [x] **85b.** Declarations: constraints of a generic override (101), constants and default
       values the engine does not write (36), members of an extension block outside it (24),
-      types without syntax (6), delegates without Invoke (1) (lecture 3.224).
-    - [ ] **85c.** Bodies: native integers and IntPtr (conversions, box, arithmetic,
-      comparisons; 64).
+      types without syntax (6), delegates without Invoke (1) (lecture 3.225).
+    - [x] **85c.** Bodies: native integers and IntPtr (conversions, box, arithmetic,
+      comparisons; 64). Checked conversions came along (lecture 3.226).
     - [x] **85d.** Member walk: record member order (39; the order part of 68z6, lecture 3.224).
     - [ ] **85e.** Bodies: the remaining reasons (about 90 in 25 groups: lifted comparisons and
       switches, MinValue/MaxValue constants, checked conversions, addresses, PinnedRegion,
