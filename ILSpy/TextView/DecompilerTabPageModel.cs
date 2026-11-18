@@ -259,6 +259,13 @@ namespace ICSharpCode.ILSpy.TextView
 		public DecompilerTextViewState? PendingViewState { get; set; }
 
 		/// <summary>
+		/// Applies a view state (caret, scroll) to the live editor immediately, for navigation that
+		/// lands on the already-displayed document (no document-apply step runs to consume
+		/// <see cref="PendingViewState"/>). Set by the text view; null until a view is attached.
+		/// </summary>
+		public System.Action<DecompilerTextViewState>? ApplyViewState { get; set; }
+
+		/// <summary>
 		/// A bookmark to scroll to the next time this document is (re)applied. Set by bookmark
 		/// navigation before the target node is decompiled; the text view reads it in its
 		/// document-apply step, computes the line from the saved token, positions the caret and plays

@@ -126,6 +126,7 @@ namespace ICSharpCode.ILSpy.Docking
 			ArgumentNullException.ThrowIfNull(predicateOnNode);
 			history.RemoveAll(entry =>
 				entry is TreeNodeEntry t && predicateOnNode(t.Node));
+			RecentNavigation.RemoveAll(predicateOnNode);
 		}
 
 		public IRootDock Layout { get; }
@@ -320,6 +321,7 @@ namespace ICSharpCode.ILSpy.Docking
 			if (removed == null)
 			{
 				history.RemoveAll(_ => true);
+				RecentNavigation.Clear();
 			}
 			else
 			{
@@ -328,6 +330,9 @@ namespace ICSharpCode.ILSpy.Docking
 					&& t.Node.AncestorsAndSelf()
 						.OfType<TreeNodes.AssemblyTreeNode>()
 						.Any(a => removed.Contains(a.LoadedAssembly)));
+				RecentNavigation.RemoveAll(node => node.AncestorsAndSelf()
+					.OfType<TreeNodes.AssemblyTreeNode>()
+					.Any(a => removed.Contains(a.LoadedAssembly)));
 			}
 			NavigateBackCommand.NotifyCanExecuteChanged();
 			NavigateForwardCommand.NotifyCanExecuteChanged();
@@ -548,8 +553,10 @@ namespace ICSharpCode.ILSpy.Docking
 			// point the editor still shows the previous selection's content, so the values
 			// describe where the user was looking before this new entry takes over. The
 			// captured state is then restored if/when the user navigates Back/Forward to it.
+			var outgoing = history.Current;
 			CaptureCurrentViewState();
 			history.Record(entry);
+			RecordRecentNavigation(outgoing, entry);
 			NavigateBackCommand.NotifyCanExecuteChanged();
 			NavigateForwardCommand.NotifyCanExecuteChanged();
 		}
