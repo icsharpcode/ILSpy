@@ -164,7 +164,7 @@ fn in_false_statement_slot(tree: &SyntaxTree, statement: SyntaxId) -> bool {
     let Some(parent) = tree.node(statement).parent else {
         return false;
     };
-    tree.slot_of(statement)
+    tree.parent_slot(statement)
         .is_some_and(|s| tree.node(parent).schema().slots[s].kind == "FalseStatement")
 }
 

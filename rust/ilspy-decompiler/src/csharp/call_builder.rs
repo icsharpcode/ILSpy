@@ -3106,8 +3106,11 @@ mod tests {
         s.encode_utf16().collect()
     }
 
-    /// The tokens of `TryGetStringInterpolationTokens`, as (index, text, alignment, format).
-    fn tokens(s: &str) -> Option<Vec<(Option<usize>, String, i32, Option<String>)>> {
+    /// A token of `TryGetStringInterpolationTokens`: index, text, alignment, format.
+    type Token = (Option<usize>, String, i32, Option<String>);
+
+    /// The tokens of `TryGetStringInterpolationTokens`.
+    fn tokens(s: &str) -> Option<Vec<Token>> {
         Some(
             format_tokens(&utf16(s))?
                 .into_iter()

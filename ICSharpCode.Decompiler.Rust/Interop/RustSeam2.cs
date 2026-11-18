@@ -32,6 +32,7 @@ using ICSharpCode.Decompiler.CSharp.Resolver;
 using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.IL;
+using ICSharpCode.Decompiler.Instrumentation;
 using ICSharpCode.Decompiler.Semantics;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
@@ -610,6 +611,11 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 			{
 				reason = "a request that records its steps";
 			}
+			else if (DecompilerEventSource.Log.IsTransformTracingEnabled())
+			{
+				// AstTransformExecuted events need every transform to run managed.
+				reason = "a request that traces its transforms";
+			}
 			else
 			{
 				var builtIn = CSharp.CSharpDecompiler.GetAstTransforms().Select(t => t.GetType()).ToList();
@@ -662,12 +668,20 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 			if (RustEngine.For(typeSystem, out _) is not { } engine)
 				return served;
 			int prefix = RustEngine.ASTPrefix;
-			engine.RunAstTransforms(root, prefix, prefix > 0 ? flags : AstRequestFlags.None, context: context);
+			int start = BuiltInStart(transforms);
+			if (prefix > 0)
+			{
+				// shortcut: the early transforms the request check recognized run managed ahead of the
+				// engine's built-in prefix, which must see their result; port them to send flags instead.
+				for (int i = 0; i < start; i++)
+					transforms[i].Run(root, context);
+			}
+			engine.RunAstTransforms(root, prefix, AstRequestFlags.None, context: context);
 			Interlocked.Increment(ref roundTrips);
 			if (prefix == 0)
 				return served;
 			// The early transforms, then the engine's built-in prefix.
-			int end = BuiltInStart(transforms) + prefix;
+			int end = start + prefix;
 			for (int i = 0; i < end; i++)
 				served.Add(transforms[i]);
 			return served;

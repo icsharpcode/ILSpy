@@ -451,7 +451,7 @@ fn name_lookup_mode(tree: &SyntaxTree, id: SyntaxId) -> u8 {
         Some(kind::USING_DECLARATION | kind::USING_ALIAS_DECLARATION)
     ) {
         mode = LOOKUP_TYPE_IN_USING_DECLARATION;
-    } else if let (Some(p), Some(slot)) = (parent, tree.slot_of(outermost))
+    } else if let (Some(p), Some(slot)) = (parent, tree.parent_slot(outermost))
         && tree.node(p).schema().slots[slot].kind == "BaseType"
     {
         let grandparent_kind = tree.node(p).parent.map(|g| tree.kind(g));

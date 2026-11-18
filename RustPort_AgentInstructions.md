@@ -798,18 +798,21 @@ the reasons. This file holds only the ordered steps, their gates and their rules
         `RecordSteps` requests managed, fallback counted per request (lecture 3.219). Subject:
         `Serve whole decompile requests through seam 2`.
 
-- [ ] **69-84. One AST transform per commit, in order.** Ported in parallel by agents against
+- [x] **69-84. One AST transform per commit, in order.** Ported in parallel by agents against
   `AstTransformEqualityTests` (2026-11-17: indices 0-5 in a first batch, 6-15 in a second) and served
-  in order by raising `AST_PREFIX` under G-ast(K). Subject pattern:
+  in order by raising `AST_PREFIX` under G-ast(K). For speed (user decision) the prefix rose in three
+  steps, each under the full AST prefix sweep: 6, 11 and 16 (2026-11-18). Chained, a transform asks the
+  host about annotations an earlier engine transform created, so the engine hands its new annotations
+  to the host after every transform (`SyntaxTree::materialize_new_annotations`). Subject pattern:
   `Port <TransformName> to Rust (AST prefix <K>)`. Gate per commit: G-rust, G-oracle,
   G-ast(K), G-ratchet.
-  - [ ] 69. PatternStatementTransform, with hand-written matchers instead of a port of
+  - [x] 69. PatternStatementTransform, with hand-written matchers instead of a port of
         `CSharp/Syntax/PatternMatching` (L)
-  - [ ] 70. RewriteVisualBasicWithEventsInInitializeComponent (S)
-  - [ ] 71. ReplaceMethodCallsWithOperators (M)
-  - [ ] 72. IntroduceUnsafeModifier (S)
-  - [ ] 73. AddCheckedBlocks (M)
-  - [ ] 74. DeclareVariables (L)
+  - [x] 70. RewriteVisualBasicWithEventsInInitializeComponent (S)
+  - [x] 71. ReplaceMethodCallsWithOperators (M)
+  - [x] 72. IntroduceUnsafeModifier (S)
+  - [x] 73. AddCheckedBlocks (M)
+  - [x] 74. DeclareVariables (L)
   - [ ] 68z6. `RecordDecompiler` (agent recommendation: moved before the AST transform
         that consumes it, `TransformFieldAndConstructorInitializers`). With the round trip (68z8) the transform
         reads the host's RecordDecompiler through the oracle, so 75 no longer waits for this port;
@@ -817,18 +820,17 @@ the reasons. This file holds only the ordered steps, their gates and their rules
         records, the record members the decompiler leaves out, and the analysis the transform reads;
         records keep the host's member walk, counted, until then. About 1,460 managed lines that
         decompile and match the generated equality, printing, clone and deconstruction members.
-  - [ ] 75. TransformFieldAndConstructorInitializers (M)
-  - [ ] 76. PrettifyAssignments (M)
-  - [ ] 77. IntroduceUsingDeclarations (L)
-  - [ ] 78. IntroduceQueryExpressions (L)
-  - [ ] 79. CombineQueryExpressions (M)
-  - [ ] 80. NormalizeBlockStatements (S)
-  - [ ] 81. FlattenSwitchBlocks (S)
-  - [ ] 82. RenameVisualBasicAnonymousTypes (S)
-  - [ ] 83. FixNameCollisions (M)
-  - [ ] 84. AddXmlDocumentationTransform stays managed: ratchet-only commit that records
-        `ast_prefix` as "all but AddXmlDocumentationTransform" and documents why (it only adds
-        comments from `IDocumentationProvider`, which the UI implements) (S)
+  - [x] 75. TransformFieldAndConstructorInitializers (M)
+  - [x] 76. PrettifyAssignments (M)
+  - [x] 77. IntroduceUsingDeclarations (L)
+  - [x] 78. IntroduceQueryExpressions (L)
+  - [x] 79. CombineQueryExpressions (M)
+  - [x] 80. NormalizeBlockStatements (S)
+  - [x] 81. FlattenSwitchBlocks (S)
+  - [x] 82. RenameVisualBasicAnonymousTypes (S)
+  - [x] 83. FixNameCollisions (M)
+  - [x] 84. AddXmlDocumentationTransform (S): ported after all; the documentation text comes from
+        the host's `IDocumentationProvider` through the oracle, so the UI's provider still applies.
 
 - [ ] **85. Seam 2 strict by default.** Size S. Subject: `Make seam 2 strict`.
   - Gate: G-dotnet, G-oracle, G-ui, `ILSpy.BamlDecompiler.Tests`, PdbGen, all with

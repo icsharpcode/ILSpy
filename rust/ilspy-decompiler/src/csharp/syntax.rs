@@ -144,16 +144,6 @@ impl SyntaxTree {
         result
     }
 
-    /// The index of the slot of its parent that holds `id` (`AstNode.Slot`); `None` for a node
-    /// without parent or for trivia.
-    pub fn slot_of(&self, id: SyntaxId) -> Option<usize> {
-        let parent = self.node(id).parent?;
-        self.node(parent).slots.iter().position(|s| match s {
-            SlotValue::Single(c) => *c == Some(id),
-            SlotValue::Many(cs) => cs.contains(&id),
-        })
-    }
-
     /// A new node of `kind` with default scalars and empty slots, without parent.
     pub fn new_node(&mut self, kind: u16) -> SyntaxId {
         let schema = &KINDS[kind as usize];
@@ -344,47 +334,6 @@ impl SyntaxTree {
     pub fn new_annotation(&mut self, kind: u8, payload: Vec<u8>) -> u32 {
         self.new_annotations.push((kind, payload));
         self.host_handles + self.new_annotations.len() as u32 - 1
-    }
-
-    /// A copy of `id` and its subtree (trivia included), without parent; the copies keep the
-    /// annotation handles of the originals.
-    pub fn deep_clone(&mut self, id: SyntaxId) -> SyntaxId {
-        let mut node = self.node(id).clone();
-        node.parent = None;
-        node.leading_trivia = node
-            .leading_trivia
-            .iter()
-            .map(|&t| self.deep_clone(t))
-            .collect();
-        node.trailing_trivia = node
-            .trailing_trivia
-            .iter()
-            .map(|&t| self.deep_clone(t))
-            .collect();
-        for slot in &mut node.slots {
-            match slot {
-                SlotValue::Single(Some(c)) => *c = self.deep_clone(*c),
-                SlotValue::Single(None) => {}
-                SlotValue::Many(cs) => {
-                    for c in cs.iter_mut() {
-                        *c = self.deep_clone(*c);
-                    }
-                }
-            }
-        }
-        self.nodes.push(node);
-        let copy = SyntaxId(self.nodes.len() as u32 - 1);
-        let node = self.node(copy).clone();
-        for c in node
-            .leading_trivia
-            .iter()
-            .chain(&node.trailing_trivia)
-            .copied()
-            .chain(self.all_children(copy))
-        {
-            self.node_mut(c).parent = Some(copy);
-        }
-        copy
     }
 
     /// Reads a single node and its subtree in the wire format into the arena, without parent;
@@ -740,7 +689,7 @@ mod tests {
         tree.set_child(root, expression_statement::slot::EXPRESSION, Some(binary));
         tree.root = Some(root);
 
-        let copy = tree.deep_clone(binary);
+        let copy = tree.clone_subtree(binary);
         assert_ne!(copy, binary);
         assert_eq!(tree.node(copy).parent, None);
         let l = tree

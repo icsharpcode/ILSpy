@@ -364,7 +364,7 @@ pub(crate) fn is_expression(tree: &SyntaxTree, node: SyntaxId) -> bool {
 /// Whether the slot holding `node` takes any expression (`Slot.ChildType` is assignable from
 /// `Expression`), so that a checked/unchecked expression may replace it.
 fn in_expression_slot(tree: &SyntaxTree, node: SyntaxId) -> bool {
-    let (Some(parent), Some(slot)) = (tree.node(node).parent, tree.slot_of(node)) else {
+    let (Some(parent), Some(slot)) = (tree.node(node).parent, tree.parent_slot(node)) else {
         return false;
     };
     matches!(
@@ -521,7 +521,7 @@ mod tests {
         let wrapper = tree.node(binary).parent.unwrap();
         assert_eq!(tree.kind(wrapper), kind::CHECKED_EXPRESSION);
         assert_eq!(
-            tree.slot_of(wrapper),
+            tree.parent_slot(wrapper),
             Some(assignment_expression::slot::RIGHT)
         );
     }

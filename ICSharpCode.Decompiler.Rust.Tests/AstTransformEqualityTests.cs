@@ -105,11 +105,12 @@ public class AstTransformEqualityTests
 	}
 
 	[Test]
-	public void AnUnportedTransformIsRefused()
+	public void ATransformBeyondTheBuiltInOnesIsRefused()
 	{
 		var decompiler = new CSharpDecompiler(typeof(Corpus).Assembly.Location, new DecompilerSettings());
 		var engine = RustEngine.For(decompiler.TypeSystem, out _)!;
-		int unported = Enumerable.Range(0, CSharpDecompiler.GetAstTransforms().Count).First(i => !RustEngine.IsAstTransformPorted(i));
-		Assert.Throws<RustEngineException>(() => engine.RunAstTransforms(new SyntaxTree(), 0, AstRequestFlags.None, single: unported));
+		int beyond = CSharpDecompiler.GetAstTransforms().Count;
+		Assert.That(RustEngine.IsAstTransformPorted(beyond), Is.False);
+		Assert.Throws<RustEngineException>(() => engine.RunAstTransforms(new SyntaxTree(), 0, AstRequestFlags.None, single: beyond));
 	}
 }

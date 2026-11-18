@@ -412,7 +412,7 @@ impl Rewriter<'_> {
         let trailing = tree.node(expression).trailing_trivia.clone();
         for (list, is_leading) in [(leading, true), (trailing, false)] {
             for t in list {
-                let copy = tree.deep_clone(t);
+                let copy = tree.clone_subtree(t);
                 tree.node_mut(copy).parent = Some(field);
                 let node = tree.node_mut(field);
                 if is_leading {

@@ -1325,7 +1325,7 @@ fn copy_annotations(tree: &mut SyntaxTree, from: SyntaxId, to: SyntaxId) {
     let trailing = tree.node(from).trailing_trivia.clone();
     for (list, is_leading) in [(leading, true), (trailing, false)] {
         for t in list {
-            let copy = tree.deep_clone(t);
+            let copy = tree.clone_subtree(t);
             tree.node_mut(copy).parent = Some(to);
             let node = tree.node_mut(to);
             if is_leading {
@@ -1398,7 +1398,7 @@ fn first_non_empty_statement(tree: &SyntaxTree, ctor: SyntaxId) -> Option<Syntax
 /// `GetNextNonEmptyStatement` of a statement in a block.
 fn next_non_empty_statement(tree: &SyntaxTree, statement: SyntaxId) -> Option<SyntaxId> {
     let parent = tree.node(statement).parent?;
-    let SlotValue::Many(siblings) = &tree.node(parent).slots[tree.slot_of(statement)?] else {
+    let SlotValue::Many(siblings) = &tree.node(parent).slots[tree.parent_slot(statement)?] else {
         return None;
     };
     let i = siblings.iter().position(|&s| s == statement)?;
