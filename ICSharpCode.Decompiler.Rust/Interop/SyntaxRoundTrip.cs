@@ -302,6 +302,8 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				return introduceUsingDeclarations;
 			if (CreateQueryExpressionsAnnotation(kind, payload) is { } queryExpressions)
 				return queryExpressions;
+			if (CreateCombineQueryExpressionsAnnotation(kind) is { } combineQueries)
+				return combineQueries;
 			switch (kind)
 			{
 				case AnnotationAnswered:
