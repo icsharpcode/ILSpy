@@ -85,6 +85,14 @@ pub enum AstNode {
         expression: AstId,
         overflow: Overflow,
     },
+    /// `UnaryOperatorExpression` of the `UnaryOperatorType` `op` (`Minus` 3, `Increment` 5,
+    /// `Decrement` 6, `PostIncrement` 7, `PostDecrement` 8), with the checked or unchecked
+    /// annotation of `overflow`.
+    UnaryOperator {
+        op: u8,
+        expression: AstId,
+        overflow: Overflow,
+    },
     /// `TupleExpression`, elements with a name written as named arguments; the host's
     /// `TupleResolveResult` takes its assembly from `value_tuple`.
     Tuple {
@@ -451,6 +459,15 @@ pub enum Rr {
     /// the given
     /// type, whose operands are the resolve results of the node's children.
     Operator { ty: TypeId },
+    /// `OperatorResolveResult` of a user-defined operator `method` (of the type `ty`) of a
+    /// compound assignment or increment, whose operands are the resolve results of the node's
+    /// children; the first child carries the checked or unchecked annotation of
+    /// `operand_overflow`.
+    UserDefinedOperator {
+        ty: TypeId,
+        method: Box<crate::il::ast::MethodOperand>,
+        operand_overflow: Overflow,
+    },
     /// `CSharpInvocationResolveResult` of a call of `method` (of the given return type) on the
     /// target's resolve result, whose arguments are the resolve results of the invocation's
     /// arguments; `extension` for an extension method call written on its first argument

@@ -95,6 +95,7 @@ mod kind {
     pub const USING_EXPANDED: u8 = 71;
     pub const GOTO_CASE: u8 = 72;
     pub const GOTO_DEFAULT: u8 = 73;
+    pub const UNARY_OPERATOR: u8 = 90;
 }
 
 pub(super) fn write_body(
@@ -228,6 +229,16 @@ fn rr(w: &mut FunctionWriter<'_, '_, '_, '_>, rr: Option<&Rr>) -> Result<(), Str
         Some(Rr::Operator { ty }) => {
             w.out.u8(7);
             w.ty(*ty);
+        }
+        Some(Rr::UserDefinedOperator {
+            ty,
+            method,
+            operand_overflow,
+        }) => {
+            w.out.u8(60);
+            w.ty(*ty);
+            w.call_method(method)?;
+            w.out.u8(*operand_overflow as u8);
         }
         Some(Rr::Invocation {
             target,
@@ -404,6 +415,7 @@ fn node(w: &mut FunctionWriter<'_, '_, '_, '_>, ast: &Ast, id: AstId) -> Result<
         AstNode::SwitchSection { .. } => kind::SWITCH_SECTION,
         AstNode::CompoundAssignment { .. } => kind::COMPOUND_ASSIGNMENT,
         AstNode::PostIncrement { .. } => kind::POST_INCREMENT,
+        AstNode::UnaryOperator { .. } => kind::UNARY_OPERATOR,
         AstNode::As { .. } => kind::AS,
         AstNode::ThrowExpression { .. } => kind::THROW_EXPRESSION,
         AstNode::BitNot { .. } => kind::BIT_NOT,
@@ -480,6 +492,15 @@ fn node(w: &mut FunctionWriter<'_, '_, '_, '_>, ast: &Ast, id: AstId) -> Result<
             overflow,
         } => {
             w.out.bool(increment);
+            w.out.u8(overflow as u8);
+            node(w, ast, expression)?;
+        }
+        AstNode::UnaryOperator {
+            op,
+            expression,
+            overflow,
+        } => {
+            w.out.u8(op);
             w.out.u8(overflow as u8);
             node(w, ast, expression)?;
         }

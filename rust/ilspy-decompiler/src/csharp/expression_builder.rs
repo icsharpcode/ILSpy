@@ -472,6 +472,7 @@ impl Builder<'_, '_, '_, '_> {
             ),
             Inst::NewArr { ty, ref indices } => self.new_arr(inst, ty.ty, indices),
             Inst::NumericCompoundAssign { .. } => self.numeric_compound_assign(inst),
+            Inst::UserDefinedCompoundAssign { .. } => self.user_defined_compound_assign(inst),
             Inst::Switch {
                 result_type: Some(_),
                 ..
@@ -1934,13 +1935,29 @@ impl Builder<'_, '_, '_, '_> {
         let l = self.prepare_arithmetic_argument(l, left_input, sign)?;
         let r = self.prepare_arithmetic_argument(r, right_input, sign)?;
         // `MatchLdcI(0)`, which sees through the extension of a native integer constant.
+        // Unary minus is supported on int, long, nint and the small integers (which promote
+        // to int).
         if op == BinaryOp::Subtract && self.f.match_ldc_i(left) == Some(0) {
-            return Err("a negation".to_owned());
-        }
-        if matches!(self.rr_of(l.expression), Rr::Constant { .. })
-            && matches!(self.rr_of(r.expression), Rr::Constant { .. })
-        {
-            return Err("an arithmetic operation on constants".to_owned());
+            let right_underlying = self.ts.nullable_underlying(r.ty);
+            if self.ts.is_known(right_underlying, KnownTypeCode::Int32)
+                || self.ts.is_known(right_underlying, KnownTypeCode::Int64)
+                || (5..=8).contains(&self.ts.type_code(right_underlying))
+                || self.ts.kind(right_underlying) == TypeKind::NInt
+            {
+                let ty = self.find_arithmetic_type(right_input, Sign::Signed)?;
+                let e = self.ast.add(AstNode::UnaryOperator {
+                    op: 3,
+                    expression: r.expression,
+                    overflow: if check_overflow {
+                        Overflow::Checked
+                    } else {
+                        Overflow::Unchecked
+                    },
+                });
+                self.ast.with_il(e, inst);
+                self.ast.with_rr(e, Rr::Operator { ty });
+                return Ok(TranslatedExpression { expression: e, ty });
+            }
         }
         // `ResolveBinaryOperator`: the operator over the promoted type of two numeric operands
         // (`None` where no predefined operator applies); a constant of another type converts
@@ -2039,6 +2056,18 @@ impl Builder<'_, '_, '_, '_> {
             Overflow::Unchecked
         };
         let ty = resolved_type.unwrap_or(l.ty);
+        // Two constant operands: the resolver folds the operator into a constant, and an
+        // operation that overflows in a checked context is written `unchecked(...)`.
+        let folded = match (self.rr_of(l.expression), self.rr_of(r.expression)) {
+            (Rr::Constant { value: lv, .. }, Rr::Constant { value: rv, .. }) => {
+                Some(self.fold_constant_arithmetic(op, &lv, &rv, ty, check_overflow)?)
+            }
+            _ => None,
+        };
+        let overflow = match folded {
+            Some((_, true)) => Overflow::ExplicitUnchecked,
+            _ => overflow,
+        };
         let e = self.ast.add(AstNode::BinaryOperator {
             op,
             left: l.expression,
@@ -2046,13 +2075,61 @@ impl Builder<'_, '_, '_, '_> {
             overflow,
         });
         self.ast.with_il(e, inst);
-        let rr = if resolved_type.is_some() {
+        let rr = if let Some((value, _)) = folded {
+            Rr::Constant { ty, value }
+        } else if resolved_type.is_some() {
             Rr::ResolvedOperator { ty }
         } else {
             Rr::Operator { ty }
         };
         self.ast.with_rr(e, rr);
         Ok(TranslatedExpression { expression: e, ty })
+    }
+
+    /// The constant `ResolveBinaryOperator` folds an unchecked integer `+`, `-`, `*`, `/` or `%`
+    /// of two constants into (of the operator's type `ty`), and whether the operation overflows
+    /// in a checked context (`ConstantBinaryOperatorOverflows`).
+    fn fold_constant_arithmetic(
+        &mut self,
+        op: BinaryOp,
+        left: &ConstValue,
+        right: &ConstValue,
+        ty: TypeId,
+        check_overflow: bool,
+    ) -> Result<(ConstValue, bool), Unsupported> {
+        // shortcut: checked, floating point, bitwise and enum folding are not ported; port
+        // them when such a constant operation is to be served.
+        let unsupported = || "an arithmetic operation on constants".to_owned();
+        let code = self.ts.type_code(ty);
+        if check_overflow || self.ts.kind(ty) == TypeKind::Enum || !(9..=12).contains(&code) {
+            return Err(unsupported());
+        }
+        let l = super::translated_expression::integral_value(left).ok_or_else(unsupported)?;
+        let r = super::translated_expression::integral_value(right).ok_or_else(unsupported)?;
+        let unsigned = matches!(code, 10 | 12);
+        if unsigned && (l < 0 || r < 0) {
+            return Err(unsupported());
+        }
+        let exact = match op {
+            BinaryOp::Add => l + r,
+            BinaryOp::Subtract => l - r,
+            BinaryOp::Multiply => l.checked_mul(r).ok_or_else(unsupported)?,
+            BinaryOp::Divide | BinaryOp::Modulus if r == 0 => return Err(unsupported()),
+            BinaryOp::Divide => l / r,
+            BinaryOp::Modulus => l % r,
+            _ => return Err(unsupported()),
+        };
+        let (value, wrapped) = match code {
+            9 => (ConstValue::Int32(exact as i32), i128::from(exact as i32)),
+            10 => (ConstValue::UInt32(exact as u32), i128::from(exact as u32)),
+            11 => (ConstValue::Int64(exact as i64), i128::from(exact as i64)),
+            _ => (ConstValue::UInt64(exact as u64), i128::from(exact as u64)),
+        };
+        // `MinValue / -1` and `MinValue % -1` throw even unchecked.
+        if matches!(op, BinaryOp::Divide | BinaryOp::Modulus) && r == -1 {
+            return Err(unsupported());
+        }
+        Ok((value, wrapped != exact))
     }
 
     /// `HandleCompoundAssignment`: `target op= value`, or `target++` / `target--` for the old
@@ -2091,7 +2168,19 @@ impl Builder<'_, '_, '_, '_> {
             BinaryNumericOperator::BitAnd => 9,
             BinaryNumericOperator::BitOr => 10,
             BinaryNumericOperator::BitXor => 11,
-            _ => return Err("a compound shift".to_owned()),
+            BinaryNumericOperator::ShiftLeft => 6,
+            // `UnsignedShiftRight` for an unsigned shift of a signed type, or of a small integer
+            // type where the setting allows `>>>`.
+            BinaryNumericOperator::ShiftRight
+                if sign == Sign::Unsigned
+                    && (self.ts.type_sign(ty) == Sign::Signed
+                        || ((5..=8).contains(&self.ts.type_code(ty))
+                            && self.settings.unsigned_right_shift)) =>
+            {
+                8
+            }
+            BinaryNumericOperator::ShiftRight => 7,
+            BinaryNumericOperator::None => return Err("a binary operator of no kind".to_owned()),
         };
         if is_lifted {
             return Err("a lifted compound assignment".to_owned());
@@ -2128,6 +2217,9 @@ impl Builder<'_, '_, '_, '_> {
         ) || self.ts.is_known(target.ty, KnownTypeCode::NullableOfT)
         {
             return Err("a compound assignment of these types".to_owned());
+        }
+        if matches!(assignment_op, 6..=8) {
+            return self.compound_shift(inst, assignment_op, target, value);
         }
         let bitwise = matches!(assignment_op, 9..=11);
         let overflow = if bitwise || matches!(underlying_result, StackType::F4 | StackType::F8) {
@@ -2183,6 +2275,216 @@ impl Builder<'_, '_, '_, '_> {
         Ok(TranslatedExpression {
             expression: e,
             ty: target_rr_ty,
+        })
+    }
+
+    /// `VisitUserDefinedCompoundAssign`: `target op= value` of a user-defined binary operator
+    /// (or `string.Concat` as `+=`), or `++` / `--` of a user-defined increment, of the
+    /// operator's return type. A lifted operator, a span-based `string.Concat` and a string
+    /// `+=` of a `ToString()` call are not translated.
+    fn user_defined_compound_assign(
+        &mut self,
+        inst: NodeId,
+    ) -> Result<TranslatedExpression, Unsupported> {
+        use crate::il::ast::{CompoundEvalMode, CompoundTargetKind};
+        let Inst::UserDefinedCompoundAssign {
+            method: operand,
+            eval_mode,
+            target_kind,
+            target,
+            value,
+        } = self.f.inst(inst).clone()
+        else {
+            unreachable!("a user-defined compound assignment");
+        };
+        if operand.lifted
+            || operand.local_function.is_some()
+            || operand.specialized_by.is_some()
+            || operand.range_accessor.is_some()
+        {
+            return Err("a lifted user-defined compound assignment".to_owned());
+        }
+        let method = Method::from_resolved(self.ts, &operand.method)
+            .ok_or("a compound assignment of an unresolved method")?;
+        let declaring = method
+            .declaring
+            .ok_or("a compound assignment of a method without declaring type")?;
+        let is_string_concat = method.name == "Concat"
+            && method.is_static
+            && self.ts.is_known(declaring, KnownTypeCode::String);
+        if is_string_concat
+            && method
+                .parameters
+                .iter()
+                .any(|p| self.ts.is_known(p.ty, KnownTypeCode::ReadOnlySpanOfT))
+        {
+            return Err("a span-based string concatenation as +=".to_owned());
+        }
+        let load_type = method
+            .parameters
+            .first()
+            .ok_or("a compound assignment of a method without parameters")?
+            .ty;
+        let target = match target_kind {
+            // `LdObj(inst.Target, loadType)`: the target address dereferenced.
+            CompoundTargetKind::Address => {
+                if self.f.result_type(self.ts, target) != StackType::Ref {
+                    return Err("a compound assignment through a pointer".to_owned());
+                }
+                let hint = self.ts.intern(TypeData::ByRef(load_type));
+                let address = self.translate(target, Some(hint))?;
+                if !self.is_compatible_pointer_type_for_memory_access(address.ty, load_type) {
+                    return Err("a compound assignment that needs a pointer cast".to_owned());
+                }
+                let AstNode::RefDirection { expression } = *self.ast.node(address.expression)
+                else {
+                    return Err(
+                        "a compound assignment through a reference that is no ref expression"
+                            .to_owned(),
+                    );
+                };
+                self.unwrap_child(address.expression, expression)
+            }
+            CompoundTargetKind::Property => self.translate(target, Some(load_type))?,
+            CompoundTargetKind::Dynamic => {
+                return Err("a dynamic compound assignment target".to_owned());
+            }
+        };
+        // `OperatorDeclaration.IsChecked`, else `ReplaceMethodCallsWithOperators
+        // .HasCheckedEquivalent`: the target carries the operator's checked context.
+        let operand_overflow = if matches!(
+            method.name.as_str(),
+            "op_CheckedAddition"
+                | "op_CheckedSubtraction"
+                | "op_CheckedMultiply"
+                | "op_CheckedDivision"
+                | "op_CheckedUnaryNegation"
+                | "op_CheckedIncrement"
+                | "op_CheckedDecrement"
+                | "op_CheckedExplicit"
+        ) {
+            Overflow::Checked
+        } else if self.has_checked_equivalent(&method.name, declaring)? {
+            Overflow::Unchecked
+        } else {
+            Overflow::None
+        };
+        let rr = Rr::UserDefinedOperator {
+            ty: method.return_type,
+            method: Box::new(operand.clone()),
+            operand_overflow,
+        };
+        let e = if is_string_concat || method.parameters.len() == 2 {
+            let value_type = method
+                .parameters
+                .get(1)
+                .ok_or("a string concatenation of another arity as +=")?
+                .ty;
+            let v = self.translate(value, None)?;
+            let v = self.convert_to(v, value_type, is_string_concat)?;
+            if is_string_concat
+                && let Rr::Invocation { method: called, .. } = self.rr_of(v.expression)
+                && called.method.name == "ToString"
+            {
+                // shortcut: `RemoveRedundantToStringInConcat` is not ported; port it when a
+                // string `+=` of a `ToString()` call is to be served.
+                return Err("a string += of a ToString call".to_owned());
+            }
+            // `GetAssignmentOperatorTypeFromMetadataName`
+            let op = match method.name.as_str() {
+                _ if is_string_concat => 1,
+                "op_Addition" => 1,
+                "op_Subtraction" => 2,
+                "op_Multiply" => 3,
+                "op_Division" => 4,
+                "op_Modulus" => 5,
+                "op_LeftShift" => 6,
+                "op_RightShift" => 7,
+                "op_UnsignedRightShift" if self.settings.unsigned_right_shift => 8,
+                "op_BitwiseAnd" => 9,
+                "op_BitwiseOr" => 10,
+                "op_ExclusiveOr" => 11,
+                _ => return Err("a compound assignment of another operator".to_owned()),
+            };
+            self.ast.add(AstNode::CompoundAssignment {
+                op,
+                left: target.expression,
+                right: v.expression,
+                overflow: Overflow::None,
+            })
+        } else {
+            // `GetUnaryOperatorTypeFromMetadataName`
+            let postfix = eval_mode == CompoundEvalMode::EvaluatesToOldValue;
+            let op = match method.name.as_str() {
+                "op_Increment" | "op_CheckedIncrement" => 5,
+                "op_Decrement" | "op_CheckedDecrement" => 6,
+                _ => return Err("a compound assignment of another unary operator".to_owned()),
+            } + if postfix { 2 } else { 0 };
+            self.ast.add(AstNode::UnaryOperator {
+                op,
+                expression: target.expression,
+                overflow: Overflow::None,
+            })
+        };
+        self.ast.with_il(e, inst);
+        self.ast.with_rr(e, rr);
+        Ok(TranslatedExpression {
+            expression: e,
+            ty: method.return_type,
+        })
+    }
+
+    /// `ReplaceMethodCallsWithOperators.HasCheckedEquivalent`: whether the declaring type has
+    /// an operator `op_Checked...` of the operator's name.
+    fn has_checked_equivalent(
+        &mut self,
+        name: &str,
+        declaring: TypeId,
+    ) -> Result<bool, Unsupported> {
+        let checked = match name.strip_prefix("op_") {
+            Some(rest) => format!("op_Checked{rest}"),
+            None => name.to_owned(),
+        };
+        let candidates = self
+            .ts
+            .get_methods(
+                declaring,
+                None,
+                crate::typesystem::lookup::MemberOptions::default(),
+            )
+            .map_err(|e| e.to_string())?;
+        Ok(candidates.iter().any(|c| {
+            c.name == checked && Method::from_resolved(self.ts, c).is_some_and(|m| m.is_operator)
+        }))
+    }
+
+    /// `HandleCompoundShift`: `target op= value` with the value converted to `int`, of the
+    /// target's type (`ResolveAssignment` of a predefined shift).
+    fn compound_shift(
+        &mut self,
+        inst: NodeId,
+        assignment_op: u8,
+        target: TranslatedExpression,
+        value: NodeId,
+    ) -> Result<TranslatedExpression, Unsupported> {
+        let code = self.ts.type_code(target.ty);
+        if !((4..=12).contains(&code) || self.is_native_integer(target.ty)) {
+            return Err("a compound shift of these types".to_owned());
+        }
+        let v = self.translate(value, None)?;
+        let int = self.ts.known_type(KnownTypeCode::Int32);
+        let v = self.convert_to(v, int, false)?;
+        let e = self.ast.add(AstNode::CompoundAssignment {
+            op: assignment_op,
+            left: target.expression,
+            right: v.expression,
+            overflow: Overflow::None,
+        });
+        self.ast.with_il(e, inst);
+        self.ast.with_rr(e, Rr::Operator { ty: target.ty });
+        Ok(TranslatedExpression {
+            expression: e,
+            ty: target.ty,
         })
     }
 
@@ -3010,7 +3312,17 @@ impl Builder<'_, '_, '_, '_> {
             Some(KnownTypeCode::UInt64) => ConstValue::UInt64(0),
             Some(KnownTypeCode::Single) => ConstValue::Single(0),
             Some(KnownTypeCode::Double) => ConstValue::Double(0),
-            Some(KnownTypeCode::Decimal) => return Err("a default decimal".to_owned()),
+            // `new PrimitiveExpression(0m)`.
+            Some(KnownTypeCode::Decimal) => {
+                let value = ConstValue::Decimal([0; 4]);
+                let e = self.ast.add(AstNode::ConstantValue {
+                    ty,
+                    value: value.clone(),
+                    allow_implicit_conversion: true,
+                });
+                self.ast.with_rr(e, Rr::Constant { ty, value });
+                return Ok(TranslatedExpression { expression: e, ty });
+            }
             _ => ConstValue::Null,
         };
         let e = self.ast.add(AstNode::DefaultValue { ty: Some(ty) });

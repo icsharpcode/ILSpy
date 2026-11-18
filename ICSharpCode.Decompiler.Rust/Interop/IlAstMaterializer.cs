@@ -1521,6 +1521,8 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 			node.ResolveResult = BodyResolveResult(out node.OperatorType);
 			node.Call = pendingInvocation;
 			pendingInvocation = null;
+			node.UserDefinedOperator = pendingUserDefinedOperator;
+			pendingUserDefinedOperator = null;
 			node.ResolveCast = pendingResolveCast;
 			pendingResolveCast = false;
 			node.ImplicitConversion = pendingImplicitConversion;
@@ -1930,9 +1932,17 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					node.Overflow = U8();
 					node.Children = [BodyNode()];
 					break;
+				case RustBodyNode.UnaryOperator:
+					node.Value = (CSharp.Syntax.UnaryOperatorType)U8();
+					node.Overflow = U8();
+					node.Children = [BodyNode()];
+					break;
 			}
 			return node;
 		}
+
+		/// <summary>The user-defined operator, and its operand annotation, of the operator resolve result the last <see cref="BodyResolveResult"/> read.</summary>
+		(IMethod Method, byte OperandOverflow)? pendingUserDefinedOperator;
 
 		/// <summary>The target and method of the invocation resolve result the last <see cref="BodyResolveResult"/> read.</summary>
 		(ResolveResult? Target, IMethod Method, bool IsExtension, bool IsDelegate, bool FoundByLookup, bool IsExpanded)? pendingInvocation;
@@ -2027,6 +2037,11 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					return new ByReferenceResolveResult(NestedTargetResolveResult()!, ReferenceKind.Ref);
 				case 7:
 					operatorType = Type();
+					return null;
+				case 60:
+					// RustSeam2 completes the resolve result of the user-defined operator.
+					operatorType = Type();
+					pendingUserDefinedOperator = (CallMethod(), U8());
 					return null;
 				case 9:
 				{

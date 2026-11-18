@@ -848,7 +848,9 @@ impl Builder<'_, '_, '_, '_> {
             && self.ts.kind(underlying) != TypeKind::Enum
             && (5..=8).contains(&self.ts.type_code(underlying))
         {
-            // `IsSpecialConstant` writes the type's MinValue or MaxValue as a member reference.
+            // `IsSpecialConstant` writes the type's MinValue or MaxValue as a member reference,
+            // whose `MemberResolveResult` is the field's constant of the small type (written as
+            // a constant, like `int.MaxValue`).
             if matches!(
                 value,
                 ConstValue::SByte(i8::MIN | i8::MAX)
@@ -856,7 +858,7 @@ impl Builder<'_, '_, '_, '_> {
                     | ConstValue::Int16(i16::MIN | i16::MAX)
                     | ConstValue::UInt16(u16::MAX)
             ) {
-                return Err("a small integer constant written as MinValue or MaxValue".to_owned());
+                return Ok((underlying, value));
             }
             let v = integral_value(&value).ok_or("a small integer constant of another kind")?;
             let int = self.ts.known_type(KnownTypeCode::Int32);

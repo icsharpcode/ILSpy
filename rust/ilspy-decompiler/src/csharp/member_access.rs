@@ -30,6 +30,7 @@ impl Builder<'_, '_, '_, '_> {
             | Rr::This { ty, .. }
             | Rr::Type(ty)
             | Rr::Operator { ty }
+            | Rr::UserDefinedOperator { ty, .. }
             | Rr::Invocation { ty, .. }
             | Rr::Property { ty, .. }
             | Rr::ObjectCreation { ty, .. }
