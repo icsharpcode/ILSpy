@@ -838,7 +838,10 @@ the reasons. This file holds only the ordered steps, their gates and their rules
     failed about 2,000 tests; the items give each group of reasons with its count of
     failed tests (first failure per test only). Each item closes a group of gaps and is gated
     with the decompiler suite under the switch for its examples.
-    - [ ] **85a.** Declarations: sorted attributes (350).
+    - [x] **85a.** Declarations: sorted attributes (350). The engine sorts; attributes told
+      apart only by different strings (culture dependent) stay with the host, reached by no test.
+      The tests it served now fail on body gaps the fallback hid, as error comments in the
+      diff, not as strict reasons (85f).
     - [x] **85b.** Declarations: constraints of a generic override (101), constants and default
       values the engine does not write (36), members of an extension block outside it (24),
       types without syntax (6), delegates without Invoke (1) (lecture 3.225).

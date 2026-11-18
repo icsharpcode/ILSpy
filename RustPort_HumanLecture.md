@@ -4590,8 +4590,8 @@ without its `Attribute` suffix (or none for a name without it), the constructor'
 `MemberResolveResult`, the arguments by `ConvertConstantValue(expectedType, type, value)` with
 the parameter type as the expected one (a small integer of another expected type keeps a cast),
 `typeof` and argument arrays, and the named arguments with the member the host finds by name.
-Sorted attribute lists (`SortCustomAttributes`), whose comparison is culture dependent for
-strings, stay with the host (`shortcut:`). The engine serves 279 field declarations of the
+Sorted attribute lists (`SortCustomAttributes`) are sorted by the engine since item 85a (see
+3.223); only attributes it would tell apart by different string arguments stay with the host. The engine serves 279 field declarations of the
 ratchet corpus; 59 fall back, for types without syntax and constants it does not write.
 
 The share stayed at 100.0 %.
@@ -4982,6 +4982,16 @@ strict run of the test matrix failed about 2,000 tests, nearly all in the decomp
 ratchet corpus decompiles with default settings and one compiler, while the matrix uses others
 (sorted attributes alone: 350 tests). The gaps are items 85a and on; when the matrix runs green the
 switch merges into `ILSPY_RUST_STRICT`, which the test projects already set (item 66).
+
+Item 85a: the engine sorts attribute lists like `ConvertAttributes` with `SortAttributes`: a
+stable sort (`OrderBy`) by the ordinal full name of the attribute type, decode errors first, then
+by the count, type and `IComparable` value of the fixed arguments and the count, ordinal name,
+type and value of the named arguments (null, `typeof` and arrays compare equal; floats as
+`double.CompareTo`, NaN first). `string.CompareTo` is culture dependent, so two attributes the
+sort would tell apart by different strings stay with the host (`shortcut:`); no test of the
+decompiler suite reaches that case. Serving those declarations exposed body gaps the declaration
+fallback had hidden: a strict throw for a body is caught by `DecompileBody`'s handler, so such a
+test fails with a missing body in its diff, not with the strict reason (85f).
 
 ### 3.224 The member order of records (item 85d)
 
