@@ -2,6 +2,7 @@
 //! `csharp::ast_transforms::TRANSFORMS` under its index in the built-in list.
 
 pub mod add_checked_blocks;
+pub mod add_xml_documentation;
 pub mod combine_query_expressions;
 pub mod declare_variables;
 pub mod field_and_constructor_initializers;

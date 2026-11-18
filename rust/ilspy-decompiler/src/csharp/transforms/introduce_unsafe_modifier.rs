@@ -45,7 +45,7 @@ pub fn is_unsafe(tree: &mut SyntaxTree, oracle: &dyn SyntaxOracle, node: SyntaxI
     visit(tree, oracle, node)
 }
 
-fn is_entity_declaration(k: u16) -> bool {
+pub(crate) fn is_entity_declaration(k: u16) -> bool {
     matches!(
         k,
         kind::CONSTRUCTOR_DECLARATION
