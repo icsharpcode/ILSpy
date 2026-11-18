@@ -7,7 +7,7 @@ use crate::semantics::types::TypeKind;
 use crate::typesystem::fnptr::Normalization;
 use crate::typesystem::known::KnownTypeCode;
 use crate::typesystem::members::ConstValue;
-use crate::typesystem::types::TypeId;
+use crate::typesystem::types::{TypeData, TypeId};
 
 use super::ast::{AstId, AstNode, Rr};
 use super::{Builder, TranslatedExpression, Unsupported};
@@ -488,8 +488,15 @@ impl Builder<'_, '_, '_, '_> {
         .any(|&c| self.ts.is_known(t, c))
     }
 
-    /// `FindType(stackType, sign)`.
+    /// `FindType(stackType, sign)`: `nint` or `nuint` for `I` with native integers.
     pub(super) fn find_type(&mut self, stack: StackType, sign: Sign) -> TypeId {
+        if stack == StackType::I && self.settings.native_integers {
+            return self.ts.intern(if sign == Sign::Unsigned {
+                TypeData::NUInt
+            } else {
+                TypeData::NInt
+            });
+        }
         let code = stack.to_primitive(sign).to_known();
         self.ts.known_type(code)
     }

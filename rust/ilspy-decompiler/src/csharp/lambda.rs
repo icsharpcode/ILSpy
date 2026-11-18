@@ -13,7 +13,7 @@ use crate::typesystem::types::TypeData;
 
 use crate::il::transforms::transform_collection_and_object_initializers::contains_anonymous_type;
 
-use super::ast::{AstNode, Rr};
+use super::ast::{AstNode, Overflow, Rr};
 use super::{Builder, TranslatedExpression, Unsupported};
 
 const COMPILER_GENERATED: &str = "System.Runtime.CompilerServices.CompilerGeneratedAttribute";
@@ -237,7 +237,7 @@ impl Builder<'_, '_, '_, '_> {
         let c = self.ast.add(AstNode::Cast {
             ty: delegate_type,
             expression: l,
-            unchecked: false,
+            overflow: Overflow::None,
         });
         self.ast
             .with_rr(c, Rr::LambdaConversion { ty: delegate_type });

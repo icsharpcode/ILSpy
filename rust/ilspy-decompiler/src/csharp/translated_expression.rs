@@ -7,7 +7,7 @@ use crate::typesystem::known::KnownTypeCode;
 use crate::typesystem::members::ConstValue;
 use crate::typesystem::types::{TypeData, TypeId};
 
-use super::ast::{AstId, AstNode, Rr};
+use super::ast::{AstId, AstNode, Overflow, Rr};
 use super::{Builder, Unsupported};
 
 /// An expression the builders produced, with `ResolveResult.Type`.
@@ -26,6 +26,32 @@ mod code {
     pub const DOUBLE: u8 = 14;
     pub const DECIMAL: u8 = 15;
     pub const STRING: u8 = 18;
+}
+
+/// `IntPtr` and `UIntPtr` with the 64-bit and 32-bit integers of their sign, and whether they
+/// are unsigned.
+const NATIVE_INTEGERS: [(KnownTypeCode, KnownTypeCode, KnownTypeCode, bool); 2] = [
+    (
+        KnownTypeCode::IntPtr,
+        KnownTypeCode::Int64,
+        KnownTypeCode::Int32,
+        false,
+    ),
+    (
+        KnownTypeCode::UIntPtr,
+        KnownTypeCode::UInt64,
+        KnownTypeCode::UInt32,
+        true,
+    ),
+];
+
+/// `nint` or `nuint`, as type data and kind.
+fn native_integer(unsigned: bool) -> (TypeData, TypeKind) {
+    if unsigned {
+        (TypeData::NUInt, TypeKind::NUInt)
+    } else {
+        (TypeData::NInt, TypeKind::NInt)
+    }
 }
 
 /// What `CSharpResolver.ResolveCast` gives for a constant.
@@ -100,10 +126,11 @@ impl Builder<'_, '_, '_, '_> {
         &mut self,
         e: TranslatedExpression,
         target: TypeId,
+        check: bool,
         allow_implicit_conversion: bool,
     ) -> Result<TranslatedExpression, Unsupported> {
         if matches!(self.rr_of(e.expression), Rr::DefaultLiteral { .. }) {
-            return self.convert_to(e, target, allow_implicit_conversion);
+            return self.convert_to_checked(e, target, check, allow_implicit_conversion);
         }
         Ok(e)
     }
@@ -125,15 +152,27 @@ impl Builder<'_, '_, '_, '_> {
     }
 
     /// `TranslatedExpression.ConvertTo(targetType, expressionBuilder, checkForOverflow: false,
+    /// allowImplicitConversion)`.
+    pub(crate) fn convert_to(
+        &mut self,
+        e: TranslatedExpression,
+        target: TypeId,
+        allow_implicit_conversion: bool,
+    ) -> Result<TranslatedExpression, Unsupported> {
+        self.convert_to_checked(e, target, false, allow_implicit_conversion)
+    }
+
+    /// `TranslatedExpression.ConvertTo(targetType, expressionBuilder, checkForOverflow,
     /// allowImplicitConversion)` for the expressions the builders make: unchanged when the
     /// types are equal up to nullability and tuple names, when the target is `void`, `?` or
     /// unknown with the same name, or (with `allow_implicit_conversion`) when an implicit
     /// conversion exists; a constant is folded into the target type. A body that needs a cast
     /// is not translated.
-    pub(crate) fn convert_to(
+    pub(crate) fn convert_to_checked(
         &mut self,
         e: TranslatedExpression,
         target: TypeId,
+        check: bool,
         allow_implicit_conversion: bool,
     ) -> Result<TranslatedExpression, Unsupported> {
         let n = Normalization::IGNORE_NULLABILITY_AND_TUPLES;
@@ -145,7 +184,7 @@ impl Builder<'_, '_, '_, '_> {
                 return Ok(e);
             }
             let restored = self.restore_default_literal_type(e)?;
-            return self.convert_to(restored, target, allow_implicit_conversion);
+            return self.convert_to_checked(restored, target, check, allow_implicit_conversion);
         }
         let ty = e.ty;
         let same = self.ts.normalize_with(ty, n) == self.ts.normalize_with(target, n);
@@ -186,12 +225,14 @@ impl Builder<'_, '_, '_, '_> {
         {
             let argument = *argument;
             let unwrapped = self.unwrap_child(e.expression, argument);
-            return self.unwrapped(unwrapped, target, allow_implicit_conversion);
+            return self.unwrapped(unwrapped, target, check, allow_implicit_conversion);
         }
-        // A cast the engine made: `CastCanBeMadeImplicit` may unwrap it again.
+        // A cast the engine made: `CastCanBeMadeImplicit` may unwrap it again, unless it is a
+        // constant (`(T*)null`), whose resolve result is no conversion.
         if let AstNode::Cast {
             expression: inner, ..
         } = *self.ast.node(e.expression)
+            && !matches!(self.rr_of(e.expression), Rr::Constant { .. })
         {
             let input = self.rr_of(inner);
             let input_ty = self.rr_type(&input);
@@ -223,7 +264,7 @@ impl Builder<'_, '_, '_, '_> {
                             .annotations_mut(unwrapped.expression)
                             .implicit_conversion = Some((ty, cast_rr));
                     }
-                    return self.unwrapped(unwrapped, target, allow_implicit_conversion);
+                    return self.unwrapped(unwrapped, target, check, allow_implicit_conversion);
                 }
                 return Ok(e);
             }
@@ -231,9 +272,14 @@ impl Builder<'_, '_, '_, '_> {
             if implicit && !user_defined {
                 let unwrapped = self.unwrap_child(e.expression, inner);
                 if allow_implicit_conversion {
-                    return self.unwrapped(unwrapped, target, allow_implicit_conversion);
+                    return self.unwrapped(unwrapped, target, check, allow_implicit_conversion);
                 }
-                return self.convert_to(unwrapped, target, allow_implicit_conversion);
+                return self.convert_to_checked(
+                    unwrapped,
+                    target,
+                    check,
+                    allow_implicit_conversion,
+                );
             }
         }
         if same {
@@ -260,14 +306,14 @@ impl Builder<'_, '_, '_, '_> {
             let c = self.ast.add(AstNode::Cast {
                 ty: cast_type,
                 expression: e.expression,
-                unchecked: false,
+                overflow: Overflow::None,
             });
             self.ast.with_rr(c, cast_rr);
             let cast = TranslatedExpression {
                 expression: c,
                 ty: cast_type,
             };
-            return self.convert_to(cast, target, allow_implicit_conversion);
+            return self.convert_to_checked(cast, target, check, allow_implicit_conversion);
         }
         // Throw expressions have no type and convert implicitly to any type.
         if allow_implicit_conversion
@@ -292,7 +338,12 @@ impl Builder<'_, '_, '_, '_> {
                     expression: element,
                     ty: self.rr_type(&rr),
                 };
-                let c = self.convert_to(element, element_type, allow_implicit_conversion)?;
+                let c = self.convert_to_checked(
+                    element,
+                    element_type,
+                    check,
+                    allow_implicit_conversion,
+                )?;
                 converted.push(c.expression);
                 types.push(c.ty);
             }
@@ -346,7 +397,7 @@ impl Builder<'_, '_, '_, '_> {
                     expression: c,
                     ty: int,
                 };
-                b.convert_to(c, target, false)
+                b.convert_to_checked(c, target, check, false)
             };
             let one = branch(self, 1)?;
             let zero = branch(self, 0)?;
@@ -367,25 +418,48 @@ impl Builder<'_, '_, '_, '_> {
         // To bool through byte, to simulate the truncation to 8 bits.
         if self.ts.is_known(target, KnownTypeCode::Boolean) {
             let byte = self.ts.known_type(KnownTypeCode::Byte);
-            let b = self.convert_to(e, byte, false)?;
+            let b = self.convert_to_checked(e, byte, check, false)?;
             return self.convert_to_boolean(b);
         }
-        let special = if self.ts.is_known(ty, KnownTypeCode::IntPtr)
-            || self.ts.is_known(ty, KnownTypeCode::UIntPtr)
-            || ((self.ts.is_known(target_utype, KnownTypeCode::IntPtr)
-                || self.ts.is_known(target_utype, KnownTypeCode::UIntPtr))
-                && self.ts.stack_type(utype).is_integer())
+        // IntPtr and UIntPtr: a cast works directly only for some types (IntPtr.txt), the
+        // others go through an intermediate type.
+        if let Some(via) =
+            self.native_integer_conversion_via(ty, utype, target, target_utype, check)
         {
-            Some("of native integers")
-        } else if self.ts.kind(target).is_any_pointer() || self.ts.kind(ty).is_any_pointer() {
-            Some("of pointers")
-        } else if self.ts.kind(target) == TypeKind::ByReference {
-            Some("to a reference")
+            // The second step allows an implicit conversion where the managed code does.
+            let (via, implicit) = via;
+            let v = self.convert_to_checked(e, via, check, false)?;
+            return self.convert_to_checked(
+                v,
+                target,
+                check,
+                implicit && allow_implicit_conversion,
+            );
+        }
+        let target_kind = self.ts.kind(target);
+        let kind = self.ts.kind(ty);
+        // C# has no casts between enums or chars and pointers: through the underlying type or
+        // ushort.
+        let via = if target_kind.is_any_pointer() && kind == TypeKind::Enum {
+            Some(self.enum_underlying(ty))
+        } else if self.ts.kind(target_utype) == TypeKind::Enum && kind.is_any_pointer() {
+            Some(self.enum_underlying(target_utype))
+        } else if (target_kind.is_any_pointer() && self.ts.is_known(ty, KnownTypeCode::Char))
+            || (self.ts.is_known(target_utype, KnownTypeCode::Char) && kind.is_any_pointer())
+        {
+            Some(self.ts.known_type(KnownTypeCode::UInt16))
         } else {
             None
         };
-        if let Some(special) = special {
-            return Err(format!("a conversion {special} that needs a cast"));
+        if let Some(via) = via {
+            let v = self.convert_to_checked(e, via, check, false)?;
+            return self.convert_to_checked(v, target, check, false);
+        }
+        if target_kind == TypeKind::Pointer && kind == TypeKind::ByReference {
+            return Err("a conversion of a reference to a pointer".to_owned());
+        }
+        if target_kind == TypeKind::ByReference {
+            return Err("a conversion to a reference that needs a cast".to_owned());
         }
         let rr = self.semantic_rr(e.expression, ty);
         if let ResolveResult::Constant { value, .. } = &rr
@@ -396,8 +470,8 @@ impl Builder<'_, '_, '_, '_> {
         {
             return Err("a constant converted to a nullable integer".to_owned());
         }
-        // `resolver.ResolveCast(targetType, ResolveResult)`
-        let cast = self.resolve_cast(target, &rr)?;
+        // `resolver.WithCheckForOverflow(checkForOverflow).ResolveCast(targetType, ResolveResult)`
+        let cast = self.resolve_cast(target, &rr, check)?;
         match cast {
             CastResult::Constant(value) => {
                 // `ConvertConstantValue(rr, allowImplicitConversion).WithILInstruction(...)`
@@ -424,7 +498,7 @@ impl Builder<'_, '_, '_, '_> {
                 {
                     let object = self.ts.known_type(KnownTypeCode::Object);
                     let via = self.convert_to(e, object, false)?;
-                    return self.convert_to(via, target, allow_implicit_conversion);
+                    return self.convert_to_checked(via, target, check, allow_implicit_conversion);
                 }
             }
             CastResult::Conversion => {
@@ -436,23 +510,66 @@ impl Builder<'_, '_, '_, '_> {
                 }
             }
         }
+        // A zero constant converted to a pointer: `null`, or `(T*)null`.
+        if target_kind.is_any_pointer()
+            && let ResolveResult::Constant {
+                value: ConstValue::Int32(0) | ConstValue::UInt32(0),
+                ..
+            } = rr
+        {
+            let n = self.ast.add(AstNode::Null);
+            let il = self.ast.annotations(e.expression).il.clone();
+            let null_type = self.ts.intern(TypeData::Null);
+            let (node, ty) = if allow_implicit_conversion {
+                (n, null_type)
+            } else {
+                let c = self.ast.add(AstNode::Cast {
+                    ty: target,
+                    expression: n,
+                    overflow: Overflow::None,
+                });
+                (c, target)
+            };
+            for inst in il {
+                self.ast.with_il(node, inst);
+            }
+            self.ast.with_rr(
+                node,
+                Rr::Constant {
+                    ty,
+                    value: ConstValue::Null,
+                },
+            );
+            return Ok(TranslatedExpression {
+                expression: node,
+                ty,
+            });
+        }
         if allow_implicit_conversion && Conversions::new(self.ts).implicit(&rr, target).is_valid() {
             return Ok(e);
         }
-        // The cast, with the resolve result of `ResolveCast`, and an unchecked annotation for
-        // an integer target.
+        // The cast, with the resolve result of `ResolveCast`, and a checked or unchecked
+        // annotation for an integer target.
         if matches!(self.ast.node(e.expression), AstNode::Base) {
             return Err("a cast of base".to_owned());
         }
-        if matches!(rr, ResolveResult::Constant { .. })
+        let overflow = if !target_ustack.is_integer() {
+            Overflow::None
+        } else if check {
+            Overflow::Checked
+        } else if matches!(rr, ResolveResult::Constant { .. })
             && matches!(self.ts.kind(target_utype), TypeKind::NInt | TypeKind::NUInt)
         {
-            return Err("a constant cast to a native integer".to_owned());
-        }
+            // An unchecked cast of a constant that may overflow needs an explicit unchecked
+            // block; the implicitly unchecked context is not enough for constants.
+            Overflow::ExplicitUnchecked
+        } else {
+            Overflow::Unchecked
+        };
         let c = self.ast.add(AstNode::Cast {
             ty: target,
             expression: e.expression,
-            unchecked: target_ustack.is_integer(),
+            overflow,
         });
         self.ast.with_rr(c, Rr::Conversion { ty: target });
         Ok(TranslatedExpression {
@@ -461,11 +578,77 @@ impl Builder<'_, '_, '_, '_> {
         })
     }
 
-    /// `CSharpResolver.ResolveCast(targetType, expression)` as far as `ConvertTo` reads it.
+    /// The special cases of `ConvertTo` for `IntPtr` and `UIntPtr`: the intermediate type a
+    /// conversion from or to them goes through, and whether the conversion from there may be
+    /// implicit; `None` where a direct cast works.
+    fn native_integer_conversion_via(
+        &mut self,
+        ty: TypeId,
+        utype: TypeId,
+        target: TypeId,
+        target_utype: TypeId,
+        check: bool,
+    ) -> Option<(TypeId, bool)> {
+        let native = self.settings.native_integers;
+        let target_kind = self.ts.kind(target);
+        let kind = self.ts.kind(ty);
+        let pointer = self.ts.known_type(KnownTypeCode::Void);
+        let void_pointer = self.ts.intern(TypeData::Pointer(pointer));
+        for &(ptr, int, int32, unsigned) in &NATIVE_INTEGERS {
+            let (special, native_kind) = native_integer(unsigned);
+            // From IntPtr, a cast works for long and nint (and int in checked contexts), for
+            // pointers and references; the others go through long or nint.
+            if self.ts.is_known(ty, ptr) {
+                if self.ts.is_known(target, int)
+                    || target_kind == native_kind
+                    || (check && self.ts.is_known(target, int32))
+                    || target_kind.is_any_pointer()
+                    || target_kind == TypeKind::ByReference
+                {
+                    break;
+                }
+                let via = if native {
+                    self.ts.intern(special)
+                } else {
+                    self.ts.known_type(int)
+                };
+                return Some((via, true));
+            }
+        }
+        for &(ptr, int, int32, unsigned) in &NATIVE_INTEGERS {
+            let (special, native_kind) = native_integer(unsigned);
+            if !self.ts.is_known(target_utype, ptr) || !self.ts.stack_type(utype).is_integer() {
+                continue;
+            }
+            // To IntPtr, a cast works for int and nint; a pointer works for UIntPtr, and for
+            // IntPtr in unchecked contexts only.
+            if self.ts.is_known(ty, int32)
+                || kind == native_kind
+                || (unsigned && kind.is_any_pointer())
+            {
+                return None;
+            }
+            if native {
+                return Some((self.ts.intern(special), true));
+            }
+            if check {
+                // long converts in checked contexts.
+                return (!self.ts.is_known(ty, int)).then(|| (self.ts.known_type(int), false));
+            }
+            // Unchecked, only a pointer truncates to the native size without throwing in
+            // 32-bit processes.
+            return (!kind.is_any_pointer()).then_some((void_pointer, false));
+        }
+        None
+    }
+
+    /// `CSharpResolver.WithCheckForOverflow(checked).ResolveCast(targetType, expression)` as
+    /// far as `ConvertTo` reads it.
     fn resolve_cast(
         &mut self,
         target: TypeId,
         rr: &ResolveResult,
+        checked: bool,
     ) -> Result<CastResult, Unsupported> {
         let ResolveResult::Constant { value, .. } = rr else {
             // A `ConversionResolveResult`, which is an error without an explicit conversion.
@@ -487,9 +670,10 @@ impl Builder<'_, '_, '_, '_> {
             if matches!(value, ConstValue::String(_)) {
                 return Ok(CastResult::Error);
             }
-            return primitive_cast(code, value).map(|v| match v {
-                Some(v) => CastResult::Constant(v),
-                None => CastResult::Error,
+            return Ok(match primitive_cast(code, value)? {
+                Some(v) if !checked || fits_unchanged(value, &v)? => CastResult::Constant(v),
+                // `CSharpPrimitiveCast` throws where a checked cast changes the value.
+                _ => CastResult::Error,
             });
         }
         if code == code::STRING {
@@ -498,10 +682,24 @@ impl Builder<'_, '_, '_, '_> {
                 _ => CastResult::Error,
             });
         }
+        // A native integer constant is the value as `int` or `uint` where it fits; a larger
+        // value converts at run time.
         if matches!(self.ts.kind(underlying), TypeKind::NInt | TypeKind::NUInt)
             && !matches!(value, ConstValue::Null)
         {
-            return Err("a constant converted to a native integer".to_owned());
+            if matches!(value, ConstValue::String(_)) {
+                return Ok(CastResult::Error);
+            }
+            let int = if self.ts.kind(underlying) == TypeKind::NInt {
+                9
+            } else {
+                10
+            };
+            return Ok(match primitive_cast(int, value)? {
+                Some(v) if fits_unchanged(value, &v)? => CastResult::Constant(v),
+                Some(_) => CastResult::Conversion,
+                None => CastResult::Error,
+            });
         }
         Ok(CastResult::Conversion)
     }
@@ -681,18 +879,9 @@ impl Builder<'_, '_, '_, '_> {
             ty,
             value: value.clone(),
         };
-        let CastResult::Constant(result) = self.resolve_cast(target, &rr)? else {
+        let CastResult::Constant(result) = self.resolve_cast(target, &rr, checked)? else {
             return Ok(None);
         };
-        if checked {
-            // `CSharpPrimitiveCast` in a checked context throws where the value changes.
-            match (integral_value(value), integral_value(&result)) {
-                (Some(a), Some(b)) if a == b => {}
-                (Some(_), Some(_)) => return Ok(None),
-                _ if result == *value => {}
-                _ => return Err("a checked constant cast of a non-integral value".to_owned()),
-            }
-        }
         Ok(Some(result))
     }
 
@@ -708,6 +897,16 @@ impl Builder<'_, '_, '_, '_> {
             Some(code) => self.ts.known_type(code),
             None => t,
         }
+    }
+}
+
+/// Whether a checked `CSharpPrimitiveCast` of `value` that gave `result` keeps the value (else
+/// it throws an `OverflowException`).
+fn fits_unchanged(value: &ConstValue, result: &ConstValue) -> Result<bool, Unsupported> {
+    match (integral_value(value), integral_value(result)) {
+        (Some(a), Some(b)) => Ok(a == b),
+        _ if result == value => Ok(true),
+        _ => Err("a checked constant cast of a non-integral value".to_owned()),
     }
 }
 
@@ -773,4 +972,32 @@ pub(crate) fn primitive_cast(
         }),
         _ => return Err("a constant cast to decimal".to_owned()),
     }))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{fits_unchanged, primitive_cast};
+    use crate::typesystem::members::ConstValue;
+
+    /// The constant `nint` and checked casts take: the value as `int` (9) or `uint` (10)
+    /// where it is unchanged, else no constant.
+    fn native_constant(code: u8, value: ConstValue) -> Option<ConstValue> {
+        let v = primitive_cast(code, &value).unwrap()?;
+        fits_unchanged(&value, &v).unwrap().then_some(v)
+    }
+
+    #[test]
+    fn native_integer_constants_are_the_values_that_fit_32_bits() {
+        assert_eq!(
+            native_constant(9, ConstValue::Int64(-5)),
+            Some(ConstValue::Int32(-5))
+        );
+        assert_eq!(native_constant(9, ConstValue::Int64(1 << 40)), None);
+        assert_eq!(native_constant(10, ConstValue::Int32(-1)), None);
+        assert_eq!(
+            native_constant(10, ConstValue::Char(65)),
+            Some(ConstValue::UInt32(65))
+        );
+        assert_eq!(native_constant(9, ConstValue::Boolean(true)), None);
+    }
 }

@@ -4983,6 +4983,22 @@ ratchet corpus decompiles with default settings and one compiler, while the matr
 (sorted attributes alone: 350 tests). The gaps are items 85a and on; when the matrix runs green the
 switch merges into `ILSPY_RUST_STRICT`, which the test projects already set (item 66).
 
+### 3.224 Native integers in bodies (item 85c)
+
+The engine's `VisitConv`, `ConvertTo`, box, binary operators, comparisons, shifts, `~`, array
+indices, compound assignments and `IntPtr` constructors take `IntPtr`, `UIntPtr`, `nint` and
+`nuint` as the managed builder does: the conversions through `long`, `nint` or `void*` that
+`ConvertTo` writes for `IntPtr`, the zero constant cast to a pointer as `null`, and the native
+integer rules of `BinaryNumericPromotion` (between `int` and `long`, a pure function with unit
+tests). The `IntPtr` rules of `ConvertTo` depend on the overflow check, so checked conversions came
+along: a cast node carries its `AddCheckedBlocks` annotation (none, checked, unchecked, or
+explicitly unchecked for a constant cast to a native integer), and the host resolves a checked
+cast checked. Two shared helpers were wrong for native integers and are fixed for all callers:
+`FindType(I)` is `nint` with native integers, and the subtraction from zero that is a negation
+matches `MatchLdcI(0)`, which sees through `conv.i`. The decompiler suite under the strict switch
+no longer reports the item's reasons; what stays of the area is pointer and reference work
+(pointer arithmetic, `Unsafe.As` and `Unsafe.AsPointer` for references, the negation itself).
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

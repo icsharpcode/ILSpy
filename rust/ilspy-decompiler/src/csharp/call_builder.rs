@@ -15,14 +15,15 @@ use crate::semantics::{
     TypeInferenceAlgorithm,
 };
 use crate::typesystem::attrs::ACC_PROTECTED;
-use crate::typesystem::compilation::TypeDefId;
+use crate::typesystem::compilation::{ModuleId, TypeDefId};
 use crate::typesystem::fnptr::Normalization;
 use crate::typesystem::known::KnownTypeCode;
 use crate::typesystem::members::{ConstValue, RefKind};
+use crate::typesystem::options;
 use crate::typesystem::resolve::MethodOrigin;
 use crate::typesystem::types::{TypeData, TypeId};
 
-use super::ast::{AstId, AstNode, Rr};
+use super::ast::{AstId, AstNode, Overflow, Rr};
 use super::{Builder, TranslatedExpression, Unsupported};
 
 /// `MethodSemanticsAttributes.Setter` and `Getter`.
@@ -382,7 +383,7 @@ impl Builder<'_, '_, '_, '_> {
                     let c = self.ast.add(AstNode::Cast {
                         ty,
                         expression: e.expression,
-                        unchecked: false,
+                        overflow: Overflow::None,
                     });
                     // The cast is the call's expression, the interpolated string inside it is not.
                     self.ast.annotations_mut(e.expression).il.clear();
@@ -691,7 +692,7 @@ impl Builder<'_, '_, '_, '_> {
         let c = self.ast.add(AstNode::Cast {
             ty: target,
             expression: argument.expression,
-            unchecked: false,
+            overflow: Overflow::None,
         });
         self.ast.with_rr(c, Rr::ImplicitConversion { ty: target });
         self.ast.with_il(c, inst);
@@ -1221,8 +1222,7 @@ impl Builder<'_, '_, '_, '_> {
             Method::from_resolved(self.ts, resolved).ok_or("a call of an unresolved method")?;
         let declaring = method.declaring.ok_or("a method without declaring type")?;
         // The forms `VisitNewObj` and `CallBuilder.Build` write with syntax of their own:
-        // stackalloc spans, delegates, tuples, ranges and anonymous types; and the native
-        // integer the constructor of IntPtr or UIntPtr may create.
+        // stackalloc spans, delegates, tuples, ranges and anonymous types.
         let ts = &*self.ts;
         let name = ts
             .definition(declaring)
@@ -1239,10 +1239,6 @@ impl Builder<'_, '_, '_, '_> {
             || ts.is_known(declaring, KnownTypeCode::Index)
         {
             Some("a range or index")
-        } else if ts.is_known(declaring, KnownTypeCode::IntPtr)
-            || ts.is_known(declaring, KnownTypeCode::UIntPtr)
-        {
-            Some("a native integer")
         } else {
             match name.as_ref() {
                 None => Some("an unnamed type"),
@@ -1297,19 +1293,27 @@ impl Builder<'_, '_, '_, '_> {
             arguments,
             initializer: None,
         });
+        // Where native integers need no attribute, a created IntPtr or UIntPtr is nint or
+        // nuint (the host overrides the return type alike), so that later conversions are
+        // those of native integers.
+        let native = self.ts.options(ModuleId(0)) & options::NATIVE_INTEGERS_WITHOUT_ATTRIBUTE != 0;
+        let ty = if native && self.ts.is_known(declaring, KnownTypeCode::IntPtr) {
+            self.ts.intern(TypeData::NInt)
+        } else if native && self.ts.is_known(declaring, KnownTypeCode::UIntPtr) {
+            self.ts.intern(TypeData::NUInt)
+        } else {
+            declaring
+        };
         self.ast.with_rr(
             e,
             Rr::ObjectCreation {
                 method: Box::new(operand.clone()),
-                ty: declaring,
+                ty,
                 expanded: list.is_expanded_form,
             },
         );
         self.ast.with_il(e, inst);
-        Ok(TranslatedExpression {
-            expression: e,
-            ty: declaring,
-        })
+        Ok(TranslatedExpression { expression: e, ty })
     }
 
     /// `Disambiguator.ForConstructorCall`: drop the names of bool literals, then cast the

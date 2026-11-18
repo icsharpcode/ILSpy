@@ -191,19 +191,17 @@ impl Builder<'_, '_, '_, '_> {
             }
             // `VisitBox`: `(object)arg`, its boxing conversion resolved by the host's `ResolveCast`.
             Inst::Box { arg, ty } => {
-                let target = ty.ty;
-                if self.ts.is_known(target, KnownTypeCode::IntPtr)
-                    || self.ts.is_known(target, KnownTypeCode::UIntPtr)
-                {
-                    return Err("a box of a native integer".to_owned());
-                }
+                let mut target = ty.ty;
                 let a = self.translate(arg, Some(target))?;
+                if a.ty != target {
+                    target = self.prefer_native_integer_type(target);
+                }
                 let a = self.convert_to(a, target, false)?;
                 let object = self.ts.known_type(KnownTypeCode::Object);
                 let c = self.ast.add(AstNode::Cast {
                     ty: object,
                     expression: a.expression,
-                    unchecked: false,
+                    overflow: Overflow::None,
                 });
                 self.ast.with_il(c, inst);
                 self.ast.with_rr(c, Rr::Conversion { ty: object });
@@ -288,7 +286,7 @@ impl Builder<'_, '_, '_, '_> {
                     let c = self.ast.add(AstNode::Cast {
                         ty: target,
                         expression: v.expression,
-                        unchecked: false,
+                        overflow: Overflow::None,
                     });
                     self.ast.with_rr(c, Rr::Conversion { ty: target });
                     v = TranslatedExpression {
@@ -583,13 +581,12 @@ impl Builder<'_, '_, '_, '_> {
             return Err("a ~ of a nullable value".to_owned());
         }
         let stack = self.ts.stack_type(a.ty);
-        if stack == StackType::I || result_stack == StackType::I {
-            return Err("a ~ of a native integer".to_owned());
-        }
         let small = self.ts.type_size(a.ty) > 0 && self.ts.type_size(a.ty) < 4;
         let enum_type = self.ts.kind(a.ty) == TypeKind::Enum;
+        // IntPtr, bool and char have no `~`.
         if stack_size(stack) < stack_size(result_stack)
             || (enum_type && small)
+            || (stack == StackType::I && !self.is_native_integer(a.ty))
             || self.ts.is_known(a.ty, KnownTypeCode::Boolean)
             || self.ts.is_known(a.ty, KnownTypeCode::Char)
         {
@@ -597,11 +594,11 @@ impl Builder<'_, '_, '_, '_> {
             if sign == Sign::None {
                 sign = self.ts.type_sign(a.ty);
             }
-            let target = self.find_integer_type(result_stack, sign)?;
+            let target = self.find_arithmetic_type(result_stack, sign)?;
             a = self.convert_to(a, target, false)?;
         }
-        // The type of the predefined `~`: an enum's own, `int` for the small integers.
-        let ty = if self.ts.kind(a.ty) == TypeKind::Enum {
+        // The type of `~`: an enum's or native integer's own, `int` for the small integers.
+        let ty = if self.ts.kind(a.ty) == TypeKind::Enum || self.is_native_integer(a.ty) {
             a.ty
         } else {
             match self.ts.type_code(a.ty) {
@@ -867,12 +864,7 @@ impl Builder<'_, '_, '_, '_> {
         left: NodeId,
         right: NodeId,
     ) -> Result<TranslatedExpression, Unsupported> {
-        let is_zero = |b: &Self, n: NodeId| {
-            matches!(
-                *b.f.inst(n),
-                Inst::LdcI4 { value: 0 } | Inst::LdcI8 { value: 0 }
-            )
-        };
+        let is_zero = |b: &Self, n: NodeId| b.f.match_ldc_i(n) == Some(0);
         if (self.ts.kind(l.ty) == TypeKind::Pointer && is_zero(self, right))
             || (self.ts.kind(r.ty) == TypeKind::Pointer && is_zero(self, left))
         {
@@ -977,6 +969,11 @@ impl Builder<'_, '_, '_, '_> {
     ) -> TypeId {
         let lu = self.ts.nullable_underlying(l.ty);
         let ru = self.ts.nullable_underlying(r.ty);
+        if (self.is_native_integer(l.ty) || self.is_native_integer(r.ty))
+            && let Ok(Some(p)) = self.native_integer_promotion(l, r)
+        {
+            return p;
+        }
         let (lc, rc) = (self.ts.type_code(lu), self.ts.type_code(ru));
         if self.ts.kind(lu) != TypeKind::Enum
             && self.ts.kind(ru) != TypeKind::Enum
@@ -1016,6 +1013,40 @@ impl Builder<'_, '_, '_, '_> {
             }
             _ => None,
         }
+    }
+
+    /// Whether an operand is `nint` or `nuint`.
+    fn is_native_integer(&self, t: TypeId) -> bool {
+        matches!(self.ts.kind(t), TypeKind::NInt | TypeKind::NUInt)
+    }
+
+    /// `BinaryNumericPromotion` and the native integer operators of `ResolveBinaryOperator`
+    /// for operands of which one is `nint` or `nuint` (which promote between `int` and
+    /// `long`): the operands' type, `None` where no operator applies (mixed signs with an
+    /// unsigned operand, or a native integer next to a type it does not promote with).
+    fn native_integer_promotion(
+        &mut self,
+        l: &TranslatedExpression,
+        r: &TranslatedExpression,
+    ) -> Result<Option<TypeId>, Unsupported> {
+        let operand = |b: &Self, e: &TranslatedExpression| {
+            let kind = b.ts.kind(e.ty);
+            let nonnegative_constant = matches!(b.rr_of(e.expression), Rr::Constant { value, .. }
+                if super::translated_expression::integral_value(&value).is_some_and(|v| v >= 0));
+            PromotionOperand {
+                code: b.ts.type_code(e.ty),
+                native: matches!(kind, TypeKind::NInt | TypeKind::NUInt).then_some(kind),
+                nonnegative_constant,
+            }
+        };
+        let (lo, ro) = (operand(self, l), operand(self, r));
+        Ok(match native_promotion(lo, ro, l.ty == r.ty)? {
+            None => None,
+            Some(NativePromotion::Operands) => Some(l.ty),
+            Some(NativePromotion::Known(code)) => Some(self.ts.known_type(code)),
+            Some(NativePromotion::NInt) => Some(self.ts.intern(TypeData::NInt)),
+            Some(NativePromotion::NUInt) => Some(self.ts.intern(TypeData::NUInt)),
+        })
     }
 
     /// The type code of a binary operator's operands, `BinaryNumericPromotion` with the implicit
@@ -1186,9 +1217,6 @@ impl Builder<'_, '_, '_, '_> {
         for t in [lt, rt] {
             match self.ts.kind(t) {
                 TypeKind::Dynamic => return Err("a dynamic comparison".to_owned()),
-                TypeKind::TypeParameter | TypeKind::NInt | TypeKind::NUInt => {
-                    return Err("a comparison of a type parameter or native integer".to_owned());
-                }
                 TypeKind::Pointer | TypeKind::FunctionPointer => {
                     return Err("a pointer comparison".to_owned());
                 }
@@ -1278,6 +1306,12 @@ impl Builder<'_, '_, '_, '_> {
             let zero = matches!(self.rr_of(other.expression), Rr::Constant { value, .. }
                 if super::translated_expression::integral_value(&value) == Some(0));
             return Ok(zero.then_some(true));
+        }
+        // The native integer operator of the promoted type, which both operands convert to.
+        if self.is_native_integer(lt) || self.is_native_integer(rt) {
+            return Ok(self
+                .native_integer_promotion(l, r)?
+                .map(|p| !(lt == p && rt == p)));
         }
         let (lc, rc) = (self.ts.type_code(lt), self.ts.type_code(rt));
         if (4..=15).contains(&lc) && (4..=15).contains(&rc) {
@@ -1708,11 +1742,7 @@ impl Builder<'_, '_, '_, '_> {
             if (k == TypeKind::Enum && !same_enum)
                 || matches!(
                     k,
-                    TypeKind::Pointer
-                        | TypeKind::Dynamic
-                        | TypeKind::NInt
-                        | TypeKind::NUInt
-                        | TypeKind::TypeParameter
+                    TypeKind::Pointer | TypeKind::Dynamic | TypeKind::TypeParameter
                 )
                 || self.ts.is_known(t, KnownTypeCode::NullableOfT)
             {
@@ -1723,6 +1753,8 @@ impl Builder<'_, '_, '_, '_> {
         // a constant of another type converts implicitly in ways the promotion does not model.
         let promoted = if same_enum {
             Some(l.ty)
+        } else if self.is_native_integer(l.ty) || self.is_native_integer(r.ty) {
+            self.native_integer_promotion(&l, &r)?
         } else {
             let (lc, rc) = (self.ts.type_code(l.ty), self.ts.type_code(r.ty));
             if !(4..=14).contains(&lc) || !(4..=14).contains(&rc) {
@@ -1757,7 +1789,7 @@ impl Builder<'_, '_, '_, '_> {
             });
         } else if input.is_integer() {
             // Ensure the inputs have the correct sign.
-            let input_type = self.find_integer_type(input, sign)?;
+            let input_type = self.find_arithmetic_type(input, sign)?;
             let l = self.convert_to(l, input_type, false)?;
             let r = self.convert_to(r, input_type, false)?;
             (l, r)
@@ -1796,28 +1828,32 @@ impl Builder<'_, '_, '_, '_> {
     ) -> Result<TranslatedExpression, Unsupported> {
         let mut arg = arg;
         if stack.is_integer() && stack_size(stack) < self.ts.type_size(arg.ty) {
-            let target = self.find_integer_type(stack, sign)?;
+            let target = self.find_type(stack, sign);
             arg = self.convert_to(arg, target, false)?;
         }
+        // No operator applies to IntPtr, and pointer arithmetic counts elements, not bytes:
+        // native-sized operands are converted to nint or long.
         if self.ts.is_known(arg.ty, KnownTypeCode::IntPtr)
             || self.ts.is_known(arg.ty, KnownTypeCode::UIntPtr)
         {
-            return Err("arithmetic on IntPtr".to_owned());
+            let target = self.find_arithmetic_type(StackType::I, sign)?;
+            arg = self.convert_to(arg, target, false)?;
         }
         Ok(arg)
     }
 
-    /// `FindType(stackType, sign)` for the 32- and 64-bit integer stack types.
-    fn find_integer_type(&mut self, stack: StackType, sign: Sign) -> Result<TypeId, Unsupported> {
-        let unsigned = sign == Sign::Unsigned;
-        let code = match stack {
-            StackType::I4 if unsigned => KnownTypeCode::UInt32,
-            StackType::I4 => KnownTypeCode::Int32,
-            StackType::I8 if unsigned => KnownTypeCode::UInt64,
-            StackType::I8 => KnownTypeCode::Int64,
-            _ => return Err("arithmetic on a native integer".to_owned()),
-        };
-        Ok(self.ts.known_type(code))
+    /// `PreferNativeIntegerType`: `nint` or `nuint` for `IntPtr` or `UIntPtr` with native
+    /// integers.
+    fn prefer_native_integer_type(&mut self, t: TypeId) -> TypeId {
+        if self.settings.native_integers {
+            if self.ts.is_known(t, KnownTypeCode::IntPtr) {
+                return self.ts.intern(TypeData::NInt);
+            }
+            if self.ts.is_known(t, KnownTypeCode::UIntPtr) {
+                return self.ts.intern(TypeData::NUInt);
+            }
+        }
+        t
     }
 
     /// `HandleBinaryNumeric` for `+ - * / %` and `& | ^` on operands of the same type from
@@ -1881,11 +1917,7 @@ impl Builder<'_, '_, '_, '_> {
             let k = self.ts.kind(self.ts.nullable_underlying(t));
             if matches!(
                 k,
-                TypeKind::Pointer
-                    | TypeKind::Dynamic
-                    | TypeKind::NInt
-                    | TypeKind::NUInt
-                    | TypeKind::TypeParameter
+                TypeKind::Pointer | TypeKind::Dynamic | TypeKind::TypeParameter
             ) || (k == TypeKind::Enum
                 && !bitwise
                 && !matches!(op, BinaryOp::Add | BinaryOp::Subtract))
@@ -1901,12 +1933,8 @@ impl Builder<'_, '_, '_, '_> {
         }
         let l = self.prepare_arithmetic_argument(l, left_input, sign)?;
         let r = self.prepare_arithmetic_argument(r, right_input, sign)?;
-        if op == BinaryOp::Subtract
-            && matches!(
-                *self.f.inst(left),
-                Inst::LdcI4 { value: 0 } | Inst::LdcI8 { value: 0 }
-            )
-        {
+        // `MatchLdcI(0)`, which sees through the extension of a native integer constant.
+        if op == BinaryOp::Subtract && self.f.match_ldc_i(left) == Some(0) {
             return Err("a negation".to_owned());
         }
         if matches!(self.rr_of(l.expression), Rr::Constant { .. })
@@ -1953,6 +1981,8 @@ impl Builder<'_, '_, '_, '_> {
             // The predefined logical operators of `bool`.
             if bitwise && lc == 3 && rc == 3 {
                 Some(l.ty)
+            } else if self.is_native_integer(l.ty) || self.is_native_integer(r.ty) {
+                self.native_integer_promotion(&l, &r)?
             } else {
                 if !(4..=14).contains(&lc) || !(4..=14).contains(&rc) {
                     return Err(format!("arithmetic on the type codes {lc} and {rc}"));
@@ -1988,7 +2018,7 @@ impl Builder<'_, '_, '_, '_> {
             let target = match result_stack {
                 StackType::F4 => self.ts.known_type(KnownTypeCode::Single),
                 StackType::F8 => self.ts.known_type(KnownTypeCode::Double),
-                _ => self.find_integer_type(result_stack, s)?,
+                _ => self.find_arithmetic_type(result_stack, s)?,
             };
             let l = self.convert_to(l, target, false)?;
             let r = self.convert_to(r, target, false)?;
@@ -2094,9 +2124,8 @@ impl Builder<'_, '_, '_, '_> {
         let target_underlying = self.ts.nullable_underlying(target.ty);
         if matches!(
             self.ts.kind(target_underlying),
-            TypeKind::Pointer | TypeKind::NInt | TypeKind::NUInt | TypeKind::Dynamic
-        ) || self.ts.stack_type(target_underlying) == StackType::I
-            || self.ts.is_known(target.ty, KnownTypeCode::NullableOfT)
+            TypeKind::Pointer | TypeKind::FunctionPointer | TypeKind::Dynamic
+        ) || self.ts.is_known(target.ty, KnownTypeCode::NullableOfT)
         {
             return Err("a compound assignment of these types".to_owned());
         }
@@ -2129,10 +2158,20 @@ impl Builder<'_, '_, '_, '_> {
         if matches!(assignment_op, 1 | 2) && self.ts.kind(value_type) == TypeKind::Enum {
             value_type = self.enum_underlying(value_type);
         }
-        let converted = self.convert_to(v, value_type, true)?;
-        if check_overflow && converted.expression != v.expression {
-            return Err("a checked conversion of a compound assignment value".to_owned());
+        // IntPtr and UIntPtr take a value cast to nint or nuint; nint and nuint convert it
+        // implicitly.
+        let mut allow_implicit_conversion = true;
+        if self.ts.stack_type(value_type) == StackType::I {
+            allow_implicit_conversion = self.is_native_integer(value_type);
+            let unsigned = self.ts.type_sign(value_type) == Sign::Unsigned;
+            value_type = self.ts.intern(if unsigned {
+                TypeData::NUInt
+            } else {
+                TypeData::NInt
+            });
         }
+        let converted =
+            self.convert_to_checked(v, value_type, check_overflow, allow_implicit_conversion)?;
         let e = self.ast.add(AstNode::CompoundAssignment {
             op: assignment_op,
             left: target.expression,
@@ -2195,7 +2234,7 @@ impl Builder<'_, '_, '_, '_> {
         let e = self.ast.add(AstNode::Cast {
             ty,
             expression: a.expression,
-            unchecked: false,
+            overflow: Overflow::None,
         });
         self.ast.with_il(e, inst);
         self.ast.with_rr(e, Rr::Conversion { ty });
@@ -2224,14 +2263,11 @@ impl Builder<'_, '_, '_, '_> {
         let r = self.translate(right, None)?;
         let mut l = self.prepare_arithmetic_argument(l, left_input, sign)?;
         let result_stack = self.f.result_type(self.ts, inst);
-        if matches!(self.ts.kind(l.ty), TypeKind::NInt | TypeKind::NUInt)
-            || result_stack == StackType::I
-            || self.ts.is_known(l.ty, KnownTypeCode::NullableOfT)
-        {
-            return Err("a shift of a native integer or nullable value".to_owned());
+        if self.ts.is_known(l.ty, KnownTypeCode::NullableOfT) {
+            return Err("a shift of a nullable value".to_owned());
         }
         let code = self.ts.type_code(l.ty);
-        let primitive_integer = (5..=12).contains(&code);
+        let primitive_integer = (5..=12).contains(&code) || self.is_native_integer(l.ty);
         let small = (5..=8).contains(&code);
         let hint_sign = type_hint.map_or(Sign::None, |t| self.ts.type_sign(t));
         let could_use_unsigned_right_shift = sign == Sign::Unsigned
@@ -2262,13 +2298,15 @@ impl Builder<'_, '_, '_, '_> {
             if s == Sign::None {
                 s = self.ts.type_sign(l.ty);
             }
-            let target = self.find_integer_type(result_stack, s)?;
+            let target = self.find_arithmetic_type(result_stack, s)?;
             l = self.convert_to(l, target, false)?;
         }
         let int = self.ts.known_type(KnownTypeCode::Int32);
         let r = self.convert_to(r, int, false)?;
-        // The type of the predefined shift: the left operand's, `int` for a small integer.
+        // The type of the predefined shift: the left operand's, `int` for a small integer;
+        // a native integer stays (with an error resolve result, as the right operand differs).
         let ty = match self.ts.type_code(l.ty) {
+            _ if self.is_native_integer(l.ty) => l.ty,
             5..=9 => int,
             10..=12 => l.ty,
             _ => return Err("a shift of these types".to_owned()),
@@ -2321,16 +2359,14 @@ impl Builder<'_, '_, '_, '_> {
         let sign = self.ts.type_sign(input.ty);
         // A truncated oversized index.
         if self.ts.type_size(input.ty) > stack_size(stack) {
-            let target = self.find_integer_type(stack, sign)?;
+            let target = self.find_type(stack, sign);
             return self.convert_to(input, target, false);
         }
-        // `IsCSharpPrimitiveIntegerType`: SByte to UInt64 other than Char, used as is.
+        // `IsCSharpPrimitiveIntegerType` (SByte to UInt64 other than Char) and native integers,
+        // used as is.
         let code = self.ts.type_code(input.ty);
-        if (5..=12).contains(&code) {
+        if (5..=12).contains(&code) || self.is_native_integer(input.ty) {
             return Ok(input);
-        }
-        if matches!(self.ts.kind(input.ty), TypeKind::NInt | TypeKind::NUInt) {
-            return Err("a native integer array index".to_owned());
         }
         // `int` is preferred where it is big enough.
         let stack = if stack != StackType::I4 && self.ts.stack_type(input.ty) == StackType::I4 {
@@ -2338,7 +2374,7 @@ impl Builder<'_, '_, '_, '_> {
         } else {
             stack
         };
-        let target = self.find_integer_type(stack, sign)?;
+        let target = self.find_arithmetic_type(stack, sign)?;
         self.convert_to(input, target, false)
     }
 
@@ -2955,7 +2991,7 @@ impl Builder<'_, '_, '_, '_> {
             let c = self.ast.add(AstNode::Cast {
                 ty,
                 expression: n,
-                unchecked: false,
+                overflow: Overflow::None,
             });
             self.ast.with_rr(c, Rr::Conversion { ty });
             return Ok(TranslatedExpression { expression: c, ty });
@@ -3032,7 +3068,7 @@ impl Builder<'_, '_, '_, '_> {
         }
     }
 
-    /// `VisitConv` without lifting, overflow checks and native integers: the argument as is
+    /// `VisitConv` without lifting: the argument as is
     /// where the parent's post-condition handles the conversion, else cast to the target.
     #[allow(clippy::too_many_arguments)]
     fn conv(
@@ -3049,51 +3085,64 @@ impl Builder<'_, '_, '_, '_> {
         if is_lifted {
             return Err("a lifted conversion".to_owned());
         }
-        if check_overflow {
-            return Err("a conversion with an overflow check".to_owned());
-        }
-        if matches!(input, StackType::I | StackType::Ref | StackType::Unknown)
-            || matches!(
-                target,
-                PrimitiveType::I
-                    | PrimitiveType::U
-                    | PrimitiveType::Ref
-                    | PrimitiveType::None
-                    | PrimitiveType::Unknown
-            )
-        {
-            return Err("a conversion from or to a native integer or reference".to_owned());
+        if target == PrimitiveType::Unknown {
+            return Err("a conversion to an unknown type".to_owned());
         }
         let hint_sign = if input_sign == Sign::None {
             self.ts.type_sign(hint)
         } else {
             input_sign
         };
-        // `FindArithmeticType(inst.InputType, hintSign)`
-        let arg_hint = match input.to_known(hint_sign) {
-            KnownTypeCode::None | KnownTypeCode::Void => {
-                return Err("a conversion of this stack type".to_owned());
-            }
-            code => self.ts.known_type(code),
-        };
+        let arg_hint = self.find_arithmetic_type(input, hint_sign)?;
         let mut a = self.translate(arg, Some(arg_hint))?;
         let input_type = self.ts.nullable_underlying(a.ty);
         let kind = crate::il::ast::conversion_kind(target, input, input_sign);
+        // `GetType`: the known type, `nint` or `nuint` rather than `IntPtr` or `UIntPtr` with
+        // native integers unless the type hint is that type.
+        let get_type = |b: &mut Self, code: KnownTypeCode| {
+            let t = b.ts.known_type(code);
+            if b.settings.native_integers && t != hint {
+                match code {
+                    KnownTypeCode::IntPtr => return b.ts.intern(TypeData::NInt),
+                    KnownTypeCode::UIntPtr => return b.ts.intern(TypeData::NUInt),
+                    _ => {}
+                }
+            }
+            t
+        };
         // The argument converted to the stack type of the given sign first.
         let to_input = |b: &mut Self, a: TranslatedExpression, sign: Sign| {
-            let t = b.ts.known_type(input.to_known(sign));
+            let t = get_type(b, input.to_known(sign));
             b.convert_to(a, t, false)
         };
         let oversized = |b: &mut Self| b.ts.type_size(input_type) > stack_size(input);
+        if check_overflow || kind == ConversionKind::IntToFloat {
+            // The argument of the expected sign, narrowed to the input stack type, so that the
+            // narrowing does not mix with the overflow check; a checked cast then has the C#
+            // semantics of the input type.
+            if oversized(self) || self.ts.type_sign(input_type) != input_sign {
+                a = to_input(self, a, input_sign)?;
+            }
+            let t = get_type(self, target.to_known());
+            let c = self.convert_to_checked(a, t, check_overflow, false)?;
+            self.ast.with_il(c.expression, inst);
+            return Ok(c);
+        }
         match kind {
-            ConversionKind::IntToFloat => {
-                if oversized(self) || self.ts.type_sign(input_type) != input_sign {
-                    a = to_input(self, a, input_sign)?;
+            ConversionKind::StartGCTracking => return Ok(a),
+            ConversionKind::StopGCTracking => {
+                if self.ts.kind(input_type) == TypeKind::ByReference {
+                    return Err("a conversion of a reference to a pointer".to_owned());
+                }
+                // Tracking stops for an integer it has just started for.
+                if self.ts.stack_type(a.ty).is_integer() {
+                    return Ok(a);
                 }
             }
-            ConversionKind::StartGCTracking => return Ok(a),
             ConversionKind::SignExtend => {
-                if self.ts.type_sign(input_type) != Sign::Signed || oversized(self) {
+                if self.ts.type_sign(input_type) != Sign::Signed
+                    || self.value_might_be_oversized(a.expression, input_type, input)
+                {
                     a = to_input(self, a, Sign::Signed)?;
                 }
                 self.ast.with_il(a.expression, inst);
@@ -3118,20 +3167,88 @@ impl Builder<'_, '_, '_, '_> {
                 self.ast.with_il(a.expression, inst);
                 return Ok(a);
             }
-            ConversionKind::Truncate
-            | ConversionKind::FloatToInt
-            | ConversionKind::FloatPrecisionChange => {}
-            _ => return Err("a conversion of this kind".to_owned()),
+            // An unknown value where an object is expected stays as it is: the post-condition
+            // allows that, and a cast to object would likely be cast back.
+            ConversionKind::Invalid
+                if input == StackType::Unknown
+                    && target == PrimitiveType::None
+                    && self.ts.kind(a.ty) == TypeKind::Unknown =>
+            {
+                self.ast.with_il(a.expression, inst);
+                return Ok(a);
+            }
+            _ => {}
         }
-        // The type hint where it is the target type, else the target's known type.
+        // The type hint where it is the target type, else the target's type: a reference to
+        // byte for an unknown reference, object for an object type.
         let target_type = if !self.ts.is_nullable(hint) && self.ts.primitive_type(hint) == target {
             hint
+        } else if target == PrimitiveType::Ref {
+            let byte = self.ts.known_type(KnownTypeCode::Byte);
+            self.ts.intern(TypeData::ByRef(byte))
+        } else if target == PrimitiveType::None {
+            self.ts.known_type(KnownTypeCode::Object)
         } else {
-            self.ts.known_type(target.to_known())
+            get_type(self, target.to_known())
         };
         let c = self.convert_to(a, target_type, false)?;
         self.ast.with_il(c.expression, inst);
         Ok(c)
+    }
+
+    /// `FindArithmeticType`: the type of the stack type and sign, `nint` or `nuint` for native
+    /// integers (64-bit integers without them).
+    fn find_arithmetic_type(
+        &mut self,
+        stack: StackType,
+        sign: Sign,
+    ) -> Result<TypeId, Unsupported> {
+        let unsigned = sign == Sign::Unsigned;
+        Ok(match stack {
+            StackType::I if self.settings.native_integers => self.ts.intern(if unsigned {
+                TypeData::NUInt
+            } else {
+                TypeData::NInt
+            }),
+            StackType::I => self.ts.known_type(StackType::I8.to_known(sign)),
+            StackType::Unknown => self.ts.intern(TypeData::UnknownSpecial),
+            StackType::Ref => {
+                let byte = self.ts.known_type(KnownTypeCode::Byte);
+                self.ts.intern(TypeData::ByRef(byte))
+            }
+            _ => match stack.to_known(sign) {
+                KnownTypeCode::None | KnownTypeCode::Void => {
+                    return Err("a conversion of this stack type".to_owned());
+                }
+                code => self.ts.known_type(code),
+            },
+        })
+    }
+
+    /// `ValueMightBeOversized`: whether a value of `ty` may not fit the stack type; a pointer
+    /// difference (of type long) always fits a native integer.
+    fn value_might_be_oversized(&mut self, e: AstId, ty: TypeId, stack: StackType) -> bool {
+        if self.ts.type_size(ty) <= stack_size(stack) {
+            return false;
+        }
+        if stack == StackType::I
+            && let AstNode::BinaryOperator {
+                op: BinaryOp::Subtract,
+                left,
+                right,
+                ..
+            } = *self.ast.node(e)
+        {
+            let pointer = |b: &mut Self, operand: AstId| {
+                let rr = b.rr_of(operand);
+                let t = b.rr_type(&rr);
+                b.ts.kind(t) == TypeKind::Pointer
+            };
+            if pointer(self, left) && pointer(self, right) {
+                return false;
+            }
+        }
+        true
     }
 }
 
@@ -3142,6 +3259,80 @@ fn stack_size(stack: StackType) -> i32 {
         StackType::I8 => 8,
         _ => crate::il::types::NATIVE_INT_SIZE,
     }
+}
+
+/// An operand of `BinaryNumericPromotion` next to a native integer: its type code (0 for
+/// `nint` and `nuint`), which native integer it is, and whether it is a non-negative `int` or
+/// `long` constant (which converts to the unsigned types).
+#[derive(Clone, Copy)]
+struct PromotionOperand {
+    code: u8,
+    native: Option<TypeKind>,
+    nonnegative_constant: bool,
+}
+
+/// The type `native_promotion` promotes both operands to.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum NativePromotion {
+    /// The operands' own type, which they share.
+    Operands,
+    Known(KnownTypeCode),
+    NInt,
+    NUInt,
+}
+
+/// `BinaryNumericPromotion` and the native integer operators of `ResolveBinaryOperator` where
+/// an operand is `nint` or `nuint`, which promote between `int` and `long` (as `int` and
+/// `uint`): `None` where no operator applies (an unsigned 64-bit or native operand with a
+/// signed one, or a native integer next to another type it does not promote with).
+fn native_promotion(
+    l: PromotionOperand,
+    r: PromotionOperand,
+    same_type: bool,
+) -> Result<Option<NativePromotion>, Unsupported> {
+    const INT32: u8 = 9;
+    const UINT32: u8 = 10;
+    const INT64: u8 = 11;
+    const UINT64: u8 = 12;
+    let code = |o: PromotionOperand| match o.native {
+        Some(TypeKind::NInt) => INT32,
+        Some(_) => UINT32,
+        None => o.code,
+    };
+    let (lc, rc) = (code(l), code(r));
+    // `IsSigned`: a non-negative int or long constant counts as unsigned, an nint never.
+    let signed = |o: PromotionOperand, c: u8| match c {
+        5 | 7 => true,
+        INT32 | INT64 => o.native.is_some() || !o.nonnegative_constant,
+        _ => false,
+    };
+    let any_signed = signed(l, lc) || signed(r, rc);
+    let either = |c: u8| lc == c || rc == c;
+    let nuint = l.native == Some(TypeKind::NUInt) || r.native == Some(TypeKind::NUInt);
+    Ok(if !(4..=15).contains(&lc) || !(4..=15).contains(&rc) {
+        // No promotion: the native operator applies only to two operands of one type.
+        same_type.then_some(NativePromotion::Operands)
+    } else if either(15) {
+        return Err("a decimal operation with a native integer".to_owned());
+    } else if either(14) {
+        Some(NativePromotion::Known(KnownTypeCode::Double))
+    } else if either(13) {
+        Some(NativePromotion::Known(KnownTypeCode::Single))
+    } else if either(UINT64) {
+        (!any_signed).then_some(NativePromotion::Known(KnownTypeCode::UInt64))
+    } else if nuint {
+        (!any_signed).then_some(NativePromotion::NUInt)
+    } else if either(UINT32) {
+        Some(NativePromotion::Known(if any_signed {
+            KnownTypeCode::Int64
+        } else {
+            KnownTypeCode::UInt32
+        }))
+    } else if either(INT64) {
+        Some(NativePromotion::Known(KnownTypeCode::Int64))
+    } else {
+        Some(NativePromotion::NInt)
+    })
 }
 
 /// `BinaryNumericPromotion` for `==` and `!=` over two numeric type codes (`Char` to `Decimal`):
@@ -3194,5 +3385,64 @@ fn known_of_type_code(code: u8) -> KnownTypeCode {
         12 => KnownTypeCode::UInt64,
         13 => KnownTypeCode::Single,
         _ => KnownTypeCode::Double,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{NativePromotion, PromotionOperand, native_promotion};
+    use crate::semantics::types::TypeKind;
+    use crate::typesystem::known::KnownTypeCode;
+
+    const NINT: PromotionOperand = PromotionOperand {
+        code: 0,
+        native: Some(TypeKind::NInt),
+        nonnegative_constant: false,
+    };
+    const NUINT: PromotionOperand = PromotionOperand {
+        code: 0,
+        native: Some(TypeKind::NUInt),
+        nonnegative_constant: false,
+    };
+
+    fn of(code: u8) -> PromotionOperand {
+        PromotionOperand {
+            code,
+            native: None,
+            nonnegative_constant: false,
+        }
+    }
+
+    fn promote(l: PromotionOperand, r: PromotionOperand) -> Option<NativePromotion> {
+        native_promotion(l, r, false).unwrap()
+    }
+
+    #[test]
+    fn native_integers_promote_between_int_and_long() {
+        use NativePromotion::*;
+        // int and smaller go to nint; long and floating point win; uint with nint is long.
+        assert_eq!(promote(NINT, of(9)), Some(NInt));
+        assert_eq!(promote(of(5), NINT), Some(NInt));
+        assert_eq!(promote(NINT, of(11)), Some(Known(KnownTypeCode::Int64)));
+        assert_eq!(promote(NINT, of(10)), Some(Known(KnownTypeCode::Int64)));
+        assert_eq!(promote(NINT, of(14)), Some(Known(KnownTypeCode::Double)));
+        assert_eq!(promote(NUINT, of(13)), Some(Known(KnownTypeCode::Single)));
+        // nuint takes unsigned operands and non-negative constants only.
+        assert_eq!(promote(NUINT, of(10)), Some(NUInt));
+        assert_eq!(promote(NUINT, of(9)), None);
+        let constant = PromotionOperand {
+            nonnegative_constant: true,
+            ..of(9)
+        };
+        assert_eq!(promote(NUINT, constant), Some(NUInt));
+        assert_eq!(promote(NUINT, NINT), None);
+        assert_eq!(promote(NINT, of(12)), None);
+        // No promotion with bool: only an operand of the same type has an operator.
+        assert_eq!(promote(NINT, of(3)), None);
+        assert_eq!(
+            native_promotion(NINT, NINT, true).unwrap(),
+            Some(NativePromotion::NInt)
+        );
+        assert!(native_promotion(NINT, of(15), false).is_err());
     }
 }
