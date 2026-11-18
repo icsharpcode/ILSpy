@@ -10,6 +10,7 @@ pub mod fix_name_collisions;
 pub mod introduce_query_expressions;
 pub mod introduce_unsafe_modifier;
 pub mod introduce_using_declarations;
+pub mod normalize_block_statements;
 pub mod pattern_statement_transform;
 pub mod prettify_assignments;
 pub mod rename_visual_basic_anonymous_types;
