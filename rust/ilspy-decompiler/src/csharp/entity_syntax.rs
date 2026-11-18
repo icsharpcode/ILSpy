@@ -2,8 +2,11 @@
 //! (`ShowAttributes`, `AlwaysUseShortTypeNames`, `AddResolveResultAnnotations`): the declaration
 //! syntax of a member, without its body.
 
+use std::cmp::Ordering;
+
 use crate::metadata::tables::{TableId, rows};
 use crate::typesystem::attributes::Attribute;
+use crate::typesystem::attrvalue::{ArgValue, NamedArg};
 use crate::typesystem::compilation::{ModuleId, TypeKind};
 use crate::typesystem::resolve::MethodOrigin;
 use crate::typesystem::types::{TypeData, TypeId, TypeSystem};
@@ -176,16 +179,118 @@ pub fn convert_attributes(
     attributes: &[Attribute],
     options: EntityOptions,
 ) -> Result<Vec<AttributeSyntax>, Unsupported> {
-    // shortcut: `SortCustomAttributes` compares argument values with `IComparable`, culture
-    // dependent for strings; sorted attribute lists stay with the host.
+    let mut sorted: Vec<&Attribute> = attributes.iter().collect();
     if options.sort_attributes && attributes.len() > 1 {
-        return Err("sorted attributes".to_owned());
+        sort_attributes(&mut sorted, &|t| ts.full_name(t))?;
     }
     let mut result = Vec::with_capacity(attributes.len());
-    for a in attributes {
+    for a in sorted {
         result.push(convert_attribute(ts, a)?);
     }
     Ok(result)
+}
+
+/// `ConvertAttributes` with `SortAttributes`: `OrderBy` with `CompareAttribute`, a stable sort
+/// like `sort_by`.
+fn sort_attributes(
+    attributes: &mut [&Attribute],
+    full_name: &dyn Fn(TypeId) -> String,
+) -> Result<(), Unsupported> {
+    let mut error = None;
+    attributes.sort_by(|a, b| {
+        compare_attributes(a, b, full_name).unwrap_or_else(|e| {
+            error.get_or_insert(e);
+            Ordering::Equal
+        })
+    });
+    error.map_or(Ok(()), Err)
+}
+
+/// `CompareAttribute`: by type full name, then decode errors first, then the fixed and the
+/// named arguments.
+fn compare_attributes(
+    a: &Attribute,
+    b: &Attribute,
+    full_name: &dyn Fn(TypeId) -> String,
+) -> Result<Ordering, Unsupported> {
+    // `string.CompareOrdinal`, by UTF-16 code units.
+    let ordinal = |x: &str, y: &str| x.encode_utf16().cmp(y.encode_utf16());
+    let ty = |x: TypeId, y: TypeId| ordinal(&full_name(x), &full_name(y));
+    let result = ty(a.ty, b.ty);
+    if result.is_ne() {
+        return Ok(result);
+    }
+    match (a.has_decode_errors, b.has_decode_errors) {
+        (true, true) => return Ok(Ordering::Equal),
+        (true, false) => return Ok(Ordering::Less),
+        (false, true) => return Ok(Ordering::Greater),
+        (false, false) => {}
+    }
+    let result = a.fixed.len().cmp(&b.fixed.len());
+    if result.is_ne() {
+        return Ok(result);
+    }
+    for (x, y) in a.fixed.iter().zip(&b.fixed) {
+        let result = ty(x.ty, y.ty);
+        if result.is_ne() {
+            return Ok(result);
+        }
+        let result = compare_values(&x.value, &y.value)?;
+        if result.is_ne() {
+            return Ok(result);
+        }
+    }
+    let result = a.named.len().cmp(&b.named.len());
+    if result.is_ne() {
+        return Ok(result);
+    }
+    let name = |n: &NamedArg| n.name.clone().unwrap_or_default();
+    for (x, y) in a.named.iter().zip(&b.named) {
+        let result = ordinal(&name(x), &name(y)).then_with(|| ty(x.arg.ty, y.arg.ty));
+        if result.is_ne() {
+            return Ok(result);
+        }
+        let result = compare_values(&x.arg.value, &y.arg.value)?;
+        if result.is_ne() {
+            return Ok(result);
+        }
+    }
+    Ok(Ordering::Equal)
+}
+
+/// `IComparable.CompareTo` of two argument values of the same type; equal where either is not
+/// `IComparable` (null, a type, an array).
+fn compare_values(a: &ArgValue, b: &ArgValue) -> Result<Ordering, Unsupported> {
+    use ArgValue as V;
+    // `float.CompareTo` and `double.CompareTo`: NaN first and equal to itself, -0 equal to 0.
+    fn float(a: f64, b: f64) -> Ordering {
+        a.partial_cmp(&b)
+            .unwrap_or_else(|| b.is_nan().cmp(&a.is_nan()))
+    }
+    let single = |x: u32| f64::from(f32::from_bits(x));
+    Ok(match (a, b) {
+        (V::Null | V::Type(_) | V::Array(_), _) | (_, V::Null | V::Type(_) | V::Array(_)) => {
+            Ordering::Equal
+        }
+        (V::Bool(x), V::Bool(y)) => x.cmp(y),
+        (V::Char(x), V::Char(y)) | (V::UInt16(x), V::UInt16(y)) => x.cmp(y),
+        (V::SByte(x), V::SByte(y)) => x.cmp(y),
+        (V::Byte(x), V::Byte(y)) => x.cmp(y),
+        (V::Int16(x), V::Int16(y)) => x.cmp(y),
+        (V::Int32(x), V::Int32(y)) => x.cmp(y),
+        (V::UInt32(x), V::UInt32(y)) => x.cmp(y),
+        (V::Int64(x), V::Int64(y)) => x.cmp(y),
+        (V::UInt64(x), V::UInt64(y)) => x.cmp(y),
+        (V::Single(x), V::Single(y)) => float(single(*x), single(*y)),
+        (V::Double(x), V::Double(y)) => float(f64::from_bits(*x), f64::from_bits(*y)),
+        (V::String(x), V::String(y)) if x == y => Ordering::Equal,
+        // shortcut: `string.CompareTo` is culture dependent; attributes the sort tells apart by
+        // different strings stay with the host until the host answers the comparison.
+        (V::String(_), V::String(_)) => {
+            return Err("sorted attributes that differ in a string argument".to_owned());
+        }
+        _ => return Err("sorted attributes with arguments the engine does not compare".to_owned()),
+    })
 }
 
 /// `ConvertAttribute`.
@@ -1959,4 +2064,68 @@ pub fn convert_extension(
         receiver,
         constraints,
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::typesystem::attrvalue::TypedArg;
+
+    fn attribute(fixed: Vec<ArgValue>, has_decode_errors: bool) -> Attribute {
+        Attribute {
+            ty: TypeId::PLACEHOLDER,
+            ctor: None,
+            fixed: fixed
+                .into_iter()
+                .map(|value| TypedArg {
+                    ty: TypeId::PLACEHOLDER,
+                    value,
+                })
+                .collect(),
+            named: Vec::new(),
+            has_decode_errors,
+        }
+    }
+
+    /// The indices of `attributes` in sorted order.
+    fn sorted(attributes: &[Attribute]) -> Result<Vec<usize>, Unsupported> {
+        let mut refs: Vec<&Attribute> = attributes.iter().collect();
+        sort_attributes(&mut refs, &|_| "A".to_owned())?;
+        Ok(refs
+            .iter()
+            .map(|r| attributes.iter().position(|a| std::ptr::eq(a, *r)).unwrap())
+            .collect())
+    }
+
+    #[test]
+    fn decode_errors_then_argument_count_then_values() {
+        let attributes = [
+            attribute(vec![ArgValue::Int32(2)], false),
+            attribute(vec![ArgValue::Int32(1), ArgValue::Null], false),
+            attribute(vec![ArgValue::Int32(1)], false),
+            attribute(vec![], true),
+            attribute(vec![ArgValue::Int32(1), ArgValue::Int32(0)], false),
+        ];
+        // A null is not `IComparable`: the last two tie and keep their order.
+        assert_eq!(sorted(&attributes).unwrap(), vec![3, 2, 0, 1, 4]);
+    }
+
+    #[test]
+    fn floats_compare_like_double_compare_to() {
+        let d = |v: f64| attribute(vec![ArgValue::Double(v.to_bits())], false);
+        let attributes = [d(1.0), d(f64::NAN), d(-0.0), d(0.0)];
+        assert_eq!(sorted(&attributes).unwrap(), vec![1, 2, 3, 0]);
+    }
+
+    #[test]
+    fn different_strings_and_mixed_kinds_stay_with_the_host() {
+        let s = |t: &str| attribute(vec![ArgValue::String(t.encode_utf16().collect())], false);
+        assert_eq!(sorted(&[s("a"), s("a")]).unwrap(), vec![0, 1]);
+        assert!(sorted(&[s("b"), s("a")]).is_err());
+        let mixed = [
+            attribute(vec![ArgValue::Int32(1)], false),
+            attribute(vec![ArgValue::Double(1f64.to_bits())], false),
+        ];
+        assert!(sorted(&mixed).is_err());
+    }
 }
