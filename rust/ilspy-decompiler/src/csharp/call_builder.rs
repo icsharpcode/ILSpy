@@ -1503,9 +1503,11 @@ impl Builder<'_, '_, '_, '_> {
         let mut spent_optional = false;
         let mut spent_cast_arguments = list.arguments.is_empty();
         let mut spent_cast_target = false;
+        let mut found_type = None;
         loop {
-            let errors = self.probe_indexers(&group, target.ty, id, &list)?;
+            let (errors, found) = self.probe_indexers(&group, target.ty, id, &list)?;
             if errors == OverloadResolutionErrors::NONE {
+                found_type = found;
                 break;
             }
             // `TryRepair`, then `Escalate`
@@ -1542,7 +1544,9 @@ impl Builder<'_, '_, '_, '_> {
                 .last()
                 .map(|p| p.ty)
                 .ok_or("a setter without parameters")?,
-            None => method.return_type,
+            // The indexer found (`disambiguator.FoundMember`) is a member of the target's type,
+            // whose type arguments keep their tuple names and nullability.
+            None => found_type.unwrap_or(method.return_type),
         };
         let e = self.ast.add(AstNode::Indexer {
             target: target.expression,
@@ -1573,14 +1577,15 @@ impl Builder<'_, '_, '_, '_> {
 
     /// `IsUnambiguousAccess` for an indexer: overload resolution of the indices over the
     /// target's indexers (stand-ins of their getters, or of their setters without the value),
-    /// with `CheckBestCandidate`, the best one compared with the accessor by its property.
+    /// with `CheckBestCandidate`, the best one compared with the accessor by its property; with
+    /// the return type of the one found when it is.
     fn probe_indexers(
         &mut self,
         group: &[MethodGroupList],
         lookup_type: TypeId,
         accessor: crate::typesystem::members::MethodDefId,
         list: &ArgumentList,
-    ) -> Result<OverloadResolutionErrors, Unsupported> {
+    ) -> Result<(OverloadResolutionErrors, Option<TypeId>), Unsupported> {
         let mut lists = self.method_lists(group, Some(lookup_type));
         for l in &mut lists {
             for m in &mut l.methods {
@@ -1600,19 +1605,21 @@ impl Builder<'_, '_, '_, '_> {
         let mut conversions = Conversions::new(self.ts);
         let mut or = OverloadResolution::new(arguments, names, Vec::new());
         or.add_method_lists(&mut conversions, &lists);
+        let ambiguous = Ok((OverloadResolutionErrors::AMBIGUOUS_MATCH, None));
         let errors = or.best_candidate_errors(&mut conversions);
         if errors != OverloadResolutionErrors::NONE {
-            return Ok(errors);
+            return Ok((errors, None));
         }
         if or.is_ambiguous() {
-            return Ok(OverloadResolutionErrors::AMBIGUOUS_MATCH);
+            return ambiguous;
         }
         let Some(found) = or.best_candidate_with_substituted_type_arguments(self.ts) else {
-            return Ok(OverloadResolutionErrors::AMBIGUOUS_MATCH);
+            return ambiguous;
         };
+        let found_type = found.return_type;
         // `IsAppropriateCallTarget` of the properties; an override of it is not translated.
         let crate::semantics::MethodKey::Def(found) = found.key else {
-            return Ok(OverloadResolutionErrors::AMBIGUOUS_MATCH);
+            return ambiguous;
         };
         let found_property = self
             .ts
@@ -1622,11 +1629,11 @@ impl Builder<'_, '_, '_, '_> {
             .ts
             .accessor_owner(accessor)
             .map(|(token, _)| (accessor.module, token));
-        Ok(if found_property == property {
-            OverloadResolutionErrors::NONE
+        if found_property == property {
+            Ok((OverloadResolutionErrors::NONE, Some(found_type)))
         } else {
-            OverloadResolutionErrors::AMBIGUOUS_MATCH
-        })
+            ambiguous
+        }
     }
 
     /// `Disambiguator.ForAccessor` without arguments to cast: whether the property is written

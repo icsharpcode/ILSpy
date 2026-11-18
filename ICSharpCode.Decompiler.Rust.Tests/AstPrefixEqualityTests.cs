@@ -20,6 +20,8 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection.Metadata;
+using System.Reflection.Metadata.Ecma335;
 
 using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.Metadata;
@@ -50,6 +52,46 @@ public class AstPrefixEqualityTests
 		string managed = Decompile(path, engineBodies: false);
 		string engine = Decompile(path, engineBodies: true);
 		Assert.That(Corpus.FirstDifference(managed, engine), Is.Null);
+	}
+
+	// The throw expression keeps the deconstruction a tuple local, whose type is written out.
+	static int IndexerOfNamedTuple(Dictionary<int, (string? Function, string? Error)> map, int key, out string? function)
+	{
+		var (read, error) = map[key];
+		function = read ?? throw new InvalidOperationException(error ?? "no function");
+		return key;
+	}
+
+	/// <summary>
+	/// An indexer of a generic type returns its type argument with the tuple element names and
+	/// nullability the target's type gives it, which the stack slot holding the result takes.
+	/// </summary>
+	[Test]
+	public void IndexerResultKeepsTupleNames()
+	{
+		string path = typeof(AstPrefixEqualityTests).Assembly.Location;
+		var handle = (MethodDefinitionHandle)MetadataTokens.EntityHandle(
+			typeof(AstPrefixEqualityTests).GetMethod(nameof(IndexerOfNamedTuple), System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic)!.MetadataToken);
+		string managed = DecompileMethod(path, handle, engineBodies: false);
+		string engine = DecompileMethod(path, handle, engineBodies: true);
+		Assert.That(managed, Does.Contain("(string? Function, string? Error)"));
+		Assert.That(engine, Is.EqualTo(managed));
+	}
+
+	static string DecompileMethod(string path, MethodDefinitionHandle handle, bool engineBodies)
+	{
+		RustSeam2.Enabled = engineBodies;
+		try
+		{
+			var module = new PEFile(path, new MemoryStream(Corpus.ReadFile(path)));
+			var resolver = new UniversalAssemblyResolver(path, false, module.DetectTargetFrameworkId());
+			var decompiler = new CSharpDecompiler(module, resolver, new DecompilerSettings());
+			return decompiler.DecompileAsString(handle);
+		}
+		finally
+		{
+			RustSeam2.Enabled = true;
+		}
 	}
 
 	static string Decompile(string path, bool engineBodies)
