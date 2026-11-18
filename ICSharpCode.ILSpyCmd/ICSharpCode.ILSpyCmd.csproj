@@ -70,15 +70,13 @@
          list, so this graph gets its own throwaway lock file instead of a locked restore. -->
     <NuGetLockFilePath>$(BaseIntermediateOutputPath)packages.ridtool.lock.json</NuGetLockFilePath>
     <RestoreLockedMode>false</RestoreLockedMode>
-    <!-- Unannotated dependencies (McMaster, Mono.Cecil) produce trim and AOT analysis
+    <!-- Unannotated dependencies (Mono.Cecil) produce trim and AOT analysis
          warnings; the repo-wide TreatWarningsAsErrors must not fail the AOT compile on them. -->
     <IlcTreatWarningsAsErrors>false</IlcTreatWarningsAsErrors>
   </PropertyGroup>
 
   <ItemGroup Condition="'$(PublishAot)' == 'true'">
-    <!-- McMaster binds [Option]/[Argument] properties by reflection over the command type;
-         the BAML HandlerMap discovers IHandler implementations via Assembly.GetTypes(). -->
-    <TrimmerRootAssembly Include="ilspycmd" />
+    <!-- The BAML HandlerMap discovers IHandler implementations via Assembly.GetTypes(). -->
     <TrimmerRootAssembly Include="ICSharpCode.BamlDecompiler" />
   </ItemGroup>
 
@@ -98,8 +96,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="McMaster.Extensions.Hosting.CommandLine" />
-    <PackageReference Include="Microsoft.Extensions.Hosting" />
+    <PackageReference Include="System.CommandLine" />
     <PackageReference Include="System.Security.Cryptography.Pkcs" />
   </ItemGroup>
 
