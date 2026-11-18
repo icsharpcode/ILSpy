@@ -19,6 +19,7 @@ mod member_access;
 pub mod member_hidden;
 pub mod member_walk;
 pub mod new_modifier;
+pub mod record_member_order;
 mod statement_builder;
 mod switch;
 pub mod syntax;

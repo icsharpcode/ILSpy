@@ -329,6 +329,9 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				| (settings.AutomaticEvents ? 1u << 16 : 0u);
 		}
 
+		/// <summary>The settings <c>DecompileBodyForAnalysis</c> reads bodies with.</summary>
+		static readonly DecompilerSettings analysisSettings = new DecompilerSettings(CSharp.LanguageVersion.CSharp1);
+
 		/// <summary>
 		/// The member walk of <c>DoDecompile(ITypeDefinition)</c> for a type of the main module: its
 		/// entities in <c>allOrderedEntities</c> order with the walk's decision for each
@@ -346,8 +349,12 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 			uint flags = HiddenFlags(settings)
 				| (settings.RecordClasses ? 1u << 17 : 0u)
 				| (settings.RecordStructs ? 1u << 18 : 0u)
-				| (settings.AlwaysShowEnumMemberValues ? 1u << 19 : 0u);
-			var status = NativeMethods.ilspy_session_member_walk(session, (uint)MetadataTokens.GetToken(type.MetadataToken), flags, out var buffer);
+				| (settings.AlwaysShowEnumMemberValues ? 1u << 19 : 0u)
+				| (analysisSettings.UseRefLocalsForAccurateOrderOfEvaluation ? 1u << 20 : 0u);
+			// A record's member order reads bodies as DecompileBodyForAnalysis does, with C# 1 settings.
+			var (analysisLow, analysisHigh) = RustSettings.Bits(analysisSettings);
+			var status = NativeMethods.ilspy_session_member_walk(session, (uint)MetadataTokens.GetToken(type.MetadataToken), flags,
+				analysisLow, analysisHigh, out var buffer);
 			byte[] bytes = NativeMethods.TakeBuffer(buffer);
 			switch (status)
 			{

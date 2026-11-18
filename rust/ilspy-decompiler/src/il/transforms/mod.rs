@@ -614,6 +614,15 @@ pub const DELEGATE_CONSTRUCTION_LEAF: u32 = 48;
 /// before it.
 pub const LOCAL_FUNCTION_DECOMPILER_LEAF: u32 = 49;
 
+/// The prefix `CSharpDecompiler.DecompileBodyForAnalysis` runs: the pipeline up to its last
+/// `BlockILTransform`, that is, through the last leaf of a block group.
+pub fn analysis_prefix() -> u32 {
+    PIPELINE
+        .iter()
+        .rposition(|leaf| leaf.group().is_some())
+        .map_or(0, |i| i as u32 + 1)
+}
+
 /// Runs the first `prefix` leaves of the pipeline.
 ///
 /// # Panics

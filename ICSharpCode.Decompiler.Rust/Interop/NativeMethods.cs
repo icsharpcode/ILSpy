@@ -104,7 +104,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		internal static extern RustStatus ilspy_session_member_is_hidden(RustSession session, uint token, uint flags, out byte hidden);
 
 		[DllImport(Library, CallingConvention = CallingConvention.Cdecl)]
-		internal static extern RustStatus ilspy_session_member_walk(RustSession session, uint token, uint flags, out RustBuffer walk);
+		internal static extern RustStatus ilspy_session_member_walk(RustSession session, uint token, uint flags, ulong analysisSettings, ulong analysisSettingsHigh, out RustBuffer walk);
 
 		[DllImport(Library, CallingConvention = CallingConvention.Cdecl)]
 		internal static extern RustStatus ilspy_session_field_data_comment(RustSession session, uint token, out RustBuffer comment);

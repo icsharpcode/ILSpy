@@ -25,13 +25,15 @@ pub const RECORD_STRUCTS: u32 = 1 << 18;
 
 /// `allOrderedEntities` of the type `row` of `module` with the walk's decision for each, as
 /// tokens: the nested types, then fields and properties, events and methods, or for a COM
-/// import interface its members in vtable (token) order. A record's member order comes from
-/// its decompiled equality members, which the engine does not analyze: an error.
+/// import interface its members in vtable (token) order. A record's fields and properties come
+/// in the order its generated members read them (`RecordDecompiler.FieldsAndProperties`), whose
+/// bodies `analysis` reads.
 pub fn member_walk(
     ts: &mut TypeSystem<'_, '_>,
     module: ModuleId,
     row: u32,
     flags: u32,
+    analysis: super::record_member_order::Analysis,
 ) -> Result<Vec<(u32, WalkDecision)>, String> {
     let def = TypeDefId { module, row };
     let comp = ts.comp;
@@ -42,11 +44,13 @@ pub fn member_walk(
         TypeKind::Struct => flags & RECORD_STRUCTS != 0,
         _ => false,
     } && super::entity_syntax::is_record(md, row, info.kind);
-    if record {
-        // shortcut: the member order of records (`RecordDecompiler.FieldsAndProperties`) stays
-        // with the host until RecordDecompiler is ported.
-        return Err("the member order of a record".to_owned());
-    }
+    let record_order = if record {
+        Some(super::record_member_order::fields_and_properties(
+            ts, module, row, analysis,
+        )?)
+    } else {
+        None
+    };
     let fields = comp.visible_fields(def).map_err(|e| e.to_string())?;
     let properties = comp.visible_properties(def).map_err(|e| e.to_string())?;
     let events = comp.visible_events(def).map_err(|e| e.to_string())?;
@@ -92,8 +96,14 @@ pub fn member_walk(
         keyed.sort_by_key(|&(key, _)| key);
         members = keyed.into_iter().map(|(_, t)| t).collect();
     } else {
-        members = fields.iter().map(|&f| field(f)).collect();
-        members.extend(properties.iter().map(|&p| property(p)));
+        members = match record_order {
+            Some(order) => order,
+            None => fields
+                .iter()
+                .map(|&f| field(f))
+                .chain(properties.iter().map(|&p| property(p)))
+                .collect(),
+        };
         members.extend(events.iter().map(|&e| event(e)));
         members.extend(methods.iter().map(|&m| method(m)));
     }

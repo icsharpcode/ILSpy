@@ -4983,6 +4983,21 @@ ratchet corpus decompiles with default settings and one compiler, while the matr
 (sorted attributes alone: 350 tests). The gaps are items 85a and on; when the matrix runs green the
 switch merges into `ILSPY_RUST_STRICT`, which the test projects already set (item 66).
 
+### 3.224 The member order of records (item 85d)
+
+The engine's member walk now walks records: `csharp/record_member_order.rs` ports
+`RecordDecompiler.DetectMemberOrder` with what it needs (`DetectAutomaticProperties`, the order read
+off the generated `Equals` and `PrintMembers`, `MergeAlongCommonMembers`). It reads those bodies as
+`DecompileBodyForAnalysis` does: the IL pipeline through its last block transform, then
+CombineExitsTransform, with the C# 1 settings the host passes to `ilspy_session_member_walk`. A body
+the engine cannot read makes the walk an error, counted, and the host walks the type. The engine
+names member definitions where the managed walk lists the fields and properties of a generic record
+specialized by its own type parameters; the walk comparison compares definitions. Which generated
+members the declaration leaves out (`MethodIsGenerated`, `PropertyIsGenerated`) and the analysis
+the AST transforms read stay with the host's RecordDecompiler (rest of item 68z6). The test
+`RecordMemberWalkEqualityTests` compares the engine's walk of every record of the corpus with the
+managed order.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

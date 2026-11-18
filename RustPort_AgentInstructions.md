@@ -816,9 +816,8 @@ the reasons. This file holds only the ordered steps, their gates and their rules
   - [ ] 68z6. `RecordDecompiler` (agent recommendation: moved before the AST transform
         that consumes it, `TransformFieldAndConstructorInitializers`). With the round trip (68z8) the transform
         reads the host's RecordDecompiler through the oracle, so 75 no longer waits for this port;
-        it remains for the engine-side member walk of records: the member order of
-        records, the record members the decompiler leaves out, and the analysis the transform reads;
-        records keep the host's member walk, counted, until then. About 1,460 managed lines that
+        the member order of records is ported (85d, lecture 3.224); it remains for the record
+        members the decompiler leaves out and the analysis the transform reads. About 1,460 managed lines that
         decompile and match the generated equality, printing, clone and deconstruction members.
   - [x] 75. TransformFieldAndConstructorInitializers (M)
   - [x] 76. PrettifyAssignments (M)
@@ -845,7 +844,7 @@ the reasons. This file holds only the ordered steps, their gates and their rules
       types without syntax (6), delegates without Invoke (1).
     - [ ] **85c.** Bodies: native integers and IntPtr (conversions, box, arithmetic,
       comparisons; 64).
-    - [ ] **85d.** Member walk: record member order (39; same as 68z6).
+    - [x] **85d.** Member walk: record member order (39; the order part of 68z6, lecture 3.224).
     - [ ] **85e.** Bodies: the remaining reasons (about 90 in 25 groups: lifted comparisons and
       switches, MinValue/MaxValue constants, checked conversions, addresses, PinnedRegion,
       TryFault, range/index/span creation, UserDefinedCompoundAssign and smaller ones).

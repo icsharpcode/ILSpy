@@ -540,7 +540,10 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				entities[i] = entity;
 				decisions[entity] = decision;
 			}
-			var managed = managedOrder.Where(e => !e.MetadataToken.IsNil).ToList();
+			// A generic record lists its fields and properties specialized by its own type parameters;
+			// the engine names their definitions.
+			var managed = managedOrder.Where(e => !e.MetadataToken.IsNil)
+				.Select(e => e is IMember { MemberDefinition: var d } ? d : e).ToList();
 			string? difference = null;
 			if (!managed.SequenceEqual(entities))
 				difference = "order";

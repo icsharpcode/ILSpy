@@ -1565,7 +1565,7 @@ pub fn read_function(
 
 /// `new GenericContext(classTypeParameters: method.DeclaringTypeDefinition?.TypeParameters,
 /// methodTypeParameters: null)`.
-fn analysis_context(
+pub(crate) fn analysis_context(
     ts: &mut TypeSystem<'_, '_>,
     method: crate::typesystem::members::MethodDefId,
 ) -> crate::metadata::Result<Option<crate::typesystem::types::GenericContext>> {

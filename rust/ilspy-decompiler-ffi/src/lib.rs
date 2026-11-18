@@ -1076,7 +1076,10 @@ pub unsafe extern "C" fn ilspy_session_member_is_hidden(
 /// not walk the type. `flags` are the hidden-member settings plus `RecordClasses` (bit 17) and
 /// `RecordStructs` (bit 18), `AlwaysShowEnumMemberValues` (bit 19); after a status byte 0 comes the
 /// enum display mode (`DetectBestEnumValueDisplayMode`, 255 for none), then whether the
-/// declaration drops `[DefaultMember]` (1) or not (0). Safe to call from several threads at once.
+/// declaration drops `[DefaultMember]` (1) or not (0). A record's member order reads bodies as
+/// `DecompileBodyForAnalysis` does, with the settings `analysis_settings` and
+/// `analysis_settings_high` (as for `ilspy_session_read_function`) and, with bit 20 of `flags`,
+/// `UseRefLocalsForAccurateOrderOfEvaluation`. Safe to call from several threads at once.
 ///
 /// # Safety
 /// `session` must be a live, loaded session; `out` must be writable.
@@ -1085,6 +1088,8 @@ pub unsafe extern "C" fn ilspy_session_member_walk(
     session: *const FfiSession,
     token: u32,
     flags: u32,
+    analysis_settings: u64,
+    analysis_settings_high: u64,
     out: *mut Buf,
 ) -> Status {
     // SAFETY: the caller guarantees `out` is writable.
@@ -1106,6 +1111,10 @@ pub unsafe extern "C" fn ilspy_session_member_walk(
             ModuleId(0),
             token & 0x00FF_FFFF,
             flags,
+            ilspy_decompiler::csharp::record_member_order::Analysis {
+                settings: Settings::from_bits(analysis_settings, analysis_settings_high),
+                use_ref_locals_for_accurate_order_of_evaluation: flags & (1 << 20) != 0,
+            },
         ) {
             Ok(walk) => {
                 bytes.push(0);
