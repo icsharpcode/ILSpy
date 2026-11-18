@@ -26,6 +26,15 @@ pub enum TypeSyntaxKind {
     },
     /// `TupleAstType`: the elements with their names.
     Tuple(Vec<(TypeSyntax, Option<String>)>),
+    /// `FunctionPointerAstType`: the calling conventions, the parameters with their
+    /// `ReferenceKind`, the return type, and whether a `ref` return is `ref readonly`.
+    FunctionPointer {
+        unmanaged: bool,
+        conventions: Vec<TypeSyntax>,
+        parameters: Vec<(u8, TypeSyntax)>,
+        return_type: Box<TypeSyntax>,
+        return_ref_readonly: bool,
+    },
 }
 
 /// A type syntax node with the `TypeResolveResult` annotations `ConvertType` added, in order.
@@ -208,7 +217,12 @@ impl<'t, 'c, 'a> TypeSyntaxBuilder<'t, 'c, 'a> {
                 }
                 TypeSyntax::new(TypeSyntaxKind::Tuple(items))
             }
-            TypeData::FnPtr(_) | TypeData::Intersection(_) => return None,
+            // shortcut: a function pointer acting as `UIntPtr` (without
+            // TypeSystemOptions.FunctionPointers) is written with a comment trivia the engine
+            // does not build; it stays with the host.
+            TypeData::FnPtr(_) if ts.definition(t).is_some() => return None,
+            TypeData::FnPtr(f) => self.convert_function_pointer(&f)?,
+            TypeData::Intersection(_) => return None,
             TypeData::Def(_) => {
                 let count = ts.type_parameter_count(t) as usize;
                 // `IsUnbound`: a generic definition names its type parameters as unbound
@@ -297,6 +311,62 @@ impl<'t, 'c, 'a> TypeSyntaxBuilder<'t, 'c, 'a> {
             converted.push(self.convert_type(a)?);
         }
         Some(TypeSyntax::simple(&name, converted))
+    }
+
+    /// `ConvertTypeHelper` of a `FunctionPointerType`.
+    fn convert_function_pointer(
+        &self,
+        f: &crate::typesystem::fnptr::FnPtrType,
+    ) -> Option<TypeSyntax> {
+        let ts = self.ts;
+        let keyword = |k: &str| TypeSyntax::new(TypeSyntaxKind::Primitive(k.to_owned()));
+        let (unmanaged, mut conventions) = match f.calling_convention {
+            0 => (false, Vec::new()),
+            9 => (true, Vec::new()),
+            1 => (true, vec![keyword("Cdecl")]),
+            2 => (true, vec![keyword("Stdcall")]),
+            3 => (true, vec![keyword("Thiscall")]),
+            4 => (true, vec![keyword("Fastcall")]),
+            5 => (true, vec![keyword("Varargs")]),
+            _ => return None,
+        };
+        for &c in f.custom_conventions.iter() {
+            let name = match ts.data(c) {
+                TypeData::Def(d) => Some(ts.comp.type_def(*d).ok()?.full_name.clone()),
+                TypeData::Unknown { name, .. } => Some((**name).clone()),
+                _ => None,
+            };
+            // `CallConvCdecl` and the like as the keyword after `CallConv`.
+            let short = name.filter(|n| n.nested.is_empty()).and_then(|n| {
+                (n.top.ns == "System.Runtime.CompilerServices")
+                    .then(|| n.top.name.strip_prefix("CallConv").map(str::to_owned))
+                    .flatten()
+                    .filter(|s| !s.is_empty())
+            });
+            conventions.push(match short {
+                Some(s) => {
+                    let mut syntax = keyword(&s);
+                    syntax.annotations.push(c);
+                    syntax
+                }
+                None => self.convert_type(c)?,
+            });
+        }
+        let mut parameters = Vec::with_capacity(f.params.len());
+        for (&p, &ref_kind) in f.params.iter().zip(f.ref_kinds.iter()) {
+            let ty = match *ts.data(p) {
+                TypeData::ByRef(e) if ref_kind != 0 => e,
+                _ => p,
+            };
+            parameters.push((ref_kind, self.convert_type(ty)?));
+        }
+        Some(TypeSyntax::new(TypeSyntaxKind::FunctionPointer {
+            unmanaged,
+            conventions,
+            parameters,
+            return_type: Box::new(self.convert_type(f.ret)?),
+            return_ref_readonly: f.ret_ref_readonly,
+        }))
     }
 
     /// The name of a type parameter: its `GenericParam` row's, or the dummy names.

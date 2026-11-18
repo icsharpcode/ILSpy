@@ -158,6 +158,49 @@ fn special_constant(v: &ConstValue) -> Option<(KnownTypeCode, &'static str)> {
     })
 }
 
+/// `TypeSystemAstBuilder.ConvertConstantValue(type, value)` of a declaration (a constant field,
+/// an enum member, a parameter's default value), whose type system can still intern: the types
+/// the syntax may name are interned first, and a null of a type parameter's type is the null
+/// literal where its constraints make it a reference type.
+pub fn convert_declared(
+    ts: &mut TypeSystem<'_, '_>,
+    ty: TypeId,
+    value: &ConstValue,
+    special_constants: bool,
+) -> Option<ConstSyntax> {
+    if matches!(value, ConstValue::Null)
+        && ConstantSyntaxBuilder::new(ts).null_is_literal(ty).is_none()
+    {
+        let literal = ts.is_reference_type(ty) == Some(true);
+        return Some(ConstantSyntaxBuilder::null_of(ty, literal));
+    }
+    if let Some((code, _)) = special_constant(value) {
+        ts.known_type(code);
+    }
+    for code in [KnownTypeCode::Int32, KnownTypeCode::UInt32] {
+        ts.known_type(code);
+    }
+    for name in ["Math", "MathF"] {
+        if let Some(def) = find_system_type(ts, name) {
+            ts.intern_def(def);
+        }
+    }
+    ConstantSyntaxBuilder::new(ts).convert_raw(ty, value, special_constants)
+}
+
+/// `compilation.FindType(new TopLevelTypeName("System", name))`: the first module's definition.
+fn find_system_type(ts: &TypeSystem<'_, '_>, name: &str) -> Option<TypeDefId> {
+    let name = crate::typesystem::names::FullTypeName::top_level(
+        crate::typesystem::names::TopLevelTypeName::new("System", name, 0),
+    );
+    let comp = ts.comp;
+    comp.module_ids().find_map(|m| {
+        comp.find_type_definition(m, &name, &mut Vec::new())
+            .ok()
+            .flatten()
+    })
+}
+
 /// The builder of a message's constant syntax.
 pub struct ConstantSyntaxBuilder<'t, 'c, 'a> {
     ts: &'t TypeSystem<'c, 'a>,
@@ -334,6 +377,18 @@ impl<'t, 'c, 'a> ConstantSyntaxBuilder<'t, 'c, 'a> {
         self.convert_constant_value(ty, ty, value, false, special_constants)
     }
 
+    /// A null constant of `ty`: the null literal, or `default(T)`.
+    fn null_of(ty: TypeId, literal: bool) -> ConstSyntax {
+        if literal {
+            ConstSyntax::with(ConstSyntaxKind::Null, ConstRr::NullLiteral)
+        } else {
+            ConstSyntax::with(
+                ConstSyntaxKind::Default(ty),
+                ConstRr::Constant(ty, ConstValue::Null),
+            )
+        }
+    }
+
     /// `IsSpecialConstant(underlyingType, value)` of an integer or decimal value: the member of
     /// the value's own type (`int.MaxValue`), which may differ from the expected one (an `int`
     /// in the constant of a `float` parameter), where its field exists. Not for hexadecimal
@@ -398,14 +453,7 @@ impl<'t, 'c, 'a> ConstantSyntaxBuilder<'t, 'c, 'a> {
         let ts = self.ts;
         if matches!(value, ConstValue::Null) {
             // `type.IsReferenceType == true || type.IsKnownType(NullableOfT) || IsAnyPointer`
-            return Some(if self.null_is_literal(ty)? {
-                ConstSyntax::with(ConstSyntaxKind::Null, ConstRr::NullLiteral)
-            } else {
-                ConstSyntax::with(
-                    ConstSyntaxKind::Default(ty),
-                    ConstRr::Constant(ty, ConstValue::Null),
-                )
-            });
+            return Some(Self::null_of(ty, self.null_is_literal(ty)?));
         }
         let underlying = ts.nullable_underlying(ty);
         // `GetDefinition()`: an enum nested in a generic type is an instance of it.
@@ -743,6 +791,7 @@ impl Fp {
 }
 
 const MAX_DENOMINATOR_DOUBLE: i64 = 1000;
+const MAX_DENOMINATOR_FLOAT: i64 = 360;
 /// `preferredFractionDenominators`: powers of two and 2^n-1 scales.
 const PREFERRED_FRACTION_DENOMINATORS: [i64; 15] = [
     127, 128, 255, 256, 1023, 1024, 4095, 4096, 8192, 16384, 32767, 32768, 65535, 65536, 1048576,
@@ -930,15 +979,10 @@ impl ConstantSyntaxBuilder<'_, '_, '_> {
             }
         }
         if use_fraction && expr.is_none() && special_constants {
-            // shortcut: a float chooses between MathF and Math by `IsDirectImportOf`, which
-            // compares full assembly names; such a float stays with the host until that check
-            // is ported.
-            if !is_double {
-                return None;
-            }
-            expr = self.math_expression(v, "PI")?;
+            let math = self.math_type(is_double)?;
+            expr = self.math_expression(ty, v, math, "PI")?;
             if expr.is_none() {
-                expr = self.math_expression(v, "E")?;
+                expr = self.math_expression(ty, v, math, "E")?;
             }
         }
         let mut expr = expr.unwrap_or_else(|| Self::literal(v.constant()));
@@ -1028,33 +1072,82 @@ impl ConstantSyntaxBuilder<'_, '_, '_> {
         })
     }
 
-    /// `TryExtractExpression(Math, double, value, member, isDouble: true)`: the value as a simple
-    /// multiple or divisor of `Math.PI` or `Math.E`. `None` when the syntax cannot be written,
-    /// `Some(None)` when the value is no such multiple.
-    fn math_expression(&self, v: Fp, member: &'static str) -> Option<Option<ConstSyntax>> {
-        let constant = if member == "PI" {
-            std::f64::consts::PI
-        } else {
-            std::f64::consts::E
-        };
-        let value = v.value();
-        let name = crate::typesystem::names::FullTypeName::top_level(
-            crate::typesystem::names::TopLevelTypeName::new("System", "Math", 0),
-        );
-        let comp = self.ts.comp;
-        let math_def = comp.module_ids().find_map(|m| {
-            comp.find_type_definition(m, &name, &mut Vec::new())
-                .ok()
-                .flatten()
-        })?;
+    /// The math type of `TryExtractExpression`: `Math` for a double; for a float `MathF` where
+    /// the main module imports it directly and it has the constants `PI` and `E`, else `Math`.
+    fn math_type(&self, is_double: bool) -> Option<TypeDefId> {
+        if !is_double && let Some(mathf) = find_system_type(self.ts, "MathF") {
+            let name = crate::typesystem::names::FullTypeName::top_level(
+                crate::typesystem::names::TopLevelTypeName::new("System", "MathF", 0),
+            );
+            if crate::typesystem::assembly_identity::is_direct_import_of(
+                self.ts.comp,
+                mathf,
+                &name,
+                ModuleId(0),
+            ) && self.has_const_field(mathf, "PI")
+                && self.has_const_field(mathf, "E")
+            {
+                return Some(mathf);
+            }
+        }
+        find_system_type(self.ts, "Math")
+    }
+
+    /// `GetFields(f => f.Name == name && f.IsConst).Any()` of a type without decimal constants.
+    fn has_const_field(&self, def: TypeDefId, name: &str) -> bool {
+        let md = &self.ts.comp.module(def.module).md;
+        md.type_fields(def.row).is_ok_and(|fields| {
+            fields.into_iter().any(|f| {
+                md.get::<rows::Field>(f).is_ok_and(|r| {
+                    r.flags & 0x40 != 0 && md.string(r.name).is_ok_and(|n| n == name)
+                })
+            })
+        })
+    }
+
+    /// `TryExtractExpression(mathType, type, value, member, isDouble)`: the value as a simple
+    /// multiple or divisor of `PI` or `E` of `math_def`, a float's `Math` member cast to `float`.
+    /// `None` when the syntax cannot be written, `Some(None)` when the value is no such multiple.
+    fn math_expression(
+        &self,
+        ty: TypeId,
+        v: Fp,
+        math_def: TypeDefId,
+        member: &'static str,
+    ) -> Option<Option<ConstSyntax>> {
+        let pi = member == "PI";
         let math = self.ts.find(&TypeData::Def(math_def))?;
+        let is_mathf = self
+            .ts
+            .comp
+            .type_def(math_def)
+            .is_ok_and(|i| i.full_name.name() == "MathF");
         let field = self.first_field_named(math_def, member);
         let reference = || {
-            ConstSyntax::new(ConstSyntaxKind::MathMember {
+            let member = ConstSyntax::new(ConstSyntaxKind::MathMember {
                 ty: math,
                 field,
                 name: member,
-            })
+            });
+            if matches!(v, Fp::Single(_)) && !is_mathf {
+                ConstSyntax::new(ConstSyntaxKind::Cast(ty, Box::new(member)))
+            } else {
+                member
+            }
+        };
+        let (c64, c32) = if pi {
+            (std::f64::consts::PI, std::f32::consts::PI)
+        } else {
+            (std::f64::consts::E, std::f32::consts::E)
+        };
+        // `field * n / d == value` and `n / (d * field) == value` in the type's precision.
+        let times = |n: i64, d: i64| match v {
+            Fp::Double(x) => c64 * n as f64 / d as f64 == x,
+            Fp::Single(x) => c32 * n as f32 / d as f32 == x,
+        };
+        let divided = |n: i64, d: i64| match v {
+            Fp::Double(x) => n as f64 / (d as f64 * c64) == x,
+            Fp::Single(x) => n as f32 / (d as f32 * c32) == x,
         };
         let extract = |n: i64, d: i64| -> Option<ConstSyntax> {
             // `field * n / d`, `-field / d` or `field / d`
@@ -1075,7 +1168,7 @@ impl ConstantSyntaxBuilder<'_, '_, '_> {
                     Box::new(Self::literal(v.of(d))),
                 ));
             }
-            if constant * n as f64 / d as f64 == value {
+            if times(n, d) {
                 return Some(expr);
             }
             // `n / field` or `n / (d * field)`
@@ -1091,15 +1184,26 @@ impl ConstantSyntaxBuilder<'_, '_, '_> {
                 Box::new(Self::literal(v.of(n))),
                 Box::new(divisor),
             ));
-            (n as f64 / (d as f64 * constant) == value).then_some(expr)
+            divided(n, d).then_some(expr)
         };
-        let (num, den) = fraction_approx(value / constant, MAX_DENOMINATOR_DOUBLE);
+        // `FractionApprox(value / field)`, then `FractionApprox(value * field)`.
+        let approx = |multiply: bool| match v {
+            Fp::Double(x) => fraction_approx(
+                if multiply { x * c64 } else { x / c64 },
+                MAX_DENOMINATOR_DOUBLE,
+            ),
+            Fp::Single(x) => fraction_approx(
+                f64::from(if multiply { x * c32 } else { x / c32 }),
+                MAX_DENOMINATOR_FLOAT,
+            ),
+        };
+        let (num, den) = approx(false);
         if is_valid_fraction(num, den)
             && let Some(e) = extract(num, den)
         {
             return Some(Some(e));
         }
-        let (num, den) = fraction_approx(value * constant, MAX_DENOMINATOR_DOUBLE);
+        let (num, den) = approx(true);
         Some(if is_valid_fraction(num, den) {
             extract(num, den)
         } else {

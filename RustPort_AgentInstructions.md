@@ -840,9 +840,9 @@ the reasons. This file holds only the ordered steps, their gates and their rules
     failed tests (first failure per test only). Each item closes a group of gaps and is gated
     with the decompiler suite under the switch for its examples.
     - [ ] **85a.** Declarations: sorted attributes (350).
-    - [ ] **85b.** Declarations: constraints of a generic override (101), constants and default
+    - [x] **85b.** Declarations: constraints of a generic override (101), constants and default
       values the engine does not write (36), members of an extension block outside it (24),
-      types without syntax (6), delegates without Invoke (1).
+      types without syntax (6), delegates without Invoke (1) (lecture 3.224).
     - [ ] **85c.** Bodies: native integers and IntPtr (conversions, box, arithmetic,
       comparisons; 64).
     - [ ] **85d.** Member walk: record member order (39; same as 68z6).
