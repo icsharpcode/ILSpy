@@ -17,12 +17,14 @@ pub const MAGIC: &[u8; 4] = b"ILSW";
 /// Type entry tags; `Interop/WireReader.cs` mirrors them.
 /// The node kinds of a type syntax entry.
 mod syntax_tag {
-    /// A type the engine does not convert (a function pointer or intersection type).
+    /// A type the engine does not convert (an intersection type, or a function pointer acting
+    /// as `UIntPtr`).
     pub const NONE: u8 = 0;
     pub const PRIMITIVE: u8 = 1;
     pub const SIMPLE: u8 = 2;
     pub const COMPOSED: u8 = 3;
     pub const TUPLE: u8 = 4;
+    pub const FUNCTION_POINTER: u8 = 5;
 }
 
 mod tag {
@@ -358,6 +360,27 @@ impl Tables {
                         None => e.uvar(0),
                     }
                 }
+            }
+            K::FunctionPointer {
+                unmanaged,
+                conventions,
+                parameters,
+                return_type,
+                return_ref_readonly,
+            } => {
+                e.u8(syntax_tag::FUNCTION_POINTER);
+                e.bool(*unmanaged);
+                e.len(conventions.len());
+                for c in conventions {
+                    self.syntax_node(ts, e, c);
+                }
+                e.len(parameters.len());
+                for (ref_kind, p) in parameters {
+                    e.u8(*ref_kind);
+                    self.syntax_node(ts, e, p);
+                }
+                self.syntax_node(ts, e, return_type);
+                e.bool(*return_ref_readonly);
             }
         }
         e.len(s.annotations.len());

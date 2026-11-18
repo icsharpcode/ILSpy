@@ -4998,6 +4998,27 @@ the AST transforms read stay with the host's RecordDecompiler (rest of item 68z6
 `RecordMemberWalkEqualityTests` compares the engine's walk of every record of the corpus with the
 managed order.
 
+### 3.225 The declaration gaps (item 85b)
+
+- A generic override or explicit implementation restates only the `class` or `default`
+  constraint that keeps `T?` a nullable annotation (`AddNullabilityDisambiguatingConstraints`):
+  the engine collects the method's own type parameters written as `T?` in its signature and
+  asks each for its reference-type-ness.
+- A float constant that is no fraction picks `MathF` or `Math` by `IsDirectImportOf`, which
+  compares full assembly names. The engine now computes them (`typesystem::assembly_identity`:
+  the public key token is the reversed tail of the key's SHA-1, written in the crate, no
+  dependency) and extracts the float multiples of `PI` and `E` in float precision, a `Math`
+  member cast to `float`.
+- A declaration's constants run through `convert_declared`, which interns the types the syntax
+  may name first and answers a null of a type parameter's type from its constraints
+  (`default(T)` or `null`); the read-only builder of bodies keeps leaving those to the host.
+- A member counts as one of an extension block only inside the `<>E__` or `<G>$` type of an
+  extension container; a generic type merely nested in a class with extension methods is an
+  ordinary type.
+- Function pointer types have type syntax (`FunctionPointerAstType`), except one acting as
+  `UIntPtr` without `TypeSystemOptions.FunctionPointers`, whose comment trivia stays with the
+  host. A delegate without `Invoke` is written as a class, as the managed builder does.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

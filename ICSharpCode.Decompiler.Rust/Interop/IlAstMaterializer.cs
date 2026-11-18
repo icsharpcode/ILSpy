@@ -168,6 +168,25 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					result = tuple;
 					break;
 				}
+				case 5:
+				{
+					var pointer = new CSharp.Syntax.FunctionPointerAstType { HasUnmanagedCallingConvention = Bool() };
+					int count = Len();
+					for (int i = 0; i < count; i++)
+						pointer.CallingConventions.Add(TypeSyntaxNode()!);
+					count = Len();
+					for (int i = 0; i < count; i++)
+					{
+						var parameter = new CSharp.Syntax.ParameterDeclaration { ParameterModifier = (ReferenceKind)U8() };
+						parameter.Type = TypeSyntaxNode()!;
+						pointer.Parameters.Add(parameter);
+					}
+					pointer.ReturnType = TypeSyntaxNode()!;
+					if (Bool() && pointer.ReturnType is CSharp.Syntax.ComposedType { HasRefSpecifier: true } returnType)
+						returnType.HasReadOnlySpecifier = true;
+					result = pointer;
+					break;
+				}
 				default:
 					throw new InvalidOperationException("Unknown wire type syntax tag");
 			}

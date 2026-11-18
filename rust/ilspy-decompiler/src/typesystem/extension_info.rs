@@ -59,6 +59,22 @@ impl TypeSystem<'_, '_> {
         Some(self.comp.type_def(def).ok()?.full_name.name().to_owned())
     }
 
+    /// A type of extension blocks in a type with extensions: the `<>E__` group type (encoding V1)
+    /// or the `<G>$` grouping type (encoding V2), whose members belong to their blocks.
+    pub fn is_extension_group_type(&self, def: TypeDefId) -> bool {
+        let in_container = self.comp.type_def(def).is_ok_and(|i| {
+            i.declaring != 0
+                && self
+                    .type_flags(TypeDefId {
+                        module: def.module,
+                        row: i.declaring,
+                    })
+                    .has_extensions
+        });
+        in_container
+            && (self.is_sealed_class_named(def, "<>E__") || self.is_sealed_class_named(def, "<G>$"))
+    }
+
     /// A sealed class whose name starts with `prefix`.
     fn is_sealed_class_named(&self, def: TypeDefId, prefix: &str) -> bool {
         self.comp.type_def(def).is_ok_and(|i| {

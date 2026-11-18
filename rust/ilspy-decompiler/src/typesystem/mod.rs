@@ -1,6 +1,7 @@
 //! The type system: a compilation of modules, type definitions resolved across them, and
 //! interned types built from signatures.
 
+pub mod assembly_identity;
 pub mod attributes;
 pub mod attrs;
 pub mod attrvalue;

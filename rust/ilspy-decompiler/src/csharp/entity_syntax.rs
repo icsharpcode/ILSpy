@@ -359,8 +359,7 @@ pub fn convert_field(
     let initializer = if is_const {
         let value = ts.field_constant(module, row);
         Some(
-            ConstantSyntaxBuilder::new(ts)
-                .convert_raw(ty, &value, options.special_constants)
+            super::constant_syntax::convert_declared(ts, ty, &value, options.special_constants)
                 .ok_or("a constant the engine does not write")?,
         )
     } else {
@@ -458,8 +457,7 @@ pub fn convert_enum_member(
     } else {
         let ty = ts.known_type(underlying);
         Some(
-            ConstantSyntaxBuilder::new(ts)
-                .convert_raw(ty, &value, options.special_constants)
+            super::constant_syntax::convert_declared(ts, ty, &value, options.special_constants)
                 .ok_or("a constant the engine does not write")?,
         )
     };
@@ -625,15 +623,83 @@ fn convert_constraint(
     if tp.allows_ref_like {
         base.push(ConstraintTypeSyntax::Keyword("allows ref struct", false));
     }
-    let name = if tp.name == "_" {
-        "@_".to_owned()
-    } else {
-        tp.name.clone()
-    };
     Ok(Some(ConstraintSyntax {
-        type_parameter: name,
+        type_parameter: simple_type_name(&tp.name),
         base_types: base,
     }))
+}
+
+/// The name `MakeSimpleType` writes.
+fn simple_type_name(name: &str) -> String {
+    if name == "_" {
+        "@_".to_owned()
+    } else {
+        name.to_owned()
+    }
+}
+
+/// `NullableTypeParameterCollector`: the indexes of `m`'s own type parameters that appear as
+/// `T?` anywhere in `t`.
+fn collect_nullable_type_parameters(
+    ts: &TypeSystem<'_, '_>,
+    m: crate::typesystem::members::MethodDefId,
+    t: TypeId,
+    found: &mut Vec<u32>,
+) {
+    use crate::typesystem::types::{Nullability, TypeParamOwner};
+    match ts.data(t) {
+        TypeData::Annotated { inner, nullability } => {
+            if *nullability == Nullability::Nullable
+                && let TypeData::TypeParam {
+                    owner:
+                        TypeParamOwner::Method(o) | TypeParamOwner::ContextMethod { method: o, .. },
+                    index,
+                } = *ts.data(*inner)
+                && o == m
+                && !found.contains(&index)
+            {
+                found.push(index);
+            }
+            collect_nullable_type_parameters(ts, m, *inner, found);
+        }
+        TypeData::Inst { generic, args } => {
+            collect_nullable_type_parameters(ts, m, *generic, found);
+            for &a in args.iter() {
+                collect_nullable_type_parameters(ts, m, a, found);
+            }
+        }
+        TypeData::Array { elem: e, .. }
+        | TypeData::Pointer(e)
+        | TypeData::ByRef(e)
+        | TypeData::Pinned(e) => collect_nullable_type_parameters(ts, m, *e, found),
+        TypeData::Modified {
+            modifier, inner, ..
+        } => {
+            collect_nullable_type_parameters(ts, m, *modifier, found);
+            collect_nullable_type_parameters(ts, m, *inner, found);
+        }
+        TypeData::Tuple {
+            underlying,
+            elements,
+            ..
+        } => {
+            collect_nullable_type_parameters(ts, m, *underlying, found);
+            for &e in elements.iter() {
+                collect_nullable_type_parameters(ts, m, e, found);
+            }
+        }
+        TypeData::FnPtr(f) => {
+            for &p in std::iter::once(&f.ret).chain(f.params.iter()) {
+                collect_nullable_type_parameters(ts, m, p, found);
+            }
+        }
+        TypeData::Intersection(types) => {
+            for &t in types.iter() {
+                collect_nullable_type_parameters(ts, m, t, found);
+            }
+        }
+        _ => {}
+    }
 }
 
 /// Whether a `GenericParam`'s constraint rows carry attributes the type system keeps
@@ -762,18 +828,7 @@ pub fn convert_method(
         .to_owned();
     // The members of a C# 14 extension block are specialized with the type parameters of their
     // block (`ExtensionInfo.GetMembersOfGroup`), whose marker type the host names.
-    let enclosing = ts
-        .comp
-        .type_def(declaring)
-        .map_err(|e| e.to_string())?
-        .declaring;
-    let in_extension_block = enclosing != 0
-        && ts
-            .type_flags(crate::typesystem::compilation::TypeDefId {
-                module,
-                row: enclosing,
-            })
-            .has_extensions;
+    let in_extension_block = ts.is_extension_group_type(declaring);
     let extension_parameters = match (in_extension_block, options.extension_marker) {
         (false, _) => None,
         (true, Some(marker)) => Some(extension_block_parameters(ts, module, marker).0),
@@ -846,15 +901,17 @@ pub fn convert_method(
         .md
         .generic_params(TableId::MethodDef, row)
         .collect();
-    if (modifiers_info.is_override || is_explicit) && !type_params.is_empty() {
-        // shortcut: an override or explicit implementation restates only the constraints that
-        // disambiguate `T?` (`AddNullabilityDisambiguatingConstraints`); generic ones stay with
-        // the host.
-        return Err("constraints of a generic override".to_owned());
+    let inherits_constraints = modifiers_info.is_override || is_explicit;
+    // `AddNullabilityDisambiguatingConstraints`: the type parameters written as `T?`.
+    let mut nullable_type_parameters = Vec::new();
+    if inherits_constraints {
+        for t in std::iter::once(ret).chain(params.iter().map(|p| p.ty)) {
+            collect_nullable_type_parameters(ts, m, t, &mut nullable_type_parameters);
+        }
     }
     let mut type_parameters = Vec::with_capacity(type_params.len());
     let mut constraints = Vec::new();
-    for (tp, &gp) in type_params.iter().zip(&gp_rows) {
+    for (index, (tp, &gp)) in type_params.iter().zip(&gp_rows).enumerate() {
         let a = ts
             .type_parameter_attributes(module, gp)
             .map_err(|e| e.to_string())?;
@@ -867,6 +924,25 @@ pub fn convert_method(
             name: tp.name.clone(),
             attributes: convert_attributes(ts, &a, options)?,
         });
+        if inherits_constraints {
+            // `GetNullabilityDisambiguator`: `class` for a reference type, `default` for neither
+            // a reference nor a value type, nothing for a value type.
+            if nullable_type_parameters.contains(&(index as u32)) {
+                let owner = crate::typesystem::types::TypeParamOwner::Method(m);
+                let keyword = match ts.type_parameter_is_reference_type(owner, index as u32) {
+                    Some(true) => Some("class"),
+                    None => Some("default"),
+                    Some(false) => None,
+                };
+                if let Some(keyword) = keyword {
+                    constraints.push(ConstraintSyntax {
+                        type_parameter: simple_type_name(&tp.name),
+                        base_types: vec![ConstraintTypeSyntax::Keyword(keyword, false)],
+                    });
+                }
+            }
+            continue;
+        }
         let constraint_attributes = has_constraint_attributes(&ts.comp.module(module).md, gp);
         if let Some(c) = convert_constraint(ts, tp, constraint_attributes)? {
             constraints.push(c);
@@ -886,9 +962,13 @@ pub fn convert_method(
             .map_err(|e| e.to_string())?
         {
             Some(
-                ConstantSyntaxBuilder::new(ts)
-                    .convert_raw(ty, &p.value, options.special_constants)
-                    .ok_or("a default value the engine does not write")?,
+                super::constant_syntax::convert_declared(
+                    ts,
+                    ty,
+                    &p.value,
+                    options.special_constants,
+                )
+                .ok_or("a default value the engine does not write")?,
             )
         } else {
             None
@@ -1197,9 +1277,13 @@ pub fn convert_property(
                 .map_err(|e| e.to_string())?
             {
                 Some(
-                    ConstantSyntaxBuilder::new(ts)
-                        .convert_raw(pty, &p.value, options.special_constants)
-                        .ok_or("a default value the engine does not write")?,
+                    super::constant_syntax::convert_declared(
+                        ts,
+                        pty,
+                        &p.value,
+                        options.special_constants,
+                    )
+                    .ok_or("a default value the engine does not write")?,
                 )
             } else {
                 None
@@ -1251,7 +1335,7 @@ pub fn convert_property(
     merge_read_only(&mut modifiers, &mut accessors);
     // A property of an extension block is specialized with the block's type parameters.
     let mut ty = ty;
-    if enclosing(ts, declaring).is_some_and(|e| ts.type_flags(e).has_extensions) {
+    if ts.is_extension_group_type(declaring) {
         let generic = ts
             .comp
             .type_def(declaring)
@@ -1447,9 +1531,13 @@ fn convert_parameters(
             .map_err(|e| e.to_string())?
         {
             Some(
-                ConstantSyntaxBuilder::new(ts)
-                    .convert_raw(ty, &p.value, options.special_constants)
-                    .ok_or("a default value the engine does not write")?,
+                super::constant_syntax::convert_declared(
+                    ts,
+                    ty,
+                    &p.value,
+                    options.special_constants,
+                )
+                .ok_or("a default value the engine does not write")?,
             )
         } else {
             None
@@ -1634,6 +1722,20 @@ pub fn convert_type_definition(
     } else if flags & SEALED != 0 {
         m |= modifiers::SEALED;
     }
+    // `GetDelegateInvokeMethod`: a delegate without `Invoke` is written as a class.
+    let invoke = if kind == TypeKind::Delegate {
+        md.type_methods(row)
+            .map_err(|e| e.to_string())?
+            .into_iter()
+            .find(|&r| {
+                md.get::<rows::MethodDef>(r)
+                    .ok()
+                    .and_then(|d| md.string(d.name).ok())
+                    .is_some_and(|n| n == "Invoke")
+            })
+    } else {
+        None
+    };
     let class_type = match kind {
         TypeKind::Struct | TypeKind::Void => {
             m &= !modifiers::SEALED;
@@ -1653,8 +1755,8 @@ pub fn convert_type_definition(
             m &= !modifiers::ABSTRACT;
             Some(2)
         }
-        TypeKind::Delegate => None,
-        TypeKind::Class => Some(if record_classes && record { 4 } else { 0 }),
+        TypeKind::Delegate if invoke.is_some() => None,
+        TypeKind::Delegate | TypeKind::Class => Some(if record_classes && record { 4 } else { 0 }),
     };
     let outer = if declaring_row == 0 {
         0
@@ -1670,7 +1772,7 @@ pub fn convert_type_definition(
     let attributes = ts.type_attributes(def).map_err(|e| e.to_string())?;
     let mut attributes = convert_attributes(ts, &attributes, options)?;
     // `DoDecompile(ITypeDefinition)` removes these from a type declaration (not a delegate's).
-    if kind != TypeKind::Delegate {
+    if class_type.is_some() {
         if options.ref_struct_attributes {
             remove_attributes_with_string(
                 ts,
@@ -1729,20 +1831,8 @@ pub fn convert_type_definition(
         }
     }
     let escaped = if name == "_" { "@_".to_owned() } else { name };
-    if class_type.is_none() {
+    if let Some(invoke) = invoke {
         // `ConvertDelegate`: the signature of `Invoke`.
-        let md = &ts.comp.module(module).md;
-        let invoke = md
-            .type_methods(row)
-            .map_err(|e| e.to_string())?
-            .into_iter()
-            .find(|&r| {
-                md.get::<rows::MethodDef>(r)
-                    .ok()
-                    .and_then(|d| md.string(d.name).ok())
-                    .is_some_and(|n| n == "Invoke")
-            })
-            .ok_or("a delegate without Invoke")?;
         let invoke = crate::typesystem::members::MethodDefId {
             module,
             row: invoke,

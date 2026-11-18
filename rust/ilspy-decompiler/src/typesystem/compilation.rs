@@ -182,6 +182,11 @@ impl<'a> Compilation<'a> {
         Ok(Some(def))
     }
 
+    /// Whether `module` has an ExportedType row of `name` (`MetadataFile.GetTypeForwarder`).
+    pub fn has_type_forwarder(&self, module: ModuleId, name: &FullTypeName) -> bool {
+        self.module(module).forwarders().contains_key(name)
+    }
+
     /// `ITypeDefinition.NestedTypes`, in NestedClass table order.
     pub fn nested_types(&self, outer: TypeDefId) -> Vec<TypeDefId> {
         let m = self.module(outer.module);
