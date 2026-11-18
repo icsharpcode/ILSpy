@@ -55,6 +55,7 @@ const TRANSFORMS: &[(usize, Transform)] = &[
     (9, super::transforms::introduce_query_expressions::run),
     (10, super::transforms::combine_query_expressions::run),
     (11, super::transforms::normalize_block_statements::run),
+    (12, super::transforms::flatten_switch_blocks::run),
     (
         13,
         super::transforms::rename_visual_basic_anonymous_types::run,
