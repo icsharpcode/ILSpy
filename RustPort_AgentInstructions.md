@@ -835,6 +835,22 @@ the reasons. This file holds only the ordered steps, their gates and their rules
 - [ ] **85. Seam 2 strict by default.** Size S. Subject: `Make seam 2 strict`.
   - Gate: G-dotnet, G-oracle, G-ui, `ILSpy.BamlDecompiler.Tests`, PdbGen, all with
     `ILSPY_RUST_STRICT=1`. Seam 1 stays available only for the prefix-equality harness.
+  - Status: the strict check exists behind `ILSPY_RUST_STRICT_SEAM2=1`. Its first matrix run
+    failed about 2,000 tests; the items give each group of reasons with its count of
+    failed tests (first failure per test only). Each item closes a group of gaps and is gated
+    with the decompiler suite under the switch for its examples.
+    - [ ] **85a.** Declarations: sorted attributes (350).
+    - [ ] **85b.** Declarations: constraints of a generic override (101), constants and default
+      values the engine does not write (36), members of an extension block outside it (24),
+      types without syntax (6), delegates without Invoke (1).
+    - [ ] **85c.** Bodies: native integers and IntPtr (conversions, box, arithmetic,
+      comparisons; 64).
+    - [ ] **85d.** Member walk: record member order (39; same as 68z6).
+    - [ ] **85e.** Bodies: the remaining reasons (about 90 in 25 groups: lifted comparisons and
+      switches, MinValue/MaxValue constants, checked conversions, addresses, PinnedRegion,
+      TryFault, range/index/span creation, UserDefinedCompoundAssign and smaller ones).
+    - [ ] **85f.** Rerun the matrix strict; repeat for what the first failure per test hid; then
+      merge the switch into `ILSPY_RUST_STRICT`.
 
 ### Phase 4: UI, CI, performance
 

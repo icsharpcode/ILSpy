@@ -301,6 +301,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					Interlocked.Increment(ref declarationsServed);
 					return decl;
 				}
+				ThrowIfStrict("this declaration", reason);
 				Interlocked.Increment(ref declarationFallbacks);
 				declarationFallbackReasons.AddOrUpdate(reason ?? "unknown", 1, (_, n) => n + 1);
 			}
@@ -319,6 +320,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					Interlocked.Increment(ref declarationsServed);
 					return decl;
 				}
+				ThrowIfStrict("this declaration", reason);
 				Interlocked.Increment(ref declarationFallbacks);
 				declarationFallbackReasons.AddOrUpdate(reason ?? "unknown", 1, (_, n) => n + 1);
 			}
@@ -342,6 +344,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					Interlocked.Increment(ref declarationsServed);
 					return decl;
 				}
+				ThrowIfStrict("this declaration", reason);
 				Interlocked.Increment(ref declarationFallbacks);
 				declarationFallbackReasons.AddOrUpdate(reason ?? "unknown", 1, (_, n) => n + 1);
 			}
@@ -370,6 +373,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					Interlocked.Increment(ref declarationsServed);
 					return decl;
 				}
+				ThrowIfStrict("this declaration", reason);
 				Interlocked.Increment(ref declarationFallbacks);
 				declarationFallbackReasons.AddOrUpdate(reason ?? "unknown", 1, (_, n) => n + 1);
 			}
@@ -388,6 +392,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					Interlocked.Increment(ref declarationsServed);
 					return decl;
 				}
+				ThrowIfStrict("this declaration", reason);
 				Interlocked.Increment(ref declarationFallbacks);
 				declarationFallbackReasons.AddOrUpdate(reason ?? "unknown", 1, (_, n) => n + 1);
 			}
@@ -415,6 +420,20 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		[ThreadStatic]
 		static WireReader? currentTypes;
 
+		/// <summary>Whether seam 2 fallback is disabled (<c>ILSPY_RUST_STRICT_SEAM2=1</c>).</summary>
+		// shortcut: separate from ILSPY_RUST_STRICT while the test matrix still hits seam 2 gaps; merge once it runs green strict.
+		public static bool Strict => Environment.GetEnvironmentVariable("ILSPY_RUST_STRICT_SEAM2") == "1";
+
+		/// <summary>
+		/// Under strict mode (<see cref="Strict"/>) a seam 2 fallback where the engine lacks something
+		/// is an error. Request routing (<see cref="AstRequest"/>) is not such a gap.
+		/// </summary>
+		static void ThrowIfStrict(string what, string? reason)
+		{
+			if (Strict)
+				throw new RustEngineException($"strict mode: the engine cannot serve {what}: {reason ?? "unknown reason"}");
+		}
+
 		/// <summary>
 		/// <c>exprBuilder.ConvertType(type)</c> as the engine built it; the managed conversion,
 		/// counted, for a type the engine sent no syntax for.
@@ -422,6 +441,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		/// <summary>A constant the managed builder converted, counted.</summary>
 		static Expression ConstantFallback(Expression expression)
 		{
+			ThrowIfStrict("this constant syntax", expression.ToString());
 			Interlocked.Increment(ref constantSyntaxFallbacks);
 			return expression;
 		}
@@ -430,6 +450,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		{
 			if (currentTypes?.TypeSyntax(type) is { } syntax)
 				return syntax;
+			ThrowIfStrict("this type syntax", type.ToString());
 			Interlocked.Increment(ref typeSyntaxFallbacks);
 			return exprBuilder.ConvertType(type);
 		}
@@ -497,6 +518,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 			var walk = engine.MemberWalk(typeDef, settings, out string? reason, out byte enumDisplayMode, out bool removesDefaultMember);
 			if (walk == null)
 			{
+				ThrowIfStrict("this type's member walk", reason);
 				Interlocked.Increment(ref walkFallbacks);
 				walkFallbackReasons.AddOrUpdate(reason ?? "unknown", 1, (_, n) => n + 1);
 				return null;
@@ -566,6 +588,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 			var hides = engine.HidesBaseMember(entity.MetadataToken, out string? reason);
 			if (hides == null)
 			{
+				ThrowIfStrict("this new-modifier decision", reason);
 				newModifierFallbackReasons.AddOrUpdate(reason ?? "unknown", 1, (_, n) => n + 1);
 				return null;
 			}
@@ -743,6 +766,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 			translations.Remove(function);
 			if (translation.Body == null)
 			{
+				ThrowIfStrict("this body", translation.Reason);
 				Interlocked.Increment(ref fallbacks);
 				fallbackReasons.AddOrUpdate(translation.Reason ?? "unknown", 1, (_, n) => n + 1);
 				return null;

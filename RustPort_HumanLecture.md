@@ -4961,6 +4961,28 @@ can be ported in any order and in parallel; the prefix the engine serves grows i
 
 The share stayed at 100.0 %.
 
+### 3.222 All AST transforms from the engine (items 69-84)
+
+The engine serves all 16 built-in AST transforms (`AST_PREFIX` 16). The prefix rose in three steps,
+6, 11 and 16, and each step ran under the full AST prefix sweep. At 6 the sweep found that a
+transform asks the host about annotations an earlier engine transform created, so after each
+transform the engine sends its new annotation descriptors (query 255) and the host builds them
+in place. The full gates at 16 found two routes the sweep does not cover. A request whose early
+transforms set flags was refused; the host now runs those early transforms itself before the round
+trip (a shortcut, until they are ported). And a request that traces its transforms
+(`AstTransformExecuted` events) stays managed, like the IL pipeline in seam 1.
+
+### 3.223 Seam 2 strict (item 85)
+
+Seam 2 has its own strict switch, `ILSPY_RUST_STRICT_SEAM2=1`: a body, declaration, member walk,
+`new` modifier decision, type syntax or constant the engine does not produce throws instead of
+falling back to the managed builder. Request routing is not a gap and stays counted: a request that records its
+steps, traces its transforms or changes the transform list runs managed by design. The first
+strict run of the test matrix failed about 2,000 tests, nearly all in the decompiler suite: the
+ratchet corpus decompiles with default settings and one compiler, while the matrix uses others
+(sorted attributes alone: 350 tests). The gaps are items 85a and on; when the matrix runs green the
+switch merges into `ILSPY_RUST_STRICT`, which the test projects already set (item 66).
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |
