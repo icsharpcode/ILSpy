@@ -57,6 +57,7 @@ const TRANSFORMS: &[(usize, Transform)] = &[
         13,
         super::transforms::rename_visual_basic_anonymous_types::run,
     ),
+    (14, super::transforms::fix_name_collisions::run),
 ];
 
 fn transform(index: usize) -> Option<Transform> {

@@ -507,6 +507,8 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				return AnswerQueryExpressionsAnnotation(query);
 			if (query[0] == QueryVisualBasicAnonymousEntity)
 				return AnswerRenameVisualBasicAnonymousTypes(query);
+			if (query[0] == QueryPrivateField)
+				return AnswerFixNameCollisions(query);
 			int pos = 1;
 			if (query[0] is >= QueryMemberFacts and <= QueryReturnTypeSyntax)
 			{

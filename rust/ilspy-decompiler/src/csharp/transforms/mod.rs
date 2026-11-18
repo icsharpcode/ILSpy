@@ -5,6 +5,7 @@ pub mod add_checked_blocks;
 pub mod combine_query_expressions;
 pub mod declare_variables;
 pub mod field_and_constructor_initializers;
+pub mod fix_name_collisions;
 pub mod introduce_query_expressions;
 pub mod introduce_unsafe_modifier;
 pub mod introduce_using_declarations;
