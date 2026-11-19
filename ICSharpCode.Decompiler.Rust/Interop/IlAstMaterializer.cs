@@ -1521,8 +1521,10 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 			node.ResolveResult = BodyResolveResult(out node.OperatorType);
 			node.Call = pendingInvocation;
 			pendingInvocation = null;
-			node.UserDefinedOperator = pendingUserDefinedOperator;
-			pendingUserDefinedOperator = null;
+			node.ExplicitOperator = pendingExplicitOperator;
+			pendingExplicitOperator = null;
+			node.OperatorInvocation = pendingOperatorInvocation;
+			pendingOperatorInvocation = null;
 			node.ResolveCast = pendingResolveCast;
 			pendingResolveCast = false;
 			node.ImplicitConversion = pendingImplicitConversion;
@@ -1941,8 +1943,11 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 			return node;
 		}
 
-		/// <summary>The user-defined operator, and its operand annotation, of the operator resolve result the last <see cref="BodyResolveResult"/> read.</summary>
-		(IMethod Method, byte OperandOverflow)? pendingUserDefinedOperator;
+		/// <summary>The operator method, lifted flag and operand annotation of the operator resolve result the last <see cref="BodyResolveResult"/> read.</summary>
+		(IMethod? Method, bool IsLifted, byte OperandOverflow)? pendingExplicitOperator;
+
+		/// <summary>The operator method of the invocation resolve result the last <see cref="BodyResolveResult"/> read.</summary>
+		IMethod? pendingOperatorInvocation;
 
 		/// <summary>The target and method of the invocation resolve result the last <see cref="BodyResolveResult"/> read.</summary>
 		(ResolveResult? Target, IMethod Method, bool IsExtension, bool IsDelegate, bool FoundByLookup, bool IsExpanded)? pendingInvocation;
@@ -2039,10 +2044,20 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					operatorType = Type();
 					return null;
 				case 60:
-					// RustSeam2 completes the resolve result of the user-defined operator.
+				{
+					// RustSeam2 completes the resolve result of the operator.
 					operatorType = Type();
-					pendingUserDefinedOperator = (CallMethod(), U8());
+					var method = Bool() ? CallMethod() : null;
+					bool isLifted = Bool();
+					pendingExplicitOperator = (method, isLifted, U8());
 					return null;
+				}
+				case 61:
+				{
+					// RustSeam2 adds the arguments, the operands' resolve results.
+					pendingOperatorInvocation = CallMethod();
+					return null;
+				}
 				case 9:
 				{
 					// The arguments are the invocation's; RustSeam2 completes the resolve result.

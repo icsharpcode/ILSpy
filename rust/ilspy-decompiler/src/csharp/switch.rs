@@ -178,6 +178,7 @@ impl Builder<'_, '_, '_, '_> {
 
     /// The sections of the switch, each with its case labels and its body (the inlined block of
     /// a section that branches to one).
+    #[allow(clippy::too_many_arguments)]
     fn switch_sections(
         &mut self,
         container: NodeId,

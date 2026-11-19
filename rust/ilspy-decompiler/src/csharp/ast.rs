@@ -459,14 +459,22 @@ pub enum Rr {
     /// the given
     /// type, whose operands are the resolve results of the node's children.
     Operator { ty: TypeId },
-    /// `OperatorResolveResult` of a user-defined operator `method` (of the type `ty`) of a
-    /// compound assignment or increment, whose operands are the resolve results of the node's
-    /// children; the first child carries the checked or unchecked annotation of
-    /// `operand_overflow`.
-    UserDefinedOperator {
+    /// `OperatorResolveResult` of the type `ty` with its operator `method` (a user-defined
+    /// operator of a compound assignment or increment; none for a predefined one) and
+    /// `isLiftedOperator`, whose operands are the resolve results of the node's children; the
+    /// first child carries the checked or unchecked annotation of `operand_overflow`.
+    ExplicitOperator {
+        ty: TypeId,
+        method: Option<Box<crate::il::ast::MethodOperand>>,
+        lifted: bool,
+        operand_overflow: Overflow,
+    },
+    /// `InvocationResolveResult` without target of the operator `method` (of the type `ty`)
+    /// written as a binary operator, whose arguments are the resolve results of the node's
+    /// children.
+    OperatorInvocation {
         ty: TypeId,
         method: Box<crate::il::ast::MethodOperand>,
-        operand_overflow: Overflow,
     },
     /// `CSharpInvocationResolveResult` of a call of `method` (of the given return type) on the
     /// target's resolve result, whose arguments are the resolve results of the invocation's

@@ -132,8 +132,10 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		public IType? OperatorType;
 		/// <summary>For an invocation or object creation: the target, method and extension method flag of its <see cref="CSharpInvocationResolveResult"/>, whose arguments are the node's.</summary>
 		public (ResolveResult? Target, IMethod Method, bool IsExtension, bool IsDelegate, bool FoundByLookup, bool IsExpanded)? Call;
-		/// <summary>For a compound assignment or increment of a user-defined operator: the operator of its <see cref="OperatorResolveResult"/> (of <see cref="OperatorType"/>), and the <c>AddCheckedBlocks</c> annotation of its first child.</summary>
-		public (IMethod Method, byte OperandOverflow)? UserDefinedOperator;
+		/// <summary>For an operator: the operator method (null for a predefined one) and lifted flag of its <see cref="OperatorResolveResult"/> (of <see cref="OperatorType"/>), and the <c>AddCheckedBlocks</c> annotation of its first child.</summary>
+		public (IMethod? Method, bool IsLifted, byte OperandOverflow)? ExplicitOperator;
+		/// <summary>For a binary operator: the operator method of its <see cref="InvocationResolveResult"/> without target, whose arguments are the operands'.</summary>
+		public IMethod? OperatorInvocation;
 		public Leave? ImplicitReturn;
 		public RustBodyNode[] Children = [];
 		public IType? Type;
@@ -1065,11 +1067,11 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					var left = (Expression)Build(node.Children[0], exprBuilder);
 					var right = (Expression)Build(node.Children[1], exprBuilder);
 					// An event's `+=` or `-=` keeps the type resolve result it comes with.
-					if (node.UserDefinedOperator is var (userOperator, operandOverflow))
+					if (node.ExplicitOperator is var (userOperator, isLifted, operandOverflow))
 					{
 						// `VisitUserDefinedCompoundAssign`: the operator over the target's and value's resolve results.
 						node.ResolveResult = new OperatorResolveResult(node.OperatorType!, AssignmentExpression.GetLinqNodeType(op, false),
-							userOperator, false, [left.GetResolveResult(), right.GetResolveResult()]);
+							userOperator, isLifted, [left.GetResolveResult(), right.GetResolveResult()]);
 						AddOverflowAnnotation(left, operandOverflow);
 					}
 					else if (node.OperatorType != null)
@@ -1092,10 +1094,10 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				{
 					var op = (UnaryOperatorType)node.Value!;
 					var operand = (Expression)Build(node.Children[0], exprBuilder);
-					if (node.UserDefinedOperator is var (userOperator, operandOverflow))
+					if (node.ExplicitOperator is var (userOperator, isLifted, operandOverflow))
 					{
 						node.ResolveResult = new OperatorResolveResult(node.OperatorType!, UnaryOperatorExpression.GetLinqNodeType(op, false),
-							userOperator, false, [operand.GetResolveResult()]);
+							userOperator, isLifted, [operand.GetResolveResult()]);
 						AddOverflowAnnotation(operand, operandOverflow);
 					}
 					else
@@ -1163,11 +1165,20 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					var left = (Expression)Build(node.Children[0], exprBuilder);
 					var right = (Expression)Build(node.Children[1], exprBuilder);
 					// A logic operator comes with a plain resolve result of its own.
-					if (node.OperatorType != null)
+					if (node.ExplicitOperator is var (operatorMethod, isLifted, _))
+					{
+						// `HandleThreeValuedLogic`: the lifted operator over the operands' resolve results.
+						node.ResolveResult = new OperatorResolveResult(node.OperatorType!, BinaryOperatorExpression.GetLinqNodeType(op, false),
+							operatorMethod, isLifted, [left.GetResolveResult(), right.GetResolveResult()]);
+					}
+					else if (node.OperatorType != null)
 					{
 						node.ResolveResult = new OperatorResolveResult(node.OperatorType, BinaryOperatorExpression.GetLinqNodeType(op, node.Overflow == 1),
 							left.GetResolveResult(), right.GetResolveResult());
 					}
+					// `VisitUserDefinedLogicOperator`: the operator's invocation over the operands' resolve results.
+					if (node.OperatorInvocation is { } invokedOperator)
+						node.ResolveResult = new InvocationResolveResult(null, invokedOperator, [left.GetResolveResult(), right.GetResolveResult()]);
 					if (node.ResolveOperator)
 						node.ResolveResult = exprBuilder.resolver.ResolveBinaryOperator(op, left.GetResolveResult(), right.GetResolveResult());
 					// A call written as an operator (`b == true` of `GetValueOrDefault`, `==` of

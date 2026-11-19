@@ -1748,8 +1748,8 @@ impl Builder<'_, '_, '_, '_> {
                 .is_some_and(|i| i.full_name.top.ns == ns && i.full_name.name() == name)
         };
         // A span-based `string.Concat` of strings and chars is built before; any other
-        // `Concat` is an ordinary call. An implicit conversion operator of a span type is
-        // `HandleImplicitConversion`'s.
+        // `Concat` is an ordinary call. An implicit conversion operator of a span type or of
+        // `Index` is `HandleImplicitConversion`'s.
         let span_operator = method.is_operator && method.name == "op_Implicit";
         let special = false
             // `FormattableStringFactory.Create` is an interpolated string where its format
@@ -1759,7 +1759,7 @@ impl Builder<'_, '_, '_, '_> {
                 "FormattableStringFactory",
             ) && method.name != "Create")
             || ts.is_known(declaring, KnownTypeCode::Range)
-            || ts.is_known(declaring, KnownTypeCode::Index)
+            || (ts.is_known(declaring, KnownTypeCode::Index) && !span_operator)
             || (ts.is_known(declaring, KnownTypeCode::ReadOnlySpanOfT) && !span_operator)
             || (ts.is_known(declaring, KnownTypeCode::SpanOfT) && !span_operator)
             || in_namespace("", "<PrivateImplementationDetails>");
@@ -2111,6 +2111,35 @@ impl Builder<'_, '_, '_, '_> {
         get_awaiter_callvirt: bool,
     ) -> Result<TranslatedExpression, Unsupported> {
         use crate::il::ast::AwaiterMethod as Am;
+        if let (Some(Am::Dynamic(_)), Some(Am::Dynamic(_))) = (&get_awaiter, &get_result) {
+            return self.dynamic_await(inst, value);
+        }
+        // Without a `GetAwaiter` (a runtime async await), the operand is translated as it is,
+        // of the type `GetResult` returns.
+        if get_awaiter.is_none() {
+            let ty = match &get_result {
+                Some(Am::Method(m)) => {
+                    Method::from_resolved(self.ts, &m.method)
+                        .ok_or("an await of an unresolved method")?
+                        .return_type
+                }
+                Some(Am::Dynamic(_)) => self.ts.intern(TypeData::Dynamic),
+                None => self.ts.intern(TypeData::UnknownSpecial),
+            };
+            if matches!(self.f.inst(value), Inst::LdObjIfRef { .. }) {
+                return Err("an await of a constrained operand".to_owned());
+            }
+            let mut operand = self.translate(value, None)?;
+            if let AstNode::RefDirection { expression } = *self.ast.node(operand.expression) {
+                operand = self.unwrap_child(operand.expression, expression);
+            }
+            let e = self.ast.add(AstNode::Await {
+                expression: operand.expression,
+            });
+            self.ast.with_il(e, inst);
+            self.ast.with_rr(e, Rr::Plain(ty));
+            return Ok(TranslatedExpression { expression: e, ty });
+        }
         let (Some(Am::Method(awaiter)), Some(Am::Method(result))) = (&get_awaiter, &get_result)
         else {
             return Err("a dynamic await".to_owned());
@@ -2188,6 +2217,33 @@ impl Builder<'_, '_, '_, '_> {
         Ok(TranslatedExpression {
             expression: e,
             ty: result.return_type,
+        })
+    }
+
+    /// `VisitAwait` of a dynamic await: the `GetAwaiter` on `dynamic` binds no method of the
+    /// operand, so the operand is converted to `dynamic`; the result is `dynamic`.
+    fn dynamic_await(
+        &mut self,
+        inst: NodeId,
+        value: NodeId,
+    ) -> Result<TranslatedExpression, Unsupported> {
+        if matches!(self.f.inst(value), Inst::LdObjIfRef { .. }) {
+            return Err("an await of a constrained operand".to_owned());
+        }
+        let dynamic = self.ts.intern(TypeData::Dynamic);
+        let mut operand = self.translate(value, Some(dynamic))?;
+        if let AstNode::RefDirection { expression } = *self.ast.node(operand.expression) {
+            operand = self.unwrap_child(operand.expression, expression);
+        }
+        let operand = self.convert_to(operand, dynamic, false)?;
+        let e = self.ast.add(AstNode::Await {
+            expression: operand.expression,
+        });
+        self.ast.with_il(e, inst);
+        self.ast.with_rr(e, Rr::Plain(dynamic));
+        Ok(TranslatedExpression {
+            expression: e,
+            ty: dynamic,
         })
     }
 

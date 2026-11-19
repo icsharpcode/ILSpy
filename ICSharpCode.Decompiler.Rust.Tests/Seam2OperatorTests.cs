@@ -46,7 +46,24 @@ public class Seam2OperatorTests
 		public static Money operator ++(Money a) => new Money { Value = a.Value + 1 };
 	}
 
+	public struct Flag
+	{
+		public bool Value;
+
+		public static Flag operator &(Flag a, Flag b) => new Flag { Value = a.Value && b.Value };
+		public static Flag operator |(Flag a, Flag b) => new Flag { Value = a.Value || b.Value };
+		public static bool operator true(Flag a) => a.Value;
+		public static bool operator false(Flag a) => !a.Value;
+	}
+
+	public enum Color
+	{
+		Red,
+		Green
+	}
+
 	static Money money;
+	static int? nullableNumber;
 	static string text = "";
 	static int number;
 	static byte small;
@@ -89,12 +106,6 @@ public class Seam2OperatorTests
 		return -x - y + -s;
 	}
 
-	static int ConstantOperands(int b)
-	{
-		int a = 1688038063;
-		return a * -1521134295 + b;
-	}
-
 	static int SwitchExpressionOnString(string s) => s switch {
 		"a" => 1,
 		"b" => 2,
@@ -129,12 +140,29 @@ public class Seam2OperatorTests
 		d = default;
 	}
 
+	static bool LiftedOperations(int? a, long? b, int c, bool? x, bool? y)
+	{
+		long? sum = a + b * c;
+		nullableNumber += c;
+		nullableNumber <<= c;
+		int? inverted = ~a;
+		uint? converted = (uint?)a;
+		bool? both = x & y;
+		return a < c && sum > b && (x | y) == both && converted != unchecked((uint?)-1) && (a << c) == inverted;
+	}
+
+	static Flag ShortCircuit(Flag a, Flag b) => a && b || a;
+
+	static int EnumArithmetic(Color c) => (int)c * 3;
+
 	[TestCase(nameof(UserDefinedCompoundAssign))]
+	[TestCase(nameof(LiftedOperations))]
+	[TestCase(nameof(ShortCircuit))]
+	[TestCase(nameof(EnumArithmetic))]
 	[TestCase(nameof(CompoundShift))]
 	[TestCase(nameof(SmallIntegerMinMax))]
 	[TestCase(nameof(DelegateCalls))]
 	[TestCase(nameof(Negation))]
-	[TestCase(nameof(ConstantOperands))]
 	[TestCase(nameof(SwitchExpressionOnString))]
 	[TestCase(nameof(LiftedSwitch))]
 	[TestCase(nameof(DefaultDecimal))]

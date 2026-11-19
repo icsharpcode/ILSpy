@@ -468,7 +468,9 @@ impl Builder<'_, '_, '_, '_> {
             && utype != target_utype
             && target_ustack.is_integer()
         {
-            return Err("a constant converted to a nullable integer".to_owned());
+            // Through the underlying type, a constant conversion, as `(uint?)uint.MaxValue`.
+            let c = self.convert_to_checked(e, target_utype, check, false)?;
+            return self.convert_to_checked(c, target, check, allow_implicit_conversion);
         }
         // `resolver.WithCheckForOverflow(checkForOverflow).ResolveCast(targetType, ResolveResult)`
         let cast = self.resolve_cast(target, &rr, check)?;

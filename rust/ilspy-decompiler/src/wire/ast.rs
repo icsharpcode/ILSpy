@@ -230,15 +230,24 @@ fn rr(w: &mut FunctionWriter<'_, '_, '_, '_>, rr: Option<&Rr>) -> Result<(), Str
             w.out.u8(7);
             w.ty(*ty);
         }
-        Some(Rr::UserDefinedOperator {
+        Some(Rr::ExplicitOperator {
             ty,
             method,
+            lifted,
             operand_overflow,
         }) => {
             w.out.u8(60);
             w.ty(*ty);
-            w.call_method(method)?;
+            w.out.bool(method.is_some());
+            if let Some(method) = method {
+                w.call_method(method)?;
+            }
+            w.out.bool(*lifted);
             w.out.u8(*operand_overflow as u8);
+        }
+        Some(Rr::OperatorInvocation { method, .. }) => {
+            w.out.u8(61);
+            w.call_method(method)?;
         }
         Some(Rr::Invocation {
             target,
