@@ -99,8 +99,9 @@ pub enum AstNode {
         expression: AstId,
         overflow: Overflow,
     },
-    /// `UnaryOperatorExpression` of the `UnaryOperatorType` `op` (`Minus` 3, `Increment` 5,
-    /// `Decrement` 6, `PostIncrement` 7, `PostDecrement` 8), with the checked or unchecked
+    /// `UnaryOperatorExpression` of the `UnaryOperatorType` `op` (`Not` 1, `BitNot` 2, `Minus` 3,
+    /// `Plus` 4, `Increment` 5, `Decrement` 6, `PostIncrement` 7, `PostDecrement` 8, `IsTrue`
+    /// 14), with the checked or unchecked
     /// annotation of `overflow`.
     UnaryOperator {
         op: u8,
@@ -377,6 +378,9 @@ pub enum AstNode {
     /// `UndocumentedExpression` of `UndocumentedExpressionType` `kind` (`__arglist`,
     /// `__refvalue`, `__reftype`, `__makeref`) over `arguments`.
     Undocumented { kind: u8, arguments: Vec<AstId> },
+    /// `new PrimitiveExpression(value)` of a `bool`, without annotations (the branches of the
+    /// conditional `VisitDynamicUnaryOperatorInstruction` writes for `IsTrue` and `IsFalse`).
+    BoolLiteral { value: bool },
 }
 
 /// The `AddCheckedBlocks` annotation of an arithmetic operator.
@@ -613,6 +617,53 @@ pub enum Rr {
         accessor: Box<crate::il::ast::MethodOperand>,
         ty: TypeId,
         found_by_lookup: bool,
+    },
+    /// `DynamicMemberResolveResult` of the target's resolve result and the member `name`, with
+    /// the `FakeField` of `CreateDynamicMemberSymbol`: of type `dynamic`, declared on
+    /// `declaring`.
+    DynamicMember {
+        target: Box<Rr>,
+        name: String,
+        declaring: TypeId,
+    },
+    /// `DynamicInvocationResolveResult` of the target's resolve result (`Indexing` or
+    /// `Invocation`), whose arguments are the resolve results of the node's arguments (an
+    /// indexer's indices), with the synthesized symbol, if any.
+    DynamicInvocation {
+        target: Box<Rr>,
+        indexing: bool,
+        symbol: Option<Box<DynamicSymbol>>,
+    },
+    /// `CSharpInvocationResolveResult` of `new ResolveResult(ty)` and the `FakeMethod`
+    /// constructor of `CreateDynamicConstructorSymbol` (of these parameters), whose arguments
+    /// are the resolve results of the object creation's arguments.
+    DynamicConstructor {
+        ty: TypeId,
+        parameters: Vec<(TypeId, String)>,
+    },
+    /// `ConversionResolveResult` of a dynamic cast to `ty` over the operand's resolve result,
+    /// of `ExplicitDynamicConversion` or `ImplicitDynamicConversion`.
+    DynamicConversion { ty: TypeId, explicit: bool },
+    /// `OperatorResolveResult` of `dynamic` and the `ExpressionType` `operation` over the
+    /// resolve results of the node's children.
+    DynamicOperator { operation: i32 },
+}
+
+/// The member `ExpressionBuilder` synthesizes for a dynamic invocation or index access.
+#[derive(Clone, Debug)]
+pub enum DynamicSymbol {
+    /// `CreateDynamicInvokeMemberSymbol`: a `FakeMethod` returning `dynamic`, specialized with
+    /// the type arguments where there are any.
+    Method {
+        name: String,
+        declaring: TypeId,
+        parameters: Vec<(TypeId, String)>,
+        type_arguments: Vec<TypeId>,
+    },
+    /// `CreateDynamicIndexerSymbol`: a `FakeProperty` indexer of type `dynamic`.
+    Indexer {
+        declaring: TypeId,
+        parameters: Vec<(TypeId, String)>,
     },
 }
 

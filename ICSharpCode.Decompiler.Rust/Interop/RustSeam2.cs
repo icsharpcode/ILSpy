@@ -132,6 +132,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		public const byte Utf8StringLiteral = 130;
 		public const byte Error = 131;
 		public const byte BlockExpression = 132;
+		public const byte BoolLiteral = 140;
 
 		public byte Kind;
 		/// <summary>The instructions the node is annotated with, in order.</summary>
@@ -192,6 +193,26 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		/// <summary>For a recursive pattern: the member of each sub-pattern.</summary>
 		public IMember[] Members = [];
 		public bool Flag;
+		/// <summary>For a dynamic operation: its resolve result, which is completed from the built node.</summary>
+		public RustDynamicResult? Dynamic;
+	}
+
+	/// <summary>
+	/// The resolve result of a dynamic operation (<c>Rr::Dynamic*</c> in rust/ilspy-decompiler/src/csharp/ast.rs),
+	/// with the symbol <c>ExpressionBuilder.CreateDynamic*Symbol</c> synthesizes; the arguments and
+	/// operands are the built node's.
+	/// </summary>
+	internal sealed class RustDynamicResult
+	{
+		/// <summary>70 member, 71 invocation or indexing, 72 constructor, 73 conversion, 74 compound operator.</summary>
+		public byte Tag;
+		/// <summary>The target's resolve result; <see cref="RustSeam2.PendingTarget"/> or null for the built target's.</summary>
+		public ResolveResult? Target;
+		public bool Indexing;
+		public IMember? Symbol;
+		public IType? Type;
+		public bool Explicit;
+		public int Operation;
 	}
 
 	/// <summary>
@@ -851,6 +872,25 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				node.ResolveResult = new ByReferenceResolveResult(element.GetResolveResult(), pending.ReferenceKind);
 		}
 
+		/// <summary>The target resolve result of a dynamic operation: its own, else the built target's.</summary>
+		static ResolveResult DynamicTarget(RustDynamicResult dynamicResult, Expression? builtTarget)
+			=> dynamicResult.Target is null || ReferenceEquals(dynamicResult.Target, PendingTarget)
+				? builtTarget?.GetResolveResult() ?? ErrorResolveResult.UnknownError
+				: dynamicResult.Target;
+
+		/// <summary>
+		/// The <see cref="DynamicInvocationResolveResult"/> of a dynamic invocation or index access over
+		/// these arguments (a named argument has no resolve result of its own).
+		/// </summary>
+		static void CompleteDynamicInvocation(RustBodyNode node, Expression? builtTarget, IEnumerable<Expression> arguments)
+		{
+			if (node.Dynamic is not { Tag: 71 } dynamicResult)
+				return;
+			node.ResolveResult = new DynamicInvocationResolveResult(DynamicTarget(dynamicResult, builtTarget),
+				dynamicResult.Indexing ? DynamicInvocationType.Indexing : DynamicInvocationType.Invocation,
+				arguments.Select(a => a.GetResolveResult()).ToArray(), symbol: dynamicResult.Symbol);
+		}
+
 		static AstNode Build(RustBodyNode node, ExpressionBuilder exprBuilder)
 		{
 			var syntax = BuildNode(node, exprBuilder);
@@ -980,6 +1020,8 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					}
 					if (node.LookUpMember)
 						node.ResolveResult = LookUpMember(exprBuilder, (MemberResolveResult)node.ResolveResult!, target.GetResolveResult());
+					if (node.Dynamic is { Tag: 70 } dynamicMember)
+						node.ResolveResult = new DynamicMemberResolveResult(DynamicTarget(dynamicMember, target), (string)node.Value!, dynamicMember.Symbol);
 					return Annotate(new MemberReferenceExpression(target, (string)node.Value!), node);
 				}
 				case RustBodyNode.TypeReference:
@@ -1064,6 +1106,9 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				{
 					var target = (Expression)Build(node.Children[0], exprBuilder);
 					var arguments = node.Children.Skip(1).Select(c => (Expression)Build(c, exprBuilder)).ToList();
+					// A dynamic member invocation's target is the member reference's target; a
+					// simple name's comes with the invocation.
+					CompleteDynamicInvocation(node, node.Dynamic?.Symbol != null ? (target as MemberReferenceExpression)?.Target : target, arguments);
 					// A function pointer call comes with a plain resolve result of its own.
 					if (node.Call == null)
 						return Annotate(new InvocationExpression(target, arguments), node);
@@ -1087,6 +1132,12 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					var argumentResults = arguments
 						.Select(a => (a is NamedArgumentExpression named ? named.Expression : a).GetResolveResult())
 						.ToArray();
+					// `VisitDynamicInvokeConstructorInstruction`: the synthesized constructor over the arguments.
+					if (node.Dynamic is { Tag: 72 } dynamicConstructor)
+					{
+						node.ResolveResult = new CSharpInvocationResolveResult(new ResolveResult(dynamicConstructor.Type!),
+							(IMethod)dynamicConstructor.Symbol!, arguments.Select(a => a.GetResolveResult()).ToArray());
+					}
 					// A creation of `default(T)` or `Activator.CreateInstance<T>()` keeps its type's resolve result.
 					if (node.Call is { } call)
 					{
@@ -1131,7 +1182,13 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					var left = (Expression)Build(node.Children[0], exprBuilder);
 					var right = (Expression)Build(node.Children[1], exprBuilder);
 					// An event's `+=` or `-=` keeps the type resolve result it comes with.
-					if (node.ExplicitOperator is var (userOperator, isLifted, operandOverflow))
+					if (node.Dynamic is { Tag: 74 } dynamicOperator)
+					{
+						// `VisitDynamicCompoundAssign`: the binder's operation over the target's and value's resolve results.
+						node.ResolveResult = new OperatorResolveResult(SpecialType.Dynamic, (System.Linq.Expressions.ExpressionType)dynamicOperator.Operation,
+							[left.GetResolveResult(), right.GetResolveResult()]);
+					}
+					else if (node.ExplicitOperator is var (userOperator, isLifted, operandOverflow))
 					{
 						// `VisitUserDefinedCompoundAssign`: the operator over the target's and value's resolve results.
 						node.ResolveResult = new OperatorResolveResult(node.OperatorType!, AssignmentExpression.GetLinqNodeType(op, false),
@@ -1164,9 +1221,10 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 							userOperator, isLifted, [operand.GetResolveResult()]);
 						AddOverflowAnnotation(operand, operandOverflow);
 					}
-					else
+					// A dynamic operator keeps the plain resolve result it comes with.
+					else if (node.OperatorType != null)
 					{
-						node.ResolveResult = new OperatorResolveResult(node.OperatorType!, UnaryOperatorExpression.GetLinqNodeType(op, node.Overflow == 1),
+						node.ResolveResult = new OperatorResolveResult(node.OperatorType, UnaryOperatorExpression.GetLinqNodeType(op, node.Overflow == 1),
 							operand.GetResolveResult());
 					}
 					return AddOverflowAnnotation(Annotate(new UnaryOperatorExpression(op, operand), node), node);
@@ -1290,8 +1348,14 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					return Annotate(new WhileStatement(condition, body), node);
 				}
 				case RustBodyNode.Indexer:
-					return Annotate(new IndexerExpression((Expression)Build(node.Children[0], exprBuilder),
-						node.Children.Skip(1).Select(c => (Expression)Build(c, exprBuilder))), node);
+				{
+					var target = (Expression)Build(node.Children[0], exprBuilder);
+					var indices = node.Children.Skip(1).Select(c => (Expression)Build(c, exprBuilder)).ToList();
+					CompleteDynamicInvocation(node, target, indices);
+					return Annotate(new IndexerExpression(target, indices), node);
+				}
+				case RustBodyNode.BoolLiteral:
+					return new PrimitiveExpression(node.Flag);
 				case RustBodyNode.DoWhile:
 					return Annotate(new DoWhileStatement {
 						EmbeddedStatement = (Statement)Build(node.Children[0], exprBuilder),
@@ -1687,6 +1751,12 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 						var operandResult = operand.GetResolveResult();
 						var conversion = CSharp.Resolver.CSharpConversions.Get(exprBuilder.compilation).ImplicitConversion(operandResult.Type, node.Type!);
 						node.ResolveResult = new ConversionResolveResult(node.Type!, operandResult, conversion);
+					}
+					// `VisitDynamicConvertInstruction`: the dynamic conversion of the binder's flags.
+					if (node.Dynamic is { Tag: 73 } dynamicConversion)
+					{
+						node.ResolveResult = new ConversionResolveResult(node.Type!, operand.GetResolveResult(),
+							dynamicConversion.Explicit ? Conversion.ExplicitDynamicConversion : Conversion.ImplicitDynamicConversion);
 					}
 					return Annotate(cast, node);
 				}

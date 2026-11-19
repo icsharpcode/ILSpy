@@ -240,6 +240,13 @@ impl Builder<'_, '_, '_, '_> {
             // A lambda's cast carries `LambdaConversion` in its resolve result.
             let conversion = if matches!(self.rr_of(e.expression), Rr::LambdaConversion { .. }) {
                 crate::semantics::Conversion::ANONYMOUS_FUNCTION
+            } else if let Rr::DynamicConversion { explicit, .. } = self.rr_of(e.expression) {
+                // A dynamic cast carries the conversion of its binder flags.
+                if explicit {
+                    crate::semantics::Conversion::EXPLICIT_DYNAMIC
+                } else {
+                    crate::semantics::Conversion::IMPLICIT_DYNAMIC
+                }
             } else {
                 Conversions::new(self.ts).explicit(&input_rr, ty)
             };
@@ -532,11 +539,12 @@ impl Builder<'_, '_, '_, '_> {
                 }
                 return Ok(TranslatedExpression { expression: c, ty });
             }
-            CastResult::Error => {
-                // Between unrelated reference types the conversion goes through object.
+            CastResult::Error
                 if self.ts.is_reference_type(target) == Some(true)
-                    && self.ts.is_reference_type(ty) == Some(true)
-                    && !self.ts.is_known(target, KnownTypeCode::Object)
+                    && self.ts.is_reference_type(ty) == Some(true) =>
+            {
+                // Between unrelated reference types the conversion goes through object.
+                if !self.ts.is_known(target, KnownTypeCode::Object)
                     && !self.ts.is_known(ty, KnownTypeCode::Object)
                 {
                     let object = self.ts.known_type(KnownTypeCode::Object);
@@ -544,12 +552,16 @@ impl Builder<'_, '_, '_, '_> {
                     return self.convert_to_checked(via, target, check, allow_implicit_conversion);
                 }
             }
-            CastResult::Conversion => {
+            _ => {
+                // `(T)(object)d` is the static conversion of a dynamic value to a reference
+                // type; `(T)d` would be a dynamic one.
                 if self.ts.kind(ty) == TypeKind::Dynamic
                     && self.ts.is_reference_type(target) == Some(true)
                     && !self.ts.is_known(target, KnownTypeCode::Object)
                 {
-                    return Err("a conversion from dynamic".to_owned());
+                    let object = self.ts.known_type(KnownTypeCode::Object);
+                    let via = self.convert_to(e, object, false)?;
+                    return self.convert_to_checked(via, target, check, allow_implicit_conversion);
                 }
             }
         }

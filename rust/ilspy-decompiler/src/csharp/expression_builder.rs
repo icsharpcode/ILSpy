@@ -513,6 +513,8 @@ impl Builder<'_, '_, '_, '_> {
             Inst::NewArr { ty, ref indices } => self.new_arr(inst, ty.ty, indices),
             Inst::NumericCompoundAssign { .. } => self.numeric_compound_assign(inst),
             Inst::UserDefinedCompoundAssign { .. } => self.user_defined_compound_assign(inst),
+            Inst::DynamicCompoundAssign { .. } => self.dynamic_compound_assign(inst),
+            Inst::Dynamic { .. } => self.dynamic(inst),
             Inst::Switch {
                 result_type: Some(_),
                 ..

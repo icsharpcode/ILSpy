@@ -1049,13 +1049,7 @@ impl Builder<'_, '_, '_, '_> {
         let declaring_is_nullable = self.ts.is_known(declaring, KnownTypeCode::NullableOfT);
         for (i, &pi) in order.iter().enumerate() {
             let parameter = &method.parameters[pi];
-            if self.ts.kind(parameter.ty) == TypeKind::Dynamic {
-                return Err("an argument of a dynamic parameter".to_owned());
-            }
             let arg = self.translate(call.args[first_param + i], Some(parameter.ty))?;
-            if self.ts.kind(arg.ty) == TypeKind::Dynamic {
-                return Err("a dynamic argument".to_owned());
-            }
             // `TransformParamsArgument`: an array creation or `Array.Empty<T>()` as the last
             // argument of a `params` parameter is a candidate for the expanded form, which `call`
             // probes; a span constructor or conversion is not translated.
@@ -1081,7 +1075,15 @@ impl Builder<'_, '_, '_, '_> {
                     list.first_optional = -2;
                 }
             }
-            let mut arg = self.convert_to(arg, parameter.ty, true)?;
+            // A dynamic parameter takes the argument as `object`; a dynamic argument converts
+            // explicitly.
+            let parameter_type = if self.ts.kind(parameter.ty) == TypeKind::Dynamic {
+                self.ts.known_type(KnownTypeCode::Object)
+            } else {
+                parameter.ty
+            };
+            let allow_implicit = self.ts.kind(arg.ty) != TypeKind::Dynamic;
+            let mut arg = self.convert_to(arg, parameter_type, allow_implicit)?;
             // An operator's operand keeps its type: the default literal converts to every type.
             if method.is_operator {
                 arg = self.restore_default_literal_type(arg)?;
