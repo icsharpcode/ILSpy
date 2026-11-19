@@ -1727,7 +1727,9 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				case RustBodyNode.UnsafeIntrinsic:
 				{
 					var target = new MemberReferenceExpression {
-						Target = new TypeReferenceExpression(ConvertType(exprBuilder, node.Type!)),
+						// `CallUnsafeIntrinsic`: the compilation's Unsafe, which is an unknown (fully qualified) type
+						// where the module does not reference it.
+						Target = new TypeReferenceExpression(ConvertType(exprBuilder, exprBuilder.compilation.FindType(KnownTypeCode.Unsafe))),
 						MemberName = (string)node.Value!
 					};
 					target.TypeArguments.AddRange(node.TypeArguments.Select(t => ConvertType(exprBuilder, t)));
