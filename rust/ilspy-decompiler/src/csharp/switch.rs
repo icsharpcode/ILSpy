@@ -28,7 +28,7 @@ pub(crate) enum CaseValue {
 
 impl Builder<'_, '_, '_, '_> {
     /// `TranslateSwitch(switchContainer, inst)`. A lifted switch, a switch on strings, labels a
-    /// section body does not inline (`goto case`, labeled blocks) and a governing type reached
+    /// section body does not inline (`goto case`) and a governing type reached
     /// through a conversion operator are not translated.
     pub(super) fn translate_switch(
         &mut self,
@@ -171,7 +171,6 @@ impl Builder<'_, '_, '_, '_> {
         case_type: TypeId,
         string_map: Option<&StringMap>,
     ) -> Result<Vec<AstId>, Unsupported> {
-        let mut inlined = Vec::new();
         let mut ast_sections = Vec::with_capacity(section_parts.len());
         for (i, (labels, body)) in section_parts.iter().enumerate() {
             let case_labels = if i == default {
@@ -207,7 +206,6 @@ impl Builder<'_, '_, '_, '_> {
                     if !self.case_label_mapping.iter().any(|(m, ..)| *m == b) {
                         return Err("a switch section branching out of its switch".to_owned());
                     }
-                    inlined.push(b);
                     self.switch_section_body(b)?
                 }
                 Inst::Leave { target, .. }
@@ -224,9 +222,39 @@ impl Builder<'_, '_, '_, '_> {
             });
             ast_sections.push(s);
         }
-        // Blocks no section inlines would be written with labels.
-        if blocks[1..].iter().any(|b| !inlined.contains(b)) {
-            return Err("a switch with labeled blocks".to_owned());
+        // The blocks no section label maps follow the last section, each with its label.
+        let Some(&last) = ast_sections.last() else {
+            return Ok(ast_sections);
+        };
+        let mut added = Vec::new();
+        for &block in &blocks[1..] {
+            if self.case_label_mapping.iter().any(|(m, ..)| *m == block) {
+                continue;
+            }
+            let name = self.ensure_unique_label(block);
+            added.push(self.ast.add(AstNode::Label { name }));
+            let Inst::Block { instructions, .. } = self.f.inst(block).clone() else {
+                return Err("a switch container without blocks".to_owned());
+            };
+            for nested in instructions {
+                let s = self.convert(nested)?;
+                match self.ast.node(s) {
+                    AstNode::Block { statements } => added.extend(statements.clone()),
+                    _ => added.push(s),
+                }
+            }
+        }
+        if let Some(label) = self
+            .end_container_labels
+            .iter()
+            .find(|(c, _)| *c == container)
+            .map(|(_, l)| l.clone())
+        {
+            added.push(self.ast.add(AstNode::Label { name: label }));
+            added.push(self.ast.add(AstNode::Break));
+        }
+        if let AstNode::SwitchSection { statements, .. } = self.ast.node_mut(last) {
+            statements.extend(added);
         }
         Ok(ast_sections)
     }

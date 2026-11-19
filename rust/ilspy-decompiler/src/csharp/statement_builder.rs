@@ -549,8 +549,7 @@ impl Builder<'_, '_, '_, '_> {
         Ok(self.ast.with_il(block, container))
     }
 
-    /// `ConvertBlockContainer(container, isLoop)` for a container whose blocks need no labels;
-    /// a loop's entry gets one that `ConvertLoop` checks and removes.
+    /// `ConvertBlockContainer(new BlockStatement(), container, blocks, isLoop)`.
     fn convert_block_container(
         &mut self,
         container: NodeId,
@@ -560,10 +559,25 @@ impl Builder<'_, '_, '_, '_> {
         let block_statement = self.ast.add(AstNode::Block {
             statements: Vec::new(),
         });
+        self.convert_block_container_into(block_statement, container, blocks, is_loop)
+    }
+
+    /// `ConvertBlockContainer(blockStatement, container, blocks, isLoop)`: the statements of
+    /// `blocks` appended to `block_statement`.
+    fn convert_block_container_into(
+        &mut self,
+        block_statement: AstId,
+        container: NodeId,
+        blocks: &[NodeId],
+        is_loop: bool,
+    ) -> Result<AstId, Unsupported> {
+        let entry = match self.f.inst(container) {
+            Inst::BlockContainer { blocks, .. } => blocks.first().copied(),
+            _ => None,
+        };
         for (index, &block) in blocks.iter().enumerate() {
-            // A block with incoming branches gets a label; that of a loop's entry, which
-            // `ConvertLoop` would remove, is not written.
-            if index != 0 || (self.f.node(block).incoming_edge_count > 1 && !is_loop) {
+            // A block with incoming branches, or other than the entry point, gets a label.
+            if self.f.node(block).incoming_edge_count > 1 || Some(block) != entry {
                 let name = self.ensure_unique_label(block);
                 let label = self.ast.add(AstNode::Label { name });
                 let AstNode::Block { statements } = self.ast.node_mut(block_statement) else {
@@ -700,7 +714,7 @@ impl Builder<'_, '_, '_, '_> {
     }
 
     /// `EnsureUniqueLabel(block)`: `Block.Label`, with a counter where blocks share it.
-    fn ensure_unique_label(&mut self, block: NodeId) -> String {
+    pub(super) fn ensure_unique_label(&mut self, block: NodeId) -> String {
         if let Some((_, label)) = self.labels.iter().find(|(b, _)| *b == block) {
             return label.clone();
         }
@@ -736,10 +750,11 @@ impl Builder<'_, '_, '_, '_> {
                 self.continue_target = Some(entry);
                 let body = self.convert_block_container(container, blocks, true)?;
                 // The entry's label goes when every jump to it became `continue`.
-                if incoming != self.continue_count + 1 {
-                    return Err("a loop with a jump to its start".to_owned());
+                if incoming == self.continue_count + 1 {
+                    self.remove_first_statement(body);
                 }
                 self.remove_trailing_continue(body);
+                self.declare_local_functions(container, body)?;
                 Ok(self.ast.add(AstNode::While {
                     condition: None,
                     body,
@@ -750,9 +765,6 @@ impl Builder<'_, '_, '_, '_> {
                 let (condition, body_block) = self
                     .match_condition_block(container, entry)
                     .ok_or("an invalid condition block in a while loop")?;
-                if blocks.len() != 2 || blocks[1] != body_block {
-                    return Err("a while loop with labeled blocks".to_owned());
-                }
                 let body = self.convert_as_block(body_block)?;
                 if !self
                     .f
@@ -763,10 +775,23 @@ impl Builder<'_, '_, '_, '_> {
                         statements.push(b);
                     }
                 }
+                let rest: Vec<_> = blocks[1..]
+                    .iter()
+                    .copied()
+                    .filter(|&b| b != body_block)
+                    .collect();
+                let body = self.convert_block_container_into(body, container, &rest, true)?;
+                // An incoming edge of the condition that is no `continue` jumps to a label.
                 if self.continue_count + 1 < incoming {
-                    return Err("a while loop with a jump to its condition".to_owned());
+                    self.remove_trailing_continue(body);
+                    let name = self.ensure_unique_label(entry);
+                    let label = self.ast.add(AstNode::Label { name });
+                    if let AstNode::Block { statements } = self.ast.node_mut(body) {
+                        statements.push(label);
+                    }
                 }
                 self.remove_trailing_continue(body);
+                self.declare_local_functions(container, body)?;
                 let condition = self.translate_condition(condition)?.expression;
                 Ok(self.ast.add(AstNode::While {
                     condition: Some(condition),
@@ -779,18 +804,22 @@ impl Builder<'_, '_, '_, '_> {
                 let (condition, _) = self
                     .match_condition_block(container, condition_block)
                     .ok_or("an invalid condition block in a do-while loop")?;
-                if blocks.len() != 2 {
-                    return Err("a do-while loop with labeled blocks".to_owned());
-                }
-                let body = self.convert_block_container(container, &blocks[..1], true)?;
+                let body =
+                    self.convert_block_container(container, &blocks[..blocks.len() - 1], true)?;
                 // The entry's label goes when only the loop's own two edges reach it.
-                if incoming != 2 {
-                    return Err("a do-while loop with a jump to its start".to_owned());
+                if incoming == 2 {
+                    self.remove_first_statement(body);
                 }
                 self.remove_trailing_continue(body);
+                // Branches to the condition block that are no `continue` jump to a label.
                 if self.f.node(condition_block).incoming_edge_count > self.continue_count {
-                    return Err("a do-while loop with a jump to its condition".to_owned());
+                    let name = self.ensure_unique_label(condition_block);
+                    let label = self.ast.add(AstNode::Label { name });
+                    if let AstNode::Block { statements } = self.ast.node_mut(body) {
+                        statements.push(label);
+                    }
                 }
+                self.declare_local_functions(container, body)?;
                 let condition = self.translate_condition(condition)?.expression;
                 let empty = matches!(self.ast.node(body), AstNode::Block { statements } if statements.is_empty());
                 Ok(self.ast.add(if empty {
@@ -843,6 +872,7 @@ impl Builder<'_, '_, '_, '_> {
                 if self.f.node(increment).incoming_edge_count > self.continue_count {
                     return Err("a for loop with a jump to its increment".to_owned());
                 }
+                self.declare_local_functions(container, body)?;
                 Ok(self.ast.add(AstNode::For {
                     condition,
                     iterators,
@@ -850,6 +880,15 @@ impl Builder<'_, '_, '_, '_> {
                 }))
             }
             _ => Err(format!("a {} container", kind.name())),
+        }
+    }
+
+    /// `blockStatement.Statements.First().Remove()`: the label of a loop's entry.
+    fn remove_first_statement(&mut self, block: AstId) {
+        if let AstNode::Block { statements } = self.ast.node_mut(block)
+            && !statements.is_empty()
+        {
+            statements.remove(0);
         }
     }
 

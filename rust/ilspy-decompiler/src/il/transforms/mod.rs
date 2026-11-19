@@ -131,6 +131,7 @@ pub const SETTING_NAMES: &[&str] = &[
     "ExpandParamsArguments",
     "FirstClassSpanTypes",
     "StringConcat",
+    "LambdaOptionalAndParamsParameters",
 ];
 
 /// The values of `SETTING_NAMES`.
@@ -205,6 +206,7 @@ pub struct Settings {
     pub expand_params_arguments: bool,
     pub first_class_span_types: bool,
     pub string_concat: bool,
+    pub lambda_optional_and_params_parameters: bool,
 }
 
 impl Settings {
@@ -284,6 +286,7 @@ impl Settings {
             expand_params_arguments: bit(66),
             first_class_span_types: bit(67),
             string_concat: bit(68),
+            lambda_optional_and_params_parameters: bit(69),
         }
     }
 }

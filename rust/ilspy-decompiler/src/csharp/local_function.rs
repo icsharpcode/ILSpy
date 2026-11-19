@@ -21,7 +21,7 @@ impl Builder<'_, '_, '_, '_> {
 
     /// `ILFunction.Name` of a local function: the name AssignVariableNames gave it, else its
     /// method's.
-    fn local_function_name(&mut self, lf: NodeId) -> Result<String, Unsupported> {
+    pub(super) fn local_function_name(&mut self, lf: NodeId) -> Result<String, Unsupported> {
         let Inst::Function {
             kind: FunctionKind::LocalFunction,
             read: Some(read),
@@ -76,7 +76,7 @@ impl Builder<'_, '_, '_, '_> {
 
     /// `TranslateFunction(function)`: the body of the local function, by a statement builder
     /// of its own; the host writes the declaration of the reduced method around it. Functions
-    /// without a body and functions with local functions of their own are not translated.
+    /// without a body are declared `extern`.
     fn translate_local_function(&mut self, lf: NodeId) -> Result<AstId, Unsupported> {
         let Inst::Function {
             return_type,
@@ -90,16 +90,21 @@ impl Builder<'_, '_, '_, '_> {
         else {
             return Err("a local function without reduced method".to_owned());
         };
+        // A method without body declares an `extern` local function.
         if read.method_operand.is_some() {
-            return Err("a local function without body".to_owned());
-        }
-        if !local_functions.is_empty() {
-            return Err("a local function with local functions".to_owned());
+            let stmt = self
+                .ast
+                .add(AstNode::LocalFunctionDeclaration { body: None });
+            return Ok(self.ast.with_il(stmt, lf));
         }
         // `new StatementBuilder(..., function, ...)`: the names `HidesVariableWithName` checks
-        // are those of the function and its ancestors.
+        // are those of the function and its ancestors, with their local functions.
         let mut names = self.variable_names.clone();
         names.extend(variables.iter().map(|&v| self.f.var(v).name.clone()));
+        for &nested in &local_functions {
+            names.push(self.local_function_name(nested)?);
+        }
+        let saved_declared = std::mem::take(&mut self.declared_local_functions);
         let saved = (
             self.return_container,
             self.result_type,
@@ -113,7 +118,7 @@ impl Builder<'_, '_, '_, '_> {
             std::mem::replace(&mut self.is_iterator, read.is_iterator),
             std::mem::replace(&mut self.in_lambda, false),
             std::mem::replace(&mut self.in_local_function, true),
-            std::mem::take(&mut self.local_functions),
+            std::mem::replace(&mut self.local_functions, local_functions.clone()),
         );
         self.return_container = body;
         // `currentResultType`: an async function returns the result of its task.
@@ -138,10 +143,14 @@ impl Builder<'_, '_, '_, '_> {
         self.continue_target = saved.3;
         self.continue_count = saved.4;
         self.break_target = saved.5;
+        let declared = std::mem::replace(&mut self.declared_local_functions, saved_declared);
         let block = block?;
+        if declared != local_functions.len() {
+            return Err("a local function declared in a loop or switch".to_owned());
+        }
         let stmt = self
             .ast
-            .add(AstNode::LocalFunctionDeclaration { body: block });
+            .add(AstNode::LocalFunctionDeclaration { body: Some(block) });
         Ok(self.ast.with_il(stmt, lf))
     }
 
@@ -151,14 +160,33 @@ impl Builder<'_, '_, '_, '_> {
         &self,
         method: crate::typesystem::members::MethodDefId,
     ) -> Option<NodeId> {
-        self.f.local_functions.iter().copied().find(|&lf| {
-            matches!(self.f.inst(lf), Inst::Function { read: Some(read), .. } if read.method == method)
-        })
+        let find = |list: &[NodeId]| {
+            list.iter().copied().find(|&lf| {
+                matches!(self.f.inst(lf), Inst::Function { read: Some(read), .. } if read.method == method)
+            })
+        };
+        let mut current = self.current_function;
+        while let Some(function) = current {
+            if let Inst::Function {
+                local_functions, ..
+            } = self.f.inst(function)
+                && let Some(lf) = find(local_functions)
+            {
+                return Some(lf);
+            }
+            current = self.f.node(function).parent;
+            while let Some(p) = current {
+                if matches!(self.f.inst(p), Inst::Function { .. }) {
+                    break;
+                }
+                current = self.f.node(p).parent;
+            }
+        }
+        find(&self.f.local_functions)
     }
 
     /// `CallBuilder.Build` of a call of a local function: `Name(arguments)`, without
-    /// disambiguation, the target the local function's method group. Generic local functions
-    /// and named or expanded `params` arguments are not translated.
+    /// disambiguation, the target the local function's method group.
     pub(crate) fn local_function_call(
         &mut self,
         inst: NodeId,
@@ -173,10 +201,10 @@ impl Builder<'_, '_, '_, '_> {
         let declaring = method.declaring.ok_or("a method without declaring type")?;
         // The identifier is annotated with the function (`ide.AddAnnotation(localFunction)`).
         let target = self.local_function_reference(operand, &method, true)?;
-        let list = self.argument_list(call, &method, id, 0, declaring, false)?;
-        if list.params_candidate.is_some() || list.parameter_map.is_some() {
-            return Err("named or params arguments of a local function".to_owned());
-        }
+        let mut list = self.argument_list(call, &method, id, 0, declaring, false)?;
+        // `TransformParamsArgument` never takes the expanded form: `IsUnambiguousCall` looks
+        // the name up on the local function's method group, whose type has no members.
+        list.params_candidate = None;
         let arguments = self.written_arguments(&list, 0);
         let e = self.ast.add(AstNode::Invocation { target, arguments });
         let target_rr = self.rr_of(target);
@@ -201,8 +229,8 @@ impl Builder<'_, '_, '_, '_> {
     }
 
     /// The local function's `IdentifierExpression` with the resolve result of `ToMethodGroup`,
-    /// annotated with the function where `annotate`. Generic local functions are not
-    /// translated.
+    /// with the type arguments of the reduced method, annotated with the function where
+    /// `annotate`.
     pub(crate) fn local_function_reference(
         &mut self,
         operand: &crate::il::ast::MethodOperand,
@@ -220,13 +248,15 @@ impl Builder<'_, '_, '_, '_> {
         let generated = reference
             .reduced
             .number_of_compiler_generated_type_parameters as usize;
-        if method
+        // `LocalFunctionMethod.TypeArguments`: those past the compiler-generated ones.
+        let type_arguments: Vec<_> = method
             .method_args
-            .as_ref()
-            .is_some_and(|a| a.len() > generated)
-        {
-            return Err("a reference of a generic local function".to_owned());
-        }
+            .as_deref()
+            .unwrap_or_default()
+            .iter()
+            .skip(generated)
+            .copied()
+            .collect();
         let declaring = method.declaring.ok_or("a method without declaring type")?;
         let index = self.ast.method_groups.len();
         let unknown = self
@@ -241,10 +271,17 @@ impl Builder<'_, '_, '_, '_> {
                     declaring,
                     methods: vec![method.clone()],
                 }],
-                type_arguments: Vec::new(),
+                type_arguments: type_arguments.clone(),
                 extension_methods: Vec::new(),
             }));
-        let target = self.ast.add(AstNode::Identifier { name: name.clone() });
+        let target = if type_arguments.is_empty() {
+            self.ast.add(AstNode::Identifier { name: name.clone() })
+        } else {
+            self.ast.add(AstNode::GenericIdentifier {
+                name: name.clone(),
+                type_arguments,
+            })
+        };
         if annotate {
             self.ast.with_il(target, lf);
         }

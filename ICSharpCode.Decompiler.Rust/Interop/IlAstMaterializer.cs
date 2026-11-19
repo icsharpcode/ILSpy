@@ -1297,8 +1297,12 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 			bool attemptedConversionWithTypeMismatch = Bool();
 			bool isImplicitlyTyped = Bool();
 			bool isAnonymousMethod = Bool();
+			bool hasParameterList = Bool();
+			// Overload resolution only asks whether the function is async, not for its result type.
+			if (Bool())
+				function.AsyncReturnType = SpecialType.UnknownType;
 			return new DecompiledLambdaResolveResult(function, delegateType, inferredReturnType,
-				hasParameterList: !isAnonymousMethod, isAnonymousMethod: isAnonymousMethod, isImplicitlyTyped: isImplicitlyTyped) {
+				hasParameterList: hasParameterList, isAnonymousMethod: isAnonymousMethod, isImplicitlyTyped: isImplicitlyTyped) {
 				AttemptedConversionWithTypeMismatch = attemptedConversionWithTypeMismatch
 			};
 		}
@@ -1603,7 +1607,15 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					}
 					break;
 				case RustBodyNode.StringLiteral:
+				case RustBodyNode.Utf8StringLiteral:
+				case RustBodyNode.Error:
 					node.Value = String();
+					break;
+				case RustBodyNode.BlockExpression:
+					// The delegate type, the block's return type, whether `Func<T>` is unknown, then the block.
+					node.Value = (Type(), Type());
+					node.Flag = Bool();
+					node.Children = [BodyNode()];
 					break;
 				case RustBodyNode.Identifier:
 				case RustBodyNode.Label:
@@ -1832,17 +1844,21 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					break;
 				}
 				case RustBodyNode.LocalFunctionDeclaration:
-					// The body.
-					node.Children = [BodyNode()];
+					// The body, if the function has one.
+					node.Children = Bool() ? [BodyNode()] : [];
 					break;
 				case RustBodyNode.Lambda:
-					// The delegate type, the inferred return type, the type mismatch and implicit typing
-					// flags, then the body.
+					// The delegate type, the inferred return type, the type mismatch, implicit typing,
+					// anonymous method, parameter list, async and params-and-defaults flags, whether the
+					// body is an expression, then the body.
 					node.Type = Type();
 					node.Value = Type();
 					node.AttemptedConversionWithTypeMismatch = Bool();
 					node.ImplicitlyTyped = Bool();
 					node.AnonymousMethod = Bool();
+					node.HasParameterList = Bool();
+					node.IsAsync = Bool();
+					node.KeepParamsAndDefaults = Bool();
 					node.Flag = Bool();
 					node.Children = [BodyNode()];
 					break;

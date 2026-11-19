@@ -16,8 +16,8 @@ use super::{Builder, TranslatedExpression, Unsupported};
 impl Builder<'_, '_, '_, '_> {
     /// `HandleDelegateConstruction(CallInstruction)` where `CanUseDelegateConstruction` holds
     /// for an instance method, or a static method of a delegate without a bound first
-    /// argument. Extension methods, local functions, accessors and value-type targets are not
-    /// translated.
+    /// argument. Extension methods, accessors, compiler-generated methods and value-type targets
+    /// boxed other than from an `ldobj` are not translated.
     pub(crate) fn delegate_construction(
         &mut self,
         inst: NodeId,
@@ -71,8 +71,19 @@ impl Builder<'_, '_, '_, '_> {
         {
             return Err("a delegate construction that binds its first argument".to_owned());
         }
-        if !method.is_static && self.ts.is_reference_type(declaring) != Some(true) {
-            return Err("a delegate of a value type's method".to_owned());
+        // A struct method's target is boxed for the delegate, where `TranslateTarget` expects
+        // a reference: that the boxed `ldobj` loads.
+        let mut this_arg = this_arg;
+        if self.ts.is_reference_type(declaring) == Some(false)
+            && let Inst::Box { arg, .. } = *self.f.inst(this_arg)
+        {
+            // shortcut: a boxed value other than an `ldobj` takes the address of a new
+            // `AddressOf` instruction, which the engine does not create; upgrade when a
+            // fixture needs it.
+            let Inst::LdObj { target, .. } = *self.f.inst(arg) else {
+                return Err("a delegate of a value type's method".to_owned());
+            };
+            this_arg = target;
         }
         let target = self.translate_target(
             (!method.is_static).then_some(this_arg),
@@ -97,7 +108,7 @@ impl Builder<'_, '_, '_, '_> {
 
     /// `HandleDelegateConstruction` of a local function, whose reduced method is static:
     /// `new D(Name)` without target or disambiguation (`DisambiguateDelegateReference`), the
-    /// name resolved to `ToMethodGroup`. Generic local functions are not translated.
+    /// name resolved to `ToMethodGroup`.
     fn local_function_delegate(
         &mut self,
         inst: NodeId,

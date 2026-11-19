@@ -1855,6 +1855,8 @@ pub fn extension_method_syntax_query(
                     w.out.bool(d.attempted_conversion_with_type_mismatch.get());
                     w.out.bool(d.implicitly_typed);
                     w.out.bool(d.anonymous_method);
+                    w.out.bool(d.has_parameter_list);
+                    w.out.bool(d.is_async);
                 }
                 _ => return Err("an operand of another kind".to_owned()),
             }

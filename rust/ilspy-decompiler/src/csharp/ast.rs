@@ -28,6 +28,20 @@ pub enum AstNode {
     },
     /// `PrimitiveExpression` of a string.
     StringLiteral { value: Vec<u16> },
+    /// `PrimitiveExpression` of a UTF-8 string literal (`LiteralFormat.Utf8Literal`).
+    Utf8StringLiteral { value: Vec<u16> },
+    /// `ErrorExpression` with the message as a multi-line comment, of
+    /// `ErrorResolveResult.UnknownError`, which the host adds.
+    Error { message: String },
+    /// `VisitBlockContainer`: `((Func<T>)delegate { body }).Invoke()` of a container that is no
+    /// single expression; the host adds the comment, and the resolve result: the invocation of
+    /// the delegate's `Invoke`, or one of the return type where `Func<T>` is unknown.
+    BlockExpression {
+        body: AstId,
+        delegate_type: TypeId,
+        return_type: TypeId,
+        func_unknown: bool,
+    },
     /// `NullReferenceExpression`.
     Null,
     /// `IdentifierExpression`.
@@ -95,8 +109,9 @@ pub enum AstNode {
         names_in_rr: bool,
     },
     /// `LocalFunctionDeclarationStatement` of the local function its IL instruction is, with
-    /// this body; the host writes the declaration of the function's reduced method.
-    LocalFunctionDeclaration { body: AstId },
+    /// this body (none for an `extern` one); the host writes the declaration of the function's
+    /// reduced method.
+    LocalFunctionDeclaration { body: Option<AstId> },
     /// `SwitchExpression`: the value and the (pattern, body) arms.
     SwitchExpression {
         expression: AstId,
@@ -229,6 +244,8 @@ pub enum AstNode {
         body: AstId,
         expression_body: bool,
         lambda: usize,
+        /// The parameter declarations keep `params` and their default values.
+        keep_params_and_defaults: bool,
     },
     /// `InterpolatedStringExpression`.
     InterpolatedString { contents: Vec<InterpolatedContent> },

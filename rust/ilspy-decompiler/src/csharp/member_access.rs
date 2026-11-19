@@ -188,7 +188,7 @@ impl Builder<'_, '_, '_, '_> {
 
     /// The tuple element `MatchTupleFieldAccess` finds for a field of a `ValueTuple`: the
     /// element's name on a target of a matching tuple type, else `ConvertField`. Elements past
-    /// the seventh (reached through `Rest`) and targets whose type is no tuple type are not
+    /// the seventh are reached through `Rest`; targets whose type is no tuple type are not
     /// translated.
     fn tuple_field_access(
         &mut self,
@@ -203,16 +203,29 @@ impl Builder<'_, '_, '_, '_> {
         else {
             return self.convert_field(field, Some(target));
         };
-        if let Inst::LdFlda { field: rest, .. } = self.f.inst(target)
-            && rest.field.name == "Rest"
-        {
-            return Err("a tuple element past the seventh".to_owned());
-        }
-        let underlying = field
+        let mut position = position;
+        let mut tuple_target = target;
+        let mut underlying = field
             .field
             .declaring
             .ok_or("a tuple field without declaring type")?;
-        let translated = self.translate_target(Some(target), true, false, underlying)?;
+        // An element past the seventh is reached through the `Rest` fields of the outer tuples.
+        while let Inst::LdFlda {
+            field: rest,
+            target: outer,
+            ..
+        } = self.f.inst(tuple_target)
+            && rest.field.name == "Rest"
+            && self.is_value_tuple(rest.field.declaring)
+        {
+            underlying = rest
+                .field
+                .declaring
+                .ok_or("a tuple field without declaring type")?;
+            tuple_target = *outer;
+            position += 7;
+        }
+        let translated = self.translate_target(Some(tuple_target), true, false, underlying)?;
         // The managed type system reads every `ValueTuple` as a tuple type, with the element
         // names of `[TupleElementNames]`. The engine keeps the names of a variable's type and of
         // a field of a non-generic type; a member of a generic type is substituted from the IL

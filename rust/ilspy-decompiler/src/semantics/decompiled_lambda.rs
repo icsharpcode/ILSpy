@@ -24,14 +24,17 @@ pub struct DecompiledLambda {
     /// `IsImplicitlyTyped`: the parameter list is written without types (a parameter of an
     /// anonymous type).
     pub implicitly_typed: bool,
-    /// `IsAnonymousMethod` without `HasParameterList`: `delegate { ... }`, which converts to any
-    /// parameter list.
+    /// `IsAnonymousMethod`: `delegate (...) { ... }`.
     pub anonymous_method: bool,
+    /// `HasParameterList`: without one, `delegate { ... }` converts to any parameter list.
+    pub has_parameter_list: bool,
+    /// `IsAsync`.
+    pub is_async: bool,
 }
 
 impl Lambda for DecompiledLambda {
     fn has_parameter_list(&self) -> bool {
-        !self.anonymous_method
+        self.has_parameter_list
     }
 
     fn is_anonymous_method(&self) -> bool {
@@ -43,7 +46,7 @@ impl Lambda for DecompiledLambda {
     }
 
     fn is_async(&self) -> bool {
-        false
+        self.is_async
     }
 
     fn parameters(&self) -> &[Parameter] {
@@ -70,7 +73,7 @@ impl Lambda for DecompiledLambda {
         return_type: TypeId,
     ) -> Conversion {
         // An anonymous method without parameter list is applicable to any parameter list.
-        let checked: &[Parameter] = if self.anonymous_method {
+        let checked: &[Parameter] = if !self.has_parameter_list {
             &[]
         } else {
             if self.parameters.len() != parameter_types.len() {

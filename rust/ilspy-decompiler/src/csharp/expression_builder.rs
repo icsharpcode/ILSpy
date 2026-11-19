@@ -533,8 +533,130 @@ impl Builder<'_, '_, '_, '_> {
                 get_result,
                 get_awaiter_callvirt,
             } => self.translate_await(inst, value, get_awaiter, get_result, get_awaiter_callvirt),
+            Inst::BlockContainer { .. } => self.block_container_expression(inst, hint),
+            // `VisitExpressionTreeCast`
+            Inst::ExpressionTreeCast {
+                ty,
+                arg,
+                is_checked,
+            } => {
+                let a = self.translate(arg, None)?;
+                self.convert_to_checked(a, ty, is_checked, false)
+            }
+            // `VisitInvalidBranch` and `VisitInvalidExpression`.
+            Inst::InvalidBranch { message, .. } => {
+                Ok(self.error_expression(inst, "Error", &message))
+            }
+            Inst::InvalidExpression {
+                message, severity, ..
+            } => Ok(self.error_expression(inst, &severity, &message)),
+            Inst::LdStrUtf8 { value } => {
+                // `ReadOnlySpan<byte>`.
+                let generic = self.ts.known_type(KnownTypeCode::ReadOnlySpanOfT);
+                let byte = self.ts.known_type(KnownTypeCode::Byte);
+                let ty = self.ts.intern(TypeData::Inst {
+                    generic,
+                    args: Box::new([byte]),
+                });
+                let value: Vec<u16> = value.encode_utf16().collect();
+                let e = self.ast.add(AstNode::Utf8StringLiteral {
+                    value: value.clone(),
+                });
+                self.ast.with_il(e, inst);
+                self.ast.with_rr(
+                    e,
+                    Rr::Constant {
+                        ty,
+                        value: ConstValue::String(value),
+                    },
+                );
+                Ok(TranslatedExpression { expression: e, ty })
+            }
             other => Err(format!("the instruction {}", super::inst_name(&other))),
         }
+    }
+
+    /// `VisitBlockContainer`: the container as the block of an anonymous method returning the
+    /// type hint, invoked as a `Func<T>` of the type its returns infer.
+    fn block_container_expression(
+        &mut self,
+        container: NodeId,
+        hint: TypeId,
+    ) -> Result<TranslatedExpression, Unsupported> {
+        let saved = (
+            std::mem::replace(&mut self.return_container, container),
+            std::mem::replace(&mut self.result_type, hint),
+            std::mem::replace(&mut self.is_iterator, false),
+            std::mem::take(&mut self.return_statements),
+        );
+        let body = self.convert_as_block(container);
+        self.return_container = saved.0;
+        self.result_type = saved.1;
+        self.is_iterator = saved.2;
+        let returns = std::mem::replace(&mut self.return_statements, saved.3);
+        let body = body?;
+        // `InferReturnType`: the best common type of the returned expressions.
+        let mut expressions = Vec::new();
+        for s in returns {
+            if let AstNode::Return {
+                expression: Some(e),
+            } = *self.ast.node(s)
+            {
+                let rr = self.rr_of(e);
+                let ty = self.rr_type(&rr);
+                expressions.push(self.semantic_rr(e, ty));
+            }
+        }
+        let mut conversions = Conversions::new(self.ts);
+        let (return_type, _) =
+            crate::semantics::TypeInference::new(&mut conversions).best_common_type(&expressions);
+        let func =
+            self.ts
+                .find_top_level(crate::typesystem::reflection::top_level_from_reflection(
+                    "System.Func`1",
+                ));
+        let func_unknown = matches!(
+            self.ts.data(func),
+            TypeData::Unknown { .. } | TypeData::UnknownSpecial
+        );
+        let delegate_type = self.ts.intern(TypeData::Inst {
+            generic: func,
+            args: Box::new([return_type]),
+        });
+        let e = self.ast.add(AstNode::BlockExpression {
+            body,
+            delegate_type,
+            return_type,
+            func_unknown,
+        });
+        self.ast.with_il(e, container);
+        self.ast.with_rr(e, Rr::Plain(return_type));
+        Ok(TranslatedExpression {
+            expression: e,
+            ty: return_type,
+        })
+    }
+
+    /// `ErrorExpression`: `severity near IL_xxxx: message`, without IL instruction.
+    fn error_expression(
+        &mut self,
+        inst: NodeId,
+        severity: &str,
+        message: &str,
+    ) -> TranslatedExpression {
+        let mut text = severity.to_owned();
+        let start = self.f.il_range(inst).start;
+        if start != 0 {
+            text.push_str(&format!(" near IL_{start:04x}"));
+        }
+        if !message.is_empty() {
+            text.push_str(": ");
+            text.push_str(message);
+        }
+        let ty = self.ts.intern(TypeData::UnknownSpecial);
+        let e = self.ast.add(AstNode::Error { message: text });
+        self.ast.with_rr(e, Rr::Plain(ty));
+        TranslatedExpression { expression: e, ty }
     }
 
     /// `VisitLdcI4`: an int (a uint for an unsigned type hint) adjusted to the type hint.
@@ -1537,8 +1659,8 @@ impl Builder<'_, '_, '_, '_> {
 
     /// The target type `VisitIfInstruction` converts both branches to where
     /// `ResolveConditional` reports an error: their best common type where the instruction's
-    /// result has its stack type, else the type hint of that stack type; for a typeless branch
-    /// the other branch's type. Inferring the type from the instruction is not translated.
+    /// result has its stack type, else the type hint of that stack type, else a ref-type of a
+    /// branch or the type the instruction infers; for a typeless branch the other branch's type.
     fn conditional_target_type(
         &mut self,
         inst: NodeId,
@@ -1567,7 +1689,18 @@ impl Builder<'_, '_, '_, '_> {
         {
             return Ok(hint);
         }
-        Err("a conditional expression of a type inferred from its instruction".to_owned())
+        if result == StackType::Ref {
+            // A ref-type: that of a branch, else the instruction's.
+            if self.ts.kind(t.ty) == TypeKind::ByReference {
+                return Ok(t.ty);
+            }
+            if self.ts.kind(f.ty) == TypeKind::ByReference {
+                return Ok(f.ty);
+            }
+            return Ok(self.f.infer_type(self.ts, inst));
+        }
+        let inferred = self.f.infer_type(self.ts, inst);
+        Ok(self.prefer_native_integer_type(inferred))
     }
 
     /// The type `ResolveConditional` gives branches of these types where it resolves without
