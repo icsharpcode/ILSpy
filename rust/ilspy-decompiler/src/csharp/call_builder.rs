@@ -2198,11 +2198,14 @@ impl Builder<'_, '_, '_, '_> {
                 if skip_target_cast && require != initially_required {
                     require = false;
                 } else {
-                    // shortcut: a constructor call's `base` target is not cast; the engine's
-                    // probe of `base..ctor()` (F# constructors) escalates where the managed one
-                    // resolves. Upgrade once the probes agree.
+                    // shortcut: a constructor call's `base` or `this` target is not cast; the
+                    // engine's probe of `base..ctor()` (F# constructors) escalates where the
+                    // managed one resolves. Upgrade once the probes agree.
                     let base_ctor = method.name == ".ctor"
-                        && matches!(self.ast.node(target.expression), AstNode::Base);
+                        && matches!(
+                            self.ast.node(target.expression),
+                            AstNode::Base | AstNode::This
+                        );
                     let uncast = target.expression;
                     // `Target.ConvertTo(declaringType)`: the target cast to the declaring type.
                     lookup_target =
