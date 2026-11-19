@@ -211,13 +211,31 @@ impl Builder<'_, '_, '_, '_> {
                 init,
                 body,
             } => self.pinned_region(inst, variable, init, body),
+            // `VisitIsInst`: an unused `isinst` is `arg is T`, even of a value type.
+            Inst::IsInst { arg, ty } => {
+                let a = self.translate(arg, None)?;
+                let a = self.unwrap_boxing_conversion(a);
+                let e = self.ast.add(AstNode::IsType {
+                    expression: a.expression,
+                    ty: ty.ty,
+                });
+                // shortcut: the host writes a tuple type as its underlying type and annotates a
+                // `TypeIsResolveResult` where the managed statement keeps the tuple type and a
+                // plain `bool`; upgrade when an `isinst` statement of a tuple type is served.
+                if matches!(self.ts.data(ty.ty), TypeData::Tuple { .. }) {
+                    return Err("the statement IsInst".to_owned());
+                }
+                self.ast.with_rr(e, Rr::TypeIs { ty: ty.ty });
+                self.ast.with_il(e, inst);
+                let s = self.ast.add(AstNode::ExpressionStatement { expression: e });
+                Ok(self.ast.with_il(s, inst))
+            }
             Inst::Switch { .. }
             | Inst::Branch { .. }
             | Inst::TryFault { .. }
             | Inst::Initblk { .. }
             | Inst::Cpblk { .. }
-            | Inst::Ckfinite { .. }
-            | Inst::IsInst { .. } => Err(format!(
+            | Inst::Ckfinite { .. } => Err(format!(
                 "the statement {}",
                 super::inst_name(self.f.inst(inst))
             )),

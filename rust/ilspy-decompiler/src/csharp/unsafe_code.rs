@@ -350,7 +350,7 @@ impl Builder<'_, '_, '_, '_> {
 
     /// `PointerArithmeticOffset.IsFixedVariable`: an uncaptured local's address, a field of
     /// one, or a native integer.
-    fn is_fixed_variable(&mut self, inst: NodeId) -> bool {
+    pub(crate) fn is_fixed_variable(&mut self, inst: NodeId) -> bool {
         match *self.f.inst(inst) {
             Inst::LdLoca { var } => self.f.var(var).capture_scope.is_none(),
             Inst::LdFlda { target, .. } => self.is_fixed_variable(target),
