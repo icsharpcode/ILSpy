@@ -132,6 +132,7 @@ pub const SETTING_NAMES: &[&str] = &[
     "FirstClassSpanTypes",
     "StringConcat",
     "FixedBuffers",
+    "LambdaOptionalAndParamsParameters",
 ];
 
 /// The values of `SETTING_NAMES`.
@@ -207,6 +208,7 @@ pub struct Settings {
     pub first_class_span_types: bool,
     pub string_concat: bool,
     pub fixed_buffers: bool,
+    pub lambda_optional_and_params_parameters: bool,
 }
 
 impl Settings {
@@ -287,6 +289,7 @@ impl Settings {
             first_class_span_types: bit(67),
             string_concat: bit(68),
             fixed_buffers: bit(69),
+            lambda_optional_and_params_parameters: bit(70),
         }
     }
 }

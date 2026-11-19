@@ -171,11 +171,8 @@ impl Builder<'_, '_, '_, '_> {
         {
             return self.local_function_call(inst, call);
         }
-        if operand.local_function.is_some()
-            || operand.specialized_by.is_some()
-            || operand.range_accessor.is_some()
-            || operand.lifted
-        {
+        // A proxy call `ProxyCallReplacer` replaced calls the specialized method as any other.
+        if operand.local_function.is_some() || operand.range_accessor.is_some() || operand.lifted {
             return Err(
                 "a call of a local function, proxy, range accessor or lifted operator".to_owned(),
             );
@@ -2310,28 +2307,57 @@ impl Builder<'_, '_, '_, '_> {
         else {
             return Err("a dynamic await".to_owned());
         };
-        if matches!(self.f.inst(value), Inst::LdObjIfRef { .. }) {
-            return Err("an await of a constrained operand".to_owned());
-        }
+        // A constrained operand awaits its target.
+        let value = match *self.f.inst(value) {
+            Inst::LdObjIfRef { target, .. } => target,
+            _ => value,
+        };
+        let awaiter_operand = awaiter;
         let awaiter = Method::from_resolved(self.ts, &awaiter.method)
             .ok_or("an await of an unresolved method")?;
         let result = Method::from_resolved(self.ts, &result.method)
             .ok_or("an await of an unresolved method")?;
-        if awaiter.is_static {
-            return Err("an await of an extension GetAwaiter".to_owned());
-        }
-        let expected = awaiter.declaring.ok_or("a method without declaring type")?;
+        // An extension `GetAwaiter` expects the type of its first parameter.
+        let expected = if awaiter.is_static {
+            awaiter
+                .parameters
+                .first()
+                .ok_or("an await of an extension GetAwaiter")?
+                .ty
+        } else {
+            awaiter.declaring.ok_or("a method without declaring type")?
+        };
         let mut operand = self.translate(value, Some(expected))?;
-        if let AstNode::RefDirection { expression } = *self.ast.node(operand.expression) {
+        if let AstNode::RefDirection { expression } | AstNode::InDirection { expression } =
+            *self.ast.node(operand.expression)
+        {
             operand = self.unwrap_child(operand.expression, expression);
         }
-        if matches!(self.ast.node(operand.expression), AstNode::Cast { .. }) {
-            return Err("an await of a cast operand".to_owned());
+        // An operand boxed for the `GetAwaiter` call is looked up through the box, which C#
+        // writes implicitly where the unboxed operand binds the same `GetAwaiter`.
+        let mut boxed = None;
+        let mut lookup = operand;
+        if let AstNode::Cast {
+            expression: inner, ..
+        } = *self.ast.node(operand.expression)
+        {
+            let rr = self.rr_of(inner);
+            let inner_ty = self.rr_type(&rr);
+            if Conversions::new(self.ts)
+                .explicit_type(inner_ty, operand.ty)
+                .is_boxing()
+            {
+                boxed = Some(inner);
+                lookup = TranslatedExpression {
+                    expression: inner,
+                    ty: inner_ty,
+                };
+            }
         }
         let resolver = self
             .resolver
             .ok_or("a member reference without the host's resolver")?;
-        let lookup_target = match self.rr_of(operand.expression) {
+        let lookup_target = match self.rr_of(lookup.expression) {
             Rr::This {
                 ty,
                 causes_non_virtual_invocation,
@@ -2341,7 +2367,7 @@ impl Builder<'_, '_, '_, '_> {
                 causes_non_virtual_invocation,
             },
             Rr::Type(ty) => LookupTarget::Type(ty),
-            _ => LookupTarget::Expression(operand.ty),
+            _ => LookupTarget::Expression(lookup.ty),
         };
         let list = ArgumentList {
             arguments: Vec::new(),
@@ -2362,18 +2388,40 @@ impl Builder<'_, '_, '_, '_> {
         } else {
             CallOp::Call
         };
-        let errors = self.probe_call(
-            resolver,
-            &awaiter,
-            op,
-            Some(lookup_target),
-            &operand,
-            &list,
-            &[],
-        )?;
-        self.found_override = None;
-        if errors != OverloadResolutionErrors::NONE {
+        let found = if awaiter.is_static {
+            // shortcut: `CheckSimpleCall` of an extension `GetAwaiter` is asked as the host's
+            // `CanTransformToExtensionMethodCall` without arguments, which binds the same
+            // method; upgrade if an awaiter shows where the two answers differ.
+            let target = self.semantic_rr(lookup.expression, lookup.ty);
+            resolver
+                .can_use_extension_method_syntax(
+                    self.ts,
+                    awaiter_operand,
+                    awaiter.method_args.as_deref(),
+                    &[],
+                    &target,
+                    &[],
+                    &[],
+                    None,
+                )
+                .ok_or("an extension method question the host cannot answer")?
+        } else {
+            let errors = self.probe_call(
+                resolver,
+                &awaiter,
+                op,
+                Some(lookup_target),
+                &lookup,
+                &list,
+                &[],
+            )?;
+            self.found_override = None;
+            errors == OverloadResolutionErrors::NONE
+        };
+        if !found {
             operand = self.convert_to(operand, expected, false)?;
+        } else if let Some(inner) = boxed {
+            operand = self.unwrap_child(operand.expression, inner);
         }
         let e = self.ast.add(AstNode::Await {
             expression: operand.expression,

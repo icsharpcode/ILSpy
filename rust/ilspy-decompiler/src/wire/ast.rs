@@ -104,6 +104,9 @@ mod kind {
     pub const UNARY_OPERATOR: u8 = 90;
     pub const ANONYMOUS_TYPE_CREATE: u8 = 74;
     pub const WITH_INITIALIZER: u8 = 75;
+    pub const UTF8_STRING_LITERAL: u8 = 130;
+    pub const ERROR: u8 = 131;
+    pub const BLOCK_EXPRESSION: u8 = 132;
 }
 
 pub(super) fn write_body(
@@ -370,6 +373,9 @@ fn node(w: &mut FunctionWriter<'_, '_, '_, '_>, ast: &Ast, id: AstId) -> Result<
         AstNode::Empty => kind::EMPTY,
         AstNode::ConstantValue { .. } => kind::CONSTANT_VALUE,
         AstNode::StringLiteral { .. } => kind::STRING_LITERAL,
+        AstNode::Utf8StringLiteral { .. } => kind::UTF8_STRING_LITERAL,
+        AstNode::Error { .. } => kind::ERROR,
+        AstNode::BlockExpression { .. } => kind::BLOCK_EXPRESSION,
         AstNode::Null => kind::NULL,
         AstNode::Identifier { .. } => kind::IDENTIFIER,
         AstNode::This => kind::THIS,
@@ -569,7 +575,12 @@ fn node(w: &mut FunctionWriter<'_, '_, '_, '_>, ast: &Ast, id: AstId) -> Result<
             let special = w.special_constants;
             constant_syntax(w, ty, &value, allow_implicit_conversion, false, special)?;
         }
-        AstNode::LocalFunctionDeclaration { body } => node(w, ast, body)?,
+        AstNode::LocalFunctionDeclaration { body } => {
+            w.out.bool(body.is_some());
+            if let Some(body) = body {
+                node(w, ast, body)?;
+            }
+        }
         AstNode::SwitchExpression { expression, arms } => {
             node(w, ast, expression)?;
             w.out.len(arms.len());
@@ -589,7 +600,22 @@ fn node(w: &mut FunctionWriter<'_, '_, '_, '_>, ast: &Ast, id: AstId) -> Result<
             let special = w.special_constants;
             constant_syntax(w, ty, &value, false, display_as_hex, special)?;
         }
-        AstNode::StringLiteral { value } => utf16(w, &value),
+        AstNode::StringLiteral { value } | AstNode::Utf8StringLiteral { value } => utf16(w, &value),
+        AstNode::Error { message } => {
+            let message: Vec<u16> = message.encode_utf16().collect();
+            utf16(w, &message);
+        }
+        AstNode::BlockExpression {
+            body,
+            delegate_type,
+            return_type,
+            func_unknown,
+        } => {
+            w.ty(delegate_type);
+            w.ty(return_type);
+            w.out.bool(func_unknown);
+            node(w, ast, body)?;
+        }
         AstNode::Identifier { name } => w.string(&name),
         AstNode::Label { name } | AstNode::Goto { name } => w.string(&name),
         AstNode::InDirection { expression } => node(w, ast, expression)?,
@@ -750,6 +776,7 @@ fn node(w: &mut FunctionWriter<'_, '_, '_, '_>, ast: &Ast, id: AstId) -> Result<
             body,
             expression_body,
             lambda,
+            keep_params_and_defaults,
         } => {
             let l = &ast.lambdas[lambda];
             w.ty(l.delegate_type);
@@ -757,6 +784,9 @@ fn node(w: &mut FunctionWriter<'_, '_, '_, '_>, ast: &Ast, id: AstId) -> Result<
             w.out.bool(l.attempted_conversion_with_type_mismatch.get());
             w.out.bool(l.implicitly_typed);
             w.out.bool(l.anonymous_method);
+            w.out.bool(l.has_parameter_list);
+            w.out.bool(l.is_async);
+            w.out.bool(keep_params_and_defaults);
             w.out.bool(expression_body);
             node(w, ast, body)?;
         }

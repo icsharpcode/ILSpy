@@ -129,6 +129,9 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		public const byte UnaryOperator = 90;
 		public const byte AnonymousTypeCreate = 74;
 		public const byte WithInitializer = 75;
+		public const byte Utf8StringLiteral = 130;
+		public const byte Error = 131;
+		public const byte BlockExpression = 132;
 
 		public byte Kind;
 		/// <summary>The instructions the node is annotated with, in order.</summary>
@@ -163,8 +166,14 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		public (bool HasTarget, IType[] TypeArguments, IMethod Method)? MethodGroup;
 		/// <summary>For a lambda: <see cref="DecompiledLambdaResolveResult.IsImplicitlyTyped"/>.</summary>
 		public bool ImplicitlyTyped;
-		/// <summary>For a lambda: an anonymous method without parameter list.</summary>
+		/// <summary>For a lambda: <see cref="DecompiledLambdaResolveResult.IsAnonymousMethod"/>.</summary>
 		public bool AnonymousMethod;
+		/// <summary>For a lambda: <see cref="DecompiledLambdaResolveResult.HasParameterList"/>.</summary>
+		public bool HasParameterList;
+		/// <summary>For a lambda: whether it is async.</summary>
+		public bool IsAsync;
+		/// <summary>For a lambda: whether its parameter declarations keep <c>params</c> and their default values.</summary>
+		public bool KeepParamsAndDefaults;
 		/// <summary>For a lambda: <see cref="DecompiledLambdaResolveResult.AttemptedConversionWithTypeMismatch"/>.</summary>
 		public bool AttemptedConversionWithTypeMismatch;
 		/// <summary>For an object creation: the elements of its initializer, if it has one.</summary>
@@ -923,6 +932,33 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				}
 				case RustBodyNode.StringLiteral:
 					return Annotate(new PrimitiveExpression(node.Value!), node);
+				case RustBodyNode.Utf8StringLiteral:
+					return Annotate(new PrimitiveExpression(node.Value!, LiteralFormat.Utf8Literal), node);
+				case RustBodyNode.Error:
+				{
+					var error = new ErrorExpression();
+					error.AddTrailingTrivia(new Comment((string)node.Value!, CommentType.MultiLine));
+					node.ResolveResult = ErrorResolveResult.UnknownError;
+					return Annotate(error, node);
+				}
+				case RustBodyNode.BlockExpression:
+				{
+					// `VisitBlockContainer`.
+					var container = (BlockContainer)node.IL[0];
+					var body = (BlockStatement)Build(node.Children[0], exprBuilder);
+					var commentStatement = new EmptyStatement();
+					commentStatement.AddTrailingTrivia(new Comment(" Could not convert BlockContainer to single expression"));
+					body.Statements.InsertBefore(body.Statements.FirstOrDefault(), commentStatement);
+					// set ILVariable.UsesInitialValue for any variables being used inside the container
+					foreach (var stloc in container.Descendants.OfType<StLoc>())
+						stloc.Variable.UsesInitialValue = true;
+					var (delegateType, blockReturnType) = ((IType, IType))node.Value!;
+					var invocationTarget = new CastExpression(ConvertType(exprBuilder, delegateType), new AnonymousMethodExpression { Body = body });
+					node.ResolveResult = node.Flag
+						? new ResolveResult(blockReturnType)
+						: new CSharpInvocationResolveResult(new ResolveResult(delegateType), delegateType.GetDelegateInvokeMethod(), EmptyList<ResolveResult>.Instance);
+					return Annotate(new InvocationExpression(new MemberReferenceExpression(invocationTarget, "Invoke")), node);
+				}
 				case RustBodyNode.Null:
 					return Annotate(new NullReferenceExpression(), node);
 				case RustBodyNode.Identifier:
@@ -1012,6 +1048,10 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				{
 					var left = (Expression)Build(node.Children[0], exprBuilder);
 					var right = (Expression)Build(node.Children[1], exprBuilder);
+					// `VisitDeconstructInstruction` replaced the loads of the init temporaries in the
+					// assignment targets with the inits' values, which the engine translated.
+					if (node.IL is [DeconstructInstruction deconstruction])
+						ReplaceAssignmentTargets(deconstruction);
 					// A property setter's assignment comes with a resolve result of its own.
 					if (node.OperatorType != null)
 					{
@@ -1508,16 +1548,23 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 						if (variables.TryGetValue(i, out var v))
 							p.Name = v.Name!;
 					}
-					method.Body = (BlockStatement)Build(node.Children[0], exprBuilder);
-					var warningAnchor = method.Body.Statements.FirstOrDefault();
-					foreach (string warning in function.Warnings)
+					if (node.Children.Length == 0)
 					{
-						var warningStatement = new EmptyStatement();
-						warningStatement.AddTrailingTrivia(new Comment(warning));
-						if (warningAnchor != null)
-							method.Body.Statements.InsertBefore(warningAnchor, warningStatement);
-						else
-							method.Body.Statements.Add(warningStatement);
+						method.Modifiers |= Modifiers.Extern;
+					}
+					else
+					{
+						method.Body = (BlockStatement)Build(node.Children[0], exprBuilder);
+						var warningAnchor = method.Body.Statements.FirstOrDefault();
+						foreach (string warning in function.Warnings)
+						{
+							var warningStatement = new EmptyStatement();
+							warningStatement.AddTrailingTrivia(new Comment(warning));
+							if (warningAnchor != null)
+								method.Body.Statements.InsertBefore(warningAnchor, warningStatement);
+							else
+								method.Body.Statements.Add(warningStatement);
+						}
 					}
 					CSharpDecompiler.AddAnnotationsToDeclaration(function.ReducedMethod!, method, function);
 					CSharpDecompiler.CleanUpMethodDeclaration(method, method.Body, function, function.Method!.HasBody);
@@ -1529,31 +1576,61 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				}
 				case RustBodyNode.Lambda:
 				{
-					// `TranslateFunction` for a lambda with a parameter list, explicitly typed unless a
-					// parameter has an anonymous type.
+					// `TranslateFunction`: the engine decides the syntax, the parameter declarations are
+					// `MakeParameters`.
 					var function = (ILFunction)node.IL[0];
-					if (node.AnonymousMethod)
+					var parameters = node.HasParameterList ? MakeParameters(function, exprBuilder) : [];
+					foreach (var pd in parameters)
 					{
-						// `delegate { ... }`: the parameters are not used and cannot be written.
-						var anonymous = new AnonymousMethodExpression { Body = (BlockStatement)Build(node.Children[0], exprBuilder) };
-						node.ResolveResult = new DecompiledLambdaResolveResult(function, node.Type!, (IType)node.Value!,
-							hasParameterList: false, isAnonymousMethod: true, isImplicitlyTyped: false) {
-							AttemptedConversionWithTypeMismatch = node.AttemptedConversionWithTypeMismatch
-						};
-						return Annotate(anonymous, node);
-					}
-					var lambda = new LambdaExpression();
-					lambda.Parameters.AddRange(MakeParameters(function, exprBuilder));
-					if (node.ImplicitlyTyped)
-					{
-						foreach (var pd in lambda.Parameters)
+						if (node.ImplicitlyTyped)
 							pd.Type = null!;
+						if (!node.KeepParamsAndDefaults)
+						{
+							pd.IsParams = false;
+							pd.DefaultExpression?.Detach();
+						}
 					}
-					lambda.Body = Build(node.Children[0], exprBuilder);
 					node.ResolveResult = new DecompiledLambdaResolveResult(function, node.Type!, (IType)node.Value!,
-						hasParameterList: true, isAnonymousMethod: false, isImplicitlyTyped: node.ImplicitlyTyped) {
+						hasParameterList: node.HasParameterList, isAnonymousMethod: node.AnonymousMethod, isImplicitlyTyped: node.ImplicitlyTyped) {
 						AttemptedConversionWithTypeMismatch = node.AttemptedConversionWithTypeMismatch
 					};
+					var lambdaBody = Build(node.Children[0], exprBuilder);
+					if (lambdaBody is BlockStatement block)
+					{
+						var warningAnchor = block.Statements.FirstOrDefault();
+						foreach (string warning in function.Warnings)
+						{
+							var warningStatement = new EmptyStatement();
+							warningStatement.AddTrailingTrivia(new Comment(warning));
+							if (warningAnchor != null)
+								block.Statements.InsertBefore(warningAnchor, warningStatement);
+							else
+								block.Statements.Add(warningStatement);
+						}
+					}
+					if (node.AnonymousMethod)
+					{
+						var anonymous = new AnonymousMethodExpression { IsAsync = node.IsAsync, Body = (BlockStatement)lambdaBody };
+						anonymous.Parameters.AddRange(parameters);
+						return Annotate(anonymous, node);
+					}
+					var lambda = new LambdaExpression { IsAsync = node.IsAsync };
+					var method = function.Method?.MemberDefinition as IMethod;
+					foreach (var attr in method?.GetAttributes() ?? [])
+					{
+						if (attr.AttributeType.IsKnownType(KnownAttribute.CompilerGenerated))
+							continue;
+						if (function.IsAsync && (attr.AttributeType.IsKnownType(KnownAttribute.AsyncStateMachine)
+							|| attr.AttributeType.IsKnownType(KnownAttribute.DebuggerStepThrough)))
+						{
+							continue;
+						}
+						lambda.Attributes.Add(new AttributeSection(exprBuilder.astBuilder.ConvertAttribute(attr)));
+					}
+					foreach (var attr in method?.GetReturnTypeAttributes() ?? [])
+						lambda.Attributes.Add(new AttributeSection(exprBuilder.astBuilder.ConvertAttribute(attr)) { AttributeTarget = "return" });
+					lambda.Parameters.AddRange(parameters);
+					lambda.Body = lambdaBody;
 					return Annotate(lambda, node);
 				}
 				case RustBodyNode.Using:
@@ -1750,6 +1827,38 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				result.Add(pd);
 			}
 			return result;
+		}
+
+		/// <summary>`ConstructAssignmentTarget`'s `ReplaceAssignmentTarget` over the deconstruction's assignments.</summary>
+		static void ReplaceAssignmentTargets(DeconstructInstruction inst)
+		{
+			var inits = inst.Init;
+			int initPos = 0;
+			foreach (var assignment in inst.Assignments.Instructions.ToArray())
+			{
+				switch (assignment)
+				{
+					case CallInstruction call:
+						for (int i = 0; i < call.Arguments.Count - 1; i++)
+							ReplaceAssignmentTarget(call.Arguments[i]);
+						break;
+					case StObj stobj:
+						var target = stobj.Target;
+						while (target.MatchLdFlda(out var nestedTarget, out _))
+							target = nestedTarget;
+						ReplaceAssignmentTarget(target);
+						break;
+				}
+			}
+
+			void ReplaceAssignmentTarget(ILInstruction target)
+			{
+				if (target.MatchLdLoc(out var v) && v.Kind == VariableKind.DeconstructionInitTemporary)
+				{
+					target.ReplaceWith(inits[initPos].Value);
+					initPos++;
+				}
+			}
 		}
 
 		static T Annotate<T>(T syntax, RustBodyNode node) where T : AstNode

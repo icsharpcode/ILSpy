@@ -113,6 +113,9 @@ pub(crate) struct Builder<'f, 't, 'c, 'a> {
     pub(crate) end_container_labels: Vec<(NodeId, String)>,
     /// `duplicateLabels`: how many blocks share each `Block.Label`.
     pub(crate) duplicate_labels: std::collections::HashMap<String, u32>,
+    /// `ReplaceAssignmentTarget`: the loads of deconstruction init temporaries that translate
+    /// as the init's value; the host replaces them in its ILAst.
+    pub(crate) replaced_loads: Vec<(NodeId, NodeId)>,
 }
 
 /// The variant name of an instruction, for the reasons of untranslated bodies.
