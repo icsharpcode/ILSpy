@@ -670,31 +670,40 @@ pub(crate) fn is_readonly_reference(
     ctx: &mut Context<'_, '_, '_>,
     addr: NodeId,
 ) -> bool {
+    is_readonly_reference_in(f, ctx.ts, addr)
+}
+
+/// `IsReadonlyReference` with the type system alone, for the C# builders.
+pub(crate) fn is_readonly_reference_in(
+    f: &Function,
+    ts: &mut crate::typesystem::types::TypeSystem<'_, '_>,
+    addr: NodeId,
+) -> bool {
     match f.inst(addr) {
         Inst::LdFlda { target, field, .. } => {
-            ctx.ts.field_is_read_only(&field.field)
+            ts.field_is_read_only(&field.field)
                 || (field
                     .field
                     .declaring
-                    .and_then(|d| ctx.ts.definition(d))
-                    .and_then(|d| ctx.ts.comp.type_def(d).ok())
+                    .and_then(|d| ts.definition(d))
+                    .and_then(|d| ts.comp.type_def(d).ok())
                     .is_some_and(|i| i.kind == crate::typesystem::compilation::TypeKind::Struct)
-                    && is_readonly_reference(f, ctx, *target))
+                    && is_readonly_reference_in(f, ts, *target))
         }
-        Inst::LdsFlda { field } => ctx.ts.field_is_read_only(&field.field),
+        Inst::LdsFlda { field } => ts.field_is_read_only(&field.field),
         Inst::LdLoc { var } => f.var(*var).is_ref_read_only,
         Inst::Call(c) | Inst::CallVirt(c) => {
-            ctx.ts.method_return_type_is_ref_read_only(&c.method.method)
+            ts.method_return_type_is_ref_read_only(&c.method.method)
         }
         Inst::CallIndirect { signature, .. } => matches!(
-            ctx.ts.data(*signature),
+            ts.data(*signature),
             crate::typesystem::types::TypeData::FnPtr(p) if p.ret_ref_readonly
         ),
         // C# does not allow mutation of value-type temporaries.
         Inst::AddressOf { .. } => true,
         _ => f
-            .match_ldfld(ctx.ts, addr)
-            .is_some_and(|(_, field)| ctx.ts.field_return_type_is_ref_read_only(&field.field)),
+            .match_ldfld(ts, addr)
+            .is_some_and(|(_, field)| ts.field_return_type_is_ref_read_only(&field.field)),
     }
 }
 

@@ -456,9 +456,14 @@ impl Builder<'_, '_, '_, '_> {
             return self.convert_to_checked(v, target, check, false);
         }
         if target_kind == TypeKind::Pointer && kind == TypeKind::ByReference {
-            return Err("a conversion of a reference to a pointer".to_owned());
+            return self.convert_reference_to_pointer(e, target);
         }
         if target_kind == TypeKind::ByReference {
+            if kind != TypeKind::ByReference
+                && let TypeData::ByRef(element) = *self.ts.data(target)
+            {
+                return self.convert_pointer_to_reference(e, element, check);
+            }
             return Err("a conversion to a reference that needs a cast".to_owned());
         }
         let rr = self.semantic_rr(e.expression, ty);

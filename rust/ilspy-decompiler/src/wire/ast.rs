@@ -95,6 +95,12 @@ mod kind {
     pub const USING_EXPANDED: u8 = 71;
     pub const GOTO_CASE: u8 = 72;
     pub const GOTO_DEFAULT: u8 = 73;
+    pub const POINTER_UNARY: u8 = 120;
+    pub const SIZE_OF: u8 = 121;
+    pub const FIXED: u8 = 122;
+    pub const UNSAFE_INTRINSIC: u8 = 123;
+    pub const STACK_ALLOC: u8 = 124;
+    pub const UNDOCUMENTED: u8 = 125;
 }
 
 pub(super) fn write_body(
@@ -411,6 +417,12 @@ fn node(w: &mut FunctionWriter<'_, '_, '_, '_>, ast: &Ast, id: AstId) -> Result<
         AstNode::HexConstant { .. } => kind::HEX_CONSTANT,
         AstNode::SwitchExpression { .. } => kind::SWITCH_EXPRESSION,
         AstNode::LocalFunctionDeclaration { .. } => kind::LOCAL_FUNCTION_DECLARATION,
+        AstNode::PointerUnary { .. } => kind::POINTER_UNARY,
+        AstNode::SizeOf { .. } => kind::SIZE_OF,
+        AstNode::Fixed { .. } => kind::FIXED,
+        AstNode::UnsafeIntrinsic { .. } => kind::UNSAFE_INTRINSIC,
+        AstNode::StackAlloc { .. } => kind::STACK_ALLOC,
+        AstNode::Undocumented { .. } => kind::UNDOCUMENTED,
     });
     w.out.len(a.il.len());
     for &inst in &a.il {
@@ -959,6 +971,66 @@ fn node(w: &mut FunctionWriter<'_, '_, '_, '_>, ast: &Ast, id: AstId) -> Result<
         | AstNode::Continue
         | AstNode::GotoDefault
         | AstNode::YieldBreak => {}
+        AstNode::PointerUnary {
+            address_of,
+            expression,
+        } => {
+            w.out.bool(address_of);
+            node(w, ast, expression)?;
+        }
+        AstNode::SizeOf { ty } => w.ty(ty),
+        AstNode::Fixed {
+            variable,
+            initializer,
+            body,
+        } => {
+            let i = var_index(w, variable)?;
+            w.out.len(i);
+            node(w, ast, initializer)?;
+            node(w, ast, body)?;
+        }
+        AstNode::UnsafeIntrinsic {
+            unsafe_type,
+            name,
+            type_arguments,
+            arguments,
+        } => {
+            w.ty(unsafe_type);
+            w.string(&name);
+            w.out.len(type_arguments.len());
+            for t in type_arguments {
+                w.ty(t);
+            }
+            w.out.len(arguments.len());
+            for a in arguments {
+                node(w, ast, a)?;
+            }
+        }
+        AstNode::StackAlloc {
+            ty,
+            count,
+            initializer,
+        } => {
+            w.ty(ty);
+            w.out.bool(count.is_some());
+            if let Some(c) = count {
+                node(w, ast, c)?;
+            }
+            w.out.bool(initializer.is_some());
+            if let Some(elements) = initializer {
+                w.out.len(elements.len());
+                for e in elements {
+                    node(w, ast, e)?;
+                }
+            }
+        }
+        AstNode::Undocumented { kind, arguments } => {
+            w.out.u8(kind);
+            w.out.len(arguments.len());
+            for a in arguments {
+                node(w, ast, a)?;
+            }
+        }
     }
     Ok(())
 }

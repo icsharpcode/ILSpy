@@ -29,6 +29,7 @@ pub mod transforms;
 pub mod syntax_schema;
 mod translated_expression;
 pub mod type_syntax;
+mod unsafe_code;
 
 use crate::il::ast::{Function, NodeId};
 use crate::typesystem::types::{TypeId, TypeSystem};
@@ -52,6 +53,8 @@ pub(crate) struct Builder<'f, 't, 'c, 'a> {
     /// `currentResultType`.
     pub(crate) result_type: TypeId,
     pub(crate) settings: crate::il::transforms::Settings,
+    /// `UseRefLocalsForAccurateOrderOfEvaluation`.
+    pub(crate) use_ref_locals: bool,
     /// The host's C# resolver, for the `Disambiguator` checks; without it no member reference
     /// is translated.
     pub(crate) resolver: Option<&'f dyn crate::il::transforms::Resolver>,

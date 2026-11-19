@@ -1930,6 +1930,59 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					node.Overflow = U8();
 					node.Children = [BodyNode()];
 					break;
+				case RustBodyNode.PointerUnary:
+					// Flag: address-of, else dereference.
+					node.Flag = Bool();
+					node.Children = [BodyNode()];
+					break;
+				case RustBodyNode.SizeOf:
+					node.Type = Type();
+					break;
+				case RustBodyNode.Fixed:
+					node.Value = Variable();
+					node.Children = [BodyNode(), BodyNode()];
+					break;
+				case RustBodyNode.UnsafeIntrinsic:
+				{
+					// The Unsafe type, the name, the type arguments, then the arguments.
+					node.Type = Type();
+					string name = Str();
+					node.TypeArguments = new IType[Len()];
+					for (int i = 0; i < node.TypeArguments.Length; i++)
+						node.TypeArguments[i] = Type();
+					node.Value = name;
+					node.Children = new RustBodyNode[Len()];
+					for (int i = 0; i < node.Children.Length; i++)
+						node.Children[i] = BodyNode();
+					break;
+				}
+				case RustBodyNode.StackAlloc:
+				{
+					// The element type, the count (if any), then the initializer's elements (if any).
+					node.Type = Type();
+					var children = new List<RustBodyNode>();
+					node.Flag = Bool();
+					if (node.Flag)
+						children.Add(BodyNode());
+					bool hasInitializer = Bool();
+					if (hasInitializer)
+					{
+						int elements = Len();
+						for (int i = 0; i < elements; i++)
+							children.Add(BodyNode());
+					}
+					node.Value = hasInitializer;
+					node.Children = children.ToArray();
+					break;
+				}
+				case RustBodyNode.Undocumented:
+				{
+					node.Value = (CSharp.Syntax.UndocumentedExpressionType)U8();
+					node.Children = new RustBodyNode[Len()];
+					for (int i = 0; i < node.Children.Length; i++)
+						node.Children[i] = BodyNode();
+					break;
+				}
 			}
 			return node;
 		}
