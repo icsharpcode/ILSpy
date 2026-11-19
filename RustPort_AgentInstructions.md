@@ -851,6 +851,14 @@ the reasons. This file holds only the ordered steps, their gates and their rules
     - [ ] **85e.** Bodies: the remaining reasons (about 90 in 25 groups: lifted comparisons and
       switches, MinValue/MaxValue constants, checked conversions, addresses, PinnedRegion,
       TryFault, range/index/span creation, UserDefinedCompoundAssign and smaller ones).
+      Round 1 (3fab3d093, lecture 3.227): the ilspycmd strict tally over the 3,260 TestCases
+      assemblies had 139 reasons; four groups (unsafe code, operators, calls and initializers,
+      lambdas and control flow) served about 90 of them. Left: the dynamic family, vararg
+      calls, ref fields, `LdFtn`, tail calls, pointer operands of integer arithmetic,
+      anonymous-type inference for generic calls, span/tuple/range/index creation, dictionary
+      initializers, delegates of extension methods and accessors, anonymous types in lambdas
+      (query expressions), casts of value-type targets, and the reasons the served bodies now
+      reach. Next round starts from a fresh tally.
     - [ ] **85f.** Rerun the matrix strict; repeat for what the first failure per test hid; then
       merge the switch into `ILSPY_RUST_STRICT`.
 

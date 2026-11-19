@@ -5045,6 +5045,55 @@ matches `MatchLdcI(0)`, which sees through `conv.i`. The decompiler suite under 
 no longer reports the item's reasons; what stays of the area is pointer and reference work
 (pointer arithmetic, `Unsafe.As` and `Unsafe.AsPointer` for references, the negation itself).
 
+### 3.227 The body gaps, first round (item 85e)
+
+The worklist is no longer the failing tests but a tally: ilspycmd decompiles each of the 3,260
+TestCases assemblies under `ILSPY_RUST_STRICT_SEAM2=1` and counts the assemblies per strict
+reason. That counts every body, not only the first failure per test, and runs in minutes instead
+of an hour. The 139 reasons went to four agents in parallel worktrees, grouped by area so the
+merges touch different code:
+
+- **Unsafe code** (new module `csharp/unsafe_code.rs`): address-of, `fixed` (PinnedRegion),
+  pointer loads, stores, comparisons and compound assignments, `sizeof` and `Unsafe.SizeOf`,
+  `stackalloc` (also as a `Span` constructor), fixed buffer elements, ref reassignment, member
+  access on a ref expression, `__arglist`/`__makeref`/`__refvalue`, and calls through function
+  pointers. `IsUnmanagedType` is ported. A Rust invocation node may come without call info; the
+  host then writes a plain invocation with the node's own resolve result.
+- **Operators**: user-defined compound assignments and `&&`/`||`, lifted arithmetic,
+  comparisons, conversions and switches, switches on strings and through a conversion operator,
+  compound shifts, negation and `~`, enum arithmetic, `MinValue`/`MaxValue` constants of small
+  types, `decimal` defaults, delegate `Combine`/`Remove`/`==`, and runtime-async awaits. New: a
+  unary operator node and two resolve results, an operator with its method and lifted flag
+  (`OperatorResolveResult`) and a user-defined logic operator (`InvocationResolveResult`).
+  Constant folding covers unchecked integer `+ - * / %` only (shortcut).
+- **Calls and initializers** (new module `csharp/initializer.rs`, a port of
+  `BuildArrayInitializerExpression` and `GetAccessPath`): nested and other initializer elements,
+  `with` initializers, expanded and default params arguments, named arguments of extension,
+  accessor and delegate calls, parameterized properties, `string.Format` with params, casts of
+  arguments and targets, explicit interface calls on `this`, anonymous type creation outside
+  lambdas, and inline array element access. `RustSeam2.LastFallbackReason` tells a test whether
+  one body was served.
+- **Lambdas and control flow**: the engine makes the managed lambda-or-anonymous-method decision
+  and fills the parameter kinds; the host still writes what it builds from metadata (attributes,
+  parameters, warning comments). Expression-tree lambdas, async lambdas, labeled loops and
+  switches (the full `ConvertLoop` and `TranslateSwitch`), awaits of constrained, cast and
+  extension operands, deconstruction inits, local functions in loops and nested ones, `extern`
+  local functions, tuples past seven elements, error expressions and UTF-8 literals.
+  Deconstruction inits are translated in place of their temporary's load through a substitution
+  list, because rewriting the engine's ILAst left a node with two parents in the tree the host
+  reads.
+
+Each agent checked its reasons on example assemblies: no strict error, and output equal to the
+managed decompiler's. Bodies the round served now fail on reasons that hid behind the old ones,
+so some counts went up (delegates of extension methods 41 to 61, arithmetic on constants 48 to
+77 before the operator group's folding). The round left the `dynamic` family (eight instruction
+kinds and resolve results with synthesized members, a step of its own), vararg calls, ref
+fields, `LdFtn`, tail calls (the wire has no way to carry the `/*tail.*/` comment yet), pointer
+operands of integer arithmetic, anonymous type inference for generic calls (needs synthesized
+IL), span, tuple, range and index creation, dictionary initializers, and anonymous types in
+lambdas (with engine bodies the query expression transform no longer fires; the differing
+annotation is not found yet).
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |
