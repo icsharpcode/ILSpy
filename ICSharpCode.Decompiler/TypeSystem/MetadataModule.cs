@@ -896,6 +896,25 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		}
 		#endregion
 
+		/// <summary>
+		/// Signature size limit in bytes that applies with <see cref="TypeSystemOptions.LimitSignatureSize"/>.
+		/// Ordinary signatures are a few hundred bytes at most.
+		/// </summary>
+		public const int MaxLimitedSignatureSize = 16 * 1024;
+
+		/// <summary>
+		/// Throws <see cref="BadImageFormatException"/> (which the member implementations already
+		/// handle as "unknown type") if the signature exceeds the limit and the limit is enabled.
+		/// </summary>
+		internal void ThrowIfSignatureTooLarge(BlobHandle signature)
+		{
+			if ((TypeSystemOptions & TypeSystemOptions.LimitSignatureSize) != 0
+				&& metadata.GetBlobReader(signature).Length > MaxLimitedSignatureSize)
+			{
+				throw new BadImageFormatException("Signature exceeds the size limit");
+			}
+		}
+
 		#region Decode Standalone Signature
 		public (SignatureHeader, FunctionPointerType) DecodeMethodSignature(StandaloneSignatureHandle handle, GenericContext genericContext)
 		{

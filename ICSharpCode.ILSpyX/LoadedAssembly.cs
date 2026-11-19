@@ -270,7 +270,7 @@ namespace ICSharpCode.ILSpyX
 				if (module == null || module.IsMetadataOnly)
 					return null;
 				value = new SimpleCompilation(
-					module.WithOptions(TypeSystemOptions.Default | TypeSystemOptions.Uncached | TypeSystemOptions.KeepModifiers),
+					module.WithOptions(TypeSystemOptions.Default | TypeSystemOptions.Uncached | TypeSystemOptions.KeepModifiers | TypeSystemOptions.LimitSignatureSize),
 					MinimalCorlib.Instance);
 				value = LazyInit.GetOrSet(ref this.typeSystem, value);
 			}
@@ -293,7 +293,7 @@ namespace ICSharpCode.ILSpyX
 					return null;
 				currentTypeSystemOptions = options;
 				return typeSystemWithOptions = new SimpleCompilation(
-					module.WithOptions(options | TypeSystemOptions.Uncached | TypeSystemOptions.KeepModifiers),
+					module.WithOptions(options | TypeSystemOptions.Uncached | TypeSystemOptions.KeepModifiers | TypeSystemOptions.LimitSignatureSize),
 					MinimalCorlib.Instance);
 			}
 		}
