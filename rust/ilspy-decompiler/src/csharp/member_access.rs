@@ -53,7 +53,11 @@ impl Builder<'_, '_, '_, '_> {
             Rr::DynamicMember { .. }
             | Rr::DynamicInvocation { .. }
             | Rr::DynamicOperator { .. } => self.ts.intern(TypeData::Dynamic),
-            Rr::Field { field, .. } => field.field.ty,
+            // `MemberResolveResult.ComputeType`: a ref field is of its element type.
+            Rr::Field { field, .. } => match *self.ts.data(field.field.ty) {
+                TypeData::ByRef(element) => element,
+                _ => field.field.ty,
+            },
             Rr::Event { ty, .. } => *ty,
             Rr::Lambda(_)
             | Rr::DefaultLiteral { .. }
@@ -127,12 +131,9 @@ impl Builder<'_, '_, '_, '_> {
         unaligned: u8,
         hint: TypeId,
     ) -> Result<TranslatedExpression, Unsupported> {
-        if unaligned != 0 {
-            return Err("an unaligned load".to_owned());
-        }
         let target_is_ref = self.f.result_type(self.ts, target) == StackType::Ref;
         let mut load_type = ty;
-        let used_in_generic = target_is_ref;
+        let used_in_generic = unaligned != 0 || target_is_ref;
         if self.ts.kind(hint) != TypeKind::Unknown
             && self
                 .ts
@@ -140,6 +141,33 @@ impl Builder<'_, '_, '_, '_> {
             && !(used_in_generic && self.ts.kind(hint).is_any_pointer())
         {
             load_type = hint;
+        }
+        if unaligned != 0 {
+            // `Unsafe.ReadUnaligned<T>(void*)` or `Unsafe.ReadUnaligned<T>(ref byte)`.
+            let pointer = self.translate(target, None)?;
+            let pointer = if matches!(
+                self.ast.node(pointer.expression),
+                AstNode::RefDirection { .. }
+            ) {
+                let byte = self
+                    .ts
+                    .known_type(crate::typesystem::known::KnownTypeCode::Byte);
+                let ref_byte = self.ts.intern(TypeData::ByRef(byte));
+                self.convert_to(pointer, ref_byte, false)?
+            } else {
+                let void = self
+                    .ts
+                    .known_type(crate::typesystem::known::KnownTypeCode::Void);
+                let void_pointer = self.ts.intern(TypeData::Pointer(void));
+                self.convert_to(pointer, void_pointer, true)?
+            };
+            return Ok(self.call_unsafe_intrinsic(
+                "ReadUnaligned",
+                vec![pointer.expression],
+                load_type,
+                Some(inst),
+                vec![load_type],
+            ));
         }
         let address_hint = if target_is_ref {
             self.ts.intern(TypeData::ByRef(load_type))
@@ -181,7 +209,14 @@ impl Builder<'_, '_, '_, '_> {
             self.ast.node(address.expression),
             AstNode::RefDirection { .. }
         ) {
-            return Err("a load that needs a pointer cast".to_owned());
+            let reference = self.ts.intern(TypeData::ByRef(load_type));
+            let address = self.convert_to(address, reference, false)?;
+            return Ok(match *self.ast.node(address.expression) {
+                AstNode::RefDirection { expression } => {
+                    self.unwrap_child(address.expression, expression)
+                }
+                _ => self.dereference(address.expression, load_type),
+            });
         }
         if !self.is_unmanaged_type(load_type) {
             // `Unsafe.Read<T>(void*)`
@@ -461,9 +496,6 @@ impl Builder<'_, '_, '_, '_> {
                 ty: field.field.ty,
             });
         }
-        if matches!(self.ts.data(field.field.ty), TypeData::ByRef(_)) {
-            return Err("a ref field".to_owned());
-        }
         let mut target = self.translate_target(target_inst, true, is_static, declaring)?;
         let require = match kind {
             // The backing field of an automatic property needs a qualifier when its property
@@ -496,7 +528,15 @@ impl Builder<'_, '_, '_, '_> {
         } else {
             self.ast.add(AstNode::Identifier { name })
         };
-        self.ast.with_rr(e, mrr);
+        self.ast.with_rr(e, mrr.clone());
+        // A ref field is read as `ref target.field`.
+        let e = if matches!(self.ts.data(field.field.ty), TypeData::ByRef(_)) {
+            let d = self.ast.add(AstNode::RefDirection { expression: e });
+            self.ast.with_rr(d, Rr::ByReference(Box::new(mrr)));
+            d
+        } else {
+            e
+        };
         Ok(TranslatedExpression {
             expression: e,
             ty: field.field.ty,
@@ -698,10 +738,7 @@ impl Builder<'_, '_, '_, '_> {
                 _ => false,
             };
             if !same {
-                if matches!(self.ts.data(translated.ty), TypeData::ByRef(_)) {
-                    return Err("a member access that needs a reference conversion".to_owned());
-                }
-                // A pointer (or integer) target: `ref *target`.
+                // A reference of another type, a pointer or an integer target.
                 let reference = self.ts.intern(TypeData::ByRef(target_type));
                 translated = self.convert_to(translated, reference, false)?;
             }
@@ -891,7 +928,41 @@ impl Builder<'_, '_, '_, '_> {
     ) -> Result<TranslatedExpression, Unsupported> {
         let target_is_ref = self.f.result_type(self.ts, target) == StackType::Ref;
         if unaligned != 0 || (!target_is_ref && !self.is_unmanaged_type(ty)) {
-            return Err("a store that is no assignment through a reference".to_owned());
+            // `StObjViaHelperCall`: `Unsafe.WriteUnaligned<T>(void*, T)`,
+            // `Unsafe.WriteUnaligned<T>(ref byte, T)` or `Unsafe.Write<T>(void*, T)`.
+            use crate::typesystem::known::KnownTypeCode;
+            let pointer = self.translate(target, None)?;
+            let v = self.translate(value, Some(ty))?;
+            let pointer = if unaligned != 0
+                && matches!(
+                    self.ast.node(pointer.expression),
+                    AstNode::RefDirection { .. }
+                ) {
+                let byte = self.ts.known_type(KnownTypeCode::Byte);
+                let ref_byte = self.ts.intern(TypeData::ByRef(byte));
+                self.convert_to(pointer, ref_byte, false)?
+            } else {
+                let void = self.ts.known_type(KnownTypeCode::Void);
+                let void_pointer = self.ts.intern(TypeData::Pointer(void));
+                self.convert_to(pointer, void_pointer, true)?
+            };
+            let v = if self.ts.is_compatible_type_for_memory_access(v.ty, ty) {
+                v
+            } else {
+                self.convert_to(v, ty, false)?
+            };
+            let (name, return_type) = if unaligned != 0 {
+                ("WriteUnaligned", self.ts.known_type(KnownTypeCode::Void))
+            } else {
+                ("Write", ty)
+            };
+            return Ok(self.call_unsafe_intrinsic(
+                name,
+                vec![pointer.expression, v.expression],
+                return_type,
+                Some(inst),
+                Vec::new(),
+            ));
         }
         let hint = if target_is_ref {
             self.ts.intern(TypeData::ByRef(ty))
@@ -912,13 +983,14 @@ impl Builder<'_, '_, '_, '_> {
                 ty
             };
             translated_value = Some(v);
-            if matches!(
+            let pointer_type = if matches!(
                 self.ast.node(pointer.expression),
                 AstNode::RefDirection { .. }
             ) {
-                return Err("a store that needs a pointer cast".to_owned());
-            }
-            let pointer_type = self.ts.intern(TypeData::Pointer(memory_type));
+                self.ts.intern(TypeData::ByRef(memory_type))
+            } else {
+                self.ts.intern(TypeData::Pointer(memory_type))
+            };
             pointer = self.convert_to(pointer, pointer_type, false)?;
             memory_type
         };

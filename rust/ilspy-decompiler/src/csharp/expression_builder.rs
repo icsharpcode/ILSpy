@@ -342,9 +342,6 @@ impl Builder<'_, '_, '_, '_> {
                 with_system_index,
                 ..
             } => {
-                if with_system_index {
-                    return Err("an array index of type Index".to_owned());
-                }
                 let mut a = self.translate(array, None)?;
                 let array_element = match *self.ts.data(a.ty) {
                     TypeData::Array { elem, .. } => Some(elem),
@@ -364,7 +361,14 @@ impl Builder<'_, '_, '_, '_> {
                 };
                 let mut written = Vec::with_capacity(indices.len());
                 for &i in &indices {
-                    written.push(self.translate_array_index(i)?.expression);
+                    let index = if with_system_index {
+                        let system_index = self.ts.known_type(KnownTypeCode::Index);
+                        let index = self.translate(i, Some(system_index))?;
+                        self.convert_to(index, system_index, false)?
+                    } else {
+                        self.translate_array_index(i)?
+                    };
+                    written.push(index.expression);
                 }
                 let e = self.ast.add(AstNode::Indexer {
                     target: a.expression,
@@ -633,6 +637,25 @@ impl Builder<'_, '_, '_, '_> {
                     },
                 );
                 Ok(TranslatedExpression { expression: e, ty })
+            }
+            // `VisitUnbox`: `ref (T)arg`, the unboxing conversion.
+            Inst::Unbox { arg, ty } => {
+                let a = self.translate(arg, None)?;
+                let c = self.ast.add(AstNode::Cast {
+                    ty: ty.ty,
+                    expression: a.expression,
+                    overflow: Overflow::None,
+                });
+                self.ast.with_rr(c, Rr::Conversion { ty: ty.ty });
+                let d = self.ast.add(AstNode::RefDirection { expression: c });
+                self.ast.with_il(d, inst);
+                self.ast
+                    .with_rr(d, Rr::ByReference(Box::new(Rr::Conversion { ty: ty.ty })));
+                let by_ref = self.ts.intern(TypeData::ByRef(ty.ty));
+                Ok(TranslatedExpression {
+                    expression: d,
+                    ty: by_ref,
+                })
             }
             other => Err(format!("the instruction {}", super::inst_name(&other))),
         }
@@ -1122,10 +1145,64 @@ impl Builder<'_, '_, '_, '_> {
         right: NodeId,
     ) -> Result<TranslatedExpression, Unsupported> {
         if lifting == ComparisonLiftingKind::ThreeValuedLogic {
-            return Err("a comparison with three-valued logic".to_owned());
+            if kind != ComparisonKind::Equality
+                || !matches!(*self.f.inst(right), Inst::LdcI4 { value: 0 })
+            {
+                return Err("a comparison with three-valued logic".to_owned());
+            }
+            // The lifted logic not: `!arg` of a `bool?`.
+            let boolean = self.ts.known_type(KnownTypeCode::Boolean);
+            let target = self.ts.make_nullable(boolean);
+            let arg = self.translate(left, Some(target))?;
+            let arg = self.convert_to(arg, target, false)?;
+            let e = self.ast.add(AstNode::LogicNot {
+                expression: arg.expression,
+            });
+            self.ast.with_rr(e, Rr::Operator { ty: target });
+            self.ast.with_il(e, inst);
+            return Ok(TranslatedExpression {
+                expression: e,
+                ty: target,
+            });
         }
         if input == StackType::Ref {
-            return Err("a comparison of references".to_owned());
+            // A comparison of references with the `Unsafe` intrinsics.
+            let (name, negate) = match kind {
+                ComparisonKind::Equality => ("AreSame", false),
+                ComparisonKind::Inequality => ("AreSame", true),
+                ComparisonKind::LessThan => ("IsAddressLessThan", false),
+                ComparisonKind::LessThanOrEqual => ("IsAddressGreaterThan", true),
+                ComparisonKind::GreaterThan => ("IsAddressGreaterThan", false),
+                ComparisonKind::GreaterThanOrEqual => ("IsAddressLessThan", true),
+            };
+            let mut l = self.translate(left, None)?;
+            let mut r = self.translate(right, None)?;
+            let erased_equal = self.ts.normalize(l.ty) == self.ts.normalize(r.ty);
+            if !matches!(self.ts.data(l.ty), TypeData::ByRef(_)) || !erased_equal {
+                let byte = self.ts.known_type(KnownTypeCode::Byte);
+                let common = self.ts.intern(TypeData::ByRef(byte));
+                l = self.convert_to(l, common, false)?;
+                r = self.convert_to(r, common, false)?;
+            }
+            let boolean = self.ts.known_type(KnownTypeCode::Boolean);
+            let e = self.call_unsafe_intrinsic(
+                name,
+                vec![l.expression, r.expression],
+                boolean,
+                Some(inst),
+                Vec::new(),
+            );
+            if !negate {
+                return Ok(e);
+            }
+            let n = self.ast.add(AstNode::LogicNot {
+                expression: e.expression,
+            });
+            self.ast.with_rr(n, Rr::Plain(boolean));
+            return Ok(TranslatedExpression {
+                expression: n,
+                ty: boolean,
+            });
         }
         if !kind.is_equality_or_inequality() {
             return self.translate_comp(inst, kind, lifting, sign, input, left, right);
@@ -2022,7 +2099,13 @@ impl Builder<'_, '_, '_, '_> {
             } else if conversions.implicit(&fallback_rr, value.ty).is_valid() {
                 value.ty
             } else {
-                return Err("a ?? of a nullable value type that needs conversions".to_owned());
+                let value_rr = self.semantic_rr(value.expression, value.ty);
+                let mut conversions = Conversions::new(self.ts);
+                if conversions.implicit(&value_rr, fallback.ty).is_valid() {
+                    fallback.ty
+                } else {
+                    return Err("a ?? of a nullable value type that needs conversions".to_owned());
+                }
             };
             let e = self.ast.add(AstNode::BinaryOperator {
                 overflow: Overflow::None,
@@ -2101,6 +2184,37 @@ impl Builder<'_, '_, '_, '_> {
             self.ast.with_il(e.expression, inst);
             return Ok(e);
         }
+        if input == StackType::Obj && !lifted {
+            // References compared as addresses: `Unsafe.As<T, UIntPtr>(ref left) op ...`, which
+            // no operator of the resolver matches.
+            let code = if sign == Sign::Signed {
+                KnownTypeCode::IntPtr
+            } else {
+                KnownTypeCode::UIntPtr
+            };
+            let integer = self.ts.known_type(code);
+            let wrap = |b: &mut Self, e: TranslatedExpression| {
+                let ty = e.ty;
+                let reference = b.ts.intern(TypeData::ByRef(ty));
+                let e = b.wrap_in_ref(e, reference);
+                b.call_unsafe_intrinsic("As", vec![e.expression], integer, None, vec![ty, integer])
+            };
+            let l = wrap(self, l);
+            let r = wrap(self, r);
+            let boolean = self.ts.known_type(KnownTypeCode::Boolean);
+            let e = self.ast.add(AstNode::BinaryOperator {
+                overflow: Overflow::None,
+                op,
+                left: l.expression,
+                right: r.expression,
+            });
+            self.ast.with_il(e, inst);
+            self.ast.with_rr(e, Rr::Operator { ty: boolean });
+            return Ok(TranslatedExpression {
+                expression: e,
+                ty: boolean,
+            });
+        }
         let l = self.prepare_lifted_arithmetic_argument(l, input, sign, lifted)?;
         let r = self.prepare_lifted_arithmetic_argument(r, input, sign, lifted)?;
         // Special case comparisons with enum and char literals
@@ -2132,21 +2246,28 @@ impl Builder<'_, '_, '_, '_> {
                 self.ts.type_code(self.ts.nullable_underlying(l.ty)),
                 self.ts.type_code(self.ts.nullable_underlying(r.ty)),
             );
-            if !(4..=14).contains(&lc) || !(4..=14).contains(&rc) {
-                return Err("a relational comparison of these types".to_owned());
+            if lc == 15 && rc == 15 {
+                // The predefined decimal operator.
+                Some(self.ts.known_type(KnownTypeCode::Decimal))
+            } else {
+                if !(4..=14).contains(&lc) || !(4..=14).contains(&rc) {
+                    return Err("a relational comparison of these types".to_owned());
+                }
+                self.operator_promotion(&l, &r, lc, rc)?
+                    .map(|p| self.ts.known_type(known_of_type_code(p)))
             }
-            self.operator_promotion(&l, &r, lc, rc)?
-                .map(|p| self.ts.known_type(known_of_type_code(p)))
         };
         let boolean = self.ts.known_type(KnownTypeCode::Boolean);
         // The resolver's operator where its operands have the comparison's sign and stack type;
-        // the operator built over operands cast to the input type otherwise.
-        let fits = promoted
-            .is_some_and(|p| self.ts.type_sign(p) == sign && self.ts.stack_type(p) == input);
+        // the operator built over operands cast to the input type otherwise. Two constants
+        // resolve to a constant, which is no `OperatorResolveResult`.
+        let fits = !self.both_constant(&l, &r)
+            && promoted
+                .is_some_and(|p| self.ts.type_sign(p) == sign && self.ts.stack_type(p) == input);
         let (l, r) = if fits {
             let p = promoted.expect("a promoted type");
             // A lifted operator is the resolver's.
-            let rr = if lifted || p != l.ty || p != r.ty || self.both_constant(&l, &r) {
+            let rr = if lifted || p != l.ty || p != r.ty {
                 Rr::ResolvedOperator { ty: boolean }
             } else {
                 Rr::Operator { ty: boolean }
@@ -2172,7 +2293,7 @@ impl Builder<'_, '_, '_, '_> {
             let l = self.convert_to(l, input_type, false)?;
             let r = self.convert_to(r, input_type, false)?;
             (l, r)
-        } else if matches!(input, StackType::F4 | StackType::F8) {
+        } else if matches!(input, StackType::F4 | StackType::F8 | StackType::VT) {
             (l, r)
         } else {
             return Err("a relational comparison of references".to_owned());
@@ -2321,7 +2442,17 @@ impl Builder<'_, '_, '_, '_> {
         let l = self.translate(left, hint)?;
         let r = self.translate(right, hint)?;
         if left_input == StackType::Ref || right_input == StackType::Ref {
-            return Err("managed pointer arithmetic".to_owned());
+            return self
+                .managed_pointer_arithmetic(
+                    inst,
+                    operator,
+                    check_overflow || is_lifted,
+                    (left_input, right_input),
+                    (left, right),
+                    l,
+                    r,
+                )?
+                .ok_or_else(|| "managed pointer arithmetic".to_owned());
         }
         if (self.ts.kind(l.ty) == TypeKind::Pointer || self.ts.kind(r.ty) == TypeKind::Pointer)
             && let Some(e) = self.pointer_arithmetic(
@@ -2338,12 +2469,15 @@ impl Builder<'_, '_, '_, '_> {
         {
             return Ok(e);
         }
+        // No predefined operator takes a pointer: the operands are converted to a common type.
+        let pointer_operand = [l.ty, r.ty]
+            .iter()
+            .any(|&t| self.ts.kind(t) == TypeKind::Pointer);
         for t in [l.ty, r.ty] {
             let k = self.ts.kind(self.ts.nullable_underlying(t));
-            if matches!(
-                k,
-                TypeKind::Pointer | TypeKind::Dynamic | TypeKind::TypeParameter
-            ) || (self.ts.is_known(t, KnownTypeCode::NullableOfT) && !is_lifted)
+            if matches!(k, TypeKind::Dynamic | TypeKind::TypeParameter)
+                || (k == TypeKind::Pointer && t != self.ts.nullable_underlying(t))
+                || (self.ts.is_known(t, KnownTypeCode::NullableOfT) && !is_lifted)
             {
                 let nullable = if self.ts.is_known(t, KnownTypeCode::NullableOfT) {
                     "nullable "
@@ -2435,7 +2569,9 @@ impl Builder<'_, '_, '_, '_> {
                 self.ts.type_code(self.ts.nullable_underlying(r.ty)),
             );
             // The predefined logical operators of `bool`.
-            if bitwise && lc == 3 && rc == 3 {
+            if pointer_operand {
+                None
+            } else if bitwise && lc == 3 && rc == 3 {
                 Some(self.ts.nullable_underlying(l.ty))
             } else if [l.ty, r.ty]
                 .iter()
@@ -2518,6 +2654,12 @@ impl Builder<'_, '_, '_, '_> {
         // Two constant operands: the resolver folds the operator into a constant, and an
         // operation that overflows in a checked context is written `unchecked(...)`.
         let folded = match (self.rr_of(l.expression), self.rr_of(r.expression)) {
+            // The resolver does not fold an operator of a native integer operand.
+            (Rr::Constant { ty: lt, .. }, Rr::Constant { ty: rt, .. })
+                if self.is_native_integer(lt) || self.is_native_integer(rt) =>
+            {
+                None
+            }
             (Rr::Constant { value: lv, .. }, Rr::Constant { value: rv, .. }) => {
                 Some(self.fold_constant_arithmetic(op, &lv, &rv, ty, check_overflow)?)
             }
@@ -2543,6 +2685,193 @@ impl Builder<'_, '_, '_, '_> {
         };
         self.ast.with_rr(e, rr);
         Ok(TranslatedExpression { expression: e, ty })
+    }
+
+    /// `HandleManagedPointerArithmetic`: `ref + n`, `n + ref`, `ref - n` and `ref - ref` as
+    /// calls of the `Unsafe` intrinsics; `None` where the operation is none of these.
+    #[allow(clippy::too_many_arguments)]
+    fn managed_pointer_arithmetic(
+        &mut self,
+        inst: NodeId,
+        operator: BinaryNumericOperator,
+        checked_or_lifted: bool,
+        inputs: (StackType, StackType),
+        operands: (NodeId, NodeId),
+        left: TranslatedExpression,
+        right: TranslatedExpression,
+    ) -> Result<Option<TranslatedExpression>, Unsupported> {
+        use crate::il::transforms::transform_assignment::{
+            PointerOffset, pointer_offset_detect_in,
+        };
+        let add = operator == BinaryNumericOperator::Add;
+        if !(add || operator == BinaryNumericOperator::Sub) || checked_or_lifted {
+            return Ok(None);
+        }
+        // `GetReferenceType`: the reference of a pointer's element type, else `ref byte`.
+        let reference_type = |b: &mut Self, t: TypeId| {
+            let element = match *b.ts.data(t) {
+                TypeData::Pointer(e) => e,
+                _ => b.ts.known_type(KnownTypeCode::Byte),
+            };
+            b.ts.intern(TypeData::ByRef(element))
+        };
+        // The reference operand as a reference type, and that type.
+        let as_reference = |b: &mut Self, e: TranslatedExpression| {
+            if matches!(b.ts.data(e.ty), TypeData::ByRef(_)) {
+                let ty = e.ty;
+                return Ok((e, ty));
+            }
+            let brt = reference_type(b, e.ty);
+            Ok::<_, Unsupported>((b.convert_to(e, brt, false)?, brt))
+        };
+        // The element offset of a byte offset, translated.
+        let offset = |b: &mut Self,
+                      byte_offset: NodeId,
+                      brt: TypeId|
+         -> Result<Option<TranslatedExpression>, Unsupported> {
+            let TypeData::ByRef(element) = *b.ts.data(brt) else {
+                unreachable!("a reference type");
+            };
+            Ok(
+                match pointer_offset_detect_in(b.f, b.ts, byte_offset, element, false, false) {
+                    Some(PointerOffset::Inst(i)) => Some(b.translate(i, None)?),
+                    Some(PointerOffset::Constant(v)) => {
+                        let unknown = b.ts.intern(TypeData::UnknownSpecial);
+                        Some(b.ldc_i4(byte_offset, v, unknown)?)
+                    }
+                    None => None,
+                },
+            )
+        };
+        let named = |b: &mut Self, name: &str, e: AstId| {
+            b.ast.add(AstNode::NamedArgument {
+                name: name.to_owned(),
+                expression: e,
+            })
+        };
+        match inputs {
+            (StackType::Ref, StackType::Ref) if !add => {
+                // `ByteOffset()` takes its parameters the other way around, so they are named.
+                let target = named(self, "target", left.expression);
+                let origin = named(self, "origin", right.expression);
+                let int_ptr = self.ts.known_type(KnownTypeCode::IntPtr);
+                Ok(Some(self.call_unsafe_intrinsic(
+                    "ByteOffset",
+                    vec![target, origin],
+                    int_ptr,
+                    Some(inst),
+                    Vec::new(),
+                )))
+            }
+            (StackType::Ref, right_input) if right_input.is_integer() => {
+                let (left, brt) = as_reference(self, left)?;
+                let name = if add { "Add" } else { "Subtract" };
+                let TypeData::ByRef(brt_element) = *self.ts.data(brt) else {
+                    unreachable!("a reference type");
+                };
+                let detected = pointer_offset_detect_in(
+                    self.f,
+                    self.ts,
+                    operands.1,
+                    brt_element,
+                    false,
+                    false,
+                );
+                // `buffer.field[offset]` of a fixed size buffer's element field.
+                let nested_field = match self.f.inst(operands.0) {
+                    Inst::LdFlda { target, .. } => match self.f.inst(*target) {
+                        Inst::LdFlda { field, target, .. } => Some((field.clone(), *target)),
+                        _ => None,
+                    },
+                    _ => None,
+                };
+                if let Some(detected) = detected
+                    && self.settings.fixed_buffers
+                    && add
+                    && let Some((field, field_target)) = nested_field
+                    && let Some(element) = self.fixed_field_element(&field)
+                {
+                    let access = self.convert_field(&field, Some(field_target))?;
+                    let Rr::Field {
+                        target: Some(target),
+                        field,
+                    } = self.rr_of(access.expression)
+                    else {
+                        return Err("a fixed size buffer without target".to_owned());
+                    };
+                    let pointer_type = self.ts.intern(TypeData::Pointer(element));
+                    // The field's `MemberResolveResult` with the pointer type as its type.
+                    self.ast.with_rr(
+                        access.expression,
+                        Rr::TupleElement {
+                            target,
+                            field,
+                            ty: pointer_type,
+                        },
+                    );
+                    self.ast.with_il(access.expression, inst);
+                    let index = match detected {
+                        PointerOffset::Inst(i) => self.translate_array_index(i)?,
+                        PointerOffset::Constant(v) => {
+                            let unknown = self.ts.intern(TypeData::UnknownSpecial);
+                            let c = self.ldc_i4(operands.1, v, unknown)?;
+                            self.convert_array_index(c, StackType::I4, false)?
+                        }
+                    };
+                    let e = self.ast.add(AstNode::Indexer {
+                        target: access.expression,
+                        indices: vec![index.expression],
+                    });
+                    self.ast.with_il(e, inst);
+                    self.ast.with_rr(e, Rr::Plain(element));
+                    let d = self.ast.add(AstNode::RefDirection { expression: e });
+                    self.ast
+                        .with_rr(d, Rr::ByReference(Box::new(Rr::Plain(element))));
+                    let ty = self.ts.intern(TypeData::ByRef(element));
+                    return Ok(Some(TranslatedExpression { expression: d, ty }));
+                }
+                match offset(self, operands.1, brt)? {
+                    Some(o) => {
+                        let o = self.convert_array_index(o, right_input, true)?;
+                        Ok(Some(self.call_unsafe_intrinsic(
+                            name,
+                            vec![left.expression, o.expression],
+                            brt,
+                            Some(inst),
+                            Vec::new(),
+                        )))
+                    }
+                    None => {
+                        let o = self.convert_array_index(right, right_input, true)?;
+                        Ok(Some(self.call_unsafe_intrinsic(
+                            &format!("{name}ByteOffset"),
+                            vec![left.expression, o.expression],
+                            brt,
+                            Some(inst),
+                            Vec::new(),
+                        )))
+                    }
+                }
+            }
+            (StackType::I, StackType::Ref) if add => {
+                let (right, brt) = as_reference(self, right)?;
+                let (name, offset_name, o) = match offset(self, operands.0, brt)? {
+                    Some(o) => ("Add", "elementOffset", o),
+                    None => ("AddByteOffset", "byteOffset", left),
+                };
+                let o = self.convert_array_index(o, StackType::I, true)?;
+                let o = named(self, offset_name, o.expression);
+                let source = named(self, "source", right.expression);
+                Ok(Some(self.call_unsafe_intrinsic(
+                    name,
+                    vec![o, source],
+                    brt,
+                    Some(inst),
+                    Vec::new(),
+                )))
+            }
+            _ => Ok(None),
+        }
     }
 
     /// The constant `ResolveBinaryOperator` folds an unchecked integer `+`, `-`, `*`, `/` or `%`
@@ -2765,6 +3094,111 @@ impl Builder<'_, '_, '_, '_> {
         })
     }
 
+    /// `ReplaceMethodCallsWithOperators.RemoveRedundantToStringInConcat` of the last argument:
+    /// the target of `target.ToString()` or `target?.ToString()` where the string `+` calls
+    /// `ToString()` the same way; `expr` otherwise.
+    fn remove_redundant_to_string_in_concat(&mut self, expr: AstId, concat: &Method) -> AstId {
+        // `target.ToString()`: the target and the call.
+        let to_string_call = |b: &Self, call: AstId| -> Option<AstId> {
+            let AstNode::Invocation { target, arguments } = b.ast.node(call) else {
+                return None;
+            };
+            let AstNode::MemberReference { target, name } = b.ast.node(*target) else {
+                return None;
+            };
+            (arguments.is_empty() && name == "ToString").then_some(*target)
+        };
+        let (target, call, null_conditional) = if let Some(t) = to_string_call(self, expr) {
+            (t, expr, false)
+        } else if let AstNode::NullConditional {
+            expression: call,
+            rewrap: true,
+        } = *self.ast.node(expr)
+            && let Some(conditional) = to_string_call(self, call)
+            && let AstNode::NullConditional {
+                expression: target,
+                rewrap: false,
+            } = *self.ast.node(conditional)
+        {
+            (target, call, true)
+        } else {
+            return expr;
+        };
+        let string_parameter = |b: &mut Self, p: &crate::semantics::Parameter| {
+            let ty = match *b.ts.data(p.ty) {
+                TypeData::Array { elem, .. } if p.is_params => elem,
+                _ => p.ty,
+            };
+            b.ts.is_known(ty, KnownTypeCode::String)
+        };
+        // With object parameters string.Concat() calls ToString() itself, so the compiler
+        // generates no ToString() calls of its own.
+        if !concat.parameters.iter().all(|p| string_parameter(self, p)) {
+            return expr;
+        }
+        let target_rr = self.rr_of(target);
+        let ty = self.rr_type(&target_rr);
+        // ref structs cannot be converted to object for use with +
+        if self.ts.is_by_ref_like(ty) {
+            return expr;
+        }
+        // ToString() might throw NullReferenceException, the builtin operator+ does not.
+        if self.ts.is_reference_type(ty) != Some(false) && !null_conditional {
+            return expr;
+        }
+        let underlying = self.ts.nullable_underlying(ty);
+        let effect_free = self.is_native_integer(underlying)
+            || [
+                KnownTypeCode::Boolean,
+                KnownTypeCode::Char,
+                KnownTypeCode::SByte,
+                KnownTypeCode::Byte,
+                KnownTypeCode::Int16,
+                KnownTypeCode::UInt16,
+                KnownTypeCode::Int32,
+                KnownTypeCode::UInt32,
+                KnownTypeCode::Int64,
+                KnownTypeCode::UInt64,
+                KnownTypeCode::Single,
+                KnownTypeCode::Double,
+                KnownTypeCode::Decimal,
+                KnownTypeCode::IntPtr,
+                KnownTypeCode::UIntPtr,
+                KnownTypeCode::String,
+            ]
+            .into_iter()
+            .any(|k| self.ts.is_known(underlying, k));
+        // operator+ calls ToString() on a copy of a struct, an explicit call on the original
+        // (`ILInlining.MethodRequiresCopyForReadonlyLValue`).
+        if !effect_free {
+            let requires_copy = match self.rr_of(call) {
+                Rr::Invocation { method, .. } => {
+                    match Method::from_resolved(self.ts, &method.method) {
+                        Some(m) => {
+                            let reference = m
+                                .declaring
+                                .is_some_and(|d| self.ts.is_reference_type(d) == Some(true));
+                            let read_only = match m.key {
+                                crate::semantics::MethodKey::Def(id) => {
+                                    let owner = self.ts.accessor_owner(id).map(|(o, _)| o);
+                                    self.ts.method_flags(id, owner).this_read_only
+                                }
+                                _ => false,
+                            };
+                            !reference && !read_only
+                        }
+                        None => false,
+                    }
+                }
+                _ => false,
+            };
+            if requires_copy {
+                return expr;
+            }
+        }
+        target
+    }
+
     /// `VisitUserDefinedCompoundAssign`: `target op= value` of a user-defined binary operator
     /// (or `string.Concat` as `+=`), or `++` / `--` of a user-defined increment, of the
     /// operator's return type. A lifted operator, a span-based `string.Concat` and a string
@@ -2799,7 +3233,28 @@ impl Builder<'_, '_, '_, '_> {
         let is_string_concat = method.name == "Concat"
             && method.is_static
             && self.ts.is_known(declaring, KnownTypeCode::String);
+        // `CallBuilder.IsSpanBasedStringConcat`: every parameter a `ReadOnlySpan<char>`.
+        let char_span = |b: &mut Self, t: TypeId| {
+            b.ts.is_known(t, KnownTypeCode::ReadOnlySpanOfT)
+                && matches!(b.ts.data(t), TypeData::Inst { args, .. }
+                    if args.len() == 1 && b.ts.is_known(args[0], KnownTypeCode::Char))
+        };
+        let mut is_span_based = is_string_concat;
+        for p in &method.parameters {
+            is_span_based &= char_span(self, p.ty);
+        }
+        // The span-based form of a `char` value: `new ReadOnlySpan<char>(ref value)`.
+        let span_char_value = match self.f.inst(value) {
+            Inst::NewObj(c) if is_span_based && c.args.len() == 1 => {
+                match *self.f.inst(c.args[0]) {
+                    Inst::AddressOf { value, .. } => Some(value),
+                    _ => None,
+                }
+            }
+            _ => None,
+        };
         if is_string_concat
+            && span_char_value.is_none()
             && method
                 .parameters
                 .iter()
@@ -2807,11 +3262,15 @@ impl Builder<'_, '_, '_, '_> {
         {
             return Err("a span-based string concatenation as +=".to_owned());
         }
-        let load_type = method
-            .parameters
-            .first()
-            .ok_or("a compound assignment of a method without parameters")?
-            .ty;
+        let load_type = if is_span_based {
+            self.ts.known_type(KnownTypeCode::String)
+        } else {
+            method
+                .parameters
+                .first()
+                .ok_or("a compound assignment of a method without parameters")?
+                .ty
+        };
         let target = match target_kind {
             // `LdObj(inst.Target, loadType)`: the target address dereferenced.
             CompoundTargetKind::Address => {
@@ -2868,15 +3327,16 @@ impl Builder<'_, '_, '_, '_> {
                 .get(1)
                 .ok_or("a string concatenation of another arity as +=")?
                 .ty;
-            let v = self.translate(value, None)?;
-            let v = self.convert_to(v, value_type, is_string_concat)?;
-            if is_string_concat
-                && let Rr::Invocation { method: called, .. } = self.rr_of(v.expression)
-                && called.method.name == "ToString"
-            {
-                // shortcut: `RemoveRedundantToStringInConcat` is not ported; port it when a
-                // string `+=` of a `ToString()` call is to be served.
-                return Err("a string += of a ToString call".to_owned());
+            let mut v = if let Some(c) = span_char_value {
+                let char_type = self.ts.known_type(KnownTypeCode::Char);
+                let v = self.translate(c, Some(char_type))?;
+                self.convert_to(v, char_type, false)?
+            } else {
+                let v = self.translate(value, None)?;
+                self.convert_to(v, value_type, is_string_concat)?
+            };
+            if is_string_concat && span_char_value.is_none() {
+                v.expression = self.remove_redundant_to_string_in_concat(v.expression, &method);
             }
             // `GetAssignmentOperatorTypeFromMetadataName`
             let op = match method.name.as_str() {
@@ -3172,6 +3632,17 @@ impl Builder<'_, '_, '_, '_> {
     fn translate_array_index(&mut self, i: NodeId) -> Result<TranslatedExpression, Unsupported> {
         let stack = self.f.result_type(self.ts, i);
         let input = self.translate(i, None)?;
+        self.convert_array_index(input, stack, false)
+    }
+
+    /// `ConvertArrayIndex`: an index of an integer type an array index takes (with
+    /// `allow_int_ptr`, also `IntPtr` and `UIntPtr`), truncated where it is oversized.
+    fn convert_array_index(
+        &mut self,
+        input: TranslatedExpression,
+        stack: StackType,
+        allow_int_ptr: bool,
+    ) -> Result<TranslatedExpression, Unsupported> {
         let sign = self.ts.type_sign(input.ty);
         // A truncated oversized index.
         if self.ts.type_size(input.ty) > stack_size(stack) {
@@ -3182,6 +3653,12 @@ impl Builder<'_, '_, '_, '_> {
         // used as is.
         let code = self.ts.type_code(input.ty);
         if (5..=12).contains(&code) || self.is_native_integer(input.ty) {
+            return Ok(input);
+        }
+        if allow_int_ptr
+            && (self.ts.is_known(input.ty, KnownTypeCode::IntPtr)
+                || self.ts.is_known(input.ty, KnownTypeCode::UIntPtr))
+        {
             return Ok(input);
         }
         // `int` is preferred where it is big enough.

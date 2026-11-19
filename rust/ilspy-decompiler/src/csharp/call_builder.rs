@@ -241,8 +241,10 @@ impl Builder<'_, '_, '_, '_> {
                     }
                 }
                 // `HandleRangeConstruction` comes first and writes `..` for `Range.All`.
-                if self.ts.is_known(declaring, KnownTypeCode::Range)
-                    || self.ts.is_known(declaring, KnownTypeCode::Index)
+                if self.settings.ranges
+                    && self.ts.is_known(declaring, KnownTypeCode::Range)
+                    && method.name == "get_All"
+                    && method.parameters.is_empty()
                 {
                     return Err("a property of Range or Index".to_owned());
                 }
@@ -390,6 +392,52 @@ impl Builder<'_, '_, '_, '_> {
             }
         }
 
+        // `InlineArrayAsSpan` and `InlineArrayAsReadOnlySpan` of the whole buffer are the inline
+        // array conversion of the buffer.
+        if self.settings.inline_arrays
+            && self.is_inline_array_as_span(&method, declaring)
+            && list.arguments.len() == 2
+        {
+            if list.parameter_map.is_some() || list.actual_count() != 2 {
+                return Err("an inline array span with named or optional arguments".to_owned());
+            }
+            let array_length = method
+                .method_args
+                .as_ref()
+                .and_then(|a| a.first().copied())
+                .and_then(|t| self.inline_array_length(t));
+            let span_length = match self.rr_of(list.arguments[1].expression) {
+                Rr::Constant {
+                    value: ConstValue::Int32(v),
+                    ..
+                } => Some(v),
+                _ => None,
+            };
+            if let (Some(array_length), Some(span_length)) = (array_length, span_length)
+                && span_length <= array_length
+            {
+                if span_length < array_length {
+                    // shortcut: the slice `buffer[..n]` needs a range node the engine's syntax
+                    // tree lacks; add one when such a body is to be served.
+                    return Err(format!("a call of {} with its own syntax", method.name));
+                }
+                let mut argument = list.arguments[0];
+                if let AstNode::RefDirection { expression } | AstNode::InDirection { expression } =
+                    *self.ast.node(argument.expression)
+                {
+                    argument = self.unwrap_child(argument.expression, expression);
+                }
+                let ty = method.return_type;
+                let c = self.ast.add(AstNode::Cast {
+                    ty,
+                    expression: argument.expression,
+                    overflow: Overflow::None,
+                });
+                self.ast.with_rr(c, Rr::Conversion { ty });
+                self.ast.with_il(c, inst);
+                return Ok(TranslatedExpression { expression: c, ty });
+            }
+        }
         // `bool?.GetValueOrDefault()` is `b == true` (with `LiftNullables`), the binary operator
         // carrying the call's resolve result; the literal has none.
         if self.settings.lift_nullables
@@ -1350,10 +1398,11 @@ impl Builder<'_, '_, '_, '_> {
             return self.stack_alloc_initializer(call.args[0], element);
         }
         let ts = &*self.ts;
-        let special = if is_span {
-            Some("a span")
-        } else if ts.is_known(declaring, KnownTypeCode::Range)
-            || ts.is_known(declaring, KnownTypeCode::Index)
+        // shortcut: `a..b` needs a range node the engine's syntax tree lacks; add one when such
+        // a body is to be served.
+        let special = if self.settings.ranges
+            && ts.is_known(declaring, KnownTypeCode::Range)
+            && call.args.len() == 2
         {
             Some("a range or index")
         } else {
@@ -1380,6 +1429,33 @@ impl Builder<'_, '_, '_, '_> {
                 )
             });
         let mut list = self.argument_list(call, &method, id, 0, declaring, false)?;
+        // `HandleRangeConstruction`: `new Index(n, true)` is `^n`.
+        if self.settings.ranges
+            && self.ts.is_known(declaring, KnownTypeCode::Index)
+            && list.parameter_map.is_none()
+            && list.arguments.len() == 2
+            && matches!(
+                self.ast.node(list.arguments[1].expression),
+                AstNode::ConstantValue {
+                    value: ConstValue::Boolean(true),
+                    ..
+                }
+            )
+        {
+            /// `UnaryOperatorType.IndexFromEnd`.
+            const INDEX_FROM_END: u8 = 16;
+            let e = self.ast.add(AstNode::UnaryOperator {
+                op: INDEX_FROM_END,
+                expression: list.arguments[0].expression,
+                overflow: Overflow::None,
+            });
+            self.ast.with_rr(e, Rr::Operator { ty: declaring });
+            self.ast.with_il(e, inst);
+            return Ok(TranslatedExpression {
+                expression: e,
+                ty: declaring,
+            });
+        }
         if anonymous {
             // shortcut: inside a lambda (a query's `select new { ... }` or transparent
             // identifier) the engine's body keeps IntroduceQueryExpressions from writing the
@@ -1871,6 +1947,38 @@ impl Builder<'_, '_, '_, '_> {
         }
     }
 
+    /// `<PrivateImplementationDetails>.InlineArrayAsSpan` or `InlineArrayAsReadOnlySpan`.
+    fn is_inline_array_as_span(&self, method: &Method, declaring: TypeId) -> bool {
+        matches!(
+            method.name.as_str(),
+            "InlineArrayAsSpan" | "InlineArrayAsReadOnlySpan"
+        ) && self
+            .ts
+            .definition(declaring)
+            .and_then(|d| self.ts.comp.type_def(d).ok())
+            .is_some_and(|i| {
+                i.full_name.top.ns.is_empty()
+                    && i.full_name.name() == "<PrivateImplementationDetails>"
+            })
+    }
+
+    /// `IType.GetInlineArrayLength()`: the length of `[InlineArray(n)]` on a struct.
+    fn inline_array_length(&mut self, t: TypeId) -> Option<i32> {
+        use crate::typesystem::attrvalue::ArgValue;
+        if self.ts.kind(t) != TypeKind::Struct {
+            return None;
+        }
+        let def = self.ts.definition(t)?;
+        let attributes = self.ts.type_attributes(def).ok()?;
+        let attribute = attributes.into_iter().find(|a| {
+            self.ts.full_name(a.ty) == "System.Runtime.CompilerServices.InlineArrayAttribute"
+        })?;
+        match attribute.fixed.first()?.value {
+            ArgValue::Int32(n) => Some(n),
+            _ => None,
+        }
+    }
+
     /// The forms of `CallBuilder.Build` that are no plain invocation.
     fn check_special_calls(
         &mut self,
@@ -1884,9 +1992,7 @@ impl Builder<'_, '_, '_, '_> {
                 .is_some_and(|i| i.full_name.top.ns == ns && i.full_name.name() == name)
         };
         // A span-based `string.Concat` of strings and chars is built before; any other
-        // `Concat` is an ordinary call. An implicit conversion operator of a span type or of
-        // `Index` is `HandleImplicitConversion`'s.
-        let span_operator = method.is_operator && method.name == "op_Implicit";
+        // `Concat` is an ordinary call.
         let special = false
             // `FormattableStringFactory.Create` is an interpolated string where its format
             // tokenizes.
@@ -1894,11 +2000,14 @@ impl Builder<'_, '_, '_, '_> {
                 "System.Runtime.CompilerServices",
                 "FormattableStringFactory",
             ) && method.name != "Create")
-            || ts.is_known(declaring, KnownTypeCode::Range)
-            || (ts.is_known(declaring, KnownTypeCode::Index) && !span_operator)
-            || (ts.is_known(declaring, KnownTypeCode::ReadOnlySpanOfT) && !span_operator)
-            || (ts.is_known(declaring, KnownTypeCode::SpanOfT) && !span_operator)
-            || in_namespace("", "<PrivateImplementationDetails>");
+            // `HandleRangeConstruction`: `a..` and `..b`.
+            || (self.settings.ranges
+                && ts.is_known(declaring, KnownTypeCode::Range)
+                && matches!(method.name.as_str(), "StartAt" | "EndAt")
+                && method.parameters.len() == 1)
+            // `IsReadOnlySpanCastUp`, an implicit span conversion with first-class spans.
+            || (ts.is_known(declaring, KnownTypeCode::ReadOnlySpanOfT)
+                && method.name == "CastUp");
         if special {
             return Err(format!("a call of {} with its own syntax", method.name));
         }
@@ -2792,11 +2901,24 @@ impl Builder<'_, '_, '_, '_> {
         params_type: TypeId,
     ) -> Result<Option<(Vec<TranslatedExpression>, TypeId)>, Unsupported> {
         let rr = self.rr_of(arg.expression);
-        if matches!(
-            rr,
-            Rr::ObjectCreation { .. } | Rr::Conversion { .. } | Rr::ImplicitConversion { .. }
-        ) && (self.ts.is_known(arg.ty, KnownTypeCode::ReadOnlySpanOfT)
-            || self.ts.is_known(arg.ty, KnownTypeCode::SpanOfT))
+        let is_span = self.ts.is_known(arg.ty, KnownTypeCode::ReadOnlySpanOfT)
+            || self.ts.is_known(arg.ty, KnownTypeCode::SpanOfT);
+        // A cast of anything but an array creation (an inline array conversion) is no implicit
+        // span conversion of an array, which `ExtractArguments` expands.
+        let cast_of_array_creation = match *self.ast.node(arg.expression) {
+            AstNode::Cast { expression, .. } => {
+                matches!(self.ast.node(expression), AstNode::ArrayCreate { .. })
+            }
+            _ => true,
+        };
+        if is_span && matches!(rr, Rr::Conversion { .. }) && !cast_of_array_creation {
+            return Ok(None);
+        }
+        if is_span
+            && matches!(
+                rr,
+                Rr::ObjectCreation { .. } | Rr::Conversion { .. } | Rr::ImplicitConversion { .. }
+            )
         {
             return Err("a params argument of a span".to_owned());
         }

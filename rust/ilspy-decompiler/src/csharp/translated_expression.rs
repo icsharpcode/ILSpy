@@ -506,8 +506,32 @@ impl Builder<'_, '_, '_, '_> {
                     });
                 }
             }
-            // `Unsafe.As` between references is not translated.
-            return Err("a conversion to a reference that needs a cast".to_owned());
+            // `IsFixedVariable`: the first instruction of the referenced expression is a fixed
+            // variable's address.
+            let fixed = match *self.ast.node(e.expression) {
+                AstNode::RefDirection { expression: inner } => {
+                    match self.ast.annotations(inner).il.first().copied() {
+                        Some(i) => self.is_fixed_variable(i),
+                        None => false,
+                    }
+                }
+                _ => false,
+            };
+            let TypeData::ByRef(from) = *self.ts.data(ty) else {
+                unreachable!("a reference type");
+            };
+            if !fixed {
+                // Between managed references, which a pointer would stop GC tracking for:
+                // `ref Unsafe.As<TFrom, TTo>(ref expr)`.
+                return Ok(self.call_unsafe_intrinsic(
+                    "As",
+                    vec![e.expression],
+                    target,
+                    None,
+                    vec![from, element],
+                ));
+            }
+            return self.convert_pointer_to_reference(e, element, check);
         }
         let rr = self.semantic_rr(e.expression, ty);
         if let ResolveResult::Constant { value, .. } = &rr
