@@ -95,9 +95,9 @@ mod kind {
     pub const USING_EXPANDED: u8 = 71;
     pub const GOTO_CASE: u8 = 72;
     pub const GOTO_DEFAULT: u8 = 73;
-    pub const UTF8_STRING_LITERAL: u8 = 120;
-    pub const ERROR: u8 = 121;
-    pub const BLOCK_EXPRESSION: u8 = 122;
+    pub const UTF8_STRING_LITERAL: u8 = 130;
+    pub const ERROR: u8 = 131;
+    pub const BLOCK_EXPRESSION: u8 = 132;
 }
 
 pub(super) fn write_body(

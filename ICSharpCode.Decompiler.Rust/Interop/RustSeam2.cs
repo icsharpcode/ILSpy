@@ -120,9 +120,9 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		public const byte UsingExpanded = 71;
 		public const byte GotoCase = 72;
 		public const byte GotoDefault = 73;
-		public const byte Utf8StringLiteral = 120;
-		public const byte Error = 121;
-		public const byte BlockExpression = 122;
+		public const byte Utf8StringLiteral = 130;
+		public const byte Error = 131;
+		public const byte BlockExpression = 132;
 
 		public byte Kind;
 		/// <summary>The instructions the node is annotated with, in order.</summary>
