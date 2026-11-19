@@ -92,6 +92,9 @@ public class SwitchListAndDeleteAllTests
 		// Arrange - boot, decompile something so there is a tab and history to lose, then give
 		// the tree keyboard focus.
 		var (window, vm) = await TestHarness.BootAsync(3);
+		// Decompiling the sample would otherwise add the test assembly's whole reference closure
+		// to the list as rows of their own, and Ctrl+A would select every one of them.
+		AppComposition.Current.GetExport<SettingsService>().DecompilerSettings.AutoLoadAssemblyReferences = false;
 		await GiveTheHistorySomethingToHoldAsync(vm);
 		// Collapse again: Ctrl+A selects every visible row, and the tree is normally collapsed
 		// to its assemblies when a user reaches for it.
@@ -100,6 +103,8 @@ public class SwitchListAndDeleteAllTests
 		await Waiters.WaitForIdleAsync();
 		var pane = await window.WaitForComponent<AssemblyListPane>();
 		var tree = await pane.WaitForComponent<ICSharpCode.ILSpy.Controls.TreeView.SharpTreeView>();
+		((System.Collections.IList)tree.ItemsSource!).Count.Should().Be(4,
+			"Ctrl+A is meant to select the three seeded assemblies and the test assembly, nothing else");
 		tree.Focus();
 		Dispatcher.UIThread.RunJobs();
 
