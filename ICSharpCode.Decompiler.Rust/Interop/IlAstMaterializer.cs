@@ -1890,6 +1890,14 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				case RustBodyNode.DoWhile:
 					node.Children = [BodyNode(), BodyNode()];
 					break;
+				case RustBodyNode.InitializerIndexer:
+				{
+					var keys = new RustBodyNode[Len()];
+					for (int i = 0; i < keys.Length; i++)
+						keys[i] = BodyNode();
+					node.Children = keys;
+					break;
+				}
 				case RustBodyNode.Indexer:
 				{
 					var target = BodyNode();

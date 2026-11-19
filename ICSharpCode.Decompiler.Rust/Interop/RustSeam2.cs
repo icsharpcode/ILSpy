@@ -132,6 +132,8 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		public const byte Utf8StringLiteral = 130;
 		public const byte Error = 131;
 		public const byte BlockExpression = 132;
+		public const byte InitializerIndexer = 160;
+		public const byte AsRefReadOnlyHelper = 161;
 
 		public byte Kind;
 		/// <summary>The instructions the node is annotated with, in order.</summary>
@@ -1292,6 +1294,8 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				case RustBodyNode.Indexer:
 					return Annotate(new IndexerExpression((Expression)Build(node.Children[0], exprBuilder),
 						node.Children.Skip(1).Select(c => (Expression)Build(c, exprBuilder))), node);
+				case RustBodyNode.InitializerIndexer:
+					return Annotate(new IndexerExpression(null, node.Children.Select(c => (Expression)Build(c, exprBuilder))), node);
 				case RustBodyNode.DoWhile:
 					return Annotate(new DoWhileStatement {
 						EmbeddedStatement = (Statement)Build(node.Children[0], exprBuilder),
@@ -1307,6 +1311,8 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 						statement.Iterators.Add((Statement)Build(node.Children[i], exprBuilder));
 					return Annotate(statement, node);
 				}
+				case RustBodyNode.AsRefReadOnlyHelper:
+					return AsRefReadOnlyHelper(exprBuilder.settings);
 				case RustBodyNode.Break:
 					return Annotate(new BreakStatement(), node);
 				case RustBodyNode.Continue:
@@ -1591,7 +1597,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 						}
 					}
 					node.ResolveResult = new DecompiledLambdaResolveResult(function, node.Type!, (IType)node.Value!,
-						hasParameterList: node.HasParameterList, isAnonymousMethod: node.AnonymousMethod, isImplicitlyTyped: node.ImplicitlyTyped) {
+						hasParameterList: node.HasParameterList, isAnonymousMethod: node.AnonymousMethod, isImplicitlyTyped: node.ImplicitlyTyped && node.AnonymousMethod) {
 						AttemptedConversionWithTypeMismatch = node.AttemptedConversionWithTypeMismatch
 					};
 					var lambdaBody = Build(node.Children[0], exprBuilder);
@@ -1861,6 +1867,30 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					initPos++;
 				}
 			}
+		}
+
+		/// <summary>The <c>ILSpyHelper_AsRefReadOnly</c> local function <c>ConvertBlockContainer</c> declares
+		/// where <c>EmitAsRefReadOnly</c> is set.</summary>
+		static LocalFunctionDeclarationStatement AsRefReadOnlyHelper(DecompilerSettings settings)
+		{
+			var methodDecl = new MethodDeclaration();
+			if (settings.StaticLocalFunctions)
+			{
+				methodDecl.Modifiers = Modifiers.Static;
+			}
+
+			methodDecl.ReturnType = new ComposedType() { HasReadOnlySpecifier = true, HasRefSpecifier = true, BaseType = new SimpleType("T") };
+			methodDecl.Name = "ILSpyHelper_AsRefReadOnly";
+			methodDecl.TypeParameters.Add(new TypeParameterDeclaration("T"));
+			methodDecl.Parameters.Add(new ParameterDeclaration { ParameterModifier = ReferenceKind.In, Type = new SimpleType("T"), Name = "temp" });
+
+			methodDecl.Body = new BlockStatement();
+			var commentStatement = new EmptyStatement();
+			commentStatement.AddTrailingTrivia(new Comment(
+				"ILSpy generated this function to help ensure overload resolution can pick the overload using 'in'"));
+			methodDecl.Body.Add(commentStatement);
+			methodDecl.Body.Add(new ReturnStatement(new DirectionExpression(FieldDirection.Ref, new IdentifierExpression("temp"))));
+			return new LocalFunctionDeclarationStatement(methodDecl);
 		}
 
 		static T Annotate<T>(T syntax, RustBodyNode node) where T : AstNode

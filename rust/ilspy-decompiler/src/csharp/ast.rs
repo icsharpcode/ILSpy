@@ -237,6 +237,12 @@ pub enum AstNode {
     Goto { name: String },
     /// `IndexerExpression` over an array: `target[indices]`.
     Indexer { target: AstId, indices: Vec<AstId> },
+    /// `IndexerExpression` without target, the key of a dictionary initializer element:
+    /// `[indices]`.
+    InitializerIndexer { indices: Vec<AstId> },
+    /// The `LocalFunctionDeclarationStatement` of `ILSpyHelper_AsRefReadOnly`, which
+    /// `EnforceExplicitIn` calls (`StatementBuilder.EmitAsRefReadOnly`).
+    AsRefReadOnlyHelper,
     /// `UsingStatement`: `using (resource) body`, with a declaration of `declaration` (of its
     /// type, annotated with its `ILVariableResolveResult`) initialized with the resource.
     Using {

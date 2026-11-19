@@ -300,6 +300,8 @@ impl Builder<'_, '_, '_, '_> {
         let mut translated = translated;
         let names_known = match self.rr_of(translated.expression) {
             Rr::Variable { .. } => true,
+            // The best common type of tuple literals has the names the literals write.
+            Rr::Plain(_) if self.switch_of_tuple_literals(translated.expression) => true,
             Rr::Field { field, .. } => field
                 .field
                 .declaring
@@ -574,6 +576,19 @@ impl Builder<'_, '_, '_, '_> {
     }
 
     /// `inst.MatchLdThis()`: the `this` parameter it loads.
+    /// Whether `e` is a switch expression whose arms are tuple literals or throw expressions.
+    fn switch_of_tuple_literals(&self, e: AstId) -> bool {
+        let AstNode::SwitchExpression { arms, .. } = self.ast.node(e) else {
+            return false;
+        };
+        arms.iter().all(|&(_, body)| {
+            matches!(
+                self.ast.node(body),
+                AstNode::Tuple { .. } | AstNode::ThrowExpression { .. }
+            )
+        })
+    }
+
     fn match_ld_this(&self, inst: NodeId) -> Option<VarId> {
         let Inst::LdLoc { var } = *self.f.inst(inst) else {
             return None;
@@ -623,19 +638,27 @@ impl Builder<'_, '_, '_, '_> {
             .current_type
             .and_then(|d| self.ts.comp.type_def(d).ok())
             .is_some_and(|i| i.kind == crate::typesystem::compilation::TypeKind::Struct);
-        // A boxed copy of a struct's own `this` is not translated; a boxed other value is
-        // translated as any target.
+        // `MatchLdThis`: `this`, or in a struct `box T(ldobj T(this))` of the struct itself.
+        let mut this_of_target = self.match_ld_this(target);
         if current_is_struct
-            && let Inst::Box { arg, .. } = *self.f.inst(target)
-            && match *self.f.inst(arg) {
-                Inst::LdObj { target: t, .. } => self.match_ld_this(t).is_some(),
-                _ => self.match_ld_this(arg).is_some(),
-            }
+            && this_of_target.is_none()
+            && let Inst::Box { arg, ty } = *self.f.inst(target)
         {
-            return Err("a member access on a boxed this".to_owned());
+            match *self.f.inst(arg) {
+                Inst::LdObj {
+                    target: t, ty: ty2, ..
+                } if ty.ty == ty2.ty && self.ts.definition(ty.ty) == self.current_type => {
+                    this_of_target = self.match_ld_this(t);
+                }
+                // A boxed `this` reference other than the `ldobj` pattern.
+                _ if self.match_ld_this(arg).is_some() => {
+                    return Err("a member access on a boxed this".to_owned());
+                }
+                _ => {}
+            }
         }
         if non_virtual_invocation
-            && let Some(this_var) = self.match_ld_this(target)
+            && let Some(this_var) = this_of_target
             && self.ts.definition(declaring) != self.current_type
         {
             // `base`: the current type's first non-interface base type.

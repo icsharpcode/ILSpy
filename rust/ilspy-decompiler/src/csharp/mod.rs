@@ -78,6 +78,9 @@ pub(crate) struct Builder<'f, 't, 'c, 'a> {
     pub(crate) is_async: bool,
     /// Whether the current function is a lambda, whose returns can keep their type with a cast.
     pub(crate) in_lambda: bool,
+    /// `StatementBuilder.EmitAsRefReadOnly`: the current function's body declares the
+    /// `ILSpyHelper_AsRefReadOnly` helper an explicit `in` argument calls.
+    pub(crate) emit_as_ref_readonly: bool,
     /// The variables of the top-level function (`ReadFunction::variables`).
     pub(crate) root_variables: Vec<crate::il::ast::VarId>,
     /// The override the last successful call probe resolved to, in place of the method called.

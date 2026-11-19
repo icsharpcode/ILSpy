@@ -527,9 +527,12 @@ impl Builder<'_, '_, '_, '_> {
             });
         }
         if let Some(is_setter) = indexer {
-            return self.indexer_access(
-                inst, operand, id, &method, target, list, is_setter, declaring,
+            self.needs_boxing_conversion = needs_boxing_conversion;
+            let access = self.indexer_access(
+                inst, operand, id, &method, op, target, list, is_setter, declaring,
             );
+            self.needs_boxing_conversion = false;
+            return access;
         }
         if let Some(name) = property {
             return self.accessor_call(
@@ -1002,7 +1005,12 @@ impl Builder<'_, '_, '_, '_> {
         }
         // The parameter of each argument: the named argument map of `CallWithNamedArgs`.
         let map = self.named_argument_map.take();
-        if map.is_some() && (is_setter || method.is_operator) {
+        // A setter's assigned value is taken off the end of the argument list, where it stays
+        // in an indexer assignment, which evaluates it after the indices.
+        if map.as_ref().is_some_and(|m| {
+            method.is_operator
+                || (is_setter && m.last() != Some(&method.parameters.len().wrapping_sub(1)))
+        }) {
             return Err("named arguments of a setter or operator".to_owned());
         }
         let order: Vec<usize> = map
@@ -1010,12 +1018,24 @@ impl Builder<'_, '_, '_, '_> {
             .unwrap_or_else(|| (0..method.parameters.len()).collect());
         // Names start at the first argument out of its place.
         let mut explicit_names: Option<Vec<Option<String>>> = None;
+        let named_parameters = if map.is_some() {
+            self.named_parameters(id, method, declaring)?
+        } else {
+            None
+        };
         for (i, &p) in order.iter().enumerate() {
             if explicit_names.is_none() && p != i {
                 explicit_names = Some(vec![None; order.len()]);
             }
-            let name = &method.parameters[p].name;
+            let name = named_parameters
+                .as_ref()
+                .and_then(|n| n.get(p))
+                .unwrap_or(&method.parameters[p].name);
+            // `GetNamedParameters`: the assigned value is past the end of the indexer's
+            // parameters and has no name.
+            let is_value = is_setter && p + 1 == method.parameters.len();
             if let Some(names) = &mut explicit_names
+                && !is_value
                 && crate::il::transforms::assign_variable_names::is_valid_name(name)
             {
                 names[i] = Some(name.clone());
@@ -1225,6 +1245,51 @@ impl Builder<'_, '_, '_, '_> {
             .collect()
     }
 
+    /// `GetNamedParameters`: the names of an indexer accessor's parameters are those of the
+    /// indexer, which takes them from its getter where it has one; `None` for the method's own.
+    fn named_parameters(
+        &mut self,
+        id: crate::typesystem::members::MethodDefId,
+        method: &Method,
+        declaring: TypeId,
+    ) -> Result<Option<Vec<String>>, Unsupported> {
+        let Some((token, _)) = self.ts.accessor_owner(id) else {
+            return Ok(None);
+        };
+        if token >> 24 != 0x17 {
+            return Ok(None);
+        }
+        let row = token & 0x00FF_FFFF;
+        let name = self.property_info(id.module, row)?.0;
+        let default_member = match self.ts.definition(declaring) {
+            Some(def) => self
+                .ts
+                .default_member_name(def)
+                .map_err(|e| e.to_string())?,
+            None => None,
+        };
+        let getter = self.ts.comp.module(id.module).md.property_accessors(row).0;
+        if default_member.as_deref() != Some(&name)
+            || getter == 0
+            || getter == id.row
+            || method.parameters.is_empty()
+        {
+            return Ok(None);
+        }
+        let getter = crate::typesystem::members::MethodDefId {
+            module: id.module,
+            row: getter,
+        };
+        Ok(Some(
+            self.ts
+                .method_signature(getter)
+                .1
+                .into_iter()
+                .map(|p| p.name)
+                .collect(),
+        ))
+    }
+
     /// `IsOptionalArgument`: a constant argument of an optional parameter that is its default
     /// value, unless the parameter is filled in by the compiler (caller information).
     fn is_optional_argument(
@@ -1239,6 +1304,8 @@ impl Builder<'_, '_, '_, '_> {
         // A constant, or a null literal conversion (whose constant value is null).
         let value = match self.rr_of(arg.expression) {
             Rr::Constant { value, .. } => value,
+            // `DefaultLiteralResolveResult` is a constant with value null.
+            Rr::DefaultLiteral { .. } => ConstValue::Null,
             Rr::Conversion { ty } => {
                 let AstNode::Cast {
                     expression: inner, ..
@@ -1282,6 +1349,84 @@ impl Builder<'_, '_, '_, '_> {
             }
         }
         Ok(info.value == value)
+    }
+
+    /// `IsAppropriateCallTarget` of an indexer found for a virtual call: an override of the
+    /// expected one. The accessor found (an override's getter where it declares no setter)
+    /// overrides an accessor of the expected property, directly or through further overrides.
+    fn overrides_property(
+        &mut self,
+        op: CallOp,
+        found: crate::typesystem::members::MethodDefId,
+        property: Option<(ModuleId, u32)>,
+        found_method: &Method,
+    ) -> Result<bool, Unsupported> {
+        let is_override = |s: &Self, m| s.ts.method_modifiers_of(m).is_ok_and(|m| m.is_override);
+        if op != CallOp::CallVirt || property.is_none() || !is_override(self, found) {
+            return Ok(false);
+        }
+        // A boxed target does not reach an override in a value type.
+        if self.needs_boxing_conversion
+            && found_method
+                .declaring
+                .is_some_and(|d| self.ts.is_reference_type(d) != Some(true))
+        {
+            return Ok(false);
+        }
+        let bases = self
+            .ts
+            .base_members(
+                crate::typesystem::inheritance::MemberDef::Method(found),
+                false,
+            )
+            .map_err(|e| e.to_string())?;
+        for base in bases {
+            let crate::typesystem::inheritance::MemberDef::Method(base_id) = base.def else {
+                break;
+            };
+            let owner = self
+                .ts
+                .accessor_owner(base_id)
+                .map(|(token, _)| (base_id.module, token));
+            if owner == property {
+                return Ok(true);
+            }
+            if !is_override(self, base_id) {
+                break;
+            }
+        }
+        Ok(false)
+    }
+
+    /// `Disambiguator.OmittedArgumentsAreDefaultsOf`: the arguments left out are the default
+    /// values of the member found, which for a virtual call can be an override that redeclares
+    /// them.
+    fn omitted_arguments_are_defaults_of(
+        &mut self,
+        list: &ArgumentList,
+        found: &Method,
+    ) -> Result<bool, Unsupported> {
+        let omitted_from = list.actual_count();
+        if omitted_from >= list.arguments.len() {
+            return Ok(true);
+        }
+        let MethodKey::Def(found_id) = found.key else {
+            return Ok(false);
+        };
+        let infos = self.ts.method_signature(found_id).1;
+        for i in omitted_from..list.arguments.len() {
+            let p = match &list.parameter_map {
+                Some(map) => map[i],
+                None => i,
+            };
+            let Some(info) = infos.get(p) else {
+                return Ok(false);
+            };
+            if !self.is_optional_argument(found_id, info, list.arguments[i])? {
+                return Ok(false);
+            }
+        }
+        Ok(true)
     }
 
     /// `CallBuilder.Build` for `newobj` of an ordinary constructor): `new T(arguments)`.
@@ -1379,15 +1524,6 @@ impl Builder<'_, '_, '_, '_> {
             });
         let mut list = self.argument_list(call, &method, id, 0, declaring, false)?;
         if anonymous {
-            // shortcut: inside a lambda (a query's `select new { ... }` or transparent
-            // identifier) the engine's body keeps IntroduceQueryExpressions from writing the
-            // outermost clause as the managed one does; find the annotation that differs, then
-            // serve these too.
-            if self.in_lambda {
-                return Err(
-                    "an object creation of an anonymous type with syntax of its own".to_owned(),
-                );
-            }
             return self.anonymous_type_creation(inst, operand, &method, &list);
         }
         // `TransformParamsArgument`: the expanded form where the creation as written with it
@@ -1632,7 +1768,8 @@ impl Builder<'_, '_, '_, '_> {
         operand: &MethodOperand,
         id: crate::typesystem::members::MethodDefId,
         method: &Method,
-        target: TranslatedExpression,
+        op: CallOp,
+        mut target: TranslatedExpression,
         mut list: ArgumentList,
         is_setter: bool,
         declaring: TypeId,
@@ -1672,7 +1809,7 @@ impl Builder<'_, '_, '_, '_> {
             Rr::Type(ty) => LookupTarget::Type(ty),
             _ => LookupTarget::Expression(target.ty),
         };
-        let group = resolver
+        let mut group = resolver
             .indexers(self.ts, lookup_target)
             .ok_or("indexers the host cannot name by metadata row")?;
         // `AccessorSteps`: the indexer is written with its target already.
@@ -1681,7 +1818,7 @@ impl Builder<'_, '_, '_, '_> {
         let mut spent_cast_target = false;
         let mut found_type = None;
         loop {
-            let (errors, found) = self.probe_indexers(&group, target.ty, id, &list)?;
+            let (errors, found) = self.probe_indexers(&group, target.ty, id, op, &list)?;
             if errors == OverloadResolutionErrors::NONE {
                 found_type = found;
                 break;
@@ -1702,12 +1839,12 @@ impl Builder<'_, '_, '_, '_> {
             }
             if !spent_cast_target {
                 spent_cast_target = true;
-                // The engine's probe of indexers with optional parameters falls through to the
-                // cast where the managed one resolves without it; a cast of the target is not
-                // translated.
-                if self.convert_to(target, declaring, false)?.expression != target.expression {
-                    return Err("a reference that needs a cast of its target".to_owned());
-                }
+                // `Target.ConvertTo(declaringType)`; the indexers are looked up on the cast.
+                let lookup =
+                    self.cast_target_to_with(&mut target, declaring, op == CallOp::CallVirt)?;
+                group = resolver
+                    .indexers(self.ts, lookup)
+                    .ok_or("indexers the host cannot name by metadata row")?;
                 continue;
             }
             // No spelling resolves; the most explicit one is written anyway.
@@ -1760,6 +1897,7 @@ impl Builder<'_, '_, '_, '_> {
         group: &[MethodGroupList],
         lookup_type: TypeId,
         accessor: crate::typesystem::members::MethodDefId,
+        op: CallOp,
         list: &ArgumentList,
     ) -> Result<(OverloadResolutionErrors, Option<TypeId>), Unsupported> {
         let mut lists = self.method_lists(group, Some(lookup_type));
@@ -1793,8 +1931,10 @@ impl Builder<'_, '_, '_, '_> {
             return ambiguous;
         };
         let found_type = found.return_type;
-        // `IsAppropriateCallTarget` of the properties; an override of it is not translated.
-        let crate::semantics::MethodKey::Def(found) = found.key else {
+        let found_method = found;
+        // `IsAppropriateCallTarget` of the properties: the indexer itself, or for a virtual
+        // call an override of it, which overrides the accessor alike.
+        let crate::semantics::MethodKey::Def(found) = found_method.key else {
             return ambiguous;
         };
         let found_property = self
@@ -1805,7 +1945,10 @@ impl Builder<'_, '_, '_, '_> {
             .ts
             .accessor_owner(accessor)
             .map(|(token, _)| (accessor.module, token));
-        if found_property == property {
+        if (found_property == property
+            || self.overrides_property(op, found, property, &found_method)?)
+            && self.omitted_arguments_are_defaults_of(list, &found_method)?
+        {
             Ok((OverloadResolutionErrors::NONE, Some(found_type)))
         } else {
             ambiguous
@@ -1861,7 +2004,8 @@ impl Builder<'_, '_, '_, '_> {
             if !spent_cast {
                 spent_cast = true;
                 // `Target.ConvertTo(declaringType)`
-                lookup_target = self.cast_target_to(target, declaring)?;
+                lookup_target =
+                    self.cast_target_to_with(target, declaring, op == CallOp::CallVirt)?;
                 continue;
             }
             // No spelling resolves; the most explicit one is emitted anyway.
@@ -2054,8 +2198,17 @@ impl Builder<'_, '_, '_, '_> {
                 if skip_target_cast && require != initially_required {
                     require = false;
                 } else {
+                    // shortcut: a constructor call's `base` target is not cast; the engine's
+                    // probe of `base..ctor()` (F# constructors) escalates where the managed one
+                    // resolves. Upgrade once the probes agree.
+                    if method.name == ".ctor"
+                        && matches!(self.ast.node(target.expression), AstNode::Base)
+                    {
+                        return Err("a reference that needs a cast of its target".to_owned());
+                    }
                     // `Target.ConvertTo(declaringType)`: the target cast to the declaring type.
-                    lookup_target = self.cast_target_to(target, declaring)?;
+                    lookup_target =
+                        self.cast_target_to_with(target, declaring, op == CallOp::CallVirt)?;
                 }
                 continue;
             }
@@ -2065,17 +2218,35 @@ impl Builder<'_, '_, '_, '_> {
                 continue;
             }
             if !spent_explicit_in {
-                // `EnforceExplicitIn`, which writes `in ILSpyHelper_AsRefReadOnly(x)` and its local
-                // function, is not translated.
+                // `EnforceExplicitIn`: an `in` argument without direction is written as
+                // `in ILSpyHelper_AsRefReadOnly(x)`, which the function body declares.
                 let expected = list.expected_parameters(method);
-                if expected.iter().zip(&list.arguments).any(|(p, a)| {
-                    p.ref_kind == RefKind::In
-                        && !matches!(
+                for (p, a) in expected.iter().zip(list.arguments.iter_mut()) {
+                    if p.ref_kind != RefKind::In
+                        || matches!(
                             self.ast.node(a.expression),
-                            AstNode::InDirection { .. } | AstNode::RefDirection { .. }
+                            AstNode::InDirection { .. }
+                                | AstNode::RefDirection { .. }
+                                | AstNode::OutDirection { .. }
                         )
-                }) {
-                    return Err("an in argument made explicit".to_owned());
+                    {
+                        continue;
+                    }
+                    let helper = self.ast.add(AstNode::Identifier {
+                        name: "ILSpyHelper_AsRefReadOnly".to_owned(),
+                    });
+                    let call = self.ast.add(AstNode::Invocation {
+                        target: helper,
+                        arguments: vec![a.expression],
+                    });
+                    let e = self.ast.add(AstNode::InDirection { expression: call });
+                    self.ast
+                        .with_rr(e, Rr::ByReferenceIn(Box::new(Rr::Plain(a.ty)), false));
+                    *a = TranslatedExpression {
+                        expression: e,
+                        ty: self.ts.intern(TypeData::ByRef(a.ty)),
+                    };
+                    self.emit_as_ref_readonly = true;
                 }
                 spent_explicit_in = true;
                 continue;
@@ -2113,14 +2284,23 @@ impl Builder<'_, '_, '_, '_> {
     }
 
     /// `Target.ConvertTo(declaringType)` of a member reference's target, and the lookup target
-    /// of the cast. A value-type target, which the managed probe resolves without the cast
-    /// where the engine's does not, is not translated; nor is a `base` target that would be
-    /// cast (written as `this`), a `this` target cast to a class, nor a null-conditional
-    /// target, which would be cast inside its `?`.
+    /// of the cast (`base` is cast as `this`). A `this` target cast to a class is not
+    /// translated, nor a null-conditional target, which would be cast inside its `?`.
     pub(crate) fn cast_target_to(
         &mut self,
         target: &mut TranslatedExpression,
         declaring: TypeId,
+    ) -> Result<LookupTarget, Unsupported> {
+        self.cast_target_to_with(target, declaring, false)
+    }
+
+    /// `cast_target_to`, where `this_to_class` casts a `this` target to a class as well (the
+    /// target of a virtual method reference, which is `this` in the managed builder too).
+    pub(crate) fn cast_target_to_with(
+        &mut self,
+        target: &mut TranslatedExpression,
+        declaring: TypeId,
+        this_to_class: bool,
     ) -> Result<LookupTarget, Unsupported> {
         // `this` or `base` of the declaring type itself converts without a cast, and stays the
         // lookup target it was (a constructor initializer whose lookup finds no constructor).
@@ -2147,16 +2327,23 @@ impl Builder<'_, '_, '_, '_> {
                 _ => LookupTarget::Expression(target.ty),
             });
         }
-        // shortcut: `this` is cast only to an interface; to a class the engine may hold `this`
-        // where the managed builder took `base` (`base..ctor()` in F# constructors), which
-        // needs no cast. Upgrade once the targets agree.
-        let this_to_class = matches!(self.ast.node(target.expression), AstNode::This)
+        // shortcut: `this` is cast to a class only as the target of a virtual reference; for a
+        // non-virtual one the engine may hold `this` where the managed builder took `base`
+        // (`base..ctor()` in F# constructors), which needs no cast. Upgrade once the targets
+        // agree.
+        let refuse_this = matches!(self.ast.node(target.expression), AstNode::This)
+            && !this_to_class
             && !self.ts.is_interface(declaring);
-        if self.ts.is_reference_type(target.ty) != Some(true)
-            || this_to_class
+        let value_type = self.ts.is_reference_type(target.ty) == Some(false)
+            && !matches!(
+                self.ts.data(target.ty),
+                TypeData::ByRef(_) | TypeData::Pointer(_)
+            );
+        if (self.ts.is_reference_type(target.ty) != Some(true) && !value_type)
+            || refuse_this
             || matches!(
                 self.ast.node(target.expression),
-                AstNode::Base | AstNode::NullConditional { .. }
+                AstNode::NullConditional { .. }
             )
         {
             return Err("a reference that needs a cast of its target".to_owned());
@@ -2573,13 +2760,28 @@ impl Builder<'_, '_, '_, '_> {
         let MethodOrigin::Def(id) = operand.method.origin else {
             return Err("a collection initializer of an unresolved method".to_owned());
         };
-        if self.ts.method_flags(id, None).extension {
-            return Err("a collection initializer of an extension method".to_owned());
-        }
+        let extension = self.ts.method_flags(id, None).extension;
         let method = Method::from_resolved(self.ts, &operand.method)
             .ok_or("a collection initializer of an unresolved method")?;
         let declaring = method.declaring.ok_or("a method without declaring type")?;
-        let mut list = self.argument_list(call, &method, id, 1, declaring, false)?;
+        // An extension method's first argument is a `Nop`, translated as an error expression
+        // of unknown type that is not written.
+        let skip = usize::from(extension);
+        let mut list = self.argument_list(call, &method, id, 1 - skip, declaring, false)?;
+        if extension {
+            let unknown = self.ts.intern(TypeData::UnknownSpecial);
+            let e = self.ast.add(AstNode::Error {
+                message: "OpCode not supported: Nop".to_owned(),
+            });
+            self.ast.with_rr(e, Rr::Plain(unknown));
+            *list
+                .arguments
+                .first_mut()
+                .ok_or("an extension method without arguments")? = TranslatedExpression {
+                expression: e,
+                ty: unknown,
+            };
+        }
         let resolver = self
             .resolver
             .ok_or("a member reference without the host's resolver")?;
@@ -2612,16 +2814,17 @@ impl Builder<'_, '_, '_, '_> {
             if !spent_cast {
                 spent_cast = true;
                 let expected = list.expected_parameters(&method);
-                self.cast_arguments(&mut list.arguments, &expected)?;
+                // The error expression's cast is not written.
+                self.cast_arguments(&mut list.arguments[skip..], &expected[skip..])?;
                 continue;
             }
             break;
         }
         // One argument needs no braces; the first optional argument is ignored then.
-        if let [argument] = list.arguments[..] {
+        if let [argument] = list.arguments[skip..] {
             return Ok(self.ast.with_il(argument.expression, element));
         }
-        let arguments = self.written_arguments(&list, 0);
+        let arguments = self.written_arguments(&list, skip);
         let e = self.ast.add(AstNode::ArrayInitializer {
             elements: arguments,
         });
@@ -2631,7 +2834,7 @@ impl Builder<'_, '_, '_, '_> {
                 target: Box::new(Rr::InitializedObject(object.ty)),
                 method: Box::new(operand.clone()),
                 ty: method.return_type,
-                extension: false,
+                extension,
                 delegate: false,
                 found_by_lookup: false,
                 expanded: list.is_expanded_form,
@@ -2639,6 +2842,82 @@ impl Builder<'_, '_, '_, '_> {
             },
         );
         Ok(self.ast.with_il(e, element))
+    }
+
+    /// `BuildDictionaryInitializerExpression`: `[indices] = value`, the indexer assignment of
+    /// the setter call `element` on the initialized object with the indices and value given
+    /// (the indices with the index variables of the initializer replaced by their values),
+    /// whose target is then removed.
+    pub(crate) fn dictionary_initializer_element(
+        &mut self,
+        element: NodeId,
+        indices: &[NodeId],
+        value: NodeId,
+        object: TranslatedExpression,
+    ) -> Result<AstId, Unsupported> {
+        let (call, op) = match self.f.inst(element) {
+            Inst::Call(c) => (c.clone(), CallOp::Call),
+            Inst::CallVirt(c) => (c.clone(), CallOp::CallVirt),
+            _ => return Err("a dictionary initializer of another instruction".to_owned()),
+        };
+        let operand = &call.method;
+        let MethodOrigin::Def(id) = operand.method.origin else {
+            return Err("a dictionary initializer of an unresolved method".to_owned());
+        };
+        let method = Method::from_resolved(self.ts, &operand.method)
+            .ok_or("a dictionary initializer of an unresolved method")?;
+        let declaring = method.declaring.ok_or("a method without declaring type")?;
+        // An indexer is the property the type's `[DefaultMember]` names; another parameterized
+        // property has no access syntax, which `HandleAccessorCall` would write.
+        let (token, _) = self
+            .ts
+            .accessor_owner(id)
+            .ok_or("a dictionary initializer of no accessor")?;
+        let name = self.property_info(id.module, token & 0x00FF_FFFF)?.0;
+        let default_member = match self.ts.definition(declaring) {
+            Some(def) => self
+                .ts
+                .default_member_name(def)
+                .map_err(|e| e.to_string())?,
+            None => None,
+        };
+        if default_member.as_deref() != Some(&name) {
+            return Err("a dictionary initializer of a parameterized property".to_owned());
+        }
+        // `callArguments`: the target (not translated), the indices and the value.
+        let mut args = Vec::with_capacity(indices.len() + 2);
+        args.push(*call.args.first().ok_or("a setter without target")?);
+        args.extend_from_slice(indices);
+        args.push(value);
+        let call = CallData { args, ..call };
+        let list = self.argument_list(&call, &method, id, 1, declaring, true)?;
+        let target = self.ast.add(AstNode::Identifier {
+            name: "initializedObject".to_owned(),
+        });
+        self.ast.with_rr(target, Rr::InitializedObject(object.ty));
+        let target = TranslatedExpression {
+            expression: target,
+            ty: object.ty,
+        };
+        let assignment = self.indexer_access(
+            element,
+            &call.method,
+            id,
+            &method,
+            op,
+            target,
+            list,
+            true,
+            declaring,
+        )?;
+        let AstNode::Assignment { left, .. } = *self.ast.node(assignment.expression) else {
+            return Err("a dictionary initializer without assignment".to_owned());
+        };
+        let AstNode::Indexer { indices, .. } = self.ast.node(left).clone() else {
+            return Err("a dictionary initializer without indexer".to_owned());
+        };
+        *self.ast.node_mut(left) = AstNode::InitializerIndexer { indices };
+        Ok(assignment.expression)
     }
 
     /// `CallWithNamedArgs`: the call with the arguments the block stores in temporaries first,
@@ -3057,10 +3336,12 @@ impl Builder<'_, '_, '_, '_> {
                 }
             }
         }
-        // The normal form was meant. The omitted arguments are the defaults of the method
-        // found, which is the one called (`OmittedArgumentsAreDefaultsOf`); writing them out
-        // again corrects a resolution that reached the expanded form.
-        if or.best_candidate_is_expanded_form() != list.is_expanded_form {
+        // The form meant and the omitted arguments the defaults of the method found, which
+        // can be an override that redeclares them (`OmittedArgumentsAreDefaultsOf`); writing
+        // the omitted arguments out again corrects either.
+        if or.best_candidate_is_expanded_form() != list.is_expanded_form
+            || !self.omitted_arguments_are_defaults_of(list, &found)?
+        {
             return Ok(if list.first_optional >= 0 {
                 OverloadResolutionErrors::MISSING_ARGUMENT_FOR_REQUIRED_PARAMETER
             } else {

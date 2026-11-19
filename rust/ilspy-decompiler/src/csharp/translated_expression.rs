@@ -593,8 +593,16 @@ impl Builder<'_, '_, '_, '_> {
         }
         // The cast, with the resolve result of `ResolveCast`, and a checked or unchecked
         // annotation for an integer target.
+        // `base` is cast as `this`, with the instructions of `base`.
+        // shortcut: the `this` keeps the resolve result of `base`, which the cast's
+        // `ResolveCast` is over, where the managed `this` carries none; upgrade once the host
+        // can resolve a cast over a resolve result its operand does not carry.
+        let mut e = e;
         if matches!(self.ast.node(e.expression), AstNode::Base) {
-            return Err("a cast of base".to_owned());
+            let annotations = self.ast.annotations(e.expression).clone();
+            let this = self.ast.add(AstNode::This);
+            *self.ast.annotations_mut(this) = annotations;
+            e.expression = this;
         }
         let overflow = if !target_ustack.is_integer() {
             Overflow::None

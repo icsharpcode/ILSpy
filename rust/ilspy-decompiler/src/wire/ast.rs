@@ -107,6 +107,8 @@ mod kind {
     pub const UTF8_STRING_LITERAL: u8 = 130;
     pub const ERROR: u8 = 131;
     pub const BLOCK_EXPRESSION: u8 = 132;
+    pub const INITIALIZER_INDEXER: u8 = 160;
+    pub const AS_REF_READONLY_HELPER: u8 = 161;
 }
 
 pub(super) fn write_body(
@@ -416,6 +418,8 @@ fn node(w: &mut FunctionWriter<'_, '_, '_, '_>, ast: &Ast, id: AstId) -> Result<
         AstNode::DoWhile { .. } => kind::DO_WHILE,
         AstNode::For { .. } => kind::FOR,
         AstNode::Indexer { .. } => kind::INDEXER,
+        AstNode::InitializerIndexer { .. } => kind::INITIALIZER_INDEXER,
+        AstNode::AsRefReadOnlyHelper => kind::AS_REF_READONLY_HELPER,
         AstNode::Using { .. } => kind::USING,
         AstNode::Lambda { .. } => kind::LAMBDA,
         AstNode::InterpolatedString { .. } => kind::INTERPOLATED_STRING,
@@ -716,6 +720,12 @@ fn node(w: &mut FunctionWriter<'_, '_, '_, '_>, ast: &Ast, id: AstId) -> Result<
         }
         AstNode::Indexer { target, indices } => {
             node(w, ast, target)?;
+            w.out.len(indices.len());
+            for i in indices {
+                node(w, ast, i)?;
+            }
+        }
+        AstNode::InitializerIndexer { indices } => {
             w.out.len(indices.len());
             for i in indices {
                 node(w, ast, i)?;
@@ -1047,7 +1057,8 @@ fn node(w: &mut FunctionWriter<'_, '_, '_, '_>, ast: &Ast, id: AstId) -> Result<
         | AstNode::Break
         | AstNode::Continue
         | AstNode::GotoDefault
-        | AstNode::YieldBreak => {}
+        | AstNode::YieldBreak
+        | AstNode::AsRefReadOnlyHelper => {}
         AstNode::PointerUnary {
             address_of,
             expression,
