@@ -27,9 +27,8 @@ pub(crate) enum CaseValue {
 }
 
 impl Builder<'_, '_, '_, '_> {
-    /// `TranslateSwitch(switchContainer, inst)`. A lifted switch, a switch on strings, labels a
-    /// section body does not inline (`goto case`, labeled blocks) and a governing type reached
-    /// through a conversion operator are not translated.
+    /// `TranslateSwitch(switchContainer, inst)`. Labels a section body does not inline (labeled
+    /// blocks) are not translated.
     pub(super) fn translate_switch(
         &mut self,
         container: NodeId,
@@ -46,12 +45,9 @@ impl Builder<'_, '_, '_, '_> {
         else {
             unreachable!("a switch");
         };
-        if is_lifted {
-            return Err("a lifted switch".to_owned());
-        }
         // 'break' within a switch leaves the switch.
         let saved = self.break_target.replace(container);
-        let result = self.switch_statement(container, blocks, value, &sections, ty);
+        let result = self.switch_statement(container, blocks, value, &sections, ty, is_lifted);
         self.break_target = saved;
         result
     }
@@ -63,6 +59,7 @@ impl Builder<'_, '_, '_, '_> {
         value: NodeId,
         sections: &[NodeId],
         ty: Option<TypeId>,
+        is_lifted: bool,
     ) -> Result<AstId, Unsupported> {
         let section_parts: Vec<_> = sections
             .iter()
@@ -71,12 +68,25 @@ impl Builder<'_, '_, '_, '_> {
                 _ => unreachable!("a switch section"),
             })
             .collect();
+        let null_labels: Vec<bool> = sections
+            .iter()
+            .map(|&s| {
+                matches!(
+                    self.f.inst(s),
+                    Inst::SwitchSection {
+                        has_null_label: true,
+                        ..
+                    }
+                )
+            })
+            .collect();
         // A switch on strings: `StringToInt`'s map gives the string labels of each value.
         let string_map = match self.f.inst(value) {
             Inst::StringToInt { map, .. } => Some(map.clone()),
             _ => None,
         };
-        let (value, case_type) = self.translate_switch_value(value, ty, &section_parts, false)?;
+        let (value, case_type) =
+            self.translate_switch_value(value, ty, &section_parts, false, is_lifted)?;
 
         let default = default_section(&section_parts);
 
@@ -90,8 +100,13 @@ impl Builder<'_, '_, '_, '_> {
                 && blocks[1..].contains(&b)
                 && self.branches_stay_in_switch(container, b)
             {
+                let mut label_type = case_type;
                 let label = if i == default {
                     None
+                } else if null_labels[i] {
+                    // `case null`: the null of the null type.
+                    label_type = self.ts.intern(TypeData::Null);
+                    Some(CaseValue::String(ConstValue::Null))
                 } else {
                     let v = labels
                         .values()
@@ -112,7 +127,7 @@ impl Builder<'_, '_, '_, '_> {
                         None => CaseValue::Integer(v),
                     })
                 };
-                mapping.push((b, label, case_type));
+                mapping.push((b, label, label_type));
             }
         }
         let saved_mapping = std::mem::replace(&mut self.case_label_mapping, mapping);
@@ -123,6 +138,7 @@ impl Builder<'_, '_, '_, '_> {
             default,
             case_type,
             string_map.as_deref(),
+            &null_labels,
         );
         self.case_label_mapping = saved_mapping;
         let ast_sections = result?;
@@ -162,6 +178,7 @@ impl Builder<'_, '_, '_, '_> {
 
     /// The sections of the switch, each with its case labels and its body (the inlined block of
     /// a section that branches to one).
+    #[allow(clippy::too_many_arguments)]
     fn switch_sections(
         &mut self,
         container: NodeId,
@@ -170,6 +187,7 @@ impl Builder<'_, '_, '_, '_> {
         default: usize,
         case_type: TypeId,
         string_map: Option<&StringMap>,
+        null_labels: &[bool],
     ) -> Result<Vec<AstId>, Unsupported> {
         let mut inlined = Vec::new();
         let mut ast_sections = Vec::with_capacity(section_parts.len());
@@ -181,6 +199,9 @@ impl Builder<'_, '_, '_, '_> {
                     return Err("a switch section with too many labels".to_owned());
                 }
                 let mut case_labels = Vec::new();
+                if null_labels[i] {
+                    case_labels.push(Some(self.ast.add(AstNode::Null)));
+                }
                 for v in labels.values() {
                     match &string_map {
                         // `CreateTypedCaseLabel` of a string: every key mapped to the value.
@@ -254,24 +275,24 @@ impl Builder<'_, '_, '_, '_> {
         ty: Option<TypeId>,
         sections: &[(crate::util::long_set::LongSet, NodeId)],
         is_expression_context: bool,
+        is_lifted: bool,
     ) -> Result<(TranslatedExpression, TypeId), Unsupported> {
         // `StringToInt`: the string (or span of chars) itself, of its expected type.
         if let Inst::StringToInt {
             arg, ty: expected, ..
         } = *self.f.inst(value)
         {
-            if is_expression_context {
-                return Err("a switch expression on strings".to_owned());
-            }
             let translated = self.translate(arg, None)?;
-            let mut value = self.convert_to(translated, expected, true)?;
-            if !self.is_compatible_with_switch(value.ty) {
-                return Err("a switch governed through a conversion operator".to_owned());
+            let string = self.ts.known_type(KnownTypeCode::String);
+            // A switch expression does not convert implicitly.
+            if is_expression_context {
+                let value = self.convert_to(translated, expected, false)?;
+                return Ok((value, string));
             }
-            if value.ty != expected {
+            let mut value = self.convert_to(translated, expected, true)?;
+            if self.csharp_switch_governing_type(value.ty)? != expected {
                 value = self.convert_to(value, expected, false)?;
             }
-            let string = self.ts.known_type(KnownTypeCode::String);
             return Ok((value, string));
         }
         let translated = self.translate(value, None)?;
@@ -313,6 +334,8 @@ impl Builder<'_, '_, '_, '_> {
                     }
                 }
             }
+            // A lifted switch is governed by its nullable type.
+            StackType::VT if is_lifted => {}
             _ => return Err("a switch on a value type".to_owned()),
         }
         // A switch expression does not convert implicitly.
@@ -321,20 +344,46 @@ impl Builder<'_, '_, '_, '_> {
             return Ok((value, governing));
         }
         let mut value = self.convert_to(translated, governing, true)?;
-        // `GetCSharpSwitchGoverningType`: a type that is no switch type is governed through its
-        // implicit conversion operators, which are not translated (an enum declares none).
-        if !self.is_compatible_with_switch(value.ty) && self.ts.kind(value.ty) != TypeKind::Enum {
-            return Err("a switch governed through a conversion operator".to_owned());
-        }
-        if value.ty != governing {
+        if self.csharp_switch_governing_type(value.ty)? != governing {
             value = self.convert_to(value, governing, false)?;
         }
         Ok((value, governing))
     }
 
+    /// `GetCSharpSwitchGoverningType`: a type that is no switch type is governed through its
+    /// only implicit conversion operator to a switch type.
+    fn csharp_switch_governing_type(&mut self, t: TypeId) -> Result<TypeId, Unsupported> {
+        if self.is_compatible_with_switch(t) {
+            return Ok(t);
+        }
+        let candidates = self
+            .ts
+            .get_methods(t, None, crate::typesystem::lookup::MemberOptions::default())
+            .map_err(|e| e.to_string())?;
+        let mut applicable = Vec::new();
+        for c in &candidates {
+            if c.name != "op_Implicit" {
+                continue;
+            }
+            let Some(m) = crate::semantics::Method::from_resolved(self.ts, c) else {
+                continue;
+            };
+            if m.is_operator
+                && m.parameters.len() == 1
+                && self.is_compatible_with_switch(m.return_type)
+            {
+                applicable.push(m.return_type);
+            }
+        }
+        Ok(match applicable[..] {
+            [only] => only,
+            _ => t,
+        })
+    }
+
     /// `VisitSwitchInstruction` as an expression: `value switch { label => body, ..., _ => body }`,
     /// the bodies converted to the result type and cast where their best common type is
-    /// another. Switches on strings and lifted switches are not translated.
+    /// another.
     pub(super) fn switch_expression(
         &mut self,
         inst: NodeId,
@@ -350,9 +399,10 @@ impl Builder<'_, '_, '_, '_> {
         else {
             unreachable!("a switch");
         };
-        if is_lifted || matches!(self.f.inst(value), Inst::StringToInt { .. }) {
-            return Err("a lifted switch expression or one on strings".to_owned());
-        }
+        let string_map = match self.f.inst(value) {
+            Inst::StringToInt { map, .. } => Some(map.clone()),
+            _ => None,
+        };
         let parts: Vec<_> = sections
             .iter()
             .map(|&s| match self.f.inst(s) {
@@ -360,17 +410,19 @@ impl Builder<'_, '_, '_, '_> {
                     labels,
                     body,
                     is_compiler_generated_default_section,
-                    ..
+                    has_null_label,
                 } => (
                     labels.clone(),
                     *body,
                     *is_compiler_generated_default_section,
+                    *has_null_label,
                 ),
                 _ => unreachable!("a switch section"),
             })
             .collect();
-        let label_sets: Vec<_> = parts.iter().map(|(l, b, _)| (l.clone(), *b)).collect();
-        let (value, case_type) = self.translate_switch_value(value, ty, &label_sets, true)?;
+        let label_sets: Vec<_> = parts.iter().map(|(l, b, ..)| (l.clone(), *b)).collect();
+        let (value, case_type) =
+            self.translate_switch_value(value, ty, &label_sets, true, is_lifted)?;
         let default = default_section(&label_sets);
         let result_stack = self.f.result_type(self.ts, inst);
         let result_type = if self.ts.kind(hint) != TypeKind::Unknown
@@ -383,15 +435,33 @@ impl Builder<'_, '_, '_, '_> {
         let mut arms = Vec::with_capacity(parts.len());
         // The bodies type inference sees (not the throw expressions), as indices into `arms`.
         let mut inferred = Vec::new();
-        for (i, (labels, body, _)) in parts.iter().enumerate() {
+        for (i, (labels, body, _, has_null_label)) in parts.iter().enumerate() {
             if i == default {
                 continue;
             }
-            let mut values = labels.values();
-            let (Some(v), None) = (values.next(), values.next()) else {
-                return Err("a switch expression section of several labels".to_owned());
+            let pattern = if *has_null_label {
+                self.ast.add(AstNode::Null)
+            } else {
+                let mut values = labels.values();
+                let (Some(v), None) = (values.next(), values.next()) else {
+                    return Err("a switch expression section of several labels".to_owned());
+                };
+                match &string_map {
+                    // `CreateTypedCaseLabel(...).Single()`: the one key mapped to the value.
+                    Some(map) => {
+                        let mut keys = map.iter().filter(|(_, mapped)| i64::from(*mapped) == v);
+                        let (Some((key, _)), None) = (keys.next(), keys.next()) else {
+                            return Err("a switch expression section of several strings".to_owned());
+                        };
+                        let constant = match key {
+                            Some(s) => ConstValue::String(s.clone()),
+                            None => ConstValue::Null,
+                        };
+                        self.string_case_label(case_type, constant)?
+                    }
+                    None => self.case_label(v, case_type)?,
+                }
             };
-            let pattern = self.case_label(v, case_type)?;
             let body = self.switch_expression_body(*body, result_type)?;
             if !matches!(
                 self.ast.node(body.expression),

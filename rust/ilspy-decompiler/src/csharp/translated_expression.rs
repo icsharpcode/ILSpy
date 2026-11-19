@@ -473,7 +473,9 @@ impl Builder<'_, '_, '_, '_> {
             && utype != target_utype
             && target_ustack.is_integer()
         {
-            return Err("a constant converted to a nullable integer".to_owned());
+            // Through the underlying type, a constant conversion, as `(uint?)uint.MaxValue`.
+            let c = self.convert_to_checked(e, target_utype, check, false)?;
+            return self.convert_to_checked(c, target, check, allow_implicit_conversion);
         }
         // `resolver.WithCheckForOverflow(checkForOverflow).ResolveCast(targetType, ResolveResult)`
         let cast = self.resolve_cast(target, &rr, check)?;
@@ -853,7 +855,9 @@ impl Builder<'_, '_, '_, '_> {
             && self.ts.kind(underlying) != TypeKind::Enum
             && (5..=8).contains(&self.ts.type_code(underlying))
         {
-            // `IsSpecialConstant` writes the type's MinValue or MaxValue as a member reference.
+            // `IsSpecialConstant` writes the type's MinValue or MaxValue as a member reference,
+            // whose `MemberResolveResult` is the field's constant of the small type (written as
+            // a constant, like `int.MaxValue`).
             if matches!(
                 value,
                 ConstValue::SByte(i8::MIN | i8::MAX)
@@ -861,7 +865,7 @@ impl Builder<'_, '_, '_, '_> {
                     | ConstValue::Int16(i16::MIN | i16::MAX)
                     | ConstValue::UInt16(u16::MAX)
             ) {
-                return Err("a small integer constant written as MinValue or MaxValue".to_owned());
+                return Ok((underlying, value));
             }
             let v = integral_value(&value).ok_or("a small integer constant of another kind")?;
             let int = self.ts.known_type(KnownTypeCode::Int32);

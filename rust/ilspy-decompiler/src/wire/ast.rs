@@ -101,6 +101,7 @@ mod kind {
     pub const UNSAFE_INTRINSIC: u8 = 123;
     pub const STACK_ALLOC: u8 = 124;
     pub const UNDOCUMENTED: u8 = 125;
+    pub const UNARY_OPERATOR: u8 = 90;
 }
 
 pub(super) fn write_body(
@@ -234,6 +235,25 @@ fn rr(w: &mut FunctionWriter<'_, '_, '_, '_>, rr: Option<&Rr>) -> Result<(), Str
         Some(Rr::Operator { ty }) => {
             w.out.u8(7);
             w.ty(*ty);
+        }
+        Some(Rr::ExplicitOperator {
+            ty,
+            method,
+            lifted,
+            operand_overflow,
+        }) => {
+            w.out.u8(60);
+            w.ty(*ty);
+            w.out.bool(method.is_some());
+            if let Some(method) = method {
+                w.call_method(method)?;
+            }
+            w.out.bool(*lifted);
+            w.out.u8(*operand_overflow as u8);
+        }
+        Some(Rr::OperatorInvocation { method, .. }) => {
+            w.out.u8(61);
+            w.call_method(method)?;
         }
         Some(Rr::Invocation {
             target,
@@ -410,6 +430,7 @@ fn node(w: &mut FunctionWriter<'_, '_, '_, '_>, ast: &Ast, id: AstId) -> Result<
         AstNode::SwitchSection { .. } => kind::SWITCH_SECTION,
         AstNode::CompoundAssignment { .. } => kind::COMPOUND_ASSIGNMENT,
         AstNode::PostIncrement { .. } => kind::POST_INCREMENT,
+        AstNode::UnaryOperator { .. } => kind::UNARY_OPERATOR,
         AstNode::As { .. } => kind::AS,
         AstNode::ThrowExpression { .. } => kind::THROW_EXPRESSION,
         AstNode::BitNot { .. } => kind::BIT_NOT,
@@ -492,6 +513,15 @@ fn node(w: &mut FunctionWriter<'_, '_, '_, '_>, ast: &Ast, id: AstId) -> Result<
             overflow,
         } => {
             w.out.bool(increment);
+            w.out.u8(overflow as u8);
+            node(w, ast, expression)?;
+        }
+        AstNode::UnaryOperator {
+            op,
+            expression,
+            overflow,
+        } => {
+            w.out.u8(op);
             w.out.u8(overflow as u8);
             node(w, ast, expression)?;
         }

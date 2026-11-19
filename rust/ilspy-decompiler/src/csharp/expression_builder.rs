@@ -478,6 +478,7 @@ impl Builder<'_, '_, '_, '_> {
             ),
             Inst::NewArr { ty, ref indices } => self.new_arr(inst, ty.ty, indices),
             Inst::NumericCompoundAssign { .. } => self.numeric_compound_assign(inst),
+            Inst::UserDefinedCompoundAssign { .. } => self.user_defined_compound_assign(inst),
             Inst::Switch {
                 result_type: Some(_),
                 ..
@@ -500,8 +501,19 @@ impl Builder<'_, '_, '_, '_> {
             ),
             Inst::BitNot {
                 arg,
-                lifted_underlying: None,
-            } => self.bit_not(inst, arg, hint),
+                lifted_underlying,
+            } => self.bit_not(inst, arg, lifted_underlying, hint),
+            Inst::ThreeValuedBoolAnd { left, right } => {
+                self.three_valued_logic(inst, left, right, BinaryOp::BitwiseAnd)
+            }
+            Inst::ThreeValuedBoolOr { left, right } => {
+                self.three_valued_logic(inst, left, right, BinaryOp::BitwiseOr)
+            }
+            Inst::UserDefinedLogic {
+                ref method,
+                left,
+                right,
+            } => self.user_defined_logic(inst, method, left, right),
             // `VisitThrow`: `throw ex`, the exception translated with `Exception` as type hint.
             Inst::Throw { arg } => {
                 let exception = self.ts.known_type(KnownTypeCode::Exception);
@@ -587,46 +599,158 @@ impl Builder<'_, '_, '_, '_> {
         &mut self,
         inst: NodeId,
         arg: NodeId,
+        lifted_underlying: Option<StackType>,
         hint: TypeId,
     ) -> Result<TranslatedExpression, Unsupported> {
-        let result_stack = self.f.result_type(self.ts, inst);
+        let result_stack = match lifted_underlying {
+            Some(stack) => stack,
+            None => self.f.result_type(self.ts, inst),
+        };
         let mut a = self.translate(arg, None)?;
-        if self.ts.is_known(a.ty, KnownTypeCode::NullableOfT) {
+        if lifted_underlying.is_none() && self.ts.is_known(a.ty, KnownTypeCode::NullableOfT) {
             return Err("a ~ of a nullable value".to_owned());
         }
-        let stack = self.ts.stack_type(a.ty);
-        let small = self.ts.type_size(a.ty) > 0 && self.ts.type_size(a.ty) < 4;
-        let enum_type = self.ts.kind(a.ty) == TypeKind::Enum;
+        let u = self.ts.nullable_underlying(a.ty);
+        let stack = self.ts.stack_type(u);
+        let small = self.ts.type_size(u) > 0 && self.ts.type_size(u) < 4;
+        let enum_type = self.ts.kind(u) == TypeKind::Enum;
         // IntPtr, bool and char have no `~`.
         if stack_size(stack) < stack_size(result_stack)
             || (enum_type && small)
-            || (stack == StackType::I && !self.is_native_integer(a.ty))
-            || self.ts.is_known(a.ty, KnownTypeCode::Boolean)
-            || self.ts.is_known(a.ty, KnownTypeCode::Char)
+            || (stack == StackType::I && !self.is_native_integer(u))
+            || self.ts.is_known(u, KnownTypeCode::Boolean)
+            || self.ts.is_known(u, KnownTypeCode::Char)
         {
             let mut sign = self.ts.type_sign(hint);
             if sign == Sign::None {
-                sign = self.ts.type_sign(a.ty);
+                sign = self.ts.type_sign(u);
             }
-            let target = self.find_arithmetic_type(result_stack, sign)?;
+            let mut target = self.find_arithmetic_type(result_stack, sign)?;
+            if lifted_underlying.is_some() {
+                target = self.ts.make_nullable(target);
+            }
             a = self.convert_to(a, target, false)?;
         }
-        // The type of `~`: an enum's or native integer's own, `int` for the small integers.
-        let ty = if self.ts.kind(a.ty) == TypeKind::Enum || self.is_native_integer(a.ty) {
-            a.ty
+        // The type of `~`: an enum's or native integer's own, `int` for the small integers;
+        // lifted, its nullable.
+        let u = self.ts.nullable_underlying(a.ty);
+        let mut ty = if self.ts.kind(u) == TypeKind::Enum || self.is_native_integer(u) {
+            u
         } else {
-            match self.ts.type_code(a.ty) {
+            match self.ts.type_code(u) {
                 5..=9 => self.ts.known_type(KnownTypeCode::Int32),
-                10..=12 => a.ty,
+                10..=12 => u,
                 _ => return Err("a ~ of these types".to_owned()),
             }
         };
+        if self.ts.is_known(a.ty, KnownTypeCode::NullableOfT) {
+            ty = self.ts.make_nullable(ty);
+        }
         let e = self.ast.add(AstNode::BitNot {
             expression: a.expression,
         });
         self.ast.with_il(e, inst);
         self.ast.with_rr(e, Rr::ResolvedOperator { ty });
         Ok(TranslatedExpression { expression: e, ty })
+    }
+
+    /// `HandleThreeValuedLogic`: `left & right` or `left | right` on `bool?`, the operands
+    /// converted to `bool?` (a non-nullable right operand of a nullable left one to `bool`),
+    /// with the lifted operator's resolve result.
+    fn three_valued_logic(
+        &mut self,
+        inst: NodeId,
+        left: NodeId,
+        right: NodeId,
+        op: BinaryOp,
+    ) -> Result<TranslatedExpression, Unsupported> {
+        let l = self.translate(left, None)?;
+        let r = self.translate(right, None)?;
+        let boolean = self.ts.known_type(KnownTypeCode::Boolean);
+        let nullable_bool = self.ts.make_nullable(boolean);
+        let (l, r) = if self.ts.is_nullable(l.ty) {
+            let l = self.convert_to(l, nullable_bool, false)?;
+            let right_type = if self.ts.is_nullable(r.ty) {
+                nullable_bool
+            } else {
+                boolean
+            };
+            (l, self.convert_to(r, right_type, false)?)
+        } else {
+            let l = self.convert_to(l, boolean, false)?;
+            (l, self.convert_to(r, nullable_bool, false)?)
+        };
+        let e = self.ast.add(AstNode::BinaryOperator {
+            op,
+            left: l.expression,
+            right: r.expression,
+            overflow: Overflow::None,
+        });
+        self.ast.with_rr(
+            e,
+            Rr::ExplicitOperator {
+                ty: nullable_bool,
+                method: None,
+                lifted: true,
+                operand_overflow: Overflow::None,
+            },
+        );
+        self.ast.with_il(e, inst);
+        Ok(TranslatedExpression {
+            expression: e,
+            ty: nullable_bool,
+        })
+    }
+
+    /// `VisitUserDefinedLogicOperator`: `left && right` or `left || right` of a user-defined
+    /// `&` or `|` (with `true` and `false` operators), the operands converted to the operator's
+    /// parameter types.
+    fn user_defined_logic(
+        &mut self,
+        inst: NodeId,
+        operand: &crate::il::ast::MethodOperand,
+        left: NodeId,
+        right: NodeId,
+    ) -> Result<TranslatedExpression, Unsupported> {
+        if operand.lifted
+            || operand.local_function.is_some()
+            || operand.specialized_by.is_some()
+            || operand.range_accessor.is_some()
+        {
+            return Err("a lifted user-defined logic operator".to_owned());
+        }
+        let method = Method::from_resolved(self.ts, &operand.method)
+            .ok_or("a logic operator of an unresolved method")?;
+        let [ref p0, ref p1] = method.parameters[..] else {
+            return Err("a logic operator of another arity".to_owned());
+        };
+        let op = match method.name.as_str() {
+            "op_BitwiseAnd" => BinaryOp::ConditionalAnd,
+            "op_BitwiseOr" => BinaryOp::ConditionalOr,
+            _ => return Err("a logic operator of another name".to_owned()),
+        };
+        let l = self.translate(left, Some(p0.ty))?;
+        let l = self.convert_to(l, p0.ty, false)?;
+        let r = self.translate(right, Some(p1.ty))?;
+        let r = self.convert_to(r, p1.ty, false)?;
+        let e = self.ast.add(AstNode::BinaryOperator {
+            op,
+            left: l.expression,
+            right: r.expression,
+            overflow: Overflow::None,
+        });
+        self.ast.with_rr(
+            e,
+            Rr::OperatorInvocation {
+                ty: method.return_type,
+                method: Box::new(operand.clone()),
+            },
+        );
+        self.ast.with_il(e, inst);
+        Ok(TranslatedExpression {
+            expression: e,
+            ty: method.return_type,
+        })
     }
 
     /// A constant operand of a bitwise operator: `ConvertConstantValue(rr, allowImplicitConversion:
@@ -945,14 +1069,18 @@ impl Builder<'_, '_, '_, '_> {
         // and both where one is not enough.
         let mut converts_operands = resolved.unwrap_or(false);
         let mut operator_built = false;
-        let lifted = self.ts.is_known(l.ty, KnownTypeCode::NullableOfT)
-            || self.ts.is_known(r.ty, KnownTypeCode::NullableOfT);
-        if lifted && !self.fits_comparison(resolved, &l, &r, input) {
-            // The cast would be to the nullable of the comparison's type.
-            return Err("a lifted comparison that needs casts".to_owned());
-        }
         if !self.fits_comparison(resolved, &l, &r, input) {
-            let target = self.comparison_target_type(input, l.ty, r.ty);
+            // Lifted, the cast is to the nullable of the comparison's type.
+            let mut target = self.comparison_target_type(input, l.ty, r.ty);
+            if matches!(
+                self.f.inst(inst),
+                Inst::Comp {
+                    lifting: ComparisonLiftingKind::CSharp,
+                    ..
+                }
+            ) {
+                target = self.ts.make_nullable(target);
+            }
             if target == l.ty {
                 r = self.convert_to(r, target, false)?;
             } else {
@@ -1763,9 +1891,10 @@ impl Builder<'_, '_, '_, '_> {
         left: NodeId,
         right: NodeId,
     ) -> Result<TranslatedExpression, Unsupported> {
-        if lifting != ComparisonLiftingKind::None {
+        if lifting == ComparisonLiftingKind::ThreeValuedLogic {
             return Err("a lifted relational comparison".to_owned());
         }
+        let lifted = lifting == ComparisonLiftingKind::CSharp;
         let op = match kind {
             ComparisonKind::LessThan => BinaryOp::LessThan,
             ComparisonKind::LessThanOrEqual => BinaryOp::LessThanOrEqual,
@@ -1780,8 +1909,8 @@ impl Builder<'_, '_, '_, '_> {
             self.ast.with_il(e.expression, inst);
             return Ok(e);
         }
-        let l = self.prepare_arithmetic_argument(l, input, sign)?;
-        let r = self.prepare_arithmetic_argument(r, input, sign)?;
+        let l = self.prepare_lifted_arithmetic_argument(l, input, sign, lifted)?;
+        let r = self.prepare_lifted_arithmetic_argument(r, input, sign, lifted)?;
         // Special case comparisons with enum and char literals
         let l = self.adjust_constant_expression_to_type(l, r.ty)?;
         let r = self.adjust_constant_expression_to_type(r, l.ty)?;
@@ -1794,19 +1923,23 @@ impl Builder<'_, '_, '_, '_> {
                     k,
                     TypeKind::Pointer | TypeKind::Dynamic | TypeKind::TypeParameter
                 )
-                || self.ts.is_known(t, KnownTypeCode::NullableOfT)
+                || (self.ts.is_known(t, KnownTypeCode::NullableOfT) && !lifted)
             {
                 return Err("a relational comparison of these types".to_owned());
             }
         }
-        // `ResolveBinaryOperator`: the operator over the promoted type of two numeric operands;
-        // a constant of another type converts implicitly in ways the promotion does not model.
+        // `ResolveBinaryOperator`: the operator over the promoted type of two numeric operands
+        // (lifted, the promoted type of the underlying types); a constant of another type
+        // converts implicitly in ways the promotion does not model.
         let promoted = if same_enum {
             Some(l.ty)
         } else if self.is_native_integer(l.ty) || self.is_native_integer(r.ty) {
             self.native_integer_promotion(&l, &r)?
         } else {
-            let (lc, rc) = (self.ts.type_code(l.ty), self.ts.type_code(r.ty));
+            let (lc, rc) = (
+                self.ts.type_code(self.ts.nullable_underlying(l.ty)),
+                self.ts.type_code(self.ts.nullable_underlying(r.ty)),
+            );
             if !(4..=14).contains(&lc) || !(4..=14).contains(&rc) {
                 return Err("a relational comparison of these types".to_owned());
             }
@@ -1820,7 +1953,8 @@ impl Builder<'_, '_, '_, '_> {
             .is_some_and(|p| self.ts.type_sign(p) == sign && self.ts.stack_type(p) == input);
         let (l, r) = if fits {
             let p = promoted.expect("a promoted type");
-            let rr = if p != l.ty || p != r.ty || self.both_constant(&l, &r) {
+            // A lifted operator is the resolver's.
+            let rr = if lifted || p != l.ty || p != r.ty || self.both_constant(&l, &r) {
                 Rr::ResolvedOperator { ty: boolean }
             } else {
                 Rr::Operator { ty: boolean }
@@ -1839,7 +1973,10 @@ impl Builder<'_, '_, '_, '_> {
             });
         } else if input.is_integer() {
             // Ensure the inputs have the correct sign.
-            let input_type = self.find_arithmetic_type(input, sign)?;
+            let mut input_type = self.find_arithmetic_type(input, sign)?;
+            if lifted {
+                input_type = self.ts.make_nullable(input_type);
+            }
             let l = self.convert_to(l, input_type, false)?;
             let r = self.convert_to(r, input_type, false)?;
             (l, r)
@@ -1866,6 +2003,35 @@ impl Builder<'_, '_, '_, '_> {
     fn both_constant(&self, l: &TranslatedExpression, r: &TranslatedExpression) -> bool {
         matches!(self.rr_of(l.expression), Rr::Constant { .. })
             && matches!(self.rr_of(r.expression), Rr::Constant { .. })
+    }
+
+    /// `PrepareArithmeticArgument` of a lifted instruction: a nullable operand is prepared as
+    /// its underlying type, converted to the nullable of the target; others as without lifting.
+    fn prepare_lifted_arithmetic_argument(
+        &mut self,
+        arg: TranslatedExpression,
+        stack: StackType,
+        sign: Sign,
+        is_lifted: bool,
+    ) -> Result<TranslatedExpression, Unsupported> {
+        if !is_lifted || !self.ts.is_known(arg.ty, KnownTypeCode::NullableOfT) {
+            return self.prepare_arithmetic_argument(arg, stack, sign);
+        }
+        let mut arg = arg;
+        let mut underlying = self.ts.nullable_underlying(arg.ty);
+        if stack.is_integer() && stack_size(stack) < self.ts.type_size(underlying) {
+            underlying = self.find_type(stack, sign);
+            let target = self.ts.make_nullable(underlying);
+            arg = self.convert_to(arg, target, false)?;
+        }
+        if self.ts.is_known(underlying, KnownTypeCode::IntPtr)
+            || self.ts.is_known(underlying, KnownTypeCode::UIntPtr)
+        {
+            let target = self.find_arithmetic_type(StackType::I, sign)?;
+            let target = self.ts.make_nullable(target);
+            arg = self.convert_to(arg, target, false)?;
+        }
+        Ok(arg)
     }
 
     /// `PrepareArithmeticArgument` without lifting: an operand wider than the stack type is
@@ -1951,9 +2117,6 @@ impl Builder<'_, '_, '_, '_> {
             }
             BinaryNumericOperator::None => return Err("a binary operator of no kind".to_owned()),
         };
-        if is_lifted {
-            return Err("a lifted arithmetic operation".to_owned());
-        }
         let bitwise = matches!(
             op,
             BinaryOp::BitwiseAnd | BinaryOp::BitwiseOr | BinaryOp::ExclusiveOr
@@ -1988,10 +2151,7 @@ impl Builder<'_, '_, '_, '_> {
             if matches!(
                 k,
                 TypeKind::Pointer | TypeKind::Dynamic | TypeKind::TypeParameter
-            ) || (k == TypeKind::Enum
-                && !bitwise
-                && !matches!(op, BinaryOp::Add | BinaryOp::Subtract))
-                || self.ts.is_known(t, KnownTypeCode::NullableOfT)
+            ) || (self.ts.is_known(t, KnownTypeCode::NullableOfT) && !is_lifted)
             {
                 let nullable = if self.ts.is_known(t, KnownTypeCode::NullableOfT) {
                     "nullable "
@@ -2001,16 +2161,47 @@ impl Builder<'_, '_, '_, '_> {
                 return Err(format!("arithmetic on {nullable}{k:?} operands"));
             }
         }
-        let l = self.prepare_arithmetic_argument(l, left_input, sign)?;
-        let r = self.prepare_arithmetic_argument(r, right_input, sign)?;
-        // `MatchLdcI(0)`, which sees through the extension of a native integer constant.
-        if op == BinaryOp::Subtract && self.f.match_ldc_i(left) == Some(0) {
-            return Err("a negation".to_owned());
-        }
-        if matches!(self.rr_of(l.expression), Rr::Constant { .. })
-            && matches!(self.rr_of(r.expression), Rr::Constant { .. })
+        // A lifted operator over a nullable operand is of the nullable of its type, which the
+        // resolver gives.
+        let nullable_result = is_lifted
+            && (self.ts.is_known(l.ty, KnownTypeCode::NullableOfT)
+                || self.ts.is_known(r.ty, KnownTypeCode::NullableOfT));
+        if nullable_result
+            && [l.ty, r.ty]
+                .iter()
+                .any(|&t| self.ts.kind(self.ts.nullable_underlying(t)) == TypeKind::Enum)
         {
-            return Err("an arithmetic operation on constants".to_owned());
+            return Err("a lifted arithmetic operation".to_owned());
+        }
+        let l = self.prepare_lifted_arithmetic_argument(l, left_input, sign, is_lifted)?;
+        let r = self.prepare_lifted_arithmetic_argument(r, right_input, sign, is_lifted)?;
+        // `MatchLdcI(0)`, which sees through the extension of a native integer constant.
+        // Unary minus is supported on int, long, nint and the small integers (which promote
+        // to int).
+        if op == BinaryOp::Subtract && self.f.match_ldc_i(left) == Some(0) {
+            let right_underlying = self.ts.nullable_underlying(r.ty);
+            if self.ts.is_known(right_underlying, KnownTypeCode::Int32)
+                || self.ts.is_known(right_underlying, KnownTypeCode::Int64)
+                || (5..=8).contains(&self.ts.type_code(right_underlying))
+                || self.ts.kind(right_underlying) == TypeKind::NInt
+            {
+                let mut ty = self.find_arithmetic_type(right_input, Sign::Signed)?;
+                if is_lifted {
+                    ty = self.ts.make_nullable(ty);
+                }
+                let e = self.ast.add(AstNode::UnaryOperator {
+                    op: 3,
+                    expression: r.expression,
+                    overflow: if check_overflow {
+                        Overflow::Checked
+                    } else {
+                        Overflow::Unchecked
+                    },
+                });
+                self.ast.with_il(e, inst);
+                self.ast.with_rr(e, Rr::Operator { ty });
+                return Ok(TranslatedExpression { expression: e, ty });
+            }
         }
         // `ResolveBinaryOperator`: the operator over the promoted type of two numeric operands
         // (`None` where no predefined operator applies); a constant of another type converts
@@ -2047,10 +2238,19 @@ impl Builder<'_, '_, '_, '_> {
                 }
             }
         } else {
-            let (lc, rc) = (self.ts.type_code(l.ty), self.ts.type_code(r.ty));
+            let (lc, rc) = (
+                self.ts.type_code(self.ts.nullable_underlying(l.ty)),
+                self.ts.type_code(self.ts.nullable_underlying(r.ty)),
+            );
             // The predefined logical operators of `bool`.
             if bitwise && lc == 3 && rc == 3 {
-                Some(l.ty)
+                Some(self.ts.nullable_underlying(l.ty))
+            } else if [l.ty, r.ty]
+                .iter()
+                .any(|&t| self.ts.kind(self.ts.nullable_underlying(t)) == TypeKind::Enum)
+            {
+                // No predefined operator of this kind takes an enum.
+                None
             } else if self.is_native_integer(l.ty) || self.is_native_integer(r.ty) {
                 self.native_integer_promotion(&l, &r)?
             } else {
@@ -2068,7 +2268,9 @@ impl Builder<'_, '_, '_, '_> {
         // With operands converted by the promotion, the host resolves the operator.
         let mut resolved_type = None;
         let (l, r) = if let Some(p) = promoted.filter(|_| fits) {
-            if p != l.ty || p != r.ty {
+            if nullable_result {
+                resolved_type = Some(self.ts.make_nullable(p));
+            } else if p != l.ty || p != r.ty {
                 resolved_type = Some(p);
             }
             (l, r)
@@ -2090,8 +2292,20 @@ impl Builder<'_, '_, '_, '_> {
                 StackType::F8 => self.ts.known_type(KnownTypeCode::Double),
                 _ => self.find_arithmetic_type(result_stack, s)?,
             };
-            let l = self.convert_to(l, target, false)?;
-            let r = self.convert_to(r, target, false)?;
+            // The nullable of the type for a nullable operand.
+            let target_of = |b: &mut Self, t: TypeId| {
+                if b.ts.is_known(t, KnownTypeCode::NullableOfT) {
+                    b.ts.make_nullable(target)
+                } else {
+                    target
+                }
+            };
+            let (lt, rt) = (target_of(self, l.ty), target_of(self, r.ty));
+            let l = self.convert_to(l, lt, false)?;
+            let r = self.convert_to(r, rt, false)?;
+            if nullable_result {
+                resolved_type = Some(self.ts.make_nullable(target));
+            }
             (l, r)
         };
         // Constant operands of bitwise operators are written anew, without implicit conversion
@@ -2109,6 +2323,18 @@ impl Builder<'_, '_, '_, '_> {
             Overflow::Unchecked
         };
         let ty = resolved_type.unwrap_or(l.ty);
+        // Two constant operands: the resolver folds the operator into a constant, and an
+        // operation that overflows in a checked context is written `unchecked(...)`.
+        let folded = match (self.rr_of(l.expression), self.rr_of(r.expression)) {
+            (Rr::Constant { value: lv, .. }, Rr::Constant { value: rv, .. }) => {
+                Some(self.fold_constant_arithmetic(op, &lv, &rv, ty, check_overflow)?)
+            }
+            _ => None,
+        };
+        let overflow = match folded {
+            Some((_, true)) => Overflow::ExplicitUnchecked,
+            _ => overflow,
+        };
         let e = self.ast.add(AstNode::BinaryOperator {
             op,
             left: l.expression,
@@ -2116,13 +2342,61 @@ impl Builder<'_, '_, '_, '_> {
             overflow,
         });
         self.ast.with_il(e, inst);
-        let rr = if resolved_type.is_some() {
+        let rr = if let Some((value, _)) = folded {
+            Rr::Constant { ty, value }
+        } else if resolved_type.is_some() {
             Rr::ResolvedOperator { ty }
         } else {
             Rr::Operator { ty }
         };
         self.ast.with_rr(e, rr);
         Ok(TranslatedExpression { expression: e, ty })
+    }
+
+    /// The constant `ResolveBinaryOperator` folds an unchecked integer `+`, `-`, `*`, `/` or `%`
+    /// of two constants into (of the operator's type `ty`), and whether the operation overflows
+    /// in a checked context (`ConstantBinaryOperatorOverflows`).
+    fn fold_constant_arithmetic(
+        &mut self,
+        op: BinaryOp,
+        left: &ConstValue,
+        right: &ConstValue,
+        ty: TypeId,
+        check_overflow: bool,
+    ) -> Result<(ConstValue, bool), Unsupported> {
+        // shortcut: checked, floating point, bitwise and enum folding are not ported; port
+        // them when such a constant operation is to be served.
+        let unsupported = || "an arithmetic operation on constants".to_owned();
+        let code = self.ts.type_code(ty);
+        if check_overflow || self.ts.kind(ty) == TypeKind::Enum || !(9..=12).contains(&code) {
+            return Err(unsupported());
+        }
+        let l = super::translated_expression::integral_value(left).ok_or_else(unsupported)?;
+        let r = super::translated_expression::integral_value(right).ok_or_else(unsupported)?;
+        let unsigned = matches!(code, 10 | 12);
+        if unsigned && (l < 0 || r < 0) {
+            return Err(unsupported());
+        }
+        let exact = match op {
+            BinaryOp::Add => l + r,
+            BinaryOp::Subtract => l - r,
+            BinaryOp::Multiply => l.checked_mul(r).ok_or_else(unsupported)?,
+            BinaryOp::Divide | BinaryOp::Modulus if r == 0 => return Err(unsupported()),
+            BinaryOp::Divide => l / r,
+            BinaryOp::Modulus => l % r,
+            _ => return Err(unsupported()),
+        };
+        let (value, wrapped) = match code {
+            9 => (ConstValue::Int32(exact as i32), i128::from(exact as i32)),
+            10 => (ConstValue::UInt32(exact as u32), i128::from(exact as u32)),
+            11 => (ConstValue::Int64(exact as i64), i128::from(exact as i64)),
+            _ => (ConstValue::UInt64(exact as u64), i128::from(exact as u64)),
+        };
+        // `MinValue / -1` and `MinValue % -1` throw even unchecked.
+        if matches!(op, BinaryOp::Divide | BinaryOp::Modulus) && r == -1 {
+            return Err(unsupported());
+        }
+        Ok((value, wrapped != exact))
     }
 
     /// `HandleCompoundAssignment`: `target op= value`, or `target++` / `target--` for the old
@@ -2161,11 +2435,20 @@ impl Builder<'_, '_, '_, '_> {
             BinaryNumericOperator::BitAnd => 9,
             BinaryNumericOperator::BitOr => 10,
             BinaryNumericOperator::BitXor => 11,
-            _ => return Err("a compound shift".to_owned()),
+            BinaryNumericOperator::ShiftLeft => 6,
+            // `UnsignedShiftRight` for an unsigned shift of a signed type, or of a small integer
+            // type where the setting allows `>>>`.
+            BinaryNumericOperator::ShiftRight
+                if sign == Sign::Unsigned
+                    && (self.ts.type_sign(ty) == Sign::Signed
+                        || ((5..=8).contains(&self.ts.type_code(ty))
+                            && self.settings.unsigned_right_shift)) =>
+            {
+                8
+            }
+            BinaryNumericOperator::ShiftRight => 7,
+            BinaryNumericOperator::None => return Err("a binary operator of no kind".to_owned()),
         };
-        if is_lifted {
-            return Err("a lifted compound assignment".to_owned());
-        }
         let target = match target_kind {
             // `LdObj(inst.Target, inst.Type)`: the target address dereferenced.
             CompoundTargetKind::Address => {
@@ -2204,9 +2487,12 @@ impl Builder<'_, '_, '_, '_> {
                 self.ts.kind(target_underlying),
                 TypeKind::Pointer | TypeKind::FunctionPointer | TypeKind::Dynamic
             ))
-            || self.ts.is_known(target.ty, KnownTypeCode::NullableOfT)
+            || (self.ts.is_known(target.ty, KnownTypeCode::NullableOfT) && !is_lifted)
         {
             return Err("a compound assignment of these types".to_owned());
+        }
+        if matches!(assignment_op, 6..=8) {
+            return self.compound_shift(inst, assignment_op, target, value);
         }
         let bitwise = matches!(assignment_op, 9..=11);
         let overflow = if bitwise || matches!(underlying_result, StackType::F4 | StackType::F8) {
@@ -2231,7 +2517,7 @@ impl Builder<'_, '_, '_, '_> {
             });
         }
         let v = self.translate(value, None)?;
-        let v = self.prepare_arithmetic_argument(v, right_input, sign)?;
+        let v = self.prepare_lifted_arithmetic_argument(v, right_input, sign, is_lifted)?;
         if let Some(element) = pointer_element {
             // `ptr += n` and `ptr -= n` with the offset in elements.
             let offset = self
@@ -2250,7 +2536,8 @@ impl Builder<'_, '_, '_, '_> {
                 ty: target_rr_ty,
             });
         }
-        // `ConvertValue`: to the target's type (an enum's underlying type for `+=` and `-=`).
+        // `ConvertValue`: to the target's type (an enum's underlying type for `+=` and `-=`),
+        // its nullable for a nullable value.
         let mut value_type = target_underlying;
         if matches!(assignment_op, 1 | 2) && self.ts.kind(value_type) == TypeKind::Enum {
             value_type = self.enum_underlying(value_type);
@@ -2267,6 +2554,9 @@ impl Builder<'_, '_, '_, '_> {
                 TypeData::NInt
             });
         }
+        if self.ts.is_nullable(v.ty) {
+            value_type = self.ts.make_nullable(value_type);
+        }
         let converted =
             self.convert_to_checked(v, value_type, check_overflow, allow_implicit_conversion)?;
         let e = self.ast.add(AstNode::CompoundAssignment {
@@ -2280,6 +2570,222 @@ impl Builder<'_, '_, '_, '_> {
         Ok(TranslatedExpression {
             expression: e,
             ty: target_rr_ty,
+        })
+    }
+
+    /// `VisitUserDefinedCompoundAssign`: `target op= value` of a user-defined binary operator
+    /// (or `string.Concat` as `+=`), or `++` / `--` of a user-defined increment, of the
+    /// operator's return type. A lifted operator, a span-based `string.Concat` and a string
+    /// `+=` of a `ToString()` call are not translated.
+    fn user_defined_compound_assign(
+        &mut self,
+        inst: NodeId,
+    ) -> Result<TranslatedExpression, Unsupported> {
+        use crate::il::ast::{CompoundEvalMode, CompoundTargetKind};
+        let Inst::UserDefinedCompoundAssign {
+            method: operand,
+            eval_mode,
+            target_kind,
+            target,
+            value,
+        } = self.f.inst(inst).clone()
+        else {
+            unreachable!("a user-defined compound assignment");
+        };
+        if operand.lifted
+            || operand.local_function.is_some()
+            || operand.specialized_by.is_some()
+            || operand.range_accessor.is_some()
+        {
+            return Err("a lifted user-defined compound assignment".to_owned());
+        }
+        let method = Method::from_resolved(self.ts, &operand.method)
+            .ok_or("a compound assignment of an unresolved method")?;
+        let declaring = method
+            .declaring
+            .ok_or("a compound assignment of a method without declaring type")?;
+        let is_string_concat = method.name == "Concat"
+            && method.is_static
+            && self.ts.is_known(declaring, KnownTypeCode::String);
+        if is_string_concat
+            && method
+                .parameters
+                .iter()
+                .any(|p| self.ts.is_known(p.ty, KnownTypeCode::ReadOnlySpanOfT))
+        {
+            return Err("a span-based string concatenation as +=".to_owned());
+        }
+        let load_type = method
+            .parameters
+            .first()
+            .ok_or("a compound assignment of a method without parameters")?
+            .ty;
+        let target = match target_kind {
+            // `LdObj(inst.Target, loadType)`: the target address dereferenced.
+            CompoundTargetKind::Address => {
+                if self.f.result_type(self.ts, target) != StackType::Ref {
+                    return Err("a compound assignment through a pointer".to_owned());
+                }
+                let hint = self.ts.intern(TypeData::ByRef(load_type));
+                let address = self.translate(target, Some(hint))?;
+                if !self.is_compatible_pointer_type_for_memory_access(address.ty, load_type) {
+                    return Err("a compound assignment that needs a pointer cast".to_owned());
+                }
+                let AstNode::RefDirection { expression } = *self.ast.node(address.expression)
+                else {
+                    return Err(
+                        "a compound assignment through a reference that is no ref expression"
+                            .to_owned(),
+                    );
+                };
+                self.unwrap_child(address.expression, expression)
+            }
+            CompoundTargetKind::Property => self.translate(target, Some(load_type))?,
+            CompoundTargetKind::Dynamic => {
+                return Err("a dynamic compound assignment target".to_owned());
+            }
+        };
+        // `OperatorDeclaration.IsChecked`, else `ReplaceMethodCallsWithOperators
+        // .HasCheckedEquivalent`: the target carries the operator's checked context.
+        let operand_overflow = if matches!(
+            method.name.as_str(),
+            "op_CheckedAddition"
+                | "op_CheckedSubtraction"
+                | "op_CheckedMultiply"
+                | "op_CheckedDivision"
+                | "op_CheckedUnaryNegation"
+                | "op_CheckedIncrement"
+                | "op_CheckedDecrement"
+                | "op_CheckedExplicit"
+        ) {
+            Overflow::Checked
+        } else if self.has_checked_equivalent(&method.name, declaring)? {
+            Overflow::Unchecked
+        } else {
+            Overflow::None
+        };
+        let rr = Rr::ExplicitOperator {
+            ty: method.return_type,
+            method: Some(Box::new(operand.clone())),
+            lifted: false,
+            operand_overflow,
+        };
+        let e = if is_string_concat || method.parameters.len() == 2 {
+            let value_type = method
+                .parameters
+                .get(1)
+                .ok_or("a string concatenation of another arity as +=")?
+                .ty;
+            let v = self.translate(value, None)?;
+            let v = self.convert_to(v, value_type, is_string_concat)?;
+            if is_string_concat
+                && let Rr::Invocation { method: called, .. } = self.rr_of(v.expression)
+                && called.method.name == "ToString"
+            {
+                // shortcut: `RemoveRedundantToStringInConcat` is not ported; port it when a
+                // string `+=` of a `ToString()` call is to be served.
+                return Err("a string += of a ToString call".to_owned());
+            }
+            // `GetAssignmentOperatorTypeFromMetadataName`
+            let op = match method.name.as_str() {
+                _ if is_string_concat => 1,
+                "op_Addition" => 1,
+                "op_Subtraction" => 2,
+                "op_Multiply" => 3,
+                "op_Division" => 4,
+                "op_Modulus" => 5,
+                "op_LeftShift" => 6,
+                "op_RightShift" => 7,
+                "op_UnsignedRightShift" if self.settings.unsigned_right_shift => 8,
+                "op_BitwiseAnd" => 9,
+                "op_BitwiseOr" => 10,
+                "op_ExclusiveOr" => 11,
+                _ => return Err("a compound assignment of another operator".to_owned()),
+            };
+            self.ast.add(AstNode::CompoundAssignment {
+                op,
+                left: target.expression,
+                right: v.expression,
+                overflow: Overflow::None,
+            })
+        } else {
+            // `GetUnaryOperatorTypeFromMetadataName`
+            let postfix = eval_mode == CompoundEvalMode::EvaluatesToOldValue;
+            let op = match method.name.as_str() {
+                "op_Increment" | "op_CheckedIncrement" => 5,
+                "op_Decrement" | "op_CheckedDecrement" => 6,
+                _ => return Err("a compound assignment of another unary operator".to_owned()),
+            } + if postfix { 2 } else { 0 };
+            self.ast.add(AstNode::UnaryOperator {
+                op,
+                expression: target.expression,
+                overflow: Overflow::None,
+            })
+        };
+        self.ast.with_il(e, inst);
+        self.ast.with_rr(e, rr);
+        Ok(TranslatedExpression {
+            expression: e,
+            ty: method.return_type,
+        })
+    }
+
+    /// `ReplaceMethodCallsWithOperators.HasCheckedEquivalent`: whether the declaring type has
+    /// an operator `op_Checked...` of the operator's name.
+    fn has_checked_equivalent(
+        &mut self,
+        name: &str,
+        declaring: TypeId,
+    ) -> Result<bool, Unsupported> {
+        let checked = match name.strip_prefix("op_") {
+            Some(rest) => format!("op_Checked{rest}"),
+            None => name.to_owned(),
+        };
+        let candidates = self
+            .ts
+            .get_methods(
+                declaring,
+                None,
+                crate::typesystem::lookup::MemberOptions::default(),
+            )
+            .map_err(|e| e.to_string())?;
+        Ok(candidates.iter().any(|c| {
+            c.name == checked && Method::from_resolved(self.ts, c).is_some_and(|m| m.is_operator)
+        }))
+    }
+
+    /// `HandleCompoundShift`: `target op= value` with the value converted to `int`, of the
+    /// target's type (`ResolveAssignment` of a predefined shift).
+    fn compound_shift(
+        &mut self,
+        inst: NodeId,
+        assignment_op: u8,
+        target: TranslatedExpression,
+        value: NodeId,
+    ) -> Result<TranslatedExpression, Unsupported> {
+        let target_underlying = self.ts.nullable_underlying(target.ty);
+        let code = self.ts.type_code(target_underlying);
+        if !((4..=12).contains(&code) || self.is_native_integer(target_underlying)) {
+            return Err("a compound shift of these types".to_owned());
+        }
+        // Shifts take an `int` (an `int?` for a nullable value).
+        let v = self.translate(value, None)?;
+        let mut int = self.ts.known_type(KnownTypeCode::Int32);
+        if self.ts.is_nullable(v.ty) {
+            int = self.ts.make_nullable(int);
+        }
+        let v = self.convert_to(v, int, false)?;
+        let e = self.ast.add(AstNode::CompoundAssignment {
+            op: assignment_op,
+            left: target.expression,
+            right: v.expression,
+            overflow: Overflow::None,
+        });
+        self.ast.with_il(e, inst);
+        self.ast.with_rr(e, Rr::Operator { ty: target.ty });
+        Ok(TranslatedExpression {
+            expression: e,
+            ty: target.ty,
         })
     }
 
@@ -2353,18 +2859,22 @@ impl Builder<'_, '_, '_, '_> {
         is_lifted: bool,
         type_hint: Option<TypeId>,
     ) -> Result<TranslatedExpression, Unsupported> {
-        if is_lifted {
-            return Err("a lifted shift".to_owned());
-        }
         let l = self.translate(left, None)?;
         let r = self.translate(right, None)?;
-        let mut l = self.prepare_arithmetic_argument(l, left_input, sign)?;
-        let result_stack = self.f.result_type(self.ts, inst);
-        if self.ts.is_known(l.ty, KnownTypeCode::NullableOfT) {
+        let mut l = self.prepare_lifted_arithmetic_argument(l, left_input, sign, is_lifted)?;
+        // The underlying result type: a shift is of its left input's stack type.
+        let result_stack = if is_lifted {
+            left_input
+        } else {
+            self.f.result_type(self.ts, inst)
+        };
+        let nullable_left = self.ts.is_known(l.ty, KnownTypeCode::NullableOfT);
+        if nullable_left && !is_lifted {
             return Err("a shift of a nullable value".to_owned());
         }
-        let code = self.ts.type_code(l.ty);
-        let primitive_integer = (5..=12).contains(&code) || self.is_native_integer(l.ty);
+        let lu = self.ts.nullable_underlying(l.ty);
+        let code = self.ts.type_code(lu);
+        let primitive_integer = (5..=12).contains(&code) || self.is_native_integer(lu);
         let small = (5..=8).contains(&code);
         let hint_sign = type_hint.map_or(Sign::None, |t| self.ts.type_sign(t));
         let could_use_unsigned_right_shift = sign == Sign::Unsigned
@@ -2386,28 +2896,45 @@ impl Builder<'_, '_, '_, '_> {
                 op = BinaryOp::UnsignedShiftRight;
             }
         } else if could_use_unsigned_right_shift
-            && self.ts.type_size(l.ty) == stack_size(result_stack)
-            && self.ts.type_sign(l.ty) == Sign::Signed
+            && self.ts.type_size(lu) == stack_size(result_stack)
+            && self.ts.type_sign(lu) == Sign::Signed
         {
             op = BinaryOp::UnsignedShiftRight;
         } else {
             let mut s = sign;
             if s == Sign::None {
-                s = self.ts.type_sign(l.ty);
+                s = self.ts.type_sign(lu);
             }
-            let target = self.find_arithmetic_type(result_stack, s)?;
+            let mut target = self.find_arithmetic_type(result_stack, s)?;
+            if nullable_left {
+                target = self.ts.make_nullable(target);
+            }
             l = self.convert_to(l, target, false)?;
         }
+        // The right operand is an `int` (an `int?` where it is nullable).
         let int = self.ts.known_type(KnownTypeCode::Int32);
-        let r = self.convert_to(r, int, false)?;
+        let right_type = if self.ts.is_known(r.ty, KnownTypeCode::NullableOfT) {
+            self.ts.make_nullable(int)
+        } else {
+            int
+        };
+        let nullable_result = nullable_left || right_type != int;
+        let r = self.convert_to(r, right_type, false)?;
         // The type of the predefined shift: the left operand's, `int` for a small integer;
         // a native integer stays (with an error resolve result, as the right operand differs).
-        let ty = match self.ts.type_code(l.ty) {
-            _ if self.is_native_integer(l.ty) => l.ty,
+        let lu = self.ts.nullable_underlying(l.ty);
+        let mut ty = match self.ts.type_code(lu) {
+            _ if self.is_native_integer(lu) => lu,
             5..=9 => int,
-            10..=12 => l.ty,
+            10..=12 => lu,
             _ => return Err("a shift of these types".to_owned()),
         };
+        if nullable_result {
+            if self.is_native_integer(lu) {
+                return Err("a lifted shift of a native integer".to_owned());
+            }
+            ty = self.ts.make_nullable(ty);
+        }
         let e = self.ast.add(AstNode::BinaryOperator {
             op,
             left: l.expression,
@@ -3111,7 +3638,17 @@ impl Builder<'_, '_, '_, '_> {
             Some(KnownTypeCode::UInt64) => ConstValue::UInt64(0),
             Some(KnownTypeCode::Single) => ConstValue::Single(0),
             Some(KnownTypeCode::Double) => ConstValue::Double(0),
-            Some(KnownTypeCode::Decimal) => return Err("a default decimal".to_owned()),
+            // `new PrimitiveExpression(0m)`.
+            Some(KnownTypeCode::Decimal) => {
+                let value = ConstValue::Decimal([0; 4]);
+                let e = self.ast.add(AstNode::ConstantValue {
+                    ty,
+                    value: value.clone(),
+                    allow_implicit_conversion: true,
+                });
+                self.ast.with_rr(e, Rr::Constant { ty, value });
+                return Ok(TranslatedExpression { expression: e, ty });
+            }
             _ => ConstValue::Null,
         };
         let e = self.ast.add(AstNode::DefaultValue { ty: Some(ty) });
@@ -3169,7 +3706,7 @@ impl Builder<'_, '_, '_, '_> {
         }
     }
 
-    /// `VisitConv` without lifting: the argument as is
+    /// `VisitConv`: the argument as is
     /// where the parent's post-condition handles the conversion, else cast to the target.
     #[allow(clippy::too_many_arguments)]
     fn conv(
@@ -3183,9 +3720,6 @@ impl Builder<'_, '_, '_, '_> {
         is_lifted: bool,
         hint: TypeId,
     ) -> Result<TranslatedExpression, Unsupported> {
-        if is_lifted {
-            return Err("a lifted conversion".to_owned());
-        }
         if target == PrimitiveType::Unknown {
             return Err("a conversion to an unknown type".to_owned());
         }
@@ -3200,14 +3734,18 @@ impl Builder<'_, '_, '_, '_> {
         let kind = crate::il::ast::conversion_kind(target, input, input_sign);
         // `GetType`: the known type, `nint` or `nuint` rather than `IntPtr` or `UIntPtr` with
         // native integers unless the type hint is that type.
+        // A lifted conversion is to the nullable of the type.
         let get_type = |b: &mut Self, code: KnownTypeCode| {
-            let t = b.ts.known_type(code);
+            let mut t = b.ts.known_type(code);
             if b.settings.native_integers && t != hint {
                 match code {
-                    KnownTypeCode::IntPtr => return b.ts.intern(TypeData::NInt),
-                    KnownTypeCode::UIntPtr => return b.ts.intern(TypeData::NUInt),
+                    KnownTypeCode::IntPtr => t = b.ts.intern(TypeData::NInt),
+                    KnownTypeCode::UIntPtr => t = b.ts.intern(TypeData::NUInt),
                     _ => {}
                 }
+            }
+            if is_lifted {
+                t = b.ts.make_nullable(t);
             }
             t
         };
@@ -3282,7 +3820,10 @@ impl Builder<'_, '_, '_, '_> {
         }
         // The type hint where it is the target type, else the target's type: a reference to
         // byte for an unknown reference, object for an object type.
-        let target_type = if !self.ts.is_nullable(hint) && self.ts.primitive_type(hint) == target {
+        let hint_underlying = self.ts.nullable_underlying(hint);
+        let target_type = if self.ts.is_nullable(hint) == is_lifted
+            && self.ts.primitive_type(hint_underlying) == target
+        {
             hint
         } else if target == PrimitiveType::Ref {
             let byte = self.ts.known_type(KnownTypeCode::Byte);
