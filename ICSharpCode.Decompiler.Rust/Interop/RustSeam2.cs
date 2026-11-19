@@ -120,6 +120,12 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		public const byte UsingExpanded = 71;
 		public const byte GotoCase = 72;
 		public const byte GotoDefault = 73;
+		public const byte PointerUnary = 120;
+		public const byte SizeOf = 121;
+		public const byte Fixed = 122;
+		public const byte UnsafeIntrinsic = 123;
+		public const byte StackAlloc = 124;
+		public const byte Undocumented = 125;
 
 		public byte Kind;
 		/// <summary>The instructions the node is annotated with, in order.</summary>
@@ -995,7 +1001,10 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				{
 					var target = (Expression)Build(node.Children[0], exprBuilder);
 					var arguments = node.Children.Skip(1).Select(c => (Expression)Build(c, exprBuilder)).ToList();
-					var (targetResult, method, isExtension, isDelegate, foundByLookup, isExpanded) = node.Call!.Value;
+					// A function pointer call comes with a plain resolve result of its own.
+					if (node.Call == null)
+						return Annotate(new InvocationExpression(target, arguments), node);
+					var (targetResult, method, isExtension, isDelegate, foundByLookup, isExpanded) = node.Call.Value;
 					// The target of a member reference, or the invoked delegate itself.
 					if (ReferenceEquals(targetResult, PendingTarget))
 						targetResult = (target is MemberReferenceExpression mre ? mre.Target : target).GetResolveResult();
@@ -1544,6 +1553,49 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 						node.ResolveResult = new OperatorResolveResult(node.OperatorType, System.Linq.Expressions.ExpressionType.Conditional,
 							condition.GetResolveResult(), trueExpression.GetResolveResult(), falseExpression.GetResolveResult());
 					return Annotate(new ConditionalExpression(condition, trueExpression, falseExpression), node);
+				}
+				case RustBodyNode.PointerUnary:
+					return Annotate(new UnaryOperatorExpression(node.Flag ? UnaryOperatorType.AddressOf : UnaryOperatorType.Dereference,
+						(Expression)Build(node.Children[0], exprBuilder)), node);
+				case RustBodyNode.SizeOf:
+					node.ResolveResult = new SizeOfResolveResult(exprBuilder.compilation.FindType(KnownTypeCode.Int32), node.Type!, null);
+					return Annotate(new SizeOfExpression(ConvertType(exprBuilder, node.Type!)), node);
+				case RustBodyNode.Fixed:
+				{
+					var variable = (ILVariable)node.Value!;
+					var statement = new FixedStatement { Type = ConvertType(exprBuilder, variable.Type) };
+					statement.Variables.Add(new VariableInitializer(variable.Name!, (Expression)Build(node.Children[0], exprBuilder)).WithILVariable(variable));
+					statement.EmbeddedStatement = (Statement)Build(node.Children[1], exprBuilder);
+					return Annotate(statement, node);
+				}
+				case RustBodyNode.UnsafeIntrinsic:
+				{
+					var target = new MemberReferenceExpression {
+						Target = new TypeReferenceExpression(ConvertType(exprBuilder, node.Type!)),
+						MemberName = (string)node.Value!
+					};
+					target.TypeArguments.AddRange(node.TypeArguments.Select(t => ConvertType(exprBuilder, t)));
+					return Annotate(new InvocationExpression(target, node.Children.Select(c => (Expression)Build(c, exprBuilder))), node);
+				}
+				case RustBodyNode.StackAlloc:
+				{
+					var stackAlloc = new StackAllocExpression { Type = ConvertType(exprBuilder, node.Type!) };
+					int first = 0;
+					if (node.Flag)
+						stackAlloc.CountExpression = (Expression)Build(node.Children[first++], exprBuilder);
+					if ((bool)node.Value!)
+					{
+						var initializer = stackAlloc.Initializer = new ArrayInitializerExpression();
+						for (int i = first; i < node.Children.Length; i++)
+							initializer.Elements.Add((Expression)Build(node.Children[i], exprBuilder));
+					}
+					return Annotate(stackAlloc, node);
+				}
+				case RustBodyNode.Undocumented:
+				{
+					var undocumented = new UndocumentedExpression { UndocumentedExpressionType = (UndocumentedExpressionType)node.Value! };
+					undocumented.Arguments.AddRange(node.Children.Select(c => (Expression)Build(c, exprBuilder)));
+					return Annotate(undocumented, node);
 				}
 				default:
 					throw new RustEngineException($"unknown C# node kind {node.Kind}");

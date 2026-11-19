@@ -449,8 +449,11 @@ pub(crate) fn nullable_underlying(ctx: &mut Context<'_, '_, '_>, t: TypeId) -> T
 }
 
 /// `PointerArithmeticOffset.ComputeSizeOf`.
-fn compute_size_of(ctx: &mut Context<'_, '_, '_>, t: TypeId) -> Option<i64> {
-    match ctx.ts.enum_underlying_known(t)? {
+pub(crate) fn compute_size_of(
+    ts: &mut crate::typesystem::types::TypeSystem<'_, '_>,
+    t: TypeId,
+) -> Option<i64> {
+    match ts.enum_underlying_known(t)? {
         KnownTypeCode::Boolean | KnownTypeCode::SByte | KnownTypeCode::Byte => Some(1),
         KnownTypeCode::Char | KnownTypeCode::Int16 | KnownTypeCode::UInt16 => Some(2),
         KnownTypeCode::Int32 | KnownTypeCode::UInt32 | KnownTypeCode::Single => Some(4),
@@ -473,6 +476,25 @@ pub(crate) enum PointerOffset {
 pub(crate) fn pointer_offset_detect(
     f: &Function,
     ctx: &mut Context<'_, '_, '_>,
+    byte_offset: NodeId,
+    element: TypeId,
+    check_for_overflow: bool,
+    unwrap_zero_extension: bool,
+) -> Option<PointerOffset> {
+    pointer_offset_detect_in(
+        f,
+        ctx.ts,
+        byte_offset,
+        element,
+        check_for_overflow,
+        unwrap_zero_extension,
+    )
+}
+
+/// `PointerArithmeticOffset.Detect` with the type system alone, for the C# builders.
+pub(crate) fn pointer_offset_detect_in(
+    f: &Function,
+    ts: &mut crate::typesystem::types::TypeSystem<'_, '_>,
     mut byte_offset: NodeId,
     element: TypeId,
     check_for_overflow: bool,
@@ -488,7 +510,7 @@ pub(crate) fn pointer_offset_detect(
     {
         byte_offset = arg;
     }
-    let size = compute_size_of(ctx, element);
+    let size = compute_size_of(ts, element);
     if size == Some(1) {
         return Some(PointerOffset::Inst(byte_offset));
     }
@@ -509,7 +531,7 @@ pub(crate) fn pointer_offset_detect(
             let matches_size = size.is_some_and(|s| s > 0 && f.match_ldc_i(right) == Some(s))
                 || match *f.inst(unwrap(f, right, ConversionKind::SignExtend)) {
                     Inst::SizeOf { ty } => {
-                        ctx.ts.normalize_parameter(ty.ty) == ctx.ts.normalize_parameter(element)
+                        ts.normalize_parameter(ty.ty) == ts.normalize_parameter(element)
                     }
                     _ => false,
                 };

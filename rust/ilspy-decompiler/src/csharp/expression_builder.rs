@@ -254,8 +254,10 @@ impl Builder<'_, '_, '_, '_> {
                                 VariableKind::ForeachLocal | VariableKind::UsingLocal
                             ))
                     }
-                    Inst::LdObj { .. } | Inst::StObj { .. } => {
-                        return Err("the address of a loaded or stored value".to_owned());
+                    Inst::LdObj { target, .. } | Inst::StObj { target, .. } => {
+                        !crate::il::transforms::il_inlining::is_readonly_reference_in(
+                            self.f, self.ts, target,
+                        )
                     }
                     Inst::Call(ref c) => matches!(
                         c.method.method.declaring.map(|t| self.ts.data(t)),
@@ -452,6 +454,10 @@ impl Builder<'_, '_, '_, '_> {
                 *data.args.last_mut().expect("a setter value") = value;
                 self.call(call, &data, op)
             }
+            Inst::Block {
+                kind: BlockKind::StackAllocInitializer,
+                ..
+            } => self.stack_alloc_initializer(inst, type_hint),
             Inst::Block { kind, .. } => Err(format!("a block of kind {kind:?}")),
             Inst::Conv {
                 arg,
@@ -533,12 +539,20 @@ impl Builder<'_, '_, '_, '_> {
                 get_result,
                 get_awaiter_callvirt,
             } => self.translate_await(inst, value, get_awaiter, get_result, get_awaiter_callvirt),
+            Inst::SizeOf { ty } => self.size_of(inst, ty.ty),
+            Inst::CallIndirect { .. } => self.call_indirect(inst),
+            Inst::Arglist
+            | Inst::MakeRefAny { .. }
+            | Inst::RefAnyType { .. }
+            | Inst::RefAnyValue { .. } => self.undocumented(inst),
+            Inst::LocAlloc { arg } => self.loc_alloc(inst, arg, None, type_hint),
+            Inst::LocAllocSpan { arg, ty } => self.loc_alloc(inst, arg, Some(ty), type_hint),
             other => Err(format!("the instruction {}", super::inst_name(&other))),
         }
     }
 
     /// `VisitLdcI4`: an int (a uint for an unsigned type hint) adjusted to the type hint.
-    fn ldc_i4(
+    pub(crate) fn ldc_i4(
         &mut self,
         inst: NodeId,
         value: i32,
@@ -738,7 +752,11 @@ impl Builder<'_, '_, '_, '_> {
             );
         }
         if self.ts.kind(hint).is_any_pointer() {
-            return Err("a constant converted to a pointer type".to_owned());
+            // Zero is the null pointer; another constant stays an integer.
+            if matches!(value, ConstValue::Int32(0) | ConstValue::UInt32(0)) {
+                return Ok((hint, ConstValue::Null));
+            }
+            return Ok((ty, value));
         }
         Ok((ty, value))
     }
@@ -865,18 +883,45 @@ impl Builder<'_, '_, '_, '_> {
         right: NodeId,
     ) -> Result<TranslatedExpression, Unsupported> {
         let is_zero = |b: &Self, n: NodeId| b.f.match_ldc_i(n) == Some(0);
-        if (self.ts.kind(l.ty) == TypeKind::Pointer && is_zero(self, right))
-            || (self.ts.kind(r.ty) == TypeKind::Pointer && is_zero(self, left))
-        {
-            return Err("a comparison of a pointer with null".to_owned());
-        }
-        let l = self.unite_equality_operand_type(l, &r)?;
-        let r = self.unite_equality_operand_type(r, &l)?;
         let op = if kind == ComparisonKind::Equality {
             BinaryOp::Equality
         } else {
             BinaryOp::InEquality
         };
+        // A pointer compared with null.
+        if self.ts.kind(l.ty) == TypeKind::Pointer && is_zero(self, right) {
+            let n = self.null_literal(right);
+            let e = self.builtin_comparison(l, op, n);
+            self.ast.with_il(e.expression, inst);
+            return Ok(e);
+        }
+        if self.ts.kind(r.ty) == TypeKind::Pointer && is_zero(self, left) {
+            let n = self.null_literal(left);
+            let e = self.builtin_comparison(n, op, r);
+            self.ast.with_il(e.expression, inst);
+            return Ok(e);
+        }
+        let l = self.unite_equality_operand_type(l, &r)?;
+        let r = self.unite_equality_operand_type(r, &l)?;
+        // Two pointers: the built-in pointer comparison of `ResolveBinaryOperator`.
+        if self.ts.kind(l.ty) == TypeKind::Pointer
+            && self.ts.kind(r.ty) == TypeKind::Pointer
+            && input == StackType::I
+        {
+            let boolean = self.ts.known_type(KnownTypeCode::Boolean);
+            let e = self.ast.add(AstNode::BinaryOperator {
+                overflow: Overflow::None,
+                op,
+                left: l.expression,
+                right: r.expression,
+            });
+            self.ast.with_il(e, inst);
+            self.ast.with_rr(e, Rr::Operator { ty: boolean });
+            return Ok(TranslatedExpression {
+                expression: e,
+                ty: boolean,
+            });
+        }
         let boolean = self.ts.known_type(KnownTypeCode::Boolean);
         if self.is_special_cased_reference_comparison_with_null(l.ty, r.ty) {
             // `CreateBuiltinBinaryOperator(...).WithILInstruction(inst)`
@@ -1730,6 +1775,11 @@ impl Builder<'_, '_, '_, '_> {
         };
         let l = self.translate(left, None)?;
         let r = self.translate(right, None)?;
+        if self.ts.kind(l.ty) == TypeKind::Pointer && self.ts.kind(r.ty) == TypeKind::Pointer {
+            let e = self.builtin_comparison(l, op, r);
+            self.ast.with_il(e.expression, inst);
+            return Ok(e);
+        }
         let l = self.prepare_arithmetic_argument(l, input, sign)?;
         let r = self.prepare_arithmetic_argument(r, input, sign)?;
         // Special case comparisons with enum and char literals
@@ -1873,6 +1923,11 @@ impl Builder<'_, '_, '_, '_> {
         is_lifted: bool,
         type_hint: Option<TypeId>,
     ) -> Result<TranslatedExpression, Unsupported> {
+        if operator == BinaryNumericOperator::Div
+            && let Some(e) = self.pointer_subtraction(inst)?
+        {
+            return Ok(e);
+        }
         let op = match operator {
             BinaryNumericOperator::Add => BinaryOp::Add,
             BinaryNumericOperator::Sub => BinaryOp::Subtract,
@@ -1912,6 +1967,21 @@ impl Builder<'_, '_, '_, '_> {
         let r = self.translate(right, hint)?;
         if left_input == StackType::Ref || right_input == StackType::Ref {
             return Err("managed pointer arithmetic".to_owned());
+        }
+        if (self.ts.kind(l.ty) == TypeKind::Pointer || self.ts.kind(r.ty) == TypeKind::Pointer)
+            && let Some(e) = self.pointer_arithmetic(
+                inst,
+                operator,
+                check_overflow,
+                is_lifted,
+                (left_input, right_input),
+                (left, right),
+                l,
+                r,
+                type_hint,
+            )?
+        {
+            return Ok(e);
         }
         for t in [l.ty, r.ty] {
             let k = self.ts.kind(self.ts.nullable_underlying(t));
@@ -2100,21 +2170,24 @@ impl Builder<'_, '_, '_, '_> {
             // `LdObj(inst.Target, inst.Type)`: the target address dereferenced.
             CompoundTargetKind::Address => {
                 if self.f.result_type(self.ts, target) != StackType::Ref {
-                    return Err("a compound assignment through a pointer".to_owned());
+                    let hint = self.ts.intern(TypeData::Pointer(ty));
+                    let address = self.translate(target, Some(hint))?;
+                    self.ld_obj_through(address, ty)?
+                } else {
+                    let hint = self.ts.intern(TypeData::ByRef(ty));
+                    let address = self.translate(target, Some(hint))?;
+                    if !self.is_compatible_pointer_type_for_memory_access(address.ty, ty) {
+                        return Err("a compound assignment that needs a pointer cast".to_owned());
+                    }
+                    let AstNode::RefDirection { expression } = *self.ast.node(address.expression)
+                    else {
+                        return Err(
+                            "a compound assignment through a reference that is no ref expression"
+                                .to_owned(),
+                        );
+                    };
+                    self.unwrap_child(address.expression, expression)
                 }
-                let hint = self.ts.intern(TypeData::ByRef(ty));
-                let address = self.translate(target, Some(hint))?;
-                if !self.is_compatible_pointer_type_for_memory_access(address.ty, ty) {
-                    return Err("a compound assignment that needs a pointer cast".to_owned());
-                }
-                let AstNode::RefDirection { expression } = *self.ast.node(address.expression)
-                else {
-                    return Err(
-                        "a compound assignment through a reference that is no ref expression"
-                            .to_owned(),
-                    );
-                };
-                self.unwrap_child(address.expression, expression)
             }
             CompoundTargetKind::Property => self.translate(target, Some(ty))?,
             CompoundTargetKind::Dynamic => {
@@ -2122,10 +2195,16 @@ impl Builder<'_, '_, '_, '_> {
             }
         };
         let target_underlying = self.ts.nullable_underlying(target.ty);
-        if matches!(
-            self.ts.kind(target_underlying),
-            TypeKind::Pointer | TypeKind::FunctionPointer | TypeKind::Dynamic
-        ) || self.ts.is_known(target.ty, KnownTypeCode::NullableOfT)
+        let pointer_element = match *self.ts.data(target.ty) {
+            TypeData::Pointer(e) if matches!(assignment_op, 1 | 2) => Some(e),
+            _ => None,
+        };
+        if (pointer_element.is_none()
+            && matches!(
+                self.ts.kind(target_underlying),
+                TypeKind::Pointer | TypeKind::FunctionPointer | TypeKind::Dynamic
+            ))
+            || self.ts.is_known(target.ty, KnownTypeCode::NullableOfT)
         {
             return Err("a compound assignment of these types".to_owned());
         }
@@ -2153,6 +2232,24 @@ impl Builder<'_, '_, '_, '_> {
         }
         let v = self.translate(value, None)?;
         let v = self.prepare_arithmetic_argument(v, right_input, sign)?;
+        if let Some(element) = pointer_element {
+            // `ptr += n` and `ptr -= n` with the offset in elements.
+            let offset = self
+                .pointer_arithmetic_offset(value, v, element, check_overflow, false)?
+                .ok_or("a pointer compound assignment of no element offset")?;
+            let e = self.ast.add(AstNode::CompoundAssignment {
+                op: assignment_op,
+                left: target.expression,
+                right: offset.expression,
+                overflow,
+            });
+            self.ast.with_il(e, inst);
+            self.ast.with_rr(e, Rr::Operator { ty: target_rr_ty });
+            return Ok(TranslatedExpression {
+                expression: e,
+                ty: target_rr_ty,
+            });
+        }
         // `ConvertValue`: to the target's type (an enum's underlying type for `+=` and `-=`).
         let mut value_type = target_underlying;
         if matches!(assignment_op, 1 | 2) && self.ts.kind(value_type) == TypeKind::Enum {
@@ -2739,7 +2836,11 @@ impl Builder<'_, '_, '_, '_> {
 
     /// `WrapInRef`: a call returning a reference is `ref call(...)`, with the
     /// `ByReferenceResolveResult` of the call's.
-    fn wrap_in_ref(&mut self, e: TranslatedExpression, ty: TypeId) -> TranslatedExpression {
+    pub(crate) fn wrap_in_ref(
+        &mut self,
+        e: TranslatedExpression,
+        ty: TypeId,
+    ) -> TranslatedExpression {
         let TypeData::ByRef(element) = *self.ts.data(ty) else {
             return e;
         };
@@ -3131,8 +3232,8 @@ impl Builder<'_, '_, '_, '_> {
         match kind {
             ConversionKind::StartGCTracking => return Ok(a),
             ConversionKind::StopGCTracking => {
-                if self.ts.kind(input_type) == TypeKind::ByReference {
-                    return Err("a conversion of a reference to a pointer".to_owned());
+                if let TypeData::ByRef(element) = *self.ts.data(input_type) {
+                    return self.stop_gc_tracking(inst, arg, a, element);
                 }
                 // Tracking stops for an integer it has just started for.
                 if self.ts.stack_type(a.ty).is_integer() {
@@ -3198,7 +3299,7 @@ impl Builder<'_, '_, '_, '_> {
 
     /// `FindArithmeticType`: the type of the stack type and sign, `nint` or `nuint` for native
     /// integers (64-bit integers without them).
-    fn find_arithmetic_type(
+    pub(crate) fn find_arithmetic_type(
         &mut self,
         stack: StackType,
         sign: Sign,
@@ -3216,10 +3317,9 @@ impl Builder<'_, '_, '_, '_> {
                 let byte = self.ts.known_type(KnownTypeCode::Byte);
                 self.ts.intern(TypeData::ByRef(byte))
             }
+            // `KnownTypeCode.None` finds the unknown type.
             _ => match stack.to_known(sign) {
-                KnownTypeCode::None | KnownTypeCode::Void => {
-                    return Err("a conversion of this stack type".to_owned());
-                }
+                KnownTypeCode::None => self.ts.intern(TypeData::UnknownSpecial),
                 code => self.ts.known_type(code),
             },
         })

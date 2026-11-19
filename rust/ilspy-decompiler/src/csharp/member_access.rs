@@ -134,20 +134,71 @@ impl Builder<'_, '_, '_, '_> {
         {
             load_type = hint;
         }
-        if !target_is_ref {
-            return Err("a load through a pointer".to_owned());
-        }
-        let address_hint = self.ts.intern(TypeData::ByRef(load_type));
-        let address = self.translate(target, Some(address_hint))?;
-        if !self.is_compatible_pointer_type_for_memory_access(address.ty, load_type) {
-            return Err("a load that needs a pointer cast".to_owned());
-        }
-        let AstNode::RefDirection { expression } = *self.ast.node(address.expression) else {
-            return Err("a load through a reference that is no ref expression".to_owned());
+        let address_hint = if target_is_ref {
+            self.ts.intern(TypeData::ByRef(load_type))
+        } else {
+            self.ts.intern(TypeData::Pointer(load_type))
         };
-        let result = self.unwrap_child(address.expression, expression);
+        let address = self.translate(target, Some(address_hint))?;
+        let result = self.ld_obj_through(address, load_type)?;
         self.ast.with_il(result.expression, inst);
         Ok(result)
+    }
+
+    /// `LdObj(address, loadType)` on the translated address: the reference without its `ref`,
+    /// the pointer without its `&` or dereferenced, cast to a pointer of the loaded type where
+    /// it is of another, or `Unsafe.Read<T>` for a managed type behind a pointer.
+    pub(crate) fn ld_obj_through(
+        &mut self,
+        address: TranslatedExpression,
+        load_type: TypeId,
+    ) -> Result<TranslatedExpression, Unsupported> {
+        if self.is_compatible_pointer_type_for_memory_access(address.ty, load_type) {
+            return match *self.ast.node(address.expression) {
+                AstNode::RefDirection { expression } => {
+                    Ok(self.unwrap_child(address.expression, expression))
+                }
+                _ => match *self.ts.data(address.ty) {
+                    TypeData::Pointer(element) => match *self.ast.node(address.expression) {
+                        AstNode::PointerUnary {
+                            address_of: true,
+                            expression,
+                        } => Ok(self.unwrap_child(address.expression, expression)),
+                        _ => Ok(self.dereference(address.expression, element)),
+                    },
+                    _ => Err("a load through a reference that is no ref expression".to_owned()),
+                },
+            };
+        }
+        if matches!(
+            self.ast.node(address.expression),
+            AstNode::RefDirection { .. }
+        ) {
+            return Err("a load that needs a pointer cast".to_owned());
+        }
+        if !self.is_unmanaged_type(load_type) {
+            // `Unsafe.Read<T>(void*)`
+            let void = self
+                .ts
+                .known_type(crate::typesystem::known::KnownTypeCode::Void);
+            let void_pointer = self.ts.intern(TypeData::Pointer(void));
+            let pointer = self.convert_to(address, void_pointer, true)?;
+            return Ok(self.call_unsafe_intrinsic(
+                "Read",
+                vec![pointer.expression],
+                load_type,
+                None,
+                vec![load_type],
+            ));
+        }
+        let pointer_type = self.ts.intern(TypeData::Pointer(load_type));
+        let address = self.convert_to(address, pointer_type, false)?;
+        Ok(match *self.ast.node(address.expression) {
+            AstNode::RefDirection { expression } => {
+                self.unwrap_child(address.expression, expression)
+            }
+            _ => self.dereference(address.expression, load_type),
+        })
     }
 
     /// `VisitLdFlda` (with a target) and `VisitLdsFlda` producing a managed reference:
@@ -158,11 +209,17 @@ impl Builder<'_, '_, '_, '_> {
         target: Option<NodeId>,
         field: &FieldOperand,
     ) -> Result<TranslatedExpression, Unsupported> {
-        if field.field.name == "FixedElementField" {
-            return Err("a fixed buffer element".to_owned());
-        }
-        if self.f.result_type(self.ts, inst) == StackType::I {
-            return Err("a field address as a native pointer".to_owned());
+        if self.settings.fixed_buffers
+            && field.field.name == "FixedElementField"
+            && let Some(t) = target
+            && let Inst::LdFlda {
+                target: buffer_target,
+                field: buffer,
+                ..
+            } = self.f.inst(t).clone()
+            && let Some(element) = self.fixed_field_element(&buffer)
+        {
+            return self.fixed_buffer_element(inst, buffer_target, &buffer, element);
         }
         let e = match target {
             Some(t) if self.is_value_tuple(field.field.declaring) => {
@@ -171,6 +228,13 @@ impl Builder<'_, '_, '_, '_> {
             _ => self.convert_field(field, target)?,
         };
         self.ast.with_il(e.expression, inst);
+        if target.is_some() && self.f.result_type(self.ts, inst) == StackType::I {
+            // `ldflda` producing a native pointer: `&target.field`.
+            let a = self.address_of_node(e.expression);
+            let ty = self.ts.intern(TypeData::Pointer(e.ty));
+            self.ast.with_rr(a, Rr::Plain(ty));
+            return Ok(TranslatedExpression { expression: a, ty });
+        }
         let element = self.rr_of(e.expression);
         let d = self.ast.add(AstNode::RefDirection {
             expression: e.expression,
@@ -325,7 +389,7 @@ impl Builder<'_, '_, '_, '_> {
     }
 
     /// `ConvertField(field, targetInstruction)` for a field that is no backing field.
-    fn convert_field(
+    pub(crate) fn convert_field(
         &mut self,
         field: &FieldOperand,
         target_inst: Option<NodeId>,
@@ -596,7 +660,7 @@ impl Builder<'_, '_, '_, '_> {
         } else if target_result == StackType::Ref {
             self.ts.intern(TypeData::ByRef(target_type))
         } else {
-            return Err("a member access through a pointer".to_owned());
+            self.ts.intern(TypeData::Pointer(target_type))
         };
         let mut translated = self.translate(target, Some(hint))?;
         if requires_managed_reference {
@@ -609,13 +673,35 @@ impl Builder<'_, '_, '_, '_> {
                 _ => false,
             };
             if !same {
-                return Err("a member access that needs a reference conversion".to_owned());
+                if matches!(self.ts.data(translated.ty), TypeData::ByRef(_)) {
+                    return Err("a member access that needs a reference conversion".to_owned());
+                }
+                // A pointer (or integer) target: `ref *target`.
+                let reference = self.ts.intern(TypeData::ByRef(target_type));
+                translated = self.convert_to(translated, reference, false)?;
             }
         }
         // (ref x).member => x.member
         match *self.ast.node(translated.expression) {
             AstNode::RefDirection { expression } => {
                 translated = self.unwrap_child(translated.expression, expression);
+            }
+            // (ref x)?.member => x?.member
+            AstNode::NullConditional {
+                expression: inner,
+                rewrap: false,
+            } if matches!(self.ast.node(inner), AstNode::RefDirection { .. }) => {
+                let AstNode::RefDirection { expression } = *self.ast.node(inner) else {
+                    unreachable!("a ref expression");
+                };
+                let x = self.unwrap_child(translated.expression, expression);
+                let ty = self.ts.nullable_underlying(x.ty);
+                let e = self.ast.add(AstNode::NullConditional {
+                    expression: x.expression,
+                    rewrap: false,
+                });
+                self.ast.with_rr(e, Rr::Plain(ty));
+                translated = TranslatedExpression { expression: e, ty };
             }
             _ if requires_managed_reference => {
                 return Err("a member access on a ref expression".to_owned());
@@ -778,24 +864,57 @@ impl Builder<'_, '_, '_, '_> {
         ty: TypeId,
         unaligned: u8,
     ) -> Result<TranslatedExpression, Unsupported> {
-        if unaligned != 0 || self.f.result_type(self.ts, target) != StackType::Ref {
+        let target_is_ref = self.f.result_type(self.ts, target) == StackType::Ref;
+        if unaligned != 0 || (!target_is_ref && !self.is_unmanaged_type(ty)) {
             return Err("a store that is no assignment through a reference".to_owned());
         }
-        let hint = self.ts.intern(TypeData::ByRef(ty));
-        let pointer = self.translate(target, Some(hint))?;
-        if !self.is_compatible_pointer_type_for_memory_access(pointer.ty, ty) {
-            return Err("a store that needs a pointer cast".to_owned());
-        }
-        let AstNode::RefDirection { expression } = *self.ast.node(pointer.expression) else {
-            return Err("a store through a reference that is no ref expression".to_owned());
+        let hint = if target_is_ref {
+            self.ts.intern(TypeData::ByRef(ty))
+        } else {
+            self.ts.intern(TypeData::Pointer(ty))
         };
-        let target = self.unwrap_child(pointer.expression, expression);
-        let value = self.translate(value, Some(target.ty))?;
+        let mut pointer = self.translate(target, Some(hint))?;
+        let mut translated_value = None;
+        let memory_type = if self.is_compatible_pointer_type_for_memory_access(pointer.ty, ty) {
+            self.pointer_element(pointer.ty)
+                .expect("a pointer or reference")
+        } else {
+            // A pointer cast to the type of the value, where that is compatible.
+            let v = self.translate(value, Some(ty))?;
+            let memory_type = if self.ts.is_compatible_type_for_memory_access(v.ty, ty) {
+                v.ty
+            } else {
+                ty
+            };
+            translated_value = Some(v);
+            if matches!(
+                self.ast.node(pointer.expression),
+                AstNode::RefDirection { .. }
+            ) {
+                return Err("a store that needs a pointer cast".to_owned());
+            }
+            let pointer_type = self.ts.intern(TypeData::Pointer(memory_type));
+            pointer = self.convert_to(pointer, pointer_type, false)?;
+            memory_type
+        };
+        let target = match *self.ast.node(pointer.expression) {
+            AstNode::RefDirection { expression }
+            | AstNode::PointerUnary {
+                address_of: true,
+                expression,
+            } => self.unwrap_child(pointer.expression, expression),
+            _ => self.dereference(pointer.expression, memory_type),
+        };
+        let value = match translated_value {
+            Some(v) => v,
+            None => self.translate(value, Some(target.ty))?,
+        };
         if matches!(
             self.ast.node(target.expression),
             AstNode::RefDirection { .. }
-        ) {
-            return Err("a ref reassignment".to_owned());
+        ) && matches!(self.rr_of(target.expression), Rr::ByReference(_))
+        {
+            return self.ref_reassignment(target, value);
         }
         let e = self.assignment(target, value)?;
         self.ast.with_il(e.expression, inst);
@@ -847,11 +966,12 @@ impl Builder<'_, '_, '_, '_> {
                 self.f.var_mut(var).ty = ty.ty;
             }
         }
-        let var_type = self.f.var(var).ty;
-        if matches!(self.ts.data(var_type), TypeData::ByRef(_)) {
-            return Err("a ref reassignment".to_owned());
-        }
         let left = self.convert_variable(var)?;
+        if matches!(self.ast.node(left.expression), AstNode::RefDirection { .. })
+            && matches!(self.rr_of(left.expression), Rr::ByReference(_))
+        {
+            return self.ref_reassignment(left, value);
+        }
         let e = self.assignment(left, value)?;
         self.ast.with_il(e.expression, inst);
         Ok(e)

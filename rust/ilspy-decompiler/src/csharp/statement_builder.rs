@@ -17,6 +17,7 @@ pub fn convert_body(
     ts: &mut TypeSystem<'_, '_>,
     read: &ReadFunction,
     settings: crate::il::transforms::Settings,
+    use_ref_locals: bool,
     resolver: Option<&dyn crate::il::transforms::Resolver>,
 ) -> Result<(Ast, AstId, Function), Unsupported> {
     // The unbound type argument the type syntax of a generic definition names.
@@ -46,6 +47,7 @@ pub fn convert_body(
         // `currentResultType`: an async function returns the result of its task.
         result_type: read.async_return_type.unwrap_or(method.ret),
         settings,
+        use_ref_locals,
         resolver,
         current_type,
         variable_names,
@@ -96,9 +98,18 @@ impl Builder<'_, '_, '_, '_> {
                 let s = self.ast.add(AstNode::Empty);
                 Ok(self.ast.with_il(s, inst))
             }
-            // `VisitStLoc` and `VisitStObj` strip a top-level `ref` of a ref reassignment, which
-            // the expression builder does not produce.
-            Inst::StLoc { .. } | Inst::StObj { .. } => self.expression_statement(inst),
+            // `VisitStLoc` and `VisitStObj` strip the top-level `ref` of a ref reassignment.
+            Inst::StLoc { .. } | Inst::StObj { .. } => {
+                let e = self.translate(inst, None)?;
+                let expression = match *self.ast.node(e.expression) {
+                    AstNode::RefDirection { expression } => {
+                        self.unwrap_child(e.expression, expression).expression
+                    }
+                    _ => e.expression,
+                };
+                let s = self.ast.add(AstNode::ExpressionStatement { expression });
+                Ok(self.ast.with_il(s, inst))
+            }
             Inst::If {
                 condition,
                 true_inst,
@@ -194,10 +205,14 @@ impl Builder<'_, '_, '_, '_> {
                 let s = self.ast.add(AstNode::Goto { name });
                 Ok(self.ast.with_il(s, inst))
             }
+            Inst::PinnedRegion {
+                variable,
+                init,
+                body,
+            } => self.pinned_region(inst, variable, init, body),
             Inst::Switch { .. }
             | Inst::Branch { .. }
             | Inst::TryFault { .. }
-            | Inst::PinnedRegion { .. }
             | Inst::Initblk { .. }
             | Inst::Cpblk { .. }
             | Inst::Ckfinite { .. }
@@ -205,14 +220,17 @@ impl Builder<'_, '_, '_, '_> {
                 "the statement {}",
                 super::inst_name(self.f.inst(inst))
             )),
-            // `Default`: an expression statement.
+            // `Default`: an expression statement; without ref locals a top-level `ref` is
+            // dropped, which introduces a load.
             _ => {
                 let s = self.expression_statement(inst)?;
                 let AstNode::ExpressionStatement { expression } = *self.ast.node(s) else {
                     unreachable!("an expression statement");
                 };
-                if matches!(self.ast.node(expression), AstNode::RefDirection { .. }) {
-                    return Err("a ref expression as statement".to_owned());
+                if !self.use_ref_locals
+                    && let AstNode::RefDirection { expression: inner } = *self.ast.node(expression)
+                {
+                    *self.ast.node_mut(s) = AstNode::ExpressionStatement { expression: inner };
                 }
                 Ok(s)
             }

@@ -1524,6 +1524,7 @@ pub fn read_function(
     } else {
         None
     };
+    let use_ref_locals = options.use_ref_locals_for_accurate_order_of_evaluation;
     let mut f = crate::il::reader::read_il_in_context(ts, method, body, options, context)
         .map_err(|e| e.to_string())?;
     let mut ctx = crate::il::transforms::Context {
@@ -1540,17 +1541,18 @@ pub fn read_function(
         crate::il::transforms::combine_exits_transform::run(&mut f, &mut ctx);
     }
     // A translated body comes with the function as the translation changed it.
-    let translated =
-        match translate_body.then(|| crate::csharp::convert_body(ts, &f, settings, resolver)) {
-            Some(Ok((ast, stmt, function))) => {
-                f.function = function;
-                // Variables the translation registered, as `RegisterVariable` adds them.
-                f.flush_pending_variables();
-                Some(Ok((ast, stmt)))
-            }
-            Some(Err(reason)) => Some(Err(reason)),
-            None => None,
-        };
+    let translated = match translate_body
+        .then(|| crate::csharp::convert_body(ts, &f, settings, use_ref_locals, resolver))
+    {
+        Some(Ok((ast, stmt, function))) => {
+            f.function = function;
+            // Variables the translation registered, as `RegisterVariable` adds them.
+            f.flush_pending_variables();
+            Some(Ok((ast, stmt)))
+        }
+        Some(Err(reason)) => Some(Err(reason)),
+        None => None,
+    };
     if matches!(translated, Some(Ok(_))) {
         ts.intern_oblivious_instances();
         ts.intern_constant_types();

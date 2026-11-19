@@ -1061,7 +1061,10 @@ impl Builder<'_, '_, '_, '_> {
 
     /// `ChangeDirectionExpressionTo(arg, ReferenceKind.Out)`: `ref x` becomes `out x`, with the
     /// `ref`'s instructions and an `out` resolve result.
-    fn change_direction_to_out(&mut self, arg: TranslatedExpression) -> TranslatedExpression {
+    pub(crate) fn change_direction_to_out(
+        &mut self,
+        arg: TranslatedExpression,
+    ) -> TranslatedExpression {
         let AstNode::RefDirection { expression } = *self.ast.node(arg.expression) else {
             return arg;
         };
@@ -1084,7 +1087,7 @@ impl Builder<'_, '_, '_, '_> {
 
     /// `ChangeDirectionExpressionTo(input, In, isAddressOf)`: `in x` of a `ref x` argument, or
     /// the value itself where the reference is a temporary's address or `this`.
-    fn change_direction_to_in(
+    pub(crate) fn change_direction_to_in(
         &mut self,
         arg: TranslatedExpression,
         is_address_of: bool,
@@ -1231,9 +1234,27 @@ impl Builder<'_, '_, '_, '_> {
         if ts.kind(declaring) == TypeKind::Delegate {
             return self.delegate_construction(inst, call, declaring);
         }
-        let special = if ts.is_known(declaring, KnownTypeCode::SpanOfT)
-            || ts.is_known(declaring, KnownTypeCode::ReadOnlySpanOfT)
+        let is_span = ts.is_known(declaring, KnownTypeCode::SpanOfT)
+            || ts.is_known(declaring, KnownTypeCode::ReadOnlySpanOfT);
+        // `VisitNewObj`: a span of a stackalloc initializer.
+        if is_span
+            && call.args.len() == 2
+            && matches!(
+                self.f.inst(call.args[0]),
+                Inst::Block {
+                    kind: crate::il::ast::BlockKind::StackAllocInitializer,
+                    ..
+                }
+            )
         {
+            let element = match self.ts.data(declaring) {
+                TypeData::Inst { args, .. } => args.first().copied(),
+                _ => None,
+            };
+            return self.stack_alloc_initializer(call.args[0], element);
+        }
+        let ts = &*self.ts;
+        let special = if is_span {
             Some("a span")
         } else if ts.is_known(declaring, KnownTypeCode::Range)
             || ts.is_known(declaring, KnownTypeCode::Index)

@@ -315,6 +315,35 @@ pub enum AstNode {
         right: AstId,
         overflow: Overflow,
     },
+    /// `UnaryOperatorExpression` of `Dereference` (`*expression`), or of `AddressOf`
+    /// (`&expression`) when `address_of`.
+    PointerUnary { address_of: bool, expression: AstId },
+    /// `SizeOfExpression` of `ConvertType(ty)`, whose `SizeOfResolveResult` the host makes.
+    SizeOf { ty: TypeId },
+    /// `FixedStatement`: `fixed (T variable = initializer) body`, of the variable's type, its
+    /// initializer annotated with the variable (`WithILVariable`).
+    Fixed {
+        variable: crate::il::ast::VarId,
+        initializer: AstId,
+        body: AstId,
+    },
+    /// `CallUnsafeIntrinsic`: `Unsafe.name<type_arguments>(arguments)` (`unsafe_type` is
+    /// `System.Runtime.CompilerServices.Unsafe`), the member reference without annotations.
+    UnsafeIntrinsic {
+        unsafe_type: TypeId,
+        name: String,
+        type_arguments: Vec<TypeId>,
+        arguments: Vec<AstId>,
+    },
+    /// `StackAllocExpression`: `stackalloc ty[count]`, or with an initializer of `elements`.
+    StackAlloc {
+        ty: TypeId,
+        count: Option<AstId>,
+        initializer: Option<Vec<AstId>>,
+    },
+    /// `UndocumentedExpression` of `UndocumentedExpressionType` `kind` (`__arglist`,
+    /// `__refvalue`, `__reftype`, `__makeref`) over `arguments`.
+    Undocumented { kind: u8, arguments: Vec<AstId> },
 }
 
 /// The `AddCheckedBlocks` annotation of an arithmetic operator.
