@@ -3067,9 +3067,10 @@ impl Builder<'_, '_, '_, '_> {
                 OverloadResolutionErrors::AMBIGUOUS_MATCH
             });
         }
-        // The resolve result names the method found, whose inferred type arguments may differ
+        // The resolve result names the method found, whose inferred type arguments, or the
+        // type arguments of the target's type its return type is substituted with, may differ
         // from the call's in tuple names or nullability; the host finds it again.
-        if found.method_args != method.method_args {
+        if found.method_args != method.method_args || found.return_type != method.return_type {
             self.found_override = Some(found.clone());
         }
         Ok(OverloadResolutionErrors::NONE)

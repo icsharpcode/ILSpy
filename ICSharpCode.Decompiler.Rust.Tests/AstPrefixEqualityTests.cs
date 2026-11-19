@@ -78,6 +78,29 @@ public class AstPrefixEqualityTests
 		Assert.That(engine, Is.EqualTo(managed));
 	}
 
+	static int CallOfNamedTuple(Queue<(string? Function, string? Error)> queue, out string? function)
+	{
+		var (read, error) = queue.Dequeue();
+		function = read ?? throw new InvalidOperationException(error ?? "no function");
+		return 0;
+	}
+
+	/// <summary>
+	/// A method of a generic type returns its type argument with the tuple element names and
+	/// nullability the target's type gives it, which the stack slot holding the result takes.
+	/// </summary>
+	[Test]
+	public void CallResultKeepsTupleNames()
+	{
+		string path = typeof(AstPrefixEqualityTests).Assembly.Location;
+		var handle = (MethodDefinitionHandle)MetadataTokens.EntityHandle(
+			typeof(AstPrefixEqualityTests).GetMethod(nameof(CallOfNamedTuple), System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic)!.MetadataToken);
+		string managed = DecompileMethod(path, handle, engineBodies: false);
+		string engine = DecompileMethod(path, handle, engineBodies: true);
+		Assert.That(managed, Does.Contain("(string? Function, string? Error)"));
+		Assert.That(engine, Is.EqualTo(managed));
+	}
+
 	static string DecompileMethod(string path, MethodDefinitionHandle handle, bool engineBodies)
 	{
 		RustSeam2.Enabled = engineBodies;
