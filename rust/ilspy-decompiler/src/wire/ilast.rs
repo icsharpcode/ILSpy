@@ -1851,6 +1851,7 @@ pub fn extension_method_syntax_query(
                     for p in &d.parameters {
                         w.ty(p.ty);
                         w.string(&p.name);
+                        w.out.u8(p.ref_kind as u8);
                     }
                     w.out.bool(d.attempted_conversion_with_type_mismatch.get());
                     w.out.bool(d.implicitly_typed);

@@ -70,6 +70,7 @@ pub fn convert_body(
         end_container_labels: Vec::new(),
         case_label_mapping: Vec::new(),
         duplicate_labels: std::collections::HashMap::new(),
+        replaced_loads: Vec::new(),
     };
     b.begin_local_functions()?;
     let stmt = b.convert(body)?;

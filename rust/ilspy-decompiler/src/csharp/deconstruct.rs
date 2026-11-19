@@ -207,7 +207,10 @@ impl Builder<'_, '_, '_, '_> {
             else {
                 return Err("a deconstruction init of another kind".to_owned());
             };
-            self.f.replace(target, init_value);
+            // shortcut: `translate` takes the init's value for the load, but builder code that
+            // inspects an argument's instruction directly still sees the load; replace it in
+            // the engine's ILAst (and send that tree) if a fixture shows the difference.
+            self.replaced_loads.push((target, init_value));
             positions.init += 1;
         }
         let e = self.translate(assignment, None)?;

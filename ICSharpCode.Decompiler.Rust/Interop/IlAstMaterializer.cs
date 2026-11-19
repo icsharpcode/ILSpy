@@ -1291,7 +1291,8 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 			for (int i = 0; i < parameters.Length; i++)
 			{
 				var type = Type();
-				parameters[i] = new DefaultParameter(type, Str());
+				var name = Str();
+				parameters[i] = new DefaultParameter(type, name, referenceKind: (ReferenceKind)U8());
 			}
 			var function = new ILFunction(returnType, parameters, default, new Nop(), ILFunctionKind.Delegate) { DelegateType = delegateType };
 			bool attemptedConversionWithTypeMismatch = Bool();

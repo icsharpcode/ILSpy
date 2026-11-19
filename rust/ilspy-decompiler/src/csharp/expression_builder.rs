@@ -31,6 +31,10 @@ impl Builder<'_, '_, '_, '_> {
             Some(t) => t,
             None => self.ts.intern(TypeData::UnknownSpecial),
         };
+        let inst = match self.replaced_loads.iter().find(|(load, _)| *load == inst) {
+            Some(&(_, value)) => value,
+            None => inst,
+        };
         match self.f.inst(inst).clone() {
             Inst::LdcI4 { value } => self.ldc_i4(inst, value, hint),
             Inst::LdcI8 { value } => self.ldc_i8(inst, value, hint),

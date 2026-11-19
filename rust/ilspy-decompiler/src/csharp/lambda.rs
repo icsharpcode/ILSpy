@@ -63,6 +63,8 @@ impl Builder<'_, '_, '_, '_> {
         let mut any_params_or_default = false;
         let mut has_attributes = false;
         let mut param_names: Vec<String> = parameters.iter().map(|(_, n)| n.clone()).collect();
+        // The reference kind, `params` and optional flags of each parameter.
+        let mut param_kinds = vec![(RefKind::None, false, false); parameters.len()];
         if let Some(read) = &read {
             // The attribute sections of the method other than `[CompilerGenerated]` (and the
             // state machine's for an async lambda), and of its return type.
@@ -85,6 +87,10 @@ impl Builder<'_, '_, '_, '_> {
                 return Err("a lambda whose parameters differ from its method's".to_owned());
             }
             param_names = params.iter().map(|p| p.name.clone()).collect();
+            param_kinds = params
+                .iter()
+                .map(|p| (p.ref_kind, p.is_params, p.optional))
+                .collect();
             let declaring = self
                 .ts
                 .method_declaring(method)
@@ -262,10 +268,16 @@ impl Builder<'_, '_, '_, '_> {
             return_type,
             parameters: parameters
                 .iter()
-                .map(|&(ty, ref name)| Parameter {
-                    name: name.clone(),
-                    ..Parameter::of_type(ty)
-                })
+                .zip(&param_kinds)
+                .map(
+                    |(&(ty, ref name), &(ref_kind, is_params, is_optional))| Parameter {
+                        name: name.clone(),
+                        ty,
+                        ref_kind,
+                        is_params,
+                        is_optional,
+                    },
+                )
                 .collect(),
             attempted_conversion_with_type_mismatch: Cell::new(false),
             implicitly_typed,

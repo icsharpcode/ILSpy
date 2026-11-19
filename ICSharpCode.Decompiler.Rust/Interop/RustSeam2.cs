@@ -1019,6 +1019,10 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				{
 					var left = (Expression)Build(node.Children[0], exprBuilder);
 					var right = (Expression)Build(node.Children[1], exprBuilder);
+					// `VisitDeconstructInstruction` replaced the loads of the init temporaries in the
+					// assignment targets with the inits' values, which the engine translated.
+					if (node.IL is [DeconstructInstruction deconstruction])
+						ReplaceAssignmentTargets(deconstruction);
 					// A property setter's assignment comes with a resolve result of its own.
 					if (node.OperatorType != null)
 					{
@@ -1692,6 +1696,38 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				result.Add(pd);
 			}
 			return result;
+		}
+
+		/// <summary>`ConstructAssignmentTarget`'s `ReplaceAssignmentTarget` over the deconstruction's assignments.</summary>
+		static void ReplaceAssignmentTargets(DeconstructInstruction inst)
+		{
+			var inits = inst.Init;
+			int initPos = 0;
+			foreach (var assignment in inst.Assignments.Instructions.ToArray())
+			{
+				switch (assignment)
+				{
+					case CallInstruction call:
+						for (int i = 0; i < call.Arguments.Count - 1; i++)
+							ReplaceAssignmentTarget(call.Arguments[i]);
+						break;
+					case StObj stobj:
+						var target = stobj.Target;
+						while (target.MatchLdFlda(out var nestedTarget, out _))
+							target = nestedTarget;
+						ReplaceAssignmentTarget(target);
+						break;
+				}
+			}
+
+			void ReplaceAssignmentTarget(ILInstruction target)
+			{
+				if (target.MatchLdLoc(out var v) && v.Kind == VariableKind.DeconstructionInitTemporary)
+				{
+					target.ReplaceWith(inits[initPos].Value);
+					initPos++;
+				}
+			}
 		}
 
 		static T Annotate<T>(T syntax, RustBodyNode node) where T : AstNode
