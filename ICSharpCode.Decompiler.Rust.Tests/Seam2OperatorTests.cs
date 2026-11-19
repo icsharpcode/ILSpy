@@ -18,6 +18,7 @@
 
 using System;
 using System.IO;
+using System.Linq.Expressions;
 using System.Reflection;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
@@ -155,7 +156,18 @@ public class Seam2OperatorTests
 
 	static int EnumArithmetic(Color c) => (int)c * 3;
 
+	// The compiler folds `~` of a constant, so the expression tree (which the decompiler turns
+	// back into a lambda) is the way to get `~` of a constant into the ILAst unoptimized.
+	static Expression<Func<bool>> ConstantBitNot() => Expression.Lambda<Func<bool>>(
+		Expression.AndAlso(
+			Expression.Equal(Expression.Not(Expression.Constant(0L, typeof(long))), Expression.Constant(-1L, typeof(long))),
+			Expression.Equal(
+				Expression.Convert(Expression.Not(Expression.Constant(0, typeof(int))), typeof(ushort)),
+				Expression.Constant(ushort.MaxValue, typeof(ushort)))),
+		Array.Empty<ParameterExpression>());
+
 	[TestCase(nameof(UserDefinedCompoundAssign))]
+	[TestCase(nameof(ConstantBitNot))]
 	[TestCase(nameof(LiftedOperations))]
 	[TestCase(nameof(ShortCircuit))]
 	[TestCase(nameof(EnumArithmetic))]

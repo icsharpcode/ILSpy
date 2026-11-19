@@ -802,11 +802,41 @@ impl Builder<'_, '_, '_, '_> {
         if self.ts.is_known(a.ty, KnownTypeCode::NullableOfT) {
             ty = self.ts.make_nullable(ty);
         }
+        // `ResolveUnaryOperator` folds `~` of a constant (an enum's as `(E)(~(U)x)`), but not
+        // of a native integer.
+        let folded = match self.rr_of(a.expression) {
+            Rr::Constant { value, .. } if !self.is_native_integer(ty) => {
+                let v = super::translated_expression::integral_value(&value);
+                match (self.ts.kind(ty) == TypeKind::Enum, value, v) {
+                    (true, ConstValue::SByte(x), _) => Some(ConstValue::SByte(!x)),
+                    (true, ConstValue::Byte(x), _) => Some(ConstValue::Byte(!x)),
+                    (true, ConstValue::Int16(x), _) => Some(ConstValue::Int16(!x)),
+                    (true, ConstValue::UInt16(x), _) => Some(ConstValue::UInt16(!x)),
+                    (true, ConstValue::Int32(x), _) => Some(ConstValue::Int32(!x)),
+                    (true, ConstValue::UInt32(x), _) => Some(ConstValue::UInt32(!x)),
+                    (true, ConstValue::Int64(x), _) => Some(ConstValue::Int64(!x)),
+                    (true, ConstValue::UInt64(x), _) => Some(ConstValue::UInt64(!x)),
+                    (false, _, Some(v)) => match self.ts.type_code(ty) {
+                        9 => Some(ConstValue::Int32(!(v as i32))),
+                        10 => Some(ConstValue::UInt32(!(v as u32))),
+                        11 => Some(ConstValue::Int64(!(v as i64))),
+                        12 => Some(ConstValue::UInt64(!(v as u64))),
+                        _ => None,
+                    },
+                    _ => None,
+                }
+            }
+            _ => None,
+        };
         let e = self.ast.add(AstNode::BitNot {
             expression: a.expression,
         });
         self.ast.with_il(e, inst);
-        self.ast.with_rr(e, Rr::ResolvedOperator { ty });
+        let rr = match folded {
+            Some(value) => Rr::Constant { ty, value },
+            None => Rr::ResolvedOperator { ty },
+        };
+        self.ast.with_rr(e, rr);
         Ok(TranslatedExpression { expression: e, ty })
     }
 
@@ -1224,7 +1254,6 @@ impl Builder<'_, '_, '_, '_> {
         // applies, or one over another stack type, an operand is cast to the comparison's type,
         // and both where one is not enough.
         let mut converts_operands = resolved.unwrap_or(false);
-        let mut operator_built = false;
         if !self.fits_comparison(resolved, &l, &r, input) {
             // Lifted, the cast is to the nullable of the comparison's type.
             let mut target = self.comparison_target_type(input, l.ty, r.ty);
@@ -1248,14 +1277,7 @@ impl Builder<'_, '_, '_, '_> {
                 l = self.convert_to(l, target, false)?;
                 r = self.convert_to(r, target, false)?;
                 converts_operands = false;
-                operator_built = true;
             }
-        }
-        // The resolver folds a comparison of two constants into a constant, which the host
-        // computes by resolving the operator; only the operator built over both converted
-        // operands stays an operator.
-        if !operator_built && self.both_constant(&l, &r) {
-            converts_operands = true;
         }
         let e = self.ast.add(AstNode::BinaryOperator {
             overflow: Overflow::None,
@@ -1277,7 +1299,8 @@ impl Builder<'_, '_, '_, '_> {
         })
     }
 
-    /// Whether the operator resolved over the comparison's stack type.
+    /// Whether the operator resolved over the comparison's stack type. Two constants resolve to
+    /// the folded constant, no `OperatorResolveResult`, so they never fit.
     fn fits_comparison(
         &mut self,
         resolved: Option<bool>,
@@ -1286,7 +1309,7 @@ impl Builder<'_, '_, '_, '_> {
         input: StackType,
     ) -> bool {
         let operand = self.equality_operand_type(l, r);
-        resolved.is_some() && self.ts.stack_type(operand) == input
+        resolved.is_some() && self.ts.stack_type(operand) == input && !self.both_constant(l, r)
     }
 
     /// The type of the operator's first operand (`rr.Operands[0].Type`): the promoted type of
