@@ -102,6 +102,8 @@ mod kind {
     pub const STACK_ALLOC: u8 = 124;
     pub const UNDOCUMENTED: u8 = 125;
     pub const UNARY_OPERATOR: u8 = 90;
+    pub const ANONYMOUS_TYPE_CREATE: u8 = 74;
+    pub const WITH_INITIALIZER: u8 = 75;
 }
 
 pub(super) fn write_body(
@@ -414,6 +416,8 @@ fn node(w: &mut FunctionWriter<'_, '_, '_, '_>, ast: &Ast, id: AstId) -> Result<
         AstNode::Named { .. } => kind::NAMED,
         AstNode::ArrayCreate { .. } => kind::ARRAY_CREATE,
         AstNode::ArrayInitializer { .. } => kind::ARRAY_INITIALIZER,
+        AstNode::AnonymousTypeCreate { .. } => kind::ANONYMOUS_TYPE_CREATE,
+        AstNode::WithInitializer { .. } => kind::WITH_INITIALIZER,
         AstNode::YieldReturn { .. } => kind::YIELD_RETURN,
         AstNode::YieldBreak => kind::YIELD_BREAK,
         AstNode::NullConditional { .. } => kind::NULL_CONDITIONAL,
@@ -960,7 +964,10 @@ fn node(w: &mut FunctionWriter<'_, '_, '_, '_>, ast: &Ast, id: AstId) -> Result<
             w.out.bool(rewrap);
             node(w, ast, expression)?;
         }
-        AstNode::ArrayInitializer { elements } => {
+        AstNode::ArrayInitializer { elements }
+        | AstNode::AnonymousTypeCreate {
+            initializers: elements,
+        } => {
             w.out.len(elements.len());
             for e in elements {
                 node(w, ast, e)?;
@@ -969,6 +976,16 @@ fn node(w: &mut FunctionWriter<'_, '_, '_, '_>, ast: &Ast, id: AstId) -> Result<
         AstNode::Named { name, expression } => {
             w.string(&name);
             node(w, ast, expression)?;
+        }
+        AstNode::WithInitializer {
+            expression,
+            initializer,
+        } => {
+            node(w, ast, expression)?;
+            w.out.len(initializer.len());
+            for e in initializer {
+                node(w, ast, e)?;
+            }
         }
         AstNode::BinaryOperator {
             op,

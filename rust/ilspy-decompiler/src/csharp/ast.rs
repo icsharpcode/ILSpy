@@ -253,6 +253,14 @@ pub enum AstNode {
     },
     /// `ArrayInitializerExpression`.
     ArrayInitializer { elements: Vec<AstId> },
+    /// `AnonymousTypeCreateExpression`: `new { initializers }`, each an expression whose name
+    /// is inferred or a `Named` one.
+    AnonymousTypeCreate { initializers: Vec<AstId> },
+    /// `WithInitializerExpression`: `expression with { initializer }`.
+    WithInitializer {
+        expression: AstId,
+        initializer: Vec<AstId>,
+    },
     /// `YieldReturnStatement`.
     YieldReturn { expression: AstId },
     /// `YieldBreakStatement`.

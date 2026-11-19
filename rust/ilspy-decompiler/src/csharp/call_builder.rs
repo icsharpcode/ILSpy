@@ -189,13 +189,10 @@ impl Builder<'_, '_, '_, '_> {
         }
         let method =
             Method::from_resolved(self.ts, resolved).ok_or("a call of an unresolved method")?;
-        if self
+        let explicit_implementation = self
             .ts
             .is_explicit_interface_implementation(id)
-            .unwrap_or(true)
-        {
-            return Err("a call of an explicit interface implementation".to_owned());
-        }
+            .map_err(|e| e.to_string())?;
         let declaring = method.declaring.ok_or("a method without declaring type")?;
         // `IsWrittenAsMemberAccess`: the name of the property the accessor belongs to; for an
         // indexer whether the accessor is its setter.
@@ -225,9 +222,11 @@ impl Builder<'_, '_, '_, '_> {
                 if !matches!(semantics, ACCESSOR_GETTER | ACCESSOR_SETTER) {
                     return Err("an indexer or parameterized property access".to_owned());
                 }
+                // `IsWrittenAsMemberAccess`: a property with parameters is written as a member
+                // access only as an indexer (`SymbolKind.Indexer`, named as the type's
+                // `[DefaultMember]`); other parameterized properties keep the call syntax.
+                let mut written_as_member_access = true;
                 if method.parameters.len() != parameters {
-                    // `SymbolKind.Indexer`: a property with parameters named as the type's
-                    // `[DefaultMember]`; other parameterized properties keep the call syntax.
                     let name = self.property_info(id.module, token & 0x00FF_FFFF)?.0;
                     let default_member = match self.ts.definition(declaring) {
                         Some(def) => self
@@ -239,9 +238,10 @@ impl Builder<'_, '_, '_, '_> {
                     if method.parameters.len() < parameters
                         || default_member.as_deref() != Some(&name)
                     {
-                        return Err("a parameterized property access".to_owned());
+                        written_as_member_access = false;
+                    } else {
+                        indexer = Some(semantics == ACCESSOR_SETTER);
                     }
-                    indexer = Some(semantics == ACCESSOR_SETTER);
                 }
                 // `HandleRangeConstruction` comes first and writes `..` for `Range.All`.
                 if self.ts.is_known(declaring, KnownTypeCode::Range)
@@ -249,10 +249,17 @@ impl Builder<'_, '_, '_, '_> {
                 {
                     return Err("a property of Range or Index".to_owned());
                 }
-                Some(self.property_info(id.module, token & 0x00FF_FFFF)?.0)
+                if written_as_member_access {
+                    Some(self.property_info(id.module, token & 0x00FF_FFFF)?.0)
+                } else {
+                    None
+                }
             }
         };
         let is_extension = self.ts.method_flags(id, None).extension;
+        if explicit_implementation && (property.is_some() || is_extension || method.is_operator) {
+            return Err("a call of an explicit interface implementation".to_owned());
+        }
         if property.is_none() {
             self.check_special_calls(&method, declaring)?;
         }
@@ -295,13 +302,7 @@ impl Builder<'_, '_, '_, '_> {
         // `TransformParamsArgument`: the expanded form where the call as written with it resolves
         // to the method in that form.
         if let Some(expanded) = list.expanded(&method) {
-            if is_extension
-                || property.is_some()
-                || indexer.is_some()
-                || method.is_operator
-                || method.method_args.is_some()
-                || (method.name == "Invoke" && self.ts.kind(declaring) == TypeKind::Delegate)
-            {
+            if property.is_some() || indexer.is_some() || method.is_operator {
                 return Err("an expanded params argument of this call".to_owned());
             }
             let resolver = self
@@ -334,12 +335,11 @@ impl Builder<'_, '_, '_, '_> {
             }
             list.params_candidate = None;
         }
-        // Named arguments of an extension method, an accessor or a delegate invocation are not
-        // translated.
+        // Named arguments of an extension method, a property or event accessor or a delegate
+        // invocation are not translated; an indexer's are written as they are.
         if list.parameter_map.is_some()
             && (is_extension
-                || property.is_some()
-                || indexer.is_some()
+                || (property.is_some() && indexer.is_none())
                 || (method.name == "Invoke" && self.ts.kind(declaring) == TypeKind::Delegate))
         {
             return Err("named arguments of an extension, accessor or delegate call".to_owned());
@@ -366,18 +366,14 @@ impl Builder<'_, '_, '_, '_> {
             && method.is_static
             && (formattable
                 || (method.name == "Format" && self.ts.is_known(declaring, KnownTypeCode::String)));
-        if creation
-            && unexpanded_params
+        let array_literal = unexpanded_params
             && list.arguments.len() == 2
             && matches!(
                 self.ast.node(list.arguments[1].expression),
                 AstNode::ArrayCreate { .. }
-            )
-        {
-            return Err("a string.Format call of a params overload".to_owned());
-        }
-        if creation && !unexpanded_params {
-            match self.format_interpolation(inst, &list, first_argument_node)? {
+            );
+        if creation && (!unexpanded_params || array_literal) {
+            match self.format_interpolation(inst, &list, first_argument_node, array_literal)? {
                 Some(e) if formattable => {
                     let ty = self.ts.known_type(KnownTypeCode::FormattableString);
                     let c = self.ast.add(AstNode::Cast {
@@ -561,7 +557,7 @@ impl Builder<'_, '_, '_, '_> {
         let disambiguated =
             self.disambiguate_call(&method, id, op, &mut target, &mut list, require, declaring);
         self.needs_boxing_conversion = false;
-        let (require, require_type_arguments) = disambiguated?;
+        let (mut require, require_type_arguments) = disambiguated?;
         // The managed builder comments a cast target of a `constrained.` call, which is not
         // translated.
         if constrained_to.is_some() && self.is_cast_target(target.expression) {
@@ -619,21 +615,51 @@ impl Builder<'_, '_, '_, '_> {
         {
             return Ok(e);
         }
+        // `this.Dispose()` of an explicitly implemented `IDisposable.Dispose` is written as
+        // `((IDisposable)this).Dispose()`, the cast without a resolve result; other targets of
+        // such a call are not translated.
+        let mut name = method.name.clone();
+        let mut callee_target = target.expression;
+        if explicit_implementation {
+            // shortcut: the host's lookup finds the implementation by its metadata name (`I.M`)
+            // without a target where the managed one needs `this`, so a `this` target is
+            // written whatever the probe said; with
+            // `AlwaysCastTargetsOfExplicitInterfaceImplementationCalls` (set for
+            // `InitializeComponent`) any target is cast, and other targets are not translated.
+            if !matches!(self.ast.node(target.expression), AstNode::This) {
+                return Err("a call of an explicit interface implementation".to_owned());
+            }
+            require = true;
+            let implemented = self
+                .ts
+                .explicit_implementations(id)
+                .map_err(|e| e.to_string())?;
+            let interface_member = implemented
+                .first()
+                .ok_or("an explicit implementation without interface member")?;
+            let interface = interface_member
+                .declaring
+                .ok_or("an interface member without declaring type")?;
+            callee_target = self.ast.add(AstNode::Cast {
+                ty: interface,
+                expression: target.expression,
+                overflow: Overflow::None,
+            });
+            name.clone_from(&interface_member.name);
+        }
         let callee = match (require, type_arguments.is_empty()) {
             (true, true) => self.ast.add(AstNode::MemberReference {
-                target: target.expression,
-                name: method.name.clone(),
+                target: callee_target,
+                name,
             }),
-            (false, true) => self.ast.add(AstNode::Identifier {
-                name: method.name.clone(),
-            }),
+            (false, true) => self.ast.add(AstNode::Identifier { name }),
             (true, false) => self.ast.add(AstNode::GenericMemberReference {
-                target: target.expression,
-                name: method.name.clone(),
+                target: callee_target,
+                name,
                 type_arguments,
             }),
             (false, false) => self.ast.add(AstNode::GenericIdentifier {
-                name: method.name.clone(),
+                name,
                 type_arguments,
             }),
         };
@@ -769,14 +795,30 @@ impl Builder<'_, '_, '_, '_> {
         }
         let mut first = list.arguments[0];
         let mut target_rr = self.rr_of(first.expression);
-        if matches!(
+        // A null literal has no type of its own: the target is `(T)null`, of the first
+        // parameter's type, asked about as an expression of that type.
+        // shortcut: the cast carries the host's `ResolveCast` of the literal where the managed
+        // cast has none and the target is its `NullLiteralConversion`; both are of the type.
+        let null_target = matches!(
             target_rr,
             Rr::Constant {
                 value: ConstValue::Null,
                 ..
             }
-        ) {
-            return Err("an extension method call on null".to_owned());
+        );
+        if null_target {
+            // shortcut: on a generic method the engine's disambiguation writes the type
+            // arguments the managed one leaves out (`((IEnumerable<int>)null).Any()`); upgrade
+            // with `IsPossibleExtensionMethodCallOnNull` in the probe.
+            if !method.type_parameters.is_empty() || method.method_args.is_some() {
+                return Err("an extension method call on null".to_owned());
+            }
+            let ty = method.parameters[0].ty;
+            target_rr = Rr::Conversion { ty };
+            first = TranslatedExpression {
+                expression: first.expression,
+                ty,
+            };
         }
         // A `ref this` extension method takes the referenced expression as its target, which
         // carries the reference implicitly; an `out` argument is no target.
@@ -796,7 +838,11 @@ impl Builder<'_, '_, '_, '_> {
         let resolver = self
             .resolver
             .ok_or("a member reference without the host's resolver")?;
-        let target = self.semantic_rr(first.expression, first.ty);
+        let target = if null_target {
+            ResolveResult::Expression(first.ty)
+        } else {
+            self.semantic_rr(first.expression, first.ty)
+        };
         // `GetArgumentResolveResults(skipCount: 1)`
         let arguments = self.argument_resolve_results(list).split_off(1);
         let remaining = names
@@ -889,6 +935,15 @@ impl Builder<'_, '_, '_, '_> {
         if !can {
             return Ok(None);
         }
+        if null_target {
+            let c = self.ast.add(AstNode::Cast {
+                ty: first.ty,
+                expression: first.expression,
+                overflow: Overflow::None,
+            });
+            self.ast.with_rr(c, Rr::Conversion { ty: first.ty });
+            first.expression = c;
+        }
         let callee = if type_arguments.is_empty() {
             self.ast.add(AstNode::MemberReference {
                 target: first.expression,
@@ -915,7 +970,7 @@ impl Builder<'_, '_, '_, '_> {
                 extension: true,
                 delegate: false,
                 found_by_lookup: false,
-                expanded: false,
+                expanded: list.is_expanded_form,
                 method_args: method_args.map(<[TypeId]>::to_vec),
             },
         );
@@ -1308,13 +1363,6 @@ impl Builder<'_, '_, '_, '_> {
                 Some((ns, name)) if ns == "System" && name.starts_with("ValueTuple") => {
                     Some("a tuple")
                 }
-                // `IsAnonymousType`, without its checks for generated names and attributes.
-                Some((ns, name))
-                    if ns.is_empty()
-                        && (name.contains("AnonType") || name.contains("AnonymousType")) =>
-                {
-                    Some("an anonymous type")
-                }
                 _ => None,
             }
         };
@@ -1326,7 +1374,25 @@ impl Builder<'_, '_, '_, '_> {
         let MethodOrigin::Def(id) = resolved.origin else {
             return Err("a call of an unresolved method".to_owned());
         };
+        let anonymous = self.settings.anonymous_types
+            && self.ts.definition(declaring).is_some_and(|d| {
+                crate::il::transforms::transform_collection_and_object_initializers::is_anonymous_type(
+                    self.ts, d,
+                )
+            });
         let mut list = self.argument_list(call, &method, id, 0, declaring, false)?;
+        if anonymous {
+            // shortcut: inside a lambda (a query's `select new { ... }` or transparent
+            // identifier) the engine's body keeps IntroduceQueryExpressions from writing the
+            // outermost clause as the managed one does; find the annotation that differs, then
+            // serve these too.
+            if self.in_lambda {
+                return Err(
+                    "an object creation of an anonymous type with syntax of its own".to_owned(),
+                );
+            }
+            return self.anonymous_type_creation(inst, operand, &method, &list);
+        }
         // `TransformParamsArgument`: the expanded form where the creation as written with it
         // resolves to the constructor in that form.
         if let Some(expanded) = list.expanded(&method) {
@@ -1367,6 +1433,56 @@ impl Builder<'_, '_, '_, '_> {
         } else {
             declaring
         };
+        self.ast.with_rr(
+            e,
+            Rr::ObjectCreation {
+                method: Box::new(operand.clone()),
+                ty,
+                expanded: list.is_expanded_form,
+            },
+        );
+        self.ast.with_il(e, inst);
+        Ok(TranslatedExpression { expression: e, ty })
+    }
+
+    /// `HandleConstructorCall` of an anonymous type: `new { a, b.c }` where each argument is
+    /// a name or member reference of its parameter's name, else `new { A = (T)a, ... }`.
+    fn anonymous_type_creation(
+        &mut self,
+        inst: NodeId,
+        operand: &MethodOperand,
+        method: &Method,
+        list: &ArgumentList,
+    ) -> Result<TranslatedExpression, Unsupported> {
+        let parameters = list.expected_parameters(method);
+        // `CanInferAnonymousTypePropertyNamesFromArguments`
+        let names = &list.parameter_names;
+        let inferred =
+            list.arguments
+                .iter()
+                .zip(names)
+                .all(|(a, p)| match self.ast.node(a.expression) {
+                    AstNode::Identifier { name }
+                    | AstNode::GenericIdentifier { name, .. }
+                    | AstNode::MemberReference { name, .. }
+                    | AstNode::GenericMemberReference { name, .. } => name == p,
+                    _ => false,
+                });
+        let initializers = if inferred {
+            self.written_arguments(list, 0)
+        } else {
+            let mut initializers = Vec::with_capacity(list.arguments.len());
+            for ((&a, p), name) in list.arguments.iter().zip(&parameters).zip(names) {
+                let converted = self.convert_to(a, p.ty, false)?;
+                initializers.push(self.ast.add(AstNode::Named {
+                    name: name.clone(),
+                    expression: converted.expression,
+                }));
+            }
+            initializers
+        };
+        let e = self.ast.add(AstNode::AnonymousTypeCreate { initializers });
+        let ty = method.declaring.ok_or("a method without declaring type")?;
         self.ast.with_rr(
             e,
             Rr::ObjectCreation {
@@ -2001,8 +2117,9 @@ impl Builder<'_, '_, '_, '_> {
 
     /// `Target.ConvertTo(declaringType)` of a member reference's target, and the lookup target
     /// of the cast. A value-type target, which the managed probe resolves without the cast
-    /// where the engine's does not, is not translated; nor is a `this` or `base` target that
-    /// would be cast, nor a null-conditional target, which would be cast inside its `?`.
+    /// where the engine's does not, is not translated; nor is a `base` target that would be
+    /// cast (written as `this`), a `this` target cast to a class, nor a null-conditional
+    /// target, which would be cast inside its `?`.
     pub(crate) fn cast_target_to(
         &mut self,
         target: &mut TranslatedExpression,
@@ -2024,10 +2141,25 @@ impl Builder<'_, '_, '_, '_> {
                 });
             }
         }
+        // Any other target of the declaring type itself converts without a cast too, a static
+        // member's type reference among them.
+        let n = Normalization::IGNORE_NULLABILITY_AND_TUPLES;
+        if self.ts.normalize_with(target.ty, n) == self.ts.normalize_with(declaring, n) {
+            return Ok(match self.rr_of(target.expression) {
+                Rr::Type(ty) => LookupTarget::Type(ty),
+                _ => LookupTarget::Expression(target.ty),
+            });
+        }
+        // shortcut: `this` is cast only to an interface; to a class the engine may hold `this`
+        // where the managed builder took `base` (`base..ctor()` in F# constructors), which
+        // needs no cast. Upgrade once the targets agree.
+        let this_to_class = matches!(self.ast.node(target.expression), AstNode::This)
+            && !self.ts.is_interface(declaring);
         if self.ts.is_reference_type(target.ty) != Some(true)
+            || this_to_class
             || matches!(
                 self.ast.node(target.expression),
-                AstNode::This | AstNode::Base | AstNode::NullConditional { .. }
+                AstNode::Base | AstNode::NullConditional { .. }
             )
         {
             return Err("a reference that needs a cast of its target".to_owned());
@@ -2056,21 +2188,34 @@ impl Builder<'_, '_, '_, '_> {
     }
 
     /// `Disambiguator.CastArguments`: every argument converted to its parameter type with an
-    /// explicit cast where it is of another type. Parameters of anonymous or dynamic types
-    /// and `in` parameters, which the managed code treats apart, are not translated.
+    /// explicit cast where it is of another type: a dynamic parameter's as `object`, an `in`
+    /// parameter's to its element type, an argument of an anonymous type not at all.
     fn cast_arguments(
         &mut self,
         arguments: &mut [TranslatedExpression],
         parameters: &[crate::semantics::Parameter],
     ) -> Result<(), Unsupported> {
         for (a, p) in arguments.iter_mut().zip(parameters) {
-            if self.contains_anonymous_type_name(p.ty)
-                || self.ts.kind(p.ty) == TypeKind::Dynamic
-                || p.ref_kind == RefKind::In
-            {
-                return Err("argument casts to anonymous, dynamic or in parameters".to_owned());
+            if self.settings.anonymous_types && self.contains_anonymous_type_name(p.ty) {
+                // An argument of an anonymous type cannot be cast; a lambda's return type
+                // would be adjusted (`ModifyReturnTypeOfLambda`), which is not translated.
+                if matches!(self.ast.node(a.expression), AstNode::Lambda { .. }) {
+                    return Err("argument casts to anonymous, dynamic or in parameters".to_owned());
+                }
+                continue;
             }
-            *a = self.convert_to(*a, p.ty, false)?;
+            let mut ty = if self.ts.kind(p.ty) == TypeKind::Dynamic {
+                self.ts.known_type(KnownTypeCode::Object)
+            } else {
+                p.ty
+            };
+            if p.ref_kind == RefKind::In
+                && let TypeData::ByRef(element) = *self.ts.data(ty)
+                && !matches!(self.ts.data(a.ty), TypeData::ByRef(_))
+            {
+                ty = element;
+            }
+            *a = self.convert_to(*a, ty, false)?;
         }
         Ok(())
     }
@@ -2387,15 +2532,22 @@ impl Builder<'_, '_, '_, '_> {
             .ok_or("a collection initializer of an unresolved method")?;
         let declaring = method.declaring.ok_or("a method without declaring type")?;
         let mut list = self.argument_list(call, &method, id, 1, declaring, false)?;
-        if list.params_candidate.is_some() {
-            return Err("a collection initializer of a params method".to_owned());
-        }
-        list.add_names_to_primitive_values = false;
-        list.use_implicitly_typed_out = false;
         let resolver = self
             .resolver
             .ok_or("a member reference without the host's resolver")?;
         let lookup = Some(LookupTarget::Expression(object.ty));
+        // `TransformParamsArgument`: the expanded form where the `Add` call written with it
+        // resolves to the method in that form.
+        if let Some(expanded) = list.expanded(&method) {
+            let errors = self.probe_call(resolver, &method, op, lookup, &object, &expanded, &[])?;
+            self.found_override = None;
+            if errors == OverloadResolutionErrors::NONE {
+                list = expanded;
+            }
+            list.params_candidate = None;
+        }
+        list.add_names_to_primitive_values = false;
+        list.use_implicitly_typed_out = false;
         let mut spent_optional = false;
         let mut spent_cast = false;
         loop {
@@ -2644,10 +2796,10 @@ impl Builder<'_, '_, '_, '_> {
                         _ => return Ok(None),
                     },
                 };
-                if elements.len() != n as usize {
+                if elements.len() > n as usize {
                     return Err("a params array with default elements".to_owned());
                 }
-                let elements = elements
+                let mut elements: Vec<_> = elements
                     .into_iter()
                     .map(|e| {
                         let rr = self.rr_of(e);
@@ -2657,6 +2809,10 @@ impl Builder<'_, '_, '_, '_> {
                         }
                     })
                     .collect();
+                // The elements the initializer leaves out are the element type's default.
+                while elements.len() < n as usize {
+                    elements.push(self.default_value_expression(element_type)?);
+                }
                 Ok(Some((elements, element_type)))
             }
             _ => Ok(None),
@@ -2671,6 +2827,7 @@ impl Builder<'_, '_, '_, '_> {
         inst: NodeId,
         list: &ArgumentList,
         first_argument_node: usize,
+        array_literal: bool,
     ) -> Result<Option<TranslatedExpression>, Unsupported> {
         let Some(format_arg) = list.arguments.first() else {
             return Ok(None);
@@ -2715,12 +2872,27 @@ impl Builder<'_, '_, '_, '_> {
         {
             return Ok(None);
         }
+        // `UnpackSingleElementArray`: the array literal of an unexpanded `params` overload with
+        // one element interpolates the element.
+        // shortcut: the interpolated string's resolve result takes the element's resolve result
+        // where the managed one keeps the array's; send the array's if a consumer reads it.
+        let mut unpacked = None;
+        if array_literal
+            && let AstNode::ArrayCreate {
+                initializer: Some(init),
+                ..
+            } = *self.ast.node(list.arguments[1].expression)
+            && let AstNode::ArrayInitializer { elements } = self.ast.node(init)
+            && let [element] = elements[..]
+        {
+            unpacked = Some(element);
+        }
         let contents = tokens
             .into_iter()
             .map(|t| match t.index {
                 None => super::ast::InterpolatedContent::Text(t.text),
                 Some(index) => super::ast::InterpolatedContent::Interpolation {
-                    expression: list.arguments[index + 1].expression,
+                    expression: unpacked.unwrap_or(list.arguments[index + 1].expression),
                     alignment: t.alignment,
                     suffix: t.format,
                 },

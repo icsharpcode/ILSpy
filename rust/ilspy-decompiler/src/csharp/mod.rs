@@ -13,6 +13,7 @@ mod delegate;
 pub mod entity_syntax;
 mod expression_builder;
 mod foreach;
+mod initializer;
 mod lambda;
 mod local_function;
 mod member_access;

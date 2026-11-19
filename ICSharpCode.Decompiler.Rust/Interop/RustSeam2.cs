@@ -127,6 +127,8 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		public const byte StackAlloc = 124;
 		public const byte Undocumented = 125;
 		public const byte UnaryOperator = 90;
+		public const byte AnonymousTypeCreate = 74;
+		public const byte WithInitializer = 75;
 
 		public byte Kind;
 		/// <summary>The instructions the node is annotated with, in order.</summary>
@@ -751,6 +753,18 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 
 		static readonly ConditionalWeakTable<ILFunction, Translation> translations = new ConditionalWeakTable<ILFunction, Translation>();
 
+		[ThreadStatic]
+		static string? lastFallbackReason;
+
+		/// <summary>
+		/// The reason of the last body the engine did not serve on this thread, for tests that
+		/// decompile one method and ask whether the engine translated its body; tests reset it.
+		/// </summary>
+		public static string? LastFallbackReason {
+			get => lastFallbackReason;
+			set => lastFallbackReason = value;
+		}
+
 		sealed class Translation
 		{
 			public RustBodyNode? Body;
@@ -780,6 +794,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 			translations.Remove(function);
 			if (translation.Body == null)
 			{
+				lastFallbackReason = translation.Reason ?? "unknown";
 				ThrowIfStrict("this body", translation.Reason);
 				Interlocked.Increment(ref fallbacks);
 				fallbackReasons.AddOrUpdate(translation.Reason ?? "unknown", 1, (_, n) => n + 1);
@@ -1436,6 +1451,32 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				}
 				case RustBodyNode.Named:
 					return Annotate(new NamedExpression((string)node.Value!, (Expression)Build(node.Children[0], exprBuilder)), node);
+				case RustBodyNode.AnonymousTypeCreate:
+				{
+					// `HandleConstructorCall` of an anonymous type. shortcut: the arguments of the
+					// resolve result are the written initializers' (after the cast to a property's
+					// type where one was added), not the uncast arguments; send those if a consumer
+					// ever tells them apart.
+					var initializers = node.Children.Select(c => (Expression)Build(c, exprBuilder)).ToList();
+					if (node.Call is var (_, callMethod, _, _, _, isExpanded))
+					{
+						node.ResolveResult = new CSharpInvocationResolveResult(null!, callMethod,
+							initializers.Select(e => (e is NamedExpression named ? named.Expression : e).GetResolveResult()).ToArray(),
+							isExpandedForm: isExpanded);
+					}
+					var creation = new AnonymousTypeCreateExpression();
+					creation.Initializers.AddRange(initializers);
+					return Annotate(creation, node);
+				}
+				case RustBodyNode.WithInitializer:
+				{
+					// `TranslateWithInitializer`: the value, then the initializer's elements.
+					var with = new WithInitializerExpression {
+						Expression = (Expression)Build(node.Children[0], exprBuilder),
+						Initializer = new ArrayInitializerExpression(node.Children.Skip(1).Select(c => (Expression)Build(c, exprBuilder))),
+					};
+					return Annotate(with, node);
+				}
 				case RustBodyNode.InterpolatedString:
 				{
 					var content = new List<InterpolatedStringContent>();
