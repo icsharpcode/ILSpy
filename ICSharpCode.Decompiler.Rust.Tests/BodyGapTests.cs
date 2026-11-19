@@ -69,6 +69,50 @@ public class BodyGapTests
 
 	static string FormatOfArrayLiteral(int x) => string.Format("value {0}", new object[] { x });
 
+	static void TakesDynamic(dynamic d) { }
+
+	static object DynamicMember(dynamic d) => d.Name;
+
+	static void DynamicSetIndexAndMember(dynamic d, int i)
+	{
+		d[i, "k"] = d.Value + 1;
+		d.Other = -d;
+	}
+
+	static int DynamicConvert(dynamic d) => (int)d;
+
+	static string StaticConversionFromDynamic(dynamic d) => (string)(object)d;
+
+	static void ArgumentOfDynamicParameter() => TakesDynamic(1);
+
+	static void DynamicCompound(dynamic d)
+	{
+		d.X += 1;
+		d *= 2;
+	}
+
+	static object DynamicInvocations(dynamic d)
+	{
+		Console.WriteLine(d);
+		d.Generic<int>(1, name: "n");
+		return new BodyGapRecord(d, "x");
+	}
+
+	static bool DynamicConditions(dynamic d)
+	{
+		if (d)
+			return !d;
+		return d && d.Flag ? true : false;
+	}
+
+	[TestCase(nameof(DynamicMember))]
+	[TestCase(nameof(DynamicSetIndexAndMember))]
+	[TestCase(nameof(DynamicConvert))]
+	[TestCase(nameof(StaticConversionFromDynamic))]
+	[TestCase(nameof(ArgumentOfDynamicParameter))]
+	[TestCase(nameof(DynamicCompound))]
+	[TestCase(nameof(DynamicInvocations))]
+	[TestCase(nameof(DynamicConditions))]
 	[TestCase(nameof(WithInitializer))]
 	[TestCase(nameof(FormatOfArrayLiteral))]
 	[TestCase(nameof(AnonymousInferred))]

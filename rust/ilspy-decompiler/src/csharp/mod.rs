@@ -10,6 +10,7 @@ mod call_builder;
 pub mod constant_syntax;
 mod deconstruct;
 mod delegate;
+mod dynamic;
 pub mod entity_syntax;
 mod expression_builder;
 mod foreach;

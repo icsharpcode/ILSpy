@@ -47,7 +47,12 @@ impl Builder<'_, '_, '_, '_> {
             | Rr::TupleElement { ty, .. }
             | Rr::TryCast { ty }
             | Rr::FormatString { ty, .. }
+            | Rr::DynamicConstructor { ty, .. }
+            | Rr::DynamicConversion { ty, .. }
             | Rr::MethodMember { ty, .. } => *ty,
+            Rr::DynamicMember { .. }
+            | Rr::DynamicInvocation { .. }
+            | Rr::DynamicOperator { .. } => self.ts.intern(TypeData::Dynamic),
             Rr::Field { field, .. } => field.field.ty,
             Rr::Event { ty, .. } => *ty,
             Rr::Lambda(_)
@@ -858,7 +863,7 @@ impl Builder<'_, '_, '_, '_> {
     }
 
     /// `ExpressionBuilder.Assignment(left, right)`.
-    fn assignment(
+    pub(crate) fn assignment(
         &mut self,
         left: TranslatedExpression,
         right: TranslatedExpression,

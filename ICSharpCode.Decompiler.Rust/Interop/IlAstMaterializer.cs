@@ -1542,6 +1542,8 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 			pendingMethodGroup = null;
 			node.LookUpMember = pendingLookUpMember;
 			pendingLookUpMember = false;
+			node.Dynamic = pendingDynamic;
+			pendingDynamic = null;
 			int implicitReturn = Len();
 			if (implicitReturn != 0)
 				node.ImplicitReturn = (Leave)materialized[implicitReturn - 1];
@@ -2020,8 +2022,117 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					node.Overflow = U8();
 					node.Children = [BodyNode()];
 					break;
+				case RustBodyNode.BoolLiteral:
+					node.Flag = Bool();
+					break;
 			}
 			return node;
+		}
+
+		/// <summary>The resolve result of a dynamic operation the last <see cref="BodyResolveResult"/> read.</summary>
+		RustDynamicResult? pendingDynamic;
+
+		/// <summary>The parameters of a symbol <c>ExpressionBuilder.CreateDynamic*Symbol</c> synthesizes.</summary>
+		IParameter[] DynamicParameters()
+		{
+			var parameters = new IParameter[Len()];
+			for (int i = 0; i < parameters.Length; i++)
+			{
+				var type = Type();
+				parameters[i] = new DefaultParameter(type, Str());
+			}
+			return parameters;
+		}
+
+		/// <summary>The resolve result of a dynamic operation, with the symbol <c>ExpressionBuilder</c> synthesizes for it.</summary>
+		RustDynamicResult ReadDynamicResult(byte tag)
+		{
+			var dynamicResult = new RustDynamicResult { Tag = tag };
+			switch (tag)
+			{
+				case 70:
+				{
+					// `CreateDynamicMemberSymbol`
+					dynamicResult.Target = NestedTargetResolveResult();
+					string name = Str();
+					dynamicResult.Symbol = new FakeField(compilation) {
+						Name = name,
+						ReturnType = SpecialType.Dynamic,
+						DeclaringType = Type(),
+					};
+					break;
+				}
+				case 71:
+				{
+					dynamicResult.Target = NestedTargetResolveResult();
+					dynamicResult.Indexing = Bool();
+					switch (U8())
+					{
+						case 1:
+						{
+							// `CreateDynamicInvokeMemberSymbol`
+							var method = new FakeMethod(compilation, SymbolKind.Method) {
+								Name = Str(),
+								ReturnType = SpecialType.Dynamic,
+								DeclaringType = Type(),
+							};
+							var parameters = DynamicParameters();
+							if (parameters.Length > 0)
+								method.Parameters = parameters;
+							var typeArguments = TypeList();
+							if (typeArguments.Length == 0)
+							{
+								dynamicResult.Symbol = method;
+								break;
+							}
+							var typeParameters = new ITypeParameter[typeArguments.Length];
+							for (int i = 0; i < typeArguments.Length; i++)
+								typeParameters[i] = new DefaultTypeParameter(method, i, i == 0 ? "T" : "T" + (i + 1));
+							method.TypeParameters = typeParameters;
+							dynamicResult.Symbol = SpecializedMethod.Create(method, new TypeParameterSubstitution(null, typeArguments));
+							break;
+						}
+						case 2:
+						{
+							// `CreateDynamicIndexerSymbol`
+							var declaringType = Type();
+							dynamicResult.Symbol = new FakeProperty(compilation) {
+								Name = "Item",
+								IsIndexer = true,
+								ReturnType = SpecialType.Dynamic,
+								DeclaringType = declaringType,
+								Parameters = DynamicParameters(),
+							};
+							break;
+						}
+					}
+					break;
+				}
+				case 72:
+				{
+					// `CreateDynamicConstructorSymbol`
+					var type = Type();
+					var constructor = new FakeMethod(compilation, SymbolKind.Constructor) {
+						Name = ".ctor",
+						DeclaringType = type,
+						ReturnType = compilation.FindType(KnownTypeCode.Void),
+					};
+					var parameters = DynamicParameters();
+					if (parameters.Length > 0)
+						constructor.Parameters = parameters;
+					dynamicResult.Type = type;
+					dynamicResult.Symbol = constructor;
+					break;
+				}
+				case 73:
+					dynamicResult.Type = Type();
+					dynamicResult.Explicit = Bool();
+					break;
+				case 74:
+					dynamicResult.Operation = Int();
+					break;
+			}
+			return dynamicResult;
 		}
 
 		/// <summary>The operator method, lifted flag and operand annotation of the operator resolve result the last <see cref="BodyResolveResult"/> read.</summary>
@@ -2057,6 +2168,12 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				pendingInvocation = null;
 				return RustSeam2.PendingTarget;
 			}
+			// So is a dynamic operation's.
+			if (result == null && pendingDynamic != null)
+			{
+				pendingDynamic = null;
+				return RustSeam2.PendingTarget;
+			}
 			return result;
 		}
 
@@ -2085,7 +2202,8 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		ResolveResult? BodyResolveResult(out IType? operatorType)
 		{
 			operatorType = null;
-			switch (U8())
+			byte tag = U8();
+			switch (tag)
 			{
 				case 0:
 					return null;
@@ -2249,6 +2367,17 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					var ev = mainModule.ResolveEntity(token, memberContext) as IEvent
 						?? throw new InvalidOperationException("Event token does not resolve to an event");
 					return new MemberResolveResult(target, ev);
+				}
+				case 70:
+				case 71:
+				case 72:
+				case 73:
+				case 74:
+				{
+					// RustSeam2 completes the resolve result of the dynamic operation from the built node.
+					var dynamicResult = ReadDynamicResult(tag);
+					pendingDynamic = dynamicResult;
+					return null;
 				}
 				default:
 					throw new InvalidOperationException("Unknown resolve result tag");

@@ -11,8 +11,9 @@
 //! - a constant is a tag (`ConstValue` order) and its value.
 
 use crate::csharp::Unsupported;
-use crate::csharp::ast::{Ast, AstId, AstNode, Rr};
+use crate::csharp::ast::{Ast, AstId, AstNode, DynamicSymbol, Rr};
 use crate::typesystem::members::ConstValue;
+use crate::typesystem::types::TypeId;
 
 use super::ilast::FunctionWriter;
 
@@ -107,6 +108,7 @@ mod kind {
     pub const UTF8_STRING_LITERAL: u8 = 130;
     pub const ERROR: u8 = 131;
     pub const BLOCK_EXPRESSION: u8 = 132;
+    pub const BOOL_LITERAL: u8 = 140;
 }
 
 pub(super) fn write_body(
@@ -360,8 +362,76 @@ fn rr(w: &mut FunctionWriter<'_, '_, '_, '_>, rr: Option<&Rr>) -> Result<(), Str
             w.call_method(method)?;
             w.out.bool(*expanded);
         }
+        Some(Rr::DynamicMember {
+            target,
+            name,
+            declaring,
+        }) => {
+            w.out.u8(70);
+            self::rr(w, Some(target))?;
+            w.string(name);
+            w.ty(*declaring);
+        }
+        Some(Rr::DynamicInvocation {
+            target,
+            indexing,
+            symbol,
+        }) => {
+            w.out.u8(71);
+            self::rr(w, Some(target))?;
+            w.out.bool(*indexing);
+            match symbol.as_deref() {
+                None => w.out.u8(0),
+                Some(DynamicSymbol::Method {
+                    name,
+                    declaring,
+                    parameters,
+                    type_arguments,
+                }) => {
+                    w.out.u8(1);
+                    w.string(name);
+                    w.ty(*declaring);
+                    dynamic_parameters(w, parameters);
+                    w.out.len(type_arguments.len());
+                    for &t in type_arguments {
+                        w.ty(t);
+                    }
+                }
+                Some(DynamicSymbol::Indexer {
+                    declaring,
+                    parameters,
+                }) => {
+                    w.out.u8(2);
+                    w.ty(*declaring);
+                    dynamic_parameters(w, parameters);
+                }
+            }
+        }
+        Some(Rr::DynamicConstructor { ty, parameters }) => {
+            w.out.u8(72);
+            w.ty(*ty);
+            dynamic_parameters(w, parameters);
+        }
+        Some(Rr::DynamicConversion { ty, explicit }) => {
+            w.out.u8(73);
+            w.ty(*ty);
+            w.out.bool(*explicit);
+        }
+        Some(Rr::DynamicOperator { operation }) => {
+            w.out.u8(74);
+            w.out.ivar(i64::from(*operation));
+        }
     }
     Ok(())
+}
+
+/// The parameters of a synthesized dynamic symbol: the count, then type and name of each.
+fn dynamic_parameters(w: &mut FunctionWriter<'_, '_, '_, '_>, parameters: &[(TypeId, String)]) {
+    w.out.len(parameters.len());
+    for (t, name) in parameters {
+        w.ty(*t);
+        w.string(name);
+    }
 }
 
 fn node(w: &mut FunctionWriter<'_, '_, '_, '_>, ast: &Ast, id: AstId) -> Result<(), String> {
@@ -454,6 +524,7 @@ fn node(w: &mut FunctionWriter<'_, '_, '_, '_>, ast: &Ast, id: AstId) -> Result<
         AstNode::UnsafeIntrinsic { .. } => kind::UNSAFE_INTRINSIC,
         AstNode::StackAlloc { .. } => kind::STACK_ALLOC,
         AstNode::Undocumented { .. } => kind::UNDOCUMENTED,
+        AstNode::BoolLiteral { .. } => kind::BOOL_LITERAL,
     });
     w.out.len(a.il.len());
     for &inst in &a.il {
@@ -1108,6 +1179,7 @@ fn node(w: &mut FunctionWriter<'_, '_, '_, '_>, ast: &Ast, id: AstId) -> Result<
                 node(w, ast, a)?;
             }
         }
+        AstNode::BoolLiteral { value } => w.out.bool(value),
     }
     Ok(())
 }
