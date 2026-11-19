@@ -544,7 +544,15 @@ impl Builder<'_, '_, '_, '_> {
             .current_type
             .and_then(|d| self.ts.comp.type_def(d).ok())
             .is_some_and(|i| i.kind == crate::typesystem::compilation::TypeKind::Struct);
-        if current_is_struct && matches!(self.f.inst(target), Inst::Box { .. }) {
+        // A boxed copy of a struct's own `this` is not translated; a boxed other value is
+        // translated as any target.
+        if current_is_struct
+            && let Inst::Box { arg, .. } = *self.f.inst(target)
+            && match *self.f.inst(arg) {
+                Inst::LdObj { target: t, .. } => self.match_ld_this(t).is_some(),
+                _ => self.match_ld_this(arg).is_some(),
+            }
+        {
             return Err("a member access on a boxed this".to_owned());
         }
         if non_virtual_invocation
@@ -576,9 +584,6 @@ impl Builder<'_, '_, '_, '_> {
                 expression: e,
                 ty: base_type,
             });
-        }
-        if matches!(self.f.inst(target), Inst::Conv { .. }) {
-            return Err("a converted member target".to_owned());
         }
         // `CallInstruction.ExpectedTypeForThisPointer`
         let expected = match self.ts.is_reference_type(declaring) {

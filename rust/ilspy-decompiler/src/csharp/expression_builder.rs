@@ -17,7 +17,6 @@ use super::ast::{
     AstId, AstNode, BinaryOp, InterpolatedContent, Overflow, PatternMember, PatternOperator, Rr,
     SubPattern,
 };
-use super::call_builder::ACCESSOR_SETTER;
 use super::{Builder, TranslatedExpression, Unsupported};
 
 impl Builder<'_, '_, '_, '_> {
@@ -303,6 +302,32 @@ impl Builder<'_, '_, '_, '_> {
                 let ty = self.ts.intern(TypeData::ByRef(target));
                 Ok(TranslatedExpression { expression: d, ty })
             }
+            // `VisitLdElemaInlineArray`: `ref array[indices]` of an inline array, the target
+            // translated as that of a member of the inline array type.
+            Inst::LdElemaInlineArray {
+                ty, array, indices, ..
+            } => {
+                let a = self.translate_target(Some(array), true, false, ty)?;
+                let element = self.ts.inline_array_element_type(ty);
+                let mut written = Vec::with_capacity(indices.len());
+                for &i in &indices {
+                    written.push(self.translate_array_index(i)?.expression);
+                }
+                let e = self.ast.add(AstNode::Indexer {
+                    target: a.expression,
+                    indices: written,
+                });
+                self.ast.with_il(e, inst);
+                self.ast.with_rr(e, Rr::Plain(element));
+                let d = self.ast.add(AstNode::RefDirection { expression: e });
+                self.ast
+                    .with_rr(d, Rr::ByReference(Box::new(Rr::Plain(element))));
+                let by_ref = self.ts.intern(TypeData::ByRef(element));
+                Ok(TranslatedExpression {
+                    expression: d,
+                    ty: by_ref,
+                })
+            }
             // `VisitLdElema`: `ref array[indices]`.
             Inst::LdElema {
                 ty,
@@ -424,6 +449,11 @@ impl Builder<'_, '_, '_, '_> {
                 instructions,
                 final_inst,
             } => self.object_initializer(inst, &instructions, final_inst),
+            Inst::Block {
+                kind: BlockKind::WithInitializer,
+                instructions,
+                final_inst,
+            } => self.with_initializer(inst, &instructions, final_inst),
             Inst::Block {
                 kind: BlockKind::ArrayInitializer,
                 instructions,
@@ -2449,8 +2479,8 @@ impl Builder<'_, '_, '_, '_> {
     }
 
     /// `TranslateObjectAndCollectionInitializer` for `new T(...) { Member = value, ... }`: an
-    /// object creation whose initializer sets fields and properties of the new object itself.
-    /// Nested members, indexers and `Add` calls are not translated.
+    /// object creation with the initializer `BuildArrayInitializerExpression` makes of the
+    /// block.
     fn object_initializer(
         &mut self,
         inst: NodeId,
@@ -2517,97 +2547,7 @@ impl Builder<'_, '_, '_, '_> {
         ) {
             return Err("an initializer of an object creation with syntax of its own".to_owned());
         }
-        let object = Rr::InitializedObject(creation.ty);
-        let is_target = |b: &Self, n: NodeId| matches!(*b.f.inst(n), Inst::LdLoc { var: v } | Inst::LdLoca { var: v } if v == var);
-        let mut elements = Vec::with_capacity(rest.len());
-        for &element in rest {
-            // `AccessPathKind.Adder`: an `Add` call on the object itself.
-            if let Inst::Call(c) | Inst::CallVirt(c) = self.f.inst(element).clone()
-                && c.method.method.accessor_kind != ACCESSOR_SETTER
-                && c.args.first().is_some_and(|&a| is_target(self, a))
-            {
-                if c.args[1..].iter().any(|&a| {
-                    self.f
-                        .descendants_post(a)
-                        .into_iter()
-                        .any(|n| is_target(self, n))
-                }) {
-                    return Err("an initializer value that uses the object".to_owned());
-                }
-                let op = if matches!(self.f.inst(element), Inst::CallVirt(_)) {
-                    super::call_builder::CallOp::CallVirt
-                } else {
-                    super::call_builder::CallOp::Call
-                };
-                let e = self.collection_initializer_element(element, &c, op, creation)?;
-                elements.push(e);
-                continue;
-            }
-            // `GetAccessPath` of a setter on the object itself.
-            let (name, member_type, value, member) = match self.f.inst(element).clone() {
-                Inst::StObj { target, value, .. } => {
-                    let Inst::LdFlda {
-                        target: object_ref,
-                        field,
-                        ..
-                    } = self.f.inst(target).clone()
-                    else {
-                        return Err("an initializer element of another kind".to_owned());
-                    };
-                    if !is_target(self, object_ref) {
-                        return Err("a nested initializer".to_owned());
-                    }
-                    let rr = Rr::Field {
-                        target: Some(Box::new(object.clone())),
-                        field: field.clone(),
-                    };
-                    (field.field.name.clone(), field.field.ty, value, rr)
-                }
-                Inst::Call(call) | Inst::CallVirt(call)
-                    if call.method.method.accessor_kind == ACCESSOR_SETTER
-                        && call.args.len() == 2 =>
-                {
-                    if !is_target(self, call.args[0]) {
-                        return Err("a nested initializer".to_owned());
-                    }
-                    let name = call
-                        .method
-                        .method
-                        .name
-                        .strip_prefix("set_")
-                        .filter(|n| !n.contains('.'))
-                        .ok_or("an initializer of an explicitly named setter")?
-                        .to_owned();
-                    let params = call.method.method.params().map_err(|e| e.to_string())?;
-                    let ty = *params.last().ok_or("a setter without parameters")?;
-                    let rr = Rr::Property {
-                        target: Box::new(object.clone()),
-                        accessor: Box::new(call.method.clone()),
-                        ty,
-                        found_by_lookup: false,
-                    };
-                    (name, ty, call.args[1], rr)
-                }
-                _ => return Err("an initializer element of another kind".to_owned()),
-            };
-            if self
-                .f
-                .descendants_post(value)
-                .into_iter()
-                .any(|n| is_target(self, n))
-            {
-                return Err("an initializer value that uses the object".to_owned());
-            }
-            let v = self.translate(value, Some(member_type))?;
-            let v = self.convert_to(v, member_type, true)?;
-            let e = self.ast.add(AstNode::Named {
-                name,
-                expression: v.expression,
-            });
-            self.ast.with_il(e, element);
-            self.ast.with_rr(e, member);
-            elements.push(e);
-        }
+        let elements = self.initializer_elements(rest, creation)?;
         if let AstNode::ObjectCreate { initializer, .. } = self.ast.node_mut(creation.expression) {
             *initializer = Some(elements);
         }
@@ -2628,6 +2568,23 @@ impl Builder<'_, '_, '_, '_> {
         let Some((&first, rest)) = instructions.split_first() else {
             return Err("an empty array initializer".to_owned());
         };
+        // `MatchArrayInitializerFinal`: the array, or its implicit conversion to a span.
+        let mut final_inst = final_inst;
+        let mut array_to_span = None;
+        if let Inst::Call(c) | Inst::CallVirt(c) = self.f.inst(final_inst)
+            && let [array] = c.args[..]
+            && c.method.method.name == "op_Implicit"
+            && Method::from_resolved(self.ts, &c.method.method).is_some_and(|m| m.is_operator)
+            && (self
+                .ts
+                .is_known(c.method.method.ret, KnownTypeCode::SpanOfT)
+                || self
+                    .ts
+                    .is_known(c.method.method.ret, KnownTypeCode::ReadOnlySpanOfT))
+        {
+            array_to_span = Some(c.method.method.ret);
+            final_inst = array;
+        }
         let (Inst::StLoc { var, value, .. }, Inst::LdLoc { var: final_var }) =
             (self.f.inst(first).clone(), self.f.inst(final_inst).clone())
         else {
@@ -2731,6 +2688,21 @@ impl Builder<'_, '_, '_, '_> {
         });
         self.ast.with_il(e, inst);
         self.ast.with_rr(e, Rr::ArrayCreate { ty: array_type });
+        if let Some(span) = array_to_span {
+            // shortcut: the cast carries the host's implicit conversion from the array to the
+            // span where the managed one is `Conversion.ImplicitSpanConversion` itself; they
+            // differ where the host's conversions do not know first-class spans.
+            let c = self.ast.add(AstNode::Cast {
+                ty: span,
+                expression: e,
+                overflow: super::ast::Overflow::None,
+            });
+            self.ast.with_rr(c, Rr::ImplicitConversion { ty: span });
+            return Ok(TranslatedExpression {
+                expression: c,
+                ty: span,
+            });
+        }
         Ok(TranslatedExpression {
             expression: e,
             ty: array_type,

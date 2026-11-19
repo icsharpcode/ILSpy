@@ -328,6 +328,12 @@ impl Builder<'_, '_, '_, '_> {
     /// `IsPossibleLossOfTypeInformation`, where the managed builder casts a lambda's return
     /// value to the return type.
     fn possible_loss_of_type_information(&mut self, given: TypeId, expected: TypeId) -> bool {
+        // An anonymous type cannot be named in a cast.
+        if crate::il::transforms::transform_collection_and_object_initializers::contains_anonymous_type(
+            self.ts, expected,
+        ) {
+            return false;
+        }
         let n = crate::typesystem::fnptr::Normalization::IGNORE_NULLABILITY;
         if self.ts.normalize_with(given, n) == self.ts.normalize_with(expected, n) {
             return false;

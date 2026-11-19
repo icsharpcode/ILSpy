@@ -459,6 +459,45 @@ impl Builder<'_, '_, '_, '_> {
             return Err("a conversion of a reference to a pointer".to_owned());
         }
         if target_kind == TypeKind::ByReference {
+            let erasure = Normalization::TYPE_ERASURE;
+            if self.ts.normalize_with(target, erasure) == self.ts.normalize_with(ty, erasure) {
+                return Ok(e);
+            }
+            // A reference to a temporary converted to another type: the cast applies to the
+            // temporary instead.
+            let TypeData::ByRef(element) = *self.ts.data(target) else {
+                return Err("a conversion to a reference that needs a cast".to_owned());
+            };
+            if let AstNode::RefDirection { expression: inner } = *self.ast.node(e.expression)
+                && self
+                    .ast
+                    .annotations(e.expression)
+                    .il
+                    .iter()
+                    .any(|&i| matches!(self.f.inst(i), crate::il::ast::Inst::AddressOf { .. }))
+            {
+                let inner_rr = self.rr_of(inner);
+                let inner_ty = self.rr_type(&inner_rr);
+                if self.ts.stack_type(inner_ty) == self.ts.stack_type(element) {
+                    let il = self.ast.annotations(e.expression).il.clone();
+                    let temp = self.unwrap_child(e.expression, inner);
+                    let converted = self.convert_to_checked(temp, element, check, false)?;
+                    let r = self.ast.add(AstNode::RefDirection {
+                        expression: converted.expression,
+                    });
+                    for inst in il {
+                        self.ast.with_il(r, inst);
+                    }
+                    let converted_rr = self.rr_of(converted.expression);
+                    self.ast.with_rr(r, Rr::ByReference(Box::new(converted_rr)));
+                    return Ok(TranslatedExpression {
+                        expression: r,
+                        ty: target,
+                    });
+                }
+            }
+            // `Unsafe.As` between references and a pointer converted to a reference are not
+            // translated.
             return Err("a conversion to a reference that needs a cast".to_owned());
         }
         let rr = self.semantic_rr(e.expression, ty);

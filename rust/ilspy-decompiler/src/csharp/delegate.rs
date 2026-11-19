@@ -139,7 +139,7 @@ impl Builder<'_, '_, '_, '_> {
         operand: &MethodOperand,
         method: &Method,
         op: CallOp,
-        target: TranslatedExpression,
+        mut target: TranslatedExpression,
         declaring: TypeId,
     ) -> Result<AstId, Unsupported> {
         let resolver = self
@@ -153,7 +153,7 @@ impl Builder<'_, '_, '_, '_> {
             target.expression,
             op != CallOp::CallVirt && method.is_overridable,
         );
-        let lookup_target = match self.rr_of(target.expression) {
+        let mut lookup_target = match self.rr_of(target.expression) {
             Rr::This {
                 ty,
                 causes_non_virtual_invocation,
@@ -165,11 +165,11 @@ impl Builder<'_, '_, '_, '_> {
             Rr::Type(ty) => LookupTarget::Type(ty),
             _ => LookupTarget::Expression(target.ty),
         };
-        // `MethodReferenceSteps`: type arguments, then the target; a cast of the target is not
-        // translated.
+        // `MethodReferenceSteps`: type arguments, then the target, then its cast.
         let mut type_arguments = false;
         let mut spent_type_arguments = method.type_parameters.is_empty();
         let mut spent_require = require;
+        let mut spent_cast = false;
         let found = loop {
             let written = if type_arguments {
                 method.method_args.clone().unwrap_or_default()
@@ -200,6 +200,14 @@ impl Builder<'_, '_, '_, '_> {
                 require = true;
                 continue;
             }
+            if !spent_cast {
+                spent_cast = true;
+                // `Target.ConvertTo(declaringType)`
+                lookup_target = self.cast_target_to(&mut target, declaring)?;
+                continue;
+            }
+            // No spelling resolves; the most explicit one, with the resolve result of its last
+            // probe, is not translated.
             return Err("a method reference that needs a cast of its target".to_owned());
         };
         let written = if type_arguments {

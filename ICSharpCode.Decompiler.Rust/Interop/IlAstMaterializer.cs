@@ -1802,6 +1802,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					node.Children = [BodyNode()];
 					break;
 				case RustBodyNode.ArrayInitializer:
+				case RustBodyNode.AnonymousTypeCreate:
 					node.Children = new RustBodyNode[Len()];
 					for (int i = 0; i < node.Children.Length; i++)
 						node.Children[i] = BodyNode();
@@ -1810,6 +1811,16 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					node.Value = Str();
 					node.Children = [BodyNode()];
 					break;
+				case RustBodyNode.WithInitializer:
+				{
+					// The value, then the elements of the initializer.
+					var value = BodyNode();
+					var elements = new RustBodyNode[Len()];
+					for (int i = 0; i < elements.Length; i++)
+						elements[i] = BodyNode();
+					node.Children = [value, .. elements];
+					break;
+				}
 				case RustBodyNode.InterpolatedString:
 				{
 					// Texts, and interpolations with alignment and suffix, whose expressions are the children.
