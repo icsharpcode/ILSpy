@@ -47,7 +47,7 @@ La décompilation tourne toujours, même quand les sources d'origine existent : 
 
 **Les originaux d'abord, la décompilation en dernier recours.** Une source embarquée ou téléchargée et vérifiée est toujours meilleure que du code décompilé.
 
-**Rien n'est gardé sans preuve.** Un fichier SourceLink n'est utilisé que si son SHA-256 (ou SHA-1) est celui que le compilateur a enregistré dans le PDB. Un fichier modifié dans le dépôt depuis la compilation est donc ignoré, jamais pris pour l'original.
+**Rien n'est gardé sans preuve.** Un fichier SourceLink n'est utilisé que si son SHA-256 (ou SHA-1) est celui que le compilateur a enregistré dans le PDB. Si le checksum ne correspond pas, la même vérification est refaite après conversion des fins de ligne (LF ↔ CRLF), car un dépôt git stocke du LF alors qu'un checkout Windows compile du CRLF. Un fichier modifié dans le dépôt depuis la compilation est donc ignoré, jamais pris pour l'original.
 
 **Nommage déterministe.** Un nom n'est donné que s'il découle d'un fait lu dans le code : la méthode qui retourne la variable, la méthode dont elle reçoit le résultat, l'agrégat LINQ qu'elle stocke. Même entrée, même sortie. Les variables qui ont un nom d'origine (PDB, champs de machine à états async ou de lambda) ne sont jamais renommées : la transformation ne touche qu'aux variables marquées `HasGeneratedName`.
 
