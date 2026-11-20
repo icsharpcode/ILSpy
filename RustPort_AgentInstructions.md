@@ -859,6 +859,12 @@ the reasons. This file holds only the ordered steps, their gates and their rules
       initializers, delegates of extension methods and accessors, anonymous types in lambdas
       (query expressions), casts of value-type targets, and the reasons the served bodies now
       reach. Next round starts from a fresh tally.
+      Round 2 (a62f5a600, lecture 3.228): 71 reasons, three groups (dynamic; operators, unsafe
+      and spans; calls, casts and creation). Left: ranges and slices, vararg, `LdFtn`, tail
+      calls, `cpblk`/`initblk`, the FSharp.Core `Unsafe` name, remaining target casts, bound
+      extension delegates, extension calls on `null`, generic local function references,
+      lifted user-defined operators, anonymous-type inference, foreach over dynamic or a static
+      `GetEnumerator` extension.
     - [ ] **85f.** Rerun the matrix strict; repeat for what the first failure per test hid; then
       merge the switch into `ILSPY_RUST_STRICT`.
 

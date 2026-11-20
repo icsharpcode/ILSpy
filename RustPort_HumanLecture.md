@@ -5094,6 +5094,42 @@ IL), span, tuple, range and index creation, dictionary initializers, and anonymo
 lambdas (with engine bodies the query expression transform no longer fires; the differing
 annotation is not found yet).
 
+### 3.228 The body gaps, second round (item 85e)
+
+A fresh tally after round 1 had 71 reasons. Three agents took them, this time with the full
+TestCases image set in each worktree and the whole Rust.Tests project run before reporting, so
+regressions show up before the merge instead of in a second gate run. Each agent's run was green;
+the full gates after the three merges found no regression (three failures, all reruns of
+load collisions, see below).
+
+- **Dynamic** (new module `csharp/dynamic.rs`, a port of every `VisitDynamic*` method): the
+  engine sends the call-site data (member name, `DynamicArgumentType`, parameters as type and
+  name pairs, type arguments) and the host builds the synthesized `FakeField`, `FakeMethod`,
+  `FakeProperty` and the dynamic resolve results exactly as the managed `CreateDynamic*Symbol`
+  code does. Synthesized members stay on the host because only the host's type system can make
+  them; the engine owns the decisions.
+- **Operators, unsafe code, spans**: managed `ResolveBinaryOperator` never folds an operand of
+  type `nint` or `nuint`, which was the whole gap in constant folding. Decimal and reference
+  comparisons, lifted `!` of `bool?`, the redundant `ToString` in a concatenation, managed
+  pointer arithmetic, ref fields (a ref field's resolve result has its element type), the
+  `Unsafe` reads, writes and casts, `Index` and inline-array helpers. Span and `Index` methods
+  are ordinary calls; only `a..b`, `StartAt`, `EndAt`, `Range.All` and inline-array slices stay
+  blocked, because the engine syntax has no range node yet.
+- **Calls and creation**: anonymous types in lambdas (128 assemblies) came down to one flag.
+  Managed `TranslateFunction` computes `IsImplicitlyTyped` after moving the parameters onto the
+  lambda, so for overload resolution a lambda is never implicitly typed; the engine said it was,
+  the Queryable `Select` candidates then failed with a type mismatch, and that stopped the query
+  expression transform. Dictionary initializers (an indexer node without target), named indexer
+  setters, `in` arguments made explicit through the `ILSpyHelper_AsRefReadOnly` helper,
+  collection initializers through extension methods, and casts of call targets.
+
+Left for the next round: ranges and slices, vararg calls, `LdFtn`, tail calls and `cpblk`/`initblk`
+(they need comment trivia), the `Unsafe` type name in FSharp.Core, the rest of the target casts,
+bound extension-method delegates, type arguments of an extension call on `null`, generic local
+function references, lifted user-defined operators, anonymous-type inference for generic calls,
+and foreach over a dynamic collection or a static `GetEnumerator` extension, which the served
+bodies now reach.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |
