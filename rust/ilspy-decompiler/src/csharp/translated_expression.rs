@@ -240,6 +240,13 @@ impl Builder<'_, '_, '_, '_> {
             // A lambda's cast carries `LambdaConversion` in its resolve result.
             let conversion = if matches!(self.rr_of(e.expression), Rr::LambdaConversion { .. }) {
                 crate::semantics::Conversion::ANONYMOUS_FUNCTION
+            } else if let Rr::FunctionPointerConversion { method, .. } = self.rr_of(e.expression) {
+                // `VisitLdFtn`'s cast carries the method group conversion of its method.
+                let method = crate::semantics::Method::from_resolved(self.ts, &method.method)
+                    .ok_or("a function pointer of an unresolved method")?;
+                crate::semantics::Conversion::method_group(method, false, false, true)
+            } else if let Rr::InlineArrayConversion { .. } = self.rr_of(e.expression) {
+                crate::semantics::Conversion::INLINE_ARRAY
             } else if let Rr::DynamicConversion { explicit, .. } = self.rr_of(e.expression) {
                 // A dynamic cast carries the conversion of its binder flags.
                 if explicit {

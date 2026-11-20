@@ -238,6 +238,12 @@ pub enum AstNode {
     Goto { name: String },
     /// `IndexerExpression` over an array: `target[indices]`.
     Indexer { target: AstId, indices: Vec<AstId> },
+    /// `BinaryOperatorExpression` of `BinaryOperatorType.Range`: `start..end`, either side
+    /// left out.
+    Range {
+        start: Option<AstId>,
+        end: Option<AstId>,
+    },
     /// `IndexerExpression` without target, the key of a dictionary initializer element:
     /// `[indices]`.
     InitializerIndexer { indices: Vec<AstId> },
@@ -518,6 +524,19 @@ pub enum Rr {
         method: Box<crate::il::ast::MethodOperand>,
         ty: TypeId,
     },
+    /// `MemberResolveResult` of a method with the target's resolve result, of the method's
+    /// return type.
+    TargetMethodMember {
+        target: Box<Rr>,
+        method: Box<crate::il::ast::MethodOperand>,
+        ty: TypeId,
+    },
+    /// `MemberResolveResult` without target of the property `accessor` belongs to, of the
+    /// property's type.
+    PropertyMember {
+        accessor: Box<crate::il::ast::MethodOperand>,
+        ty: TypeId,
+    },
     /// `OperatorResolveResult` of the node's operator (an assignment, `!`, a binary or the conditional
     /// operator), of
     /// the given
@@ -578,6 +597,16 @@ pub enum Rr {
     /// `resolver.ResolveCast(ty, operand)` of a cast, over the resolve result of the cast's
     /// operand, which the host computes.
     Conversion { ty: TypeId },
+    /// `ConversionResolveResult` of `Conversion.InlineArrayConversion` to `ty`, over the cast
+    /// operand's resolve result.
+    InlineArrayConversion { ty: TypeId },
+    /// `ConversionResolveResult` of the cast `VisitLdFtn` writes around `&Method`: the
+    /// `MethodGroupConversion` of the method (no virtual lookup, no captured first argument)
+    /// to the function pointer type `ty`, over the operand's resolve result.
+    FunctionPointerConversion {
+        ty: TypeId,
+        method: Box<crate::il::ast::MethodOperand>,
+    },
     /// `ConversionResolveResult` of a cast of a lambda to the delegate type `ty`, with the
     /// lambda's resolve result and `LambdaConversion`.
     LambdaConversion { ty: TypeId },
@@ -698,6 +727,9 @@ pub struct Annotations {
     /// `ImplicitConversionAnnotation`: the type and resolve result (`ImplicitConversion` or
     /// `Conversion`) of the user-defined cast `ConvertTo` dropped around the expression.
     pub implicit_conversion: Option<(TypeId, Rr)>,
+    /// `AddLeadingTrivia(new Comment(text, type))`: a comment before the node, with its
+    /// `CommentType` (0 single-line, 1 multi-line).
+    pub leading_comment: Option<(String, u8)>,
 }
 
 #[derive(Clone, Debug, Default)]
@@ -738,6 +770,12 @@ impl Ast {
             a.il_before_rr = true;
         }
         a.il.push(inst);
+        id
+    }
+
+    /// `AddLeadingTrivia(new Comment(text, type))`, `CommentType` 0 single-line, 1 multi-line.
+    pub fn with_leading_comment(&mut self, id: AstId, text: &str, comment_type: u8) -> AstId {
+        self.annotations_mut(id).leading_comment = Some((text.to_owned(), comment_type));
         id
     }
 

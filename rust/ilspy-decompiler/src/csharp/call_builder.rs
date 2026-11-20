@@ -155,14 +155,25 @@ impl Builder<'_, '_, '_, '_> {
         call: &CallData,
         op: CallOp,
     ) -> Result<TranslatedExpression, Unsupported> {
-        if call.is_tail {
-            return Err("a tail call".to_owned());
-        }
         if self.settings.string_concat
             && let Some(operands) = self.span_based_string_concat(call)
         {
             return self.build_string_concat(inst, call, &operands);
         }
+        let result = self.call_without_tail(inst, call, op)?;
+        // The IL `tail.` prefix is written as an inline marker: `/*tail.*/Callee(x)`.
+        if call.is_tail {
+            self.ast.with_leading_comment(result.expression, "tail.", 1);
+        }
+        Ok(result)
+    }
+
+    fn call_without_tail(
+        &mut self,
+        inst: NodeId,
+        call: &CallData,
+        op: CallOp,
+    ) -> Result<TranslatedExpression, Unsupported> {
         let operand = &call.method;
         if operand.local_function.is_some()
             && operand.specialized_by.is_none()
@@ -172,7 +183,12 @@ impl Builder<'_, '_, '_, '_> {
             return self.local_function_call(inst, call);
         }
         // A proxy call `ProxyCallReplacer` replaced calls the specialized method as any other.
-        if operand.local_function.is_some() || operand.range_accessor.is_some() || operand.lifted {
+        // A slicing range accessor is written by `HandleRangeConstruction`.
+        let slicing = operand.range_accessor.as_ref().is_some_and(|r| r.slicing);
+        if operand.local_function.is_some()
+            || (operand.range_accessor.is_some() && !slicing)
+            || operand.lifted
+        {
             return Err(
                 "a call of a local function, proxy, range accessor or lifted operator".to_owned(),
             );
@@ -181,11 +197,15 @@ impl Builder<'_, '_, '_, '_> {
         let MethodOrigin::Def(id) = resolved.origin else {
             return Err("a call of an unresolved method".to_owned());
         };
-        if resolved.varargs.is_some() {
-            return Err("a vararg call".to_owned());
-        }
-        let method =
+        let mut method =
             Method::from_resolved(self.ts, resolved).ok_or("a call of an unresolved method")?;
+        if slicing {
+            // `SyntheticRangeIndexAccessor.Parameters`: one unnamed parameter of type `Range`.
+            method.parameters.truncate(1);
+            if let Some(p) = method.parameters.first_mut() {
+                *p = crate::semantics::Parameter::of_type(p.ty);
+            }
+        }
         let explicit_implementation = self
             .ts
             .is_explicit_interface_implementation(id)
@@ -245,8 +265,24 @@ impl Builder<'_, '_, '_, '_> {
                     && self.ts.is_known(declaring, KnownTypeCode::Range)
                     && method.name == "get_All"
                     && method.parameters.is_empty()
+                    && op == CallOp::Call
                 {
-                    return Err("a property of Range or Index".to_owned());
+                    let e = self.ast.add(AstNode::Range {
+                        start: None,
+                        end: None,
+                    });
+                    self.ast.with_rr(
+                        e,
+                        Rr::PropertyMember {
+                            accessor: Box::new(operand.clone()),
+                            ty: method.return_type,
+                        },
+                    );
+                    self.ast.with_il(e, inst);
+                    return Ok(TranslatedExpression {
+                        expression: e,
+                        ty: method.return_type,
+                    });
                 }
                 if written_as_member_access {
                     Some(self.property_info(id.module, token & 0x00FF_FFFF)?.0)
@@ -298,6 +334,53 @@ impl Builder<'_, '_, '_, '_> {
             (property.is_some() && method.parameters.len() == 1) || indexer == Some(true);
         let first_argument_node = self.ast.nodes.len();
         let mut list = self.argument_list(call, &method, id, first_param, declaring, is_setter)?;
+        if resolved.varargs.is_some() {
+            method = self.vararg_argument_list(resolved, &mut list)?;
+        }
+        // `HandleRangeConstruction`: `a..` and `..b`.
+        if self.settings.ranges
+            && op == CallOp::Call
+            && list.explicit_names.is_none()
+            && self.ts.is_known(declaring, KnownTypeCode::Range)
+            && matches!(method.name.as_str(), "StartAt" | "EndAt")
+            && list.arguments.len() == 1
+        {
+            let side = Some(list.arguments[0].expression);
+            let (start, end) = if method.name == "StartAt" {
+                (side, None)
+            } else {
+                (None, side)
+            };
+            return Ok(self.range_expression(inst, operand, &method, start, end));
+        }
+        // `HandleRangeConstruction`: a slicing `Slice()` or `Substring()` is written as an
+        // indexer.
+        if self.settings.ranges && slicing && list.explicit_names.is_none() {
+            let indices = list.arguments.iter().map(|a| a.expression).collect();
+            let e = self.ast.add(AstNode::Indexer {
+                target: target.expression,
+                indices,
+            });
+            let target_rr = self.rr_of(target.expression);
+            self.ast.with_rr(
+                e,
+                Rr::TargetMethodMember {
+                    target: Box::new(target_rr),
+                    method: Box::new(operand.clone()),
+                    ty: method.return_type,
+                },
+            );
+            self.ast.with_il(e, inst);
+            return Ok(TranslatedExpression {
+                expression: e,
+                ty: method.return_type,
+            });
+        }
+        if slicing {
+            return Err(
+                "a call of a local function, proxy, range accessor or lifted operator".to_owned(),
+            );
+        }
         // `TransformParamsArgument`: the expanded form where the call as written with it resolves
         // to the method in that form.
         if let Some(expanded) = list.expanded(&method) {
@@ -416,11 +499,6 @@ impl Builder<'_, '_, '_, '_> {
             if let (Some(array_length), Some(span_length)) = (array_length, span_length)
                 && span_length <= array_length
             {
-                if span_length < array_length {
-                    // shortcut: the slice `buffer[..n]` needs a range node the engine's syntax
-                    // tree lacks; add one when such a body is to be served.
-                    return Err(format!("a call of {} with its own syntax", method.name));
-                }
                 let mut argument = list.arguments[0];
                 if let AstNode::RefDirection { expression } | AstNode::InDirection { expression } =
                     *self.ast.node(argument.expression)
@@ -428,12 +506,49 @@ impl Builder<'_, '_, '_, '_> {
                     argument = self.unwrap_child(argument.expression, expression);
                 }
                 let ty = method.return_type;
+                // The slice `buffer[..n]`, a `Span<T>` without instructions.
+                let slice = span_length < array_length;
+                if slice {
+                    let array_type = method
+                        .method_args
+                        .as_ref()
+                        .and_then(|a| a.first().copied())
+                        .ok_or("an inline array span without type argument")?;
+                    let element = self.ts.inline_array_element_type(array_type);
+                    let span = self.ts.known_type(KnownTypeCode::SpanOfT);
+                    let span = self.ts.intern(TypeData::Inst {
+                        generic: span,
+                        args: Box::new([element]),
+                    });
+                    let range = self.ast.add(AstNode::Range {
+                        start: None,
+                        end: Some(list.arguments[1].expression),
+                    });
+                    let e = self.ast.add(AstNode::Indexer {
+                        target: argument.expression,
+                        indices: vec![range],
+                    });
+                    self.ast.with_rr(e, Rr::Plain(span));
+                    argument = TranslatedExpression {
+                        expression: e,
+                        ty: span,
+                    };
+                    if self.ts.is_known(ty, KnownTypeCode::SpanOfT) {
+                        // `WithILInstruction(inst)` of `Build`'s result.
+                        self.ast.with_il(e, inst);
+                        return Ok(argument);
+                    }
+                }
                 let c = self.ast.add(AstNode::Cast {
                     ty,
                     expression: argument.expression,
                     overflow: Overflow::None,
                 });
-                self.ast.with_rr(c, Rr::Conversion { ty });
+                if slice {
+                    self.ast.with_rr(c, Rr::InlineArrayConversion { ty });
+                } else {
+                    self.ast.with_rr(c, Rr::Conversion { ty });
+                }
                 self.ast.with_il(c, inst);
                 return Ok(TranslatedExpression { expression: c, ty });
             }
@@ -528,11 +643,12 @@ impl Builder<'_, '_, '_, '_> {
         if method.is_operator && method.name == "op_Implicit" && list.arguments.len() == 1 {
             return self.implicit_conversion_call(inst, &method, &list);
         }
-        // The C# 14 compiler emits `AsSpan(string)` for the implicit span conversion, which
-        // the call folds back into where the conversion applies to the argument's type.
+        // The C# 14 compiler emits `AsSpan(string)` and `CastUp` for implicit span conversions,
+        // which the call folds back into where the conversion applies to the argument's type.
         if self.settings.first_class_span_types
             && list.arguments.len() == 1
-            && self.is_string_to_read_only_span_char_as_span(&method, declaring)
+            && (self.is_string_to_read_only_span_char_as_span(&method, declaring)
+                || self.is_read_only_span_cast_up(&method, declaring))
             && Conversions::new(self.ts)
                 .implicit_type(list.arguments[0].ty, method.return_type)
                 .is_implicit_span()
@@ -762,10 +878,21 @@ impl Builder<'_, '_, '_, '_> {
                 .is_known(method.parameters[0].ty, KnownTypeCode::String)
     }
 
-    /// `IsEquivalentToSpanConversion`: an implicit conversion operator of a span type, or
-    /// `AsSpan(string)`.
-    // shortcut: no `ReadOnlySpan<T>.CastUp`, which the engine translates as an ordinary call of
-    // its span type and refuses; port it with the `CastUp` folding.
+    /// `IsReadOnlySpanCastUp`: `ReadOnlySpan<To>.CastUp<From>(ReadOnlySpan<From>)`, the helper
+    /// the C# 14 compiler emits for the covariant implicit span conversion.
+    fn is_read_only_span_cast_up(&self, method: &Method, declaring: TypeId) -> bool {
+        method.is_static
+            && method.name == "CastUp"
+            && method.parameters.len() == 1
+            && method.method_args.as_ref().is_some_and(|a| a.len() == 1)
+            && self.ts.is_known(declaring, KnownTypeCode::ReadOnlySpanOfT)
+            && self
+                .ts
+                .is_known(method.parameters[0].ty, KnownTypeCode::ReadOnlySpanOfT)
+    }
+
+    /// `IsEquivalentToSpanConversion`: an implicit conversion operator of a span type,
+    /// `AsSpan(string)` or `ReadOnlySpan<T>.CastUp`.
     fn is_equivalent_to_span_conversion(&self, method: &Method) -> bool {
         let Some(declaring) = method.declaring else {
             return false;
@@ -775,6 +902,7 @@ impl Builder<'_, '_, '_, '_> {
             && method.is_operator
             && method.name == "op_Implicit")
             || self.is_string_to_read_only_span_char_as_span(method, declaring)
+            || self.is_read_only_span_cast_up(method, declaring)
     }
 
     /// `HandleImplicitConversion`: `(T)argument`, with the argument first cast to the
@@ -1045,6 +1173,27 @@ impl Builder<'_, '_, '_, '_> {
         if call.method.local_function.is_some() {
             infos.truncate(method.parameters.len());
         }
+        // `VarArgInstanceMethod.Parameters`: the `__arglist` parameter is replaced by the types
+        // passed after the sentinel, which are no optional parameters.
+        if let Some(extra) = &call.method.method.varargs
+            && let Some(mut arglist) = infos.pop()
+        {
+            arglist.optional = false;
+            infos.extend(std::iter::repeat_n(arglist, extra.len()));
+        }
+        // A slicing `SyntheticRangeIndexAccessor` has one parameter, no optional one.
+        if call
+            .method
+            .range_accessor
+            .as_ref()
+            .is_some_and(|r| r.slicing)
+        {
+            infos.truncate(1);
+            if let Some(first) = infos.first_mut() {
+                first.optional = false;
+                first.name.clear();
+            }
+        }
         if infos.len() != method.parameters.len() {
             return Err("a call with mismatched parameters".to_owned());
         }
@@ -1192,6 +1341,83 @@ impl Builder<'_, '_, '_, '_> {
             list.arguments.push(arg);
         }
         Ok(list)
+    }
+
+    /// `HandleRangeConstruction`: `start..end` of a `Range` member, with the member resolve
+    /// result of the method.
+    fn range_expression(
+        &mut self,
+        inst: NodeId,
+        operand: &crate::il::ast::MethodOperand,
+        method: &Method,
+        start: Option<AstId>,
+        end: Option<AstId>,
+    ) -> TranslatedExpression {
+        // `MemberResolveResult.ComputeType`: a constructor's is its declaring type.
+        let ty = match method.declaring {
+            Some(declaring) if method.name == ".ctor" => declaring,
+            _ => method.return_type,
+        };
+        let e = self.ast.add(AstNode::Range { start, end });
+        self.ast.with_rr(
+            e,
+            Rr::MethodMember {
+                method: Box::new(operand.clone()),
+                ty,
+            },
+        );
+        self.ast.with_il(e, inst);
+        TranslatedExpression { expression: e, ty }
+    }
+
+    /// The `VarArgInstanceMethod` step of `CallBuilder.Build`: the arguments passed after the
+    /// sentinel become one `__arglist(...)` argument, each converted to its type at the call
+    /// site, and the call is of the base method, which is returned.
+    fn vararg_argument_list(
+        &mut self,
+        resolved: &crate::typesystem::resolve::ResolvedMethod,
+        list: &mut ArgumentList,
+    ) -> Result<Method, Unsupported> {
+        if list.parameter_map.is_some() {
+            return Err("named arguments of a vararg call".to_owned());
+        }
+        let mut base = resolved.clone();
+        base.varargs = None;
+        let base = Method::from_resolved(self.ts, &base).ok_or("a call of an unresolved method")?;
+        let regular = base
+            .parameters
+            .len()
+            .checked_sub(1)
+            .ok_or("a vararg method without parameters")?;
+        list.first_optional = -1;
+        list.add_names_to_primitive_values = false;
+        list.use_implicitly_typed_out = false;
+        let extra = list.arguments.split_off(regular);
+        let types = resolved.varargs.clone().unwrap_or_default();
+        let mut arguments = Vec::with_capacity(extra.len());
+        for (a, ty) in extra.into_iter().zip(types) {
+            arguments.push(self.convert_to(a, ty, false)?.expression);
+        }
+        /// `UndocumentedExpressionType.ArgList`.
+        const ARG_LIST: u8 = 1;
+        let e = self.ast.add(AstNode::Undocumented {
+            kind: ARG_LIST,
+            arguments,
+        });
+        let ty = self.ts.intern(TypeData::ArgList);
+        self.ast.with_rr(e, Rr::Plain(ty));
+        list.arguments
+            .push(TranslatedExpression { expression: e, ty });
+        list.parameter_names.truncate(regular);
+        list.is_primitive_value.truncate(regular);
+        list.ref_kinds.truncate(regular);
+        for p in &base.parameters[regular..] {
+            list.parameter_names.push(p.name.clone());
+            list.is_primitive_value.push(false);
+            list.ref_kinds.push(p.ref_kind);
+        }
+        list.params_candidate = None;
+        Ok(base)
     }
 
     /// `GetArgumentExpressions(skipCount)`: the written arguments from `skip` on, named where
@@ -1542,22 +1768,10 @@ impl Builder<'_, '_, '_, '_> {
             };
             return self.stack_alloc_initializer(call.args[0], element);
         }
-        let ts = &*self.ts;
-        // shortcut: `a..b` needs a range node the engine's syntax tree lacks; add one when such
-        // a body is to be served.
-        let special = if self.settings.ranges
-            && ts.is_known(declaring, KnownTypeCode::Range)
-            && call.args.len() == 2
-        {
-            Some("a range or index")
-        } else {
-            match name.as_ref() {
-                None => Some("an unnamed type"),
-                Some((ns, name)) if ns == "System" && name.starts_with("ValueTuple") => {
-                    Some("a tuple")
-                }
-                _ => None,
-            }
+        let special = match name.as_ref() {
+            None => Some("an unnamed type"),
+            Some((ns, name)) if ns == "System" && name.starts_with("ValueTuple") => Some("a tuple"),
+            _ => None,
         };
         if let Some(form) = special {
             return Err(format!(
@@ -1574,6 +1788,15 @@ impl Builder<'_, '_, '_, '_> {
                 )
             });
         let mut list = self.argument_list(call, &method, id, 0, declaring, false)?;
+        // `HandleRangeConstruction`: `new Range(a, b)` is `a..b`.
+        if self.settings.ranges
+            && self.ts.is_known(declaring, KnownTypeCode::Range)
+            && list.explicit_names.is_none()
+            && list.arguments.len() == 2
+        {
+            let (start, end) = (list.arguments[0].expression, list.arguments[1].expression);
+            return Ok(self.range_expression(inst, operand, &method, Some(start), Some(end)));
+        }
         // `HandleRangeConstruction`: `new Index(n, true)` is `^n`.
         if self.settings.ranges
             && self.ts.is_known(declaring, KnownTypeCode::Index)
@@ -2143,15 +2366,7 @@ impl Builder<'_, '_, '_, '_> {
             || (in_namespace(
                 "System.Runtime.CompilerServices",
                 "FormattableStringFactory",
-            ) && method.name != "Create")
-            // `HandleRangeConstruction`: `a..` and `..b`.
-            || (self.settings.ranges
-                && ts.is_known(declaring, KnownTypeCode::Range)
-                && matches!(method.name.as_str(), "StartAt" | "EndAt")
-                && method.parameters.len() == 1)
-            // `IsReadOnlySpanCastUp`, an implicit span conversion with first-class spans.
-            || (ts.is_known(declaring, KnownTypeCode::ReadOnlySpanOfT)
-                && method.name == "CastUp");
+            ) && method.name != "Create");
         if special {
             return Err(format!("a call of {} with its own syntax", method.name));
         }
@@ -2393,7 +2608,12 @@ impl Builder<'_, '_, '_, '_> {
                 self.contains_anonymous_type_name(*inner)
             }
             TypeData::Tuple { underlying, .. } => self.contains_anonymous_type_name(*underlying),
-            TypeData::FnPtr(_) | TypeData::Intersection(_) => true,
+            // `TypeVisitor.VisitFunctionPointerType` visits the return and parameter types.
+            TypeData::FnPtr(f) => {
+                self.contains_anonymous_type_name(f.ret)
+                    || f.params.iter().any(|&p| self.contains_anonymous_type_name(p))
+            }
+            TypeData::Intersection(_) => true,
             _ => false,
         }
     }
@@ -3184,37 +3404,89 @@ impl Builder<'_, '_, '_, '_> {
         params_type: TypeId,
     ) -> Result<Option<(Vec<TranslatedExpression>, TypeId)>, Unsupported> {
         let rr = self.rr_of(arg.expression);
-        let is_span = self.ts.is_known(arg.ty, KnownTypeCode::ReadOnlySpanOfT)
-            || self.ts.is_known(arg.ty, KnownTypeCode::SpanOfT);
-        // A cast of anything but an array creation (an inline array conversion) is no implicit
-        // span conversion of an array, which `ExtractArguments` expands.
-        let cast_of_array_creation = match *self.ast.node(arg.expression) {
-            AstNode::Cast { expression, .. } => {
-                matches!(self.ast.node(expression), AstNode::ArrayCreate { .. })
-            }
-            _ => true,
-        };
-        if is_span && matches!(rr, Rr::Conversion { .. }) && !cast_of_array_creation {
-            return Ok(None);
-        }
-        if is_span
-            && matches!(
-                rr,
-                Rr::ObjectCreation { .. } | Rr::Conversion { .. } | Rr::ImplicitConversion { .. }
-            )
-        {
-            return Err("a params argument of a span".to_owned());
-        }
+        // Every expanded argument binds to the element type of the params collection.
         let element_type = match *self.ts.data(params_type) {
             TypeData::Array { elem, rank: 1, .. } => elem,
-            _ => {
-                return if matches!(rr, Rr::ArrayCreate { .. }) {
-                    Err("a params argument of a span or collection".to_owned())
-                } else {
-                    Ok(None)
-                };
+            _ if self
+                .ts
+                .is_known(params_type, KnownTypeCode::ReadOnlySpanOfT)
+                || self.ts.is_known(params_type, KnownTypeCode::SpanOfT)
+                || matches!(
+                    self.ts.known_type_code(params_type),
+                    KnownTypeCode::IEnumerableOfT
+                        | KnownTypeCode::ICollectionOfT
+                        | KnownTypeCode::IListOfT
+                        | KnownTypeCode::IReadOnlyCollectionOfT
+                        | KnownTypeCode::IReadOnlyListOfT
+                ) =>
+            {
+                match self.ts.first_type_argument(params_type) {
+                    Some(t) => t,
+                    None => return Ok(None),
+                }
             }
+            _ => return Ok(None),
         };
+        // `System.ReadOnlySpan<T>..ctor(ref readonly T)`: the one element.
+        if let Rr::ObjectCreation { method, .. } = &rr
+            && let AstNode::ObjectCreate {
+                ref arguments,
+                initializer: None,
+                ..
+            } = *self.ast.node(arg.expression)
+            && let [element] = arguments.as_slice()
+        {
+            let element = *element;
+            let ctor = Method::from_resolved(self.ts, &method.method);
+            let single_ref_readonly = ctor.as_ref().and_then(|m| match m.parameters.as_slice() {
+                [p] if p.ref_kind == RefKind::RefReadOnly => match *self.ts.data(p.ty) {
+                    TypeData::ByRef(e) => Some(e),
+                    _ => None,
+                },
+                _ => None,
+            });
+            let declaring = method.method.declaring;
+            if method.method.name == ".ctor"
+                && let Some(param_type) = single_ref_readonly
+                && let Some(declaring) = declaring
+                && self.ts.is_known(declaring, KnownTypeCode::ReadOnlySpanOfT)
+                && self.ts.first_type_argument(declaring) == Some(param_type)
+            {
+                let rr = self.rr_of(element);
+                let ty = self.rr_type(&rr);
+                return Ok(Some((
+                    vec![TranslatedExpression {
+                        expression: element,
+                        ty,
+                    }],
+                    element_type,
+                )));
+            }
+            return Ok(None);
+        }
+        // An implicit span conversion of an array creation: its elements.
+        if let Rr::Conversion { .. } | Rr::ImplicitConversion { .. } = rr {
+            let inner = match *self.ast.node(arg.expression) {
+                AstNode::Cast { expression, .. } => expression,
+                _ => arg.expression,
+            };
+            if !matches!(self.rr_of(inner), Rr::ArrayCreate { .. }) {
+                return Ok(None);
+            }
+            let inner_rr = self.rr_of(inner);
+            let inner_ty = self.rr_type(&inner_rr);
+            if !Conversions::new(self.ts)
+                .implicit_type(inner_ty, arg.ty)
+                .is_implicit_span()
+            {
+                return Ok(None);
+            }
+            let array = TranslatedExpression {
+                expression: inner,
+                ty: inner_ty,
+            };
+            return self.params_elements(array, params_type);
+        }
         match rr {
             Rr::Invocation { method, .. }
                 if method.method.name == "Empty"

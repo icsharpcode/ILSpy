@@ -1536,6 +1536,10 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 			pendingImplicitConversion = false;
 			node.LambdaConversion = pendingLambdaConversion;
 			pendingLambdaConversion = false;
+			node.MethodGroupConversion = pendingMethodGroupConversion;
+			pendingMethodGroupConversion = null;
+			node.InlineArrayConversion = pendingInlineArrayConversion;
+			pendingInlineArrayConversion = false;
 			node.ResolveOperator = pendingResolveOperator;
 			pendingResolveOperator = false;
 			node.MethodGroup = pendingMethodGroup;
@@ -2033,6 +2037,22 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				case RustBodyNode.BoolLiteral:
 					node.Flag = Bool();
 					break;
+				case RustBodyNode.Range:
+				{
+					// Whether the start is there and the start, then the same of the end.
+					var start = Bool() ? BodyNode() : null;
+					var end = Bool() ? BodyNode() : null;
+					node.Children = [start!, end!];
+					break;
+				}
+				case RustBodyNode.LeadingComment:
+				{
+					// The comment's text and CommentType, then the node it precedes.
+					string text = Str();
+					node.Value = new CSharp.Syntax.Comment(text, (CSharp.Syntax.CommentType)U8());
+					node.Children = [BodyNode()];
+					break;
+				}
 			}
 			return node;
 		}
@@ -2164,9 +2184,11 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		ResolveResult? NestedTargetResolveResult()
 		{
 			var result = BodyResolveResult(out _);
-			if (pendingResolveCast || pendingImplicitConversion || pendingLambdaConversion)
+			if (pendingResolveCast || pendingImplicitConversion || pendingLambdaConversion || pendingMethodGroupConversion != null
+				|| pendingInlineArrayConversion)
 			{
-				pendingResolveCast = pendingImplicitConversion = pendingLambdaConversion = false;
+				pendingResolveCast = pendingImplicitConversion = pendingLambdaConversion = pendingInlineArrayConversion = false;
+				pendingMethodGroupConversion = null;
 				return RustSeam2.PendingTarget;
 			}
 			// A nested invocation's resolve result is completed on its own node; the one taking it
@@ -2193,6 +2215,12 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 
 		/// <summary>Whether the last <see cref="BodyResolveResult"/> read was the lambda conversion of a cast.</summary>
 		bool pendingLambdaConversion;
+
+		/// <summary>The method of the method group conversion of a cast the last <see cref="BodyResolveResult"/> read.</summary>
+		IMethod? pendingMethodGroupConversion;
+
+		/// <summary>Whether the last <see cref="BodyResolveResult"/> read was the inline array conversion of a cast.</summary>
+		bool pendingInlineArrayConversion;
 
 		/// <summary>Whether the last <see cref="BodyResolveResult"/> read was a binary operator the host resolves.</summary>
 		bool pendingResolveOperator;
@@ -2342,6 +2370,14 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					// RustSeam2 converts the lambda's resolve result.
 					pendingLambdaConversion = true;
 					return null;
+				case 120:
+					// RustSeam2 converts the operand with the method group conversion of the method.
+					pendingMethodGroupConversion = CallMethod();
+					return null;
+				case 123:
+					// RustSeam2 converts the operand with the inline array conversion.
+					pendingInlineArrayConversion = true;
+					return null;
 				case 14:
 				{
 					var type = Type();
@@ -2351,6 +2387,17 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					return new ByReferenceResolveResult(NestedTargetResolveResult()!, ReferenceKind.Out);
 				case 30:
 					return new MemberResolveResult(null, CallMethod());
+				case 122:
+				{
+					var target = NestedTargetResolveResult();
+					return new MemberResolveResult(target, CallMethod());
+				}
+				case 121:
+				{
+					var accessor = CallMethod();
+					return new MemberResolveResult(null, accessor.AccessorOwner
+						?? throw new InvalidOperationException("Property resolve result of a method that is no accessor"));
+				}
 				case 29:
 				{
 					var kind = Bool() ? ReferenceKind.RefReadOnly : ReferenceKind.In;

@@ -231,12 +231,83 @@ impl Builder<'_, '_, '_, '_> {
                 let s = self.ast.add(AstNode::ExpressionStatement { expression: e });
                 Ok(self.ast.with_il(s, inst))
             }
-            Inst::Switch { .. }
-            | Inst::Branch { .. }
-            | Inst::TryFault { .. }
-            | Inst::Initblk { .. }
-            | Inst::Cpblk { .. }
-            | Inst::Ckfinite { .. } => Err(format!(
+            // `VisitInitblk` and `VisitCpblk`: the `Unsafe` block method, commented.
+            Inst::Initblk {
+                address: a,
+                value: b,
+                size: c,
+                unaligned,
+                ..
+            }
+            | Inst::Cpblk {
+                dest: a,
+                source: b,
+                size: c,
+                unaligned,
+                ..
+            } => {
+                let initblk = matches!(self.f.inst(inst), Inst::Initblk { .. });
+                let name = match (initblk, unaligned != 0) {
+                    (true, false) => "InitBlock",
+                    (true, true) => "InitBlockUnaligned",
+                    (false, false) => "CopyBlock",
+                    (false, true) => "CopyBlockUnaligned",
+                };
+                let mut arguments = Vec::with_capacity(3);
+                for arg in [a, b, c] {
+                    arguments.push(self.translate(arg, None)?.expression);
+                }
+                let void = self.ts.known_type(KnownTypeCode::Void);
+                let e = self.call_unsafe_intrinsic(name, arguments, void, Some(inst), Vec::new());
+                let s = self.ast.add(AstNode::ExpressionStatement {
+                    expression: e.expression,
+                });
+                let comment = if initblk {
+                    " IL initblk instruction"
+                } else {
+                    " IL cpblk instruction"
+                };
+                self.ast.with_leading_comment(s, comment, 0);
+                Ok(self.ast.with_il(s, inst))
+            }
+            // `VisitCkfinite`: `if (!float.IsFinite(arg)) throw new ArithmeticException();`,
+            // with no resolve results but the exception type's.
+            Inst::Ckfinite { arg } => {
+                let a = self.translate(arg, None)?.expression;
+                let float = self.ts.known_type(KnownTypeCode::Single);
+                let t = self.ast.add(AstNode::TypeReference { ty: float });
+                let m = self.ast.add(AstNode::MemberReference {
+                    target: t,
+                    name: "IsFinite".to_owned(),
+                });
+                let call = self.ast.add(AstNode::Invocation {
+                    target: m,
+                    arguments: vec![a],
+                });
+                let condition = self.ast.add(AstNode::LogicNot { expression: call });
+                let exception =
+                    self.ts
+                        .find_top_level(crate::typesystem::names::TopLevelTypeName::new(
+                            "System",
+                            "ArithmeticException",
+                            0,
+                        ));
+                let creation = self.ast.add(AstNode::ObjectCreate {
+                    ty: exception,
+                    arguments: Vec::new(),
+                    initializer: None,
+                });
+                let throw = self.ast.add(AstNode::Throw {
+                    expression: Some(creation),
+                });
+                let s = self.ast.add(AstNode::IfElse {
+                    condition,
+                    true_statement: throw,
+                    false_statement: None,
+                });
+                Ok(self.ast.with_il(s, inst))
+            }
+            Inst::Switch { .. } | Inst::Branch { .. } | Inst::TryFault { .. } => Err(format!(
                 "the statement {}",
                 super::inst_name(self.f.inst(inst))
             )),

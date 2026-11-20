@@ -539,6 +539,7 @@ impl Builder<'_, '_, '_, '_> {
                 super::call_builder::CallOp::CallVirt,
                 ty,
             ),
+            Inst::LdFtn { ref method } => self.ldftn(inst, method),
             Inst::BitNot {
                 arg,
                 lifted_underlying,

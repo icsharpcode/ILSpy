@@ -111,6 +111,8 @@ mod kind {
     pub const BOOL_LITERAL: u8 = 140;
     pub const INITIALIZER_INDEXER: u8 = 160;
     pub const AS_REF_READONLY_HELPER: u8 = 161;
+    pub const LEADING_COMMENT: u8 = 190;
+    pub const RANGE: u8 = 191;
 }
 
 pub(super) fn write_body(
@@ -232,6 +234,15 @@ fn rr(w: &mut FunctionWriter<'_, '_, '_, '_>, rr: Option<&Rr>) -> Result<(), Str
             w.out.u8(30);
             w.call_method(method)?;
         }
+        Some(Rr::PropertyMember { accessor, .. }) => {
+            w.out.u8(121);
+            w.call_method(accessor)?;
+        }
+        Some(Rr::TargetMethodMember { target, method, .. }) => {
+            w.out.u8(122);
+            self::rr(w, Some(target))?;
+            w.call_method(method)?;
+        }
         Some(Rr::ByReferenceIn(element, ref_readonly)) => {
             w.out.u8(29);
             w.out.bool(*ref_readonly);
@@ -303,6 +314,13 @@ fn rr(w: &mut FunctionWriter<'_, '_, '_, '_>, rr: Option<&Rr>) -> Result<(), Str
         Some(Rr::Conversion { .. }) => w.out.u8(13),
         Some(Rr::ImplicitConversion { .. }) => w.out.u8(17),
         Some(Rr::LambdaConversion { .. }) => w.out.u8(18),
+        // The host converts the cast's operand with the inline array conversion.
+        Some(Rr::InlineArrayConversion { .. }) => w.out.u8(123),
+        // The host converts the cast's operand with the method group conversion of the method.
+        Some(Rr::FunctionPointerConversion { method, .. }) => {
+            w.out.u8(120);
+            w.call_method(method)?;
+        }
         // The host builds the resolve result from the node.
         Some(Rr::ArrayCreate { .. }) => w.out.u8(0),
         Some(Rr::TypeIs { .. }) => w.out.u8(0),
@@ -437,6 +455,26 @@ fn dynamic_parameters(w: &mut FunctionWriter<'_, '_, '_, '_>, parameters: &[(Typ
 }
 
 fn node(w: &mut FunctionWriter<'_, '_, '_, '_>, ast: &Ast, id: AstId) -> Result<(), String> {
+    // A leading comment is a node of its own before the commented one: no annotations, the
+    // text and the `CommentType`.
+    if let Some((text, comment_type)) = &ast.annotations(id).leading_comment {
+        w.out.u8(kind::LEADING_COMMENT);
+        w.out.len(0);
+        w.out.bool(false);
+        rr(w, None)?;
+        w.out.u8(0);
+        w.out.bool(false);
+        w.string(text);
+        w.out.u8(*comment_type);
+    }
+    node_without_comment(w, ast, id)
+}
+
+fn node_without_comment(
+    w: &mut FunctionWriter<'_, '_, '_, '_>,
+    ast: &Ast,
+    id: AstId,
+) -> Result<(), String> {
     let n = ast.node(id).clone();
     let a = ast.annotations(id).clone();
     w.out.u8(match n {
@@ -528,6 +566,7 @@ fn node(w: &mut FunctionWriter<'_, '_, '_, '_>, ast: &Ast, id: AstId) -> Result<
         AstNode::UnsafeIntrinsic { .. } => kind::UNSAFE_INTRINSIC,
         AstNode::StackAlloc { .. } => kind::STACK_ALLOC,
         AstNode::Undocumented { .. } => kind::UNDOCUMENTED,
+        AstNode::Range { .. } => kind::RANGE,
         AstNode::BoolLiteral { .. } => kind::BOOL_LITERAL,
     });
     w.out.len(a.il.len());
@@ -1180,6 +1219,14 @@ fn node(w: &mut FunctionWriter<'_, '_, '_, '_>, ast: &Ast, id: AstId) -> Result<
                 w.out.len(elements.len());
                 for e in elements {
                     node(w, ast, e)?;
+                }
+            }
+        }
+        AstNode::Range { start, end } => {
+            for side in [start, end] {
+                w.out.bool(side.is_some());
+                if let Some(s) = side {
+                    node(w, ast, s)?;
                 }
             }
         }

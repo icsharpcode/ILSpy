@@ -39,6 +39,8 @@ impl Builder<'_, '_, '_, '_> {
             | Rr::Conversion { ty }
             | Rr::ImplicitConversion { ty }
             | Rr::LambdaConversion { ty }
+            | Rr::FunctionPointerConversion { ty, .. }
+            | Rr::InlineArrayConversion { ty }
             | Rr::InitializedObject(ty)
             | Rr::ArrayCreate { ty }
             | Rr::ResolvedOperator { ty }
@@ -49,7 +51,9 @@ impl Builder<'_, '_, '_, '_> {
             | Rr::FormatString { ty, .. }
             | Rr::DynamicConstructor { ty, .. }
             | Rr::DynamicConversion { ty, .. }
-            | Rr::MethodMember { ty, .. } => *ty,
+            | Rr::MethodMember { ty, .. }
+            | Rr::PropertyMember { ty, .. }
+            | Rr::TargetMethodMember { ty, .. } => *ty,
             Rr::DynamicMember { .. }
             | Rr::DynamicInvocation { .. }
             | Rr::DynamicOperator { .. } => self.ts.intern(TypeData::Dynamic),
