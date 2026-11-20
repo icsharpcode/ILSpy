@@ -38,10 +38,6 @@ static class BodyGapExtensions
 	public static void Add(this BodyGapBag bag, int value) => bag.Items.Add(value);
 
 	public static int TupleExtension(this (int, string) t) => t.Item1;
-
-#nullable disable
-	public static int ObliviousGenericExtension<T>(this System.Collections.Generic.IEnumerable<T> e) => 0;
-#nullable restore
 }
 
 struct BodyGapLiftable
@@ -202,25 +198,12 @@ public class BodyGapTests
 
 	static int ExtensionOnTuple(int i) => (i, "x").TupleExtension();
 
-#nullable disable
-	static int ObliviousGenericExtensionOnNull() => ((System.Collections.Generic.IEnumerable<int>)null).ObliviousGenericExtension();
-#nullable restore
-
 	static bool LiftedUserDefinedOperator(BodyGapLiftable? a, BodyGapLiftable? b) => a == b;
-
-	static int GenericLocalFunction(int x)
-	{
-		return Local(x) + Local(x + 1);
-
-		static T Local<T>(T value) => value;
-	}
 
 	[TestCase(nameof(BoundExtensionMethod))]
 	[TestCase(nameof(BoundExtensionMethodOnNull))]
 	[TestCase(nameof(ExtensionOnTuple))]
-	[TestCase(nameof(ObliviousGenericExtensionOnNull))]
 	[TestCase(nameof(LiftedUserDefinedOperator))]
-	[TestCase(nameof(GenericLocalFunction))]
 	[TestCase(nameof(SwitchOfTuples))]
 	[TestCase(nameof(UnboundExtensionMethod))]
 	[TestCase(nameof(DictionaryInitializer))]

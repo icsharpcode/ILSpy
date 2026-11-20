@@ -891,15 +891,11 @@ impl Builder<'_, '_, '_, '_> {
             }
         );
         if null_target {
-            // shortcut: for a receiver of a nullable-annotated type the engine writes the type
-            // arguments the managed builder leaves out (`((IEnumerable<int>?)null).Ext()`);
-            // find where the managed escalation differs before lifting this.
-            if !type_arguments.is_empty()
-                && method
-                    .definition_parameters
-                    .first()
-                    .is_some_and(|p| matches!(self.ts.data(p.ty), TypeData::Annotated { .. }))
-            {
+            // shortcut: where the call needs its type arguments, the engine writes them where
+            // the managed builder may leave them out (`((IEnumerable<int>)null).Any()` in
+            // `QualifierTests` compiled with nullable annotations); find where the managed
+            // escalation differs before lifting this.
+            if !type_arguments.is_empty() {
                 return Err("an extension method call on null".to_owned());
             }
             let ty = method.parameters[0].ty;
