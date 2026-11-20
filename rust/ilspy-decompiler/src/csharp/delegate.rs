@@ -6,8 +6,11 @@ use std::rc::Rc;
 use crate::il::ast::{CallData, Inst, MethodOperand, NodeId};
 use crate::il::transforms::LookupTarget;
 use crate::semantics::{Conversions, Method, MethodGroup, OverloadResolution, ResolveResult};
+use crate::typesystem::attrvalue::ArgValue;
+use crate::typesystem::fnptr::FnPtrType;
+use crate::typesystem::known::KnownTypeCode;
 use crate::typesystem::resolve::MethodOrigin;
-use crate::typesystem::types::TypeId;
+use crate::typesystem::types::{TypeData, TypeId};
 
 use super::ast::{AstId, AstNode, Rr};
 use super::call_builder::CallOp;
@@ -105,6 +108,140 @@ impl Builder<'_, '_, '_, '_> {
         Ok(TranslatedExpression {
             expression: e,
             ty: delegate_type,
+        })
+    }
+
+    /// `VisitLdFtn`: `(delegate*<...>)(&Method)` of a static method, the reference written as
+    /// `BuildMethodReference` writes it; an instance method is the pseudo-call `__ldftn(M)`.
+    pub(crate) fn ldftn(
+        &mut self,
+        inst: NodeId,
+        operand: &MethodOperand,
+    ) -> Result<TranslatedExpression, Unsupported> {
+        let MethodOrigin::Def(id) = operand.method.origin else {
+            return Err("a function pointer of an unresolved method".to_owned());
+        };
+        let mut method = Method::from_resolved(self.ts, &operand.method)
+            .ok_or("a function pointer of an unresolved method")?;
+        let declaring = method.declaring.ok_or("a method without declaring type")?;
+        // `BuildMethodReference(method, isVirtual: false)`, with a `MemberResolveResult` without
+        // target in place of the method group.
+        let reference = if let Some(local) = &operand.local_function {
+            // `LocalFunctionMethod`: static, without the compiler-generated parameters.
+            let reference = self.local_function_reference(operand, &method, false)?;
+            let generated = local.reduced.number_of_compiler_generated_parameters as usize;
+            let keep = method.parameters.len().saturating_sub(generated);
+            method.parameters.truncate(keep);
+            method.is_static = true;
+            reference
+        } else {
+            let target = self.translate_target(None, true, method.is_static, declaring)?;
+            self.method_reference(operand, &method, CallOp::Call, target, declaring)?
+        };
+        // `MemberResolveResult.ComputeType`: a by-reference return is of its element type.
+        let member_type = match *self.ts.data(method.return_type) {
+            TypeData::ByRef(element) => element,
+            _ => method.return_type,
+        };
+        self.ast.with_rr(
+            reference,
+            Rr::MethodMember {
+                method: Box::new(operand.clone()),
+                ty: member_type,
+            },
+        );
+        if !method.is_static {
+            // C# function pointers do not support instance methods.
+            let name = self.ast.add(AstNode::Identifier {
+                name: "__ldftn".to_owned(),
+            });
+            let e = self.ast.add(AstNode::Invocation {
+                target: name,
+                arguments: vec![reference],
+            });
+            let void = self.ts.known_type(KnownTypeCode::Void);
+            let ty = self.ts.intern(TypeData::Pointer(void));
+            self.ast.with_rr(e, Rr::Plain(ty));
+            self.ast.with_il(e, inst);
+            return Ok(TranslatedExpression { expression: e, ty });
+        }
+        // The calling convention and the custom ones of `[UnmanagedCallersOnly]`.
+        let mut calling_convention = 0u8;
+        let mut custom_conventions = Vec::new();
+        let attributes = self.ts.method_attributes(id).map_err(|e| e.to_string())?;
+        let unmanaged_callers_only = attributes.iter().find(|a| {
+            self.ts.name_and_namespace(a.ty).is_some_and(|(name, ns)| {
+                ns == "System.Runtime.InteropServices" && name == "UnmanagedCallersOnlyAttribute"
+            })
+        });
+        if let Some(attribute) = unmanaged_callers_only {
+            /// `SignatureCallingConvention.Unmanaged`.
+            const UNMANAGED: u8 = 9;
+            calling_convention = UNMANAGED;
+            let conventions = attribute
+                .named
+                .iter()
+                .find(|n| n.name.as_deref() == Some("CallConvs"));
+            if let Some(n) = conventions
+                && let ArgValue::Array(elements) = &n.arg.value
+            {
+                for element in elements {
+                    let ArgValue::Type(t) = element.value else {
+                        continue;
+                    };
+                    let found = match self.ts.name_and_namespace(t) {
+                        Some((name, ns))
+                            if ns == "System.Runtime.CompilerServices"
+                                && calling_convention == UNMANAGED =>
+                        {
+                            match name.as_str() {
+                                "CallConvCdecl" => Some(1),
+                                "CallConvFastcall" => Some(4),
+                                "CallConvStdcall" => Some(2),
+                                "CallConvThiscall" => Some(3),
+                                _ => None,
+                            }
+                        }
+                        _ => None,
+                    };
+                    match found {
+                        Some(c) => calling_convention = c,
+                        None => custom_conventions.push(t),
+                    }
+                }
+            }
+        }
+        let ret_ref_readonly = self.ts.method_return_type_is_ref_read_only(&operand.method);
+        let ftp = self.ts.intern(TypeData::FnPtr(Box::new(FnPtrType {
+            calling_convention,
+            custom_conventions: custom_conventions.into(),
+            ret: method.return_type,
+            ret_ref_readonly,
+            params: method.parameters.iter().map(|p| p.ty).collect(),
+            ref_kinds: method.parameters.iter().map(|p| p.ref_kind as u8).collect(),
+        })));
+        let address_of = self.ast.add(AstNode::PointerUnary {
+            address_of: true,
+            expression: reference,
+        });
+        let no_type = self.ts.intern(TypeData::NoType);
+        self.ast.with_rr(address_of, Rr::Plain(no_type));
+        self.ast.with_il(address_of, inst);
+        let e = self.ast.add(AstNode::Cast {
+            ty: ftp,
+            expression: address_of,
+            overflow: super::ast::Overflow::None,
+        });
+        self.ast.with_rr(
+            e,
+            Rr::FunctionPointerConversion {
+                ty: ftp,
+                method: Box::new(operand.clone()),
+            },
+        );
+        Ok(TranslatedExpression {
+            expression: e,
+            ty: ftp,
         })
     }
 

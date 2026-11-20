@@ -135,6 +135,10 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		public const byte BoolLiteral = 140;
 		public const byte InitializerIndexer = 160;
 		public const byte AsRefReadOnlyHelper = 161;
+		/// <summary>A comment added as leading trivia of its only child, which it builds into.</summary>
+		public const byte LeadingComment = 190;
+		/// <summary>A range <c>start..end</c>, a child left out being null.</summary>
+		public const byte Range = 191;
 
 		public byte Kind;
 		/// <summary>The instructions the node is annotated with, in order.</summary>
@@ -163,6 +167,10 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		public bool ImplicitConversion;
 		/// <summary>For a cast: whether its resolve result is the lambda conversion of the lambda it casts.</summary>
 		public bool LambdaConversion;
+		/// <summary>For a cast: the method whose method group conversion over the operand's resolve result is the cast's (a function pointer <c>ldftn</c>).</summary>
+		public IMethod? MethodGroupConversion;
+		/// <summary>For a cast: whether its resolve result is the inline array conversion of the operand's.</summary>
+		public bool InlineArrayConversion;
 		/// <summary>For a binary operator: whether its resolve result is <c>ResolveBinaryOperator</c> over the operands'.</summary>
 		public bool ResolveOperator;
 		/// <summary>For a method reference: whether it has a target, and the type arguments and method of its <see cref="MethodGroupResolveResult"/>.</summary>
@@ -498,6 +506,28 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 			ThrowIfStrict("this type syntax", type.ToString());
 			Interlocked.Increment(ref typeSyntaxFallbacks);
 			return exprBuilder.ConvertType(type);
+		}
+
+		/// <summary>
+		/// The syntax of the compilation's Unsafe. Where no module defines it, the compilation's
+		/// is MinimalCorlib's, which the engine knows only by name (<paramref name="engineType"/>);
+		/// the engine's syntax of that name then carries the compilation's type, as the managed
+		/// <c>ConvertType</c> annotates it, so <c>FullyQualifyAmbiguousTypeNames</c> qualifies it alike.
+		/// </summary>
+		static AstType UnsafeTypeSyntax(ExpressionBuilder exprBuilder, IType engineType)
+		{
+			var unsafeType = exprBuilder.compilation.FindType(KnownTypeCode.Unsafe);
+			if (currentTypes?.TypeSyntax(unsafeType) is { } syntax)
+				return syntax;
+			if (unsafeType.GetDefinition()?.ParentModule is not MetadataModule && engineType.Kind == TypeKind.Unknown
+				&& engineType.FullName == unsafeType.FullName
+				&& currentTypes?.TypeSyntax(engineType) is { } engineSyntax)
+			{
+				engineSyntax.RemoveAnnotations<TypeResolveResult>();
+				engineSyntax.AddAnnotation(new TypeResolveResult(unsafeType));
+				return engineSyntax;
+			}
+			return ConvertType(exprBuilder, unsafeType);
 		}
 
 		static long hiddenDecisions;
@@ -1280,7 +1310,9 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				case RustBodyNode.LogicNot:
 				{
 					var operand = (Expression)Build(node.Children[0], exprBuilder);
-					node.ResolveResult = new OperatorResolveResult(node.OperatorType!, System.Linq.Expressions.ExpressionType.Not, operand.GetResolveResult());
+					// `VisitCkfinite`'s `!` comes without a resolve result.
+					if (node.OperatorType != null)
+						node.ResolveResult = new OperatorResolveResult(node.OperatorType, System.Linq.Expressions.ExpressionType.Not, operand.GetResolveResult());
 					return Annotate(new UnaryOperatorExpression(UnaryOperatorType.Not, operand), node);
 				}
 				case RustBodyNode.BinaryOperator:
@@ -1353,6 +1385,9 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				{
 					var target = (Expression)Build(node.Children[0], exprBuilder);
 					var indices = node.Children.Skip(1).Select(c => (Expression)Build(c, exprBuilder)).ToList();
+					// A slice's member resolve result takes a cast or call target's from the built target.
+					if (node.ResolveResult is MemberResolveResult pending && ReferenceEquals(pending.TargetResult, PendingTarget))
+						node.ResolveResult = new MemberResolveResult(target.GetResolveResult(), pending.Member);
 					CompleteDynamicInvocation(node, target, indices);
 					return Annotate(new IndexerExpression(target, indices), node);
 				}
@@ -1749,6 +1784,13 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					AddOverflowAnnotation(cast, node);
 					if (node.LambdaConversion)
 						node.ResolveResult = new ConversionResolveResult(node.Type!, operand.GetResolveResult(), Semantics.LambdaConversion.Instance);
+					if (node.InlineArrayConversion)
+						node.ResolveResult = new ConversionResolveResult(node.Type!, operand.GetResolveResult(), Conversion.InlineArrayConversion);
+					if (node.MethodGroupConversion != null)
+					{
+						node.ResolveResult = new ConversionResolveResult(node.Type!, operand.GetResolveResult(),
+							Conversion.MethodGroupConversion(node.MethodGroupConversion, isVirtualMethodLookup: false, delegateCapturesFirstArgument: false));
+					}
 					if (node.ResolveCast)
 						node.ResolveResult = exprBuilder.resolver.WithCheckForOverflow(node.Overflow == 1).ResolveCast(node.Type!, operand.GetResolveResult());
 					// `HandleImplicitConversion`: the implicit conversion from the operand's type.
@@ -1805,7 +1847,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					var target = new MemberReferenceExpression {
 						// `CallUnsafeIntrinsic`: the compilation's Unsafe, which is an unknown (fully qualified) type
 						// where the module does not reference it.
-						Target = new TypeReferenceExpression(ConvertType(exprBuilder, exprBuilder.compilation.FindType(KnownTypeCode.Unsafe))),
+						Target = new TypeReferenceExpression(UnsafeTypeSyntax(exprBuilder, node.Type!)),
 						MemberName = (string)node.Value!
 					};
 					target.TypeArguments.AddRange(node.TypeArguments.Select(t => ConvertType(exprBuilder, t)));
@@ -1830,6 +1872,18 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					var undocumented = new UndocumentedExpression { UndocumentedExpressionType = (UndocumentedExpressionType)node.Value! };
 					undocumented.Arguments.AddRange(node.Children.Select(c => (Expression)Build(c, exprBuilder)));
 					return Annotate(undocumented, node);
+				}
+				case RustBodyNode.Range:
+				{
+					var start = node.Children[0] is { } s ? (Expression)Build(s, exprBuilder) : null;
+					var end = node.Children[1] is { } e ? (Expression)Build(e, exprBuilder) : null;
+					return Annotate(new BinaryOperatorExpression(start!, BinaryOperatorType.Range, end!), node);
+				}
+				case RustBodyNode.LeadingComment:
+				{
+					var commented = Build(node.Children[0], exprBuilder);
+					commented.AddLeadingTrivia((Comment)node.Value!);
+					return commented;
 				}
 				default:
 					throw new RustEngineException($"unknown C# node kind {node.Kind}");
