@@ -159,6 +159,14 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// </summary>
 		RuntimeAsync = 0x100000,
 		/// <summary>
+		/// If this option is active, field, method and property signatures larger than
+		/// <see cref="MetadataModule.MaxLimitedSignatureSize"/> bytes are not decoded;
+		/// the affected types resolve to <see cref="SpecialType.UnknownType"/>.
+		/// Intended for type systems that back interactive UI, where decoding a pathologically large
+		/// signature (megabytes of nested generic instantiations) would block for seconds.
+		/// </summary>
+		LimitSignatureSize = 0x200000,
+		/// <summary>
 		/// Default settings: typical options for the decompiler, with all C# language features enabled.
 		/// </summary>
 		Default = Dynamic | Tuple | ExtensionMethods | DecimalConstants | ReadOnlyStructsAndParameters

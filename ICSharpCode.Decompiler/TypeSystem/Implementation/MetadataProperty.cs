@@ -135,6 +135,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			IParameter[] parameters;
 			try
 			{
+				module.ThrowIfSignatureTooLarge(propertyDef.Signature);
 				var signature = propertyDef.DecodeSignature(module.TypeProvider, genericContext);
 				var accessors = propertyDef.GetAccessors();
 				var declTypeDef = this.DeclaringTypeDefinition;

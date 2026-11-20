@@ -207,6 +207,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			ModifiedType mod;
 			try
 			{
+				module.ThrowIfSignatureTooLarge(methodDef.Signature);
 				var nullableContext = methodDef.GetCustomAttributes().GetNullableContext(module.metadata) ?? DeclaringTypeDefinition.NullableContext;
 				var signature = methodDef.DecodeSignature(module.TypeProvider, genericContext);
 				(returnType, parameters, mod) = DecodeSignature(module, this, signature,
