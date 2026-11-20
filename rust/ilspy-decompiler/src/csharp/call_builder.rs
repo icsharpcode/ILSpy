@@ -172,7 +172,7 @@ impl Builder<'_, '_, '_, '_> {
             return self.local_function_call(inst, call);
         }
         // A proxy call `ProxyCallReplacer` replaced calls the specialized method as any other.
-        if operand.local_function.is_some() || operand.range_accessor.is_some() || operand.lifted {
+        if operand.local_function.is_some() || operand.range_accessor.is_some() {
             return Err(
                 "a call of a local function, proxy, range accessor or lifted operator".to_owned(),
             );
@@ -184,13 +184,49 @@ impl Builder<'_, '_, '_, '_> {
         if resolved.varargs.is_some() {
             return Err("a vararg call".to_owned());
         }
-        let method =
+        let mut method =
             Method::from_resolved(self.ts, resolved).ok_or("a call of an unresolved method")?;
+        method.lifted = operand.lifted;
         let explicit_implementation = self
             .ts
             .is_explicit_interface_implementation(id)
             .map_err(|e| e.to_string())?;
         let declaring = method.declaring.ok_or("a method without declaring type")?;
+        // A direct non-virtual call of an explicit interface implementation cannot be written
+        // in C#; in a sealed class it is equivalent to a virtual call of the interface member.
+        if explicit_implementation
+            && op == CallOp::Call
+            && operand.specialized_by.is_none()
+            && self
+                .ts
+                .definition(declaring)
+                .and_then(|d| self.ts.comp.type_def(d).ok())
+                .is_some_and(|i| {
+                    i.kind == crate::typesystem::compilation::TypeKind::Class
+                        && i.flags & 0x100 != 0
+                })
+        {
+            let implemented = self
+                .ts
+                .explicit_implementations(id)
+                .map_err(|e| e.to_string())?;
+            if let [interface_member] = &implemented[..] {
+                let call = CallData {
+                    // Found by lookup: the wire sends the method's signature.
+                    method: MethodOperand {
+                        token: 0,
+                        method: interface_member.clone(),
+                        context: operand.context,
+                        lifted: false,
+                        range_accessor: None,
+                        specialized_by: None,
+                        local_function: None,
+                    },
+                    ..call.clone()
+                };
+                return self.call(inst, &call, CallOp::CallVirt);
+            }
+        }
         // `IsWrittenAsMemberAccess`: the name of the property the accessor belongs to; for an
         // indexer whether the accessor is its setter.
         let mut indexer: Option<bool> = None;
@@ -855,10 +891,15 @@ impl Builder<'_, '_, '_, '_> {
             }
         );
         if null_target {
-            // shortcut: on a generic method the engine's disambiguation writes the type
-            // arguments the managed one leaves out (`((IEnumerable<int>)null).Any()`); upgrade
-            // with `IsPossibleExtensionMethodCallOnNull` in the probe.
-            if !method.type_parameters.is_empty() || method.method_args.is_some() {
+            // shortcut: for a receiver of a nullable-annotated type the engine writes the type
+            // arguments the managed builder leaves out (`((IEnumerable<int>?)null).Ext()`);
+            // find where the managed escalation differs before lifting this.
+            if !type_arguments.is_empty()
+                && method
+                    .definition_parameters
+                    .first()
+                    .is_some_and(|p| matches!(self.ts.data(p.ty), TypeData::Annotated { .. }))
+            {
                 return Err("an extension method call on null".to_owned());
             }
             let ty = method.parameters[0].ty;
@@ -902,6 +943,15 @@ impl Builder<'_, '_, '_, '_> {
         let mut groups = Vec::with_capacity(arguments.len());
         for a in &list.arguments[1..list.actual_count()] {
             groups.push(match self.rr_of(a.expression) {
+                // shortcut: the host looks a method group argument up without its extension
+                // methods; teach `QueryMethodGroup` `ResolveMemberAccess` when a body needs it.
+                Rr::MethodGroup {
+                    extension: true, ..
+                } => {
+                    return Err(
+                        "an extension method question with an extension method group".to_owned(),
+                    );
+                }
                 Rr::MethodGroup {
                     target,
                     method,
@@ -946,8 +996,15 @@ impl Builder<'_, '_, '_, '_> {
                     )
             })
             .collect();
-        // The question carries expressions, constants, references, `out var`, lambdas and
-        // method groups.
+        // The question carries expressions, constants, references, `out var`, lambdas, method
+        // groups and tuples of expressions and constants.
+        fn plain_tuple(elements: &[ResolveResult]) -> bool {
+            elements.iter().all(|e| match e {
+                ResolveResult::Expression(_) | ResolveResult::Constant { .. } => true,
+                ResolveResult::Tuple { elements, .. } => plain_tuple(elements),
+                _ => false,
+            })
+        }
         for (i, rr) in std::iter::once(&target).chain(&arguments).enumerate() {
             let kind = match rr {
                 ResolveResult::Expression(_)
@@ -955,6 +1012,7 @@ impl Builder<'_, '_, '_, '_> {
                 | ResolveResult::ByReference { .. }
                 | ResolveResult::OutVar(_)
                 | ResolveResult::Lambda(_) => continue,
+                ResolveResult::Tuple { elements, .. } if plain_tuple(elements) => continue,
                 ResolveResult::MethodGroup(_) if i > 0 && method_groups[i - 1].is_some() => {
                     continue;
                 }
@@ -2309,21 +2367,11 @@ impl Builder<'_, '_, '_, '_> {
                 if skip_target_cast && require != initially_required {
                     require = false;
                 } else {
-                    // shortcut: a constructor call's `base` or `this` target is not cast; the
-                    // engine's probe of `base..ctor()` (F# constructors) escalates where the
-                    // managed one resolves. Upgrade once the probes agree.
-                    let base_ctor = method.name == ".ctor"
-                        && matches!(
-                            self.ast.node(target.expression),
-                            AstNode::Base | AstNode::This
-                        );
-                    let uncast = target.expression;
-                    // `Target.ConvertTo(declaringType)`: the target cast to the declaring type.
+                    // `Target.ConvertTo(declaringType)`: the target cast to the declaring type;
+                    // a cast `this..ctor()` is still a constructor initializer
+                    // (`ThisCallClassPattern`).
                     lookup_target =
                         self.cast_target_to_with(target, declaring, op == CallOp::CallVirt)?;
-                    if base_ctor && target.expression != uncast {
-                        return Err("a reference that needs a cast of its target".to_owned());
-                    }
                 }
                 continue;
             }
@@ -3487,8 +3535,9 @@ impl Builder<'_, '_, '_, '_> {
 
     /// `GetUserDefinedOperatorCandidates` for the operands `IsUnambiguousCall` resolves an
     /// operator call with (and the target type of an explicit conversion): the operators of
-    /// that name the types and their base types declare, the primitive types excepted. Lifted
-    /// operators are only applicable to nullable operands, which are not translated.
+    /// that name the underlying types and their base types declare, the primitive types
+    /// excepted, each type's operators followed by their lifted forms
+    /// (`LiftUserDefinedOperators`).
     fn operator_candidates(
         &mut self,
         method: &Method,
@@ -3498,23 +3547,12 @@ impl Builder<'_, '_, '_, '_> {
         if !matches!(written.len(), 1 | 2) {
             return Ok(Vec::new());
         }
-        let mut types: Vec<TypeId> = written.iter().map(|a| a.ty).collect();
-        if written.len() == 1 && method.name == "op_Explicit" {
-            // The target's candidates are those of its underlying type. A lifted operator
-            // takes nullable value types, which an operand of reference type does not convert
-            // to, so a cast of one to a nullable type has no lifted candidates.
-            let target = if self.ts.is_reference_type(types[0]) == Some(true) {
-                self.ts.nullable_underlying(method.return_type)
-            } else {
-                method.return_type
-            };
-            types.push(target);
-        }
-        if types
+        let mut types: Vec<TypeId> = written
             .iter()
-            .any(|&t| self.ts.is_known(t, KnownTypeCode::NullableOfT))
-        {
-            return Err("a lifted operator call".to_owned());
+            .map(|a| self.ts.nullable_underlying(a.ty))
+            .collect();
+        if written.len() == 1 && method.name == "op_Explicit" {
+            types.push(self.ts.nullable_underlying(method.return_type));
         }
         let mut candidates: Vec<Method> = Vec::new();
         for t in types {
@@ -3544,15 +3582,67 @@ impl Builder<'_, '_, '_, '_> {
                     });
                 }
             }
-            for l in self.method_lists(&groups, Some(t)) {
-                for m in l.methods {
-                    if m.is_operator && !candidates.contains(&m) {
-                        candidates.push(m);
-                    }
+            let mut operators: Vec<Method> = self
+                .method_lists(&groups, Some(t))
+                .into_iter()
+                .flat_map(|l| l.methods)
+                .filter(|m| m.is_operator)
+                .collect();
+            let lifted: Vec<Method> = operators
+                .iter()
+                .filter_map(|m| self.lift_user_defined_operator(m))
+                .collect();
+            operators.extend(lifted);
+            for m in operators {
+                if !candidates.contains(&m) {
+                    candidates.push(m);
                 }
             }
         }
         Ok(candidates)
+    }
+
+    /// `CSharpOperators.LiftUserDefinedOperator`: the lifted form of a user-defined operator
+    /// of non-nullable value types, with nullable parameters and (except for a comparison) a
+    /// nullable return type.
+    fn lift_user_defined_operator(&mut self, m: &Method) -> Option<Method> {
+        let comparison = m.parameters.len() == 2
+            && matches!(
+                m.name.as_str(),
+                "op_Equality"
+                    | "op_Inequality"
+                    | "op_LessThan"
+                    | "op_GreaterThan"
+                    | "op_LessThanOrEqual"
+                    | "op_GreaterThanOrEqual"
+            );
+        let non_nullable_value_type = |b: &mut Self, t: TypeId| {
+            b.ts.is_reference_type(t) == Some(false)
+                && !b.ts.is_known(t, KnownTypeCode::NullableOfT)
+        };
+        if comparison {
+            if !self.ts.is_known(m.return_type, KnownTypeCode::Boolean) {
+                return None;
+            }
+        } else if !non_nullable_value_type(self, m.return_type) {
+            return None;
+        }
+        if !m
+            .parameters
+            .iter()
+            .all(|p| non_nullable_value_type(self, p.ty))
+        {
+            return None;
+        }
+        let mut lifted = m.clone();
+        for p in &mut lifted.parameters {
+            p.ty = crate::il::ast::nullable_type(self.ts, p.ty);
+        }
+        if !comparison {
+            lifted.return_type = crate::il::ast::nullable_type(self.ts, m.return_type);
+        }
+        lifted.lifted = true;
+        Some(lifted)
     }
 
     /// The host's method group as the overload resolution's method lists: each definition
@@ -3651,6 +3741,7 @@ impl Builder<'_, '_, '_, '_> {
     /// `expected.Equals(actual, NormalizeTypeVisitor.TypeErasure)`.
     fn same_method_after_type_erasure(&mut self, expected: &Method, actual: &Method) -> bool {
         expected.key == actual.key
+            && expected.lifted == actual.lifted
             && self.effective_type_arguments(expected) == self.effective_type_arguments(actual)
     }
 

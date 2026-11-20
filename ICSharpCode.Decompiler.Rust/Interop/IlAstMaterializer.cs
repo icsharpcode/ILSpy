@@ -1161,7 +1161,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					throw new InvalidOperationException("Trailing bytes after the resolver query");
 				return query;
 			}
-			if (query.Kind is RustResolverQuery.MethodGroupKind or RustResolverQuery.AccessorKind or RustResolverQuery.IndexersKind or RustResolverQuery.MethodReferenceKind)
+			if (query.Kind is RustResolverQuery.MethodGroupKind or RustResolverQuery.AccessorKind or RustResolverQuery.IndexersKind or RustResolverQuery.MethodReferenceKind or RustResolverQuery.ExtensionMethodGroupKind)
 			{
 				if (query.Kind == RustResolverQuery.AccessorKind)
 				{
@@ -1180,7 +1180,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 						query.CausesNonVirtualInvocation = reader.Bool();
 					query.Target = reader.Type();
 				}
-				if (query.Kind is RustResolverQuery.MethodGroupKind or RustResolverQuery.IndexersKind or RustResolverQuery.MethodReferenceKind)
+				if (query.Kind is RustResolverQuery.MethodGroupKind or RustResolverQuery.IndexersKind or RustResolverQuery.MethodReferenceKind or RustResolverQuery.ExtensionMethodGroupKind)
 				{
 					query.TypeArguments = new IType[reader.Len()];
 					for (int i = 0; i < query.TypeArguments.Length; i++)
@@ -1275,8 +1275,19 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				2 => new ByReferenceResolveResult(type, (ReferenceKind)U8()),
 				3 => new OutVarResolveResult(type),
 				4 => QueryLambda(type),
+				6 => QueryTuple(type),
 				_ => throw new InvalidOperationException("Unknown resolver query operand"),
 			};
+		}
+
+		/// <summary>The tuple literal of a resolver query: its elements, named as its type names them.</summary>
+		TupleResolveResult QueryTuple(IType type)
+		{
+			var elements = new ResolveResult[Len()];
+			for (int i = 0; i < elements.Length; i++)
+				elements[i] = QueryOperand();
+			var names = type is TupleType tupleType ? tupleType.ElementNames : default;
+			return new TupleResolveResult(compilation, elements.ToImmutableArray(), names);
 		}
 
 		/// <summary>
@@ -2198,7 +2209,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		bool pendingResolveOperator;
 
 		/// <summary>The method group the last <see cref="BodyResolveResult"/> read describes.</summary>
-		(bool HasTarget, IType[] TypeArguments, IMethod Method)? pendingMethodGroup;
+		(bool HasTarget, IType[] TypeArguments, IMethod Method, bool Extension)? pendingMethodGroup;
 
 		/// <summary>Whether the last <see cref="BodyResolveResult"/> read names a member found by looking its name up again.</summary>
 		bool pendingLookUpMember;
@@ -2323,13 +2334,17 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					// RustSeam2 replaces it with the TryCast conversion of the `as` node's operand.
 					return new ResolveResult(Type());
 				case 23:
+				case 100:
 				{
-					// RustSeam2 looks the method group up again and narrows it to the method.
+					// RustSeam2 looks the method group up again and narrows it to the method; 100
+					// is the group of an extension method reference, resolved as an invocation
+					// target.
+					bool extension = tag == 100;
 					bool hasTarget = Bool();
 					var typeArguments = new IType[Len()];
 					for (int i = 0; i < typeArguments.Length; i++)
 						typeArguments[i] = Type();
-					pendingMethodGroup = (hasTarget, typeArguments, CallMethod());
+					pendingMethodGroup = (hasTarget, typeArguments, CallMethod(), extension);
 					return null;
 				}
 				case 22:

@@ -67,6 +67,8 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		public const byte MethodReferenceKind = 11;
 		/// <summary><c>ExpressionBuilder.ParameterTypesAreAccessible</c> for the types in <see cref="Arguments"/>.</summary>
 		public const byte TypesAccessibleKind = 12;
+		/// <summary><c>ResolveMemberAccess</c> of <see cref="Name"/> on the target as an invocation target: the method group with its extension methods.</summary>
+		public const byte ExtensionMethodGroupKind = 100;
 
 		/// <summary><see cref="TargetKind"/>: <c>this</c> or <c>base</c>.</summary>
 		public const byte ThisTarget = 0;
@@ -206,10 +208,11 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					return AccessorReference(q);
 				if (q.Kind == RustResolverQuery.TypesAccessibleKind)
 					return TypesAccessible(q.Arguments) ? 1 : 0;
-				if (q.Kind is RustResolverQuery.MethodGroupKind or RustResolverQuery.ConstructorsKind or RustResolverQuery.SingularizeKind or RustResolverQuery.IndexersKind or RustResolverQuery.MethodReferenceKind)
+				if (q.Kind is RustResolverQuery.MethodGroupKind or RustResolverQuery.ConstructorsKind or RustResolverQuery.SingularizeKind or RustResolverQuery.IndexersKind or RustResolverQuery.MethodReferenceKind or RustResolverQuery.ExtensionMethodGroupKind)
 				{
 					// The full answer's length; the engine asks again when it does not fit.
 					var data = q.Kind switch {
+						RustResolverQuery.ExtensionMethodGroupKind => ExtensionMethodGroup(q),
 						RustResolverQuery.ConstructorsKind => Constructors(q),
 						RustResolverQuery.IndexersKind => Indexers(q),
 						RustResolverQuery.SingularizeKind => System.Text.Encoding.UTF8.GetBytes(Humanizer.Inflections.Vocabularies.Default.Singularize(q.Name, inputIsKnownToBePlural: false) ?? ""),
@@ -392,6 +395,58 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				return [0];
 			return EncodeMethodLists(group.MethodsGroupedByDeclaringType
 				.Select(l => (l.DeclaringType, (IReadOnlyList<IParameterizedMember>)l)).ToList());
+		}
+
+		/// <summary>
+		/// <c>ResolveMemberAccess(target, name, typeArguments, NameLookupMode.InvocationTarget)</c>,
+		/// as <c>IsUnambiguousMethodReference</c> resolves an extension method reference: the
+		/// method lists encoded as for <see cref="MethodGroup"/>, then the number of extension
+		/// method groups and per group the number of methods and each definition's module index
+		/// and MethodDef row, as unsigned LEB128; 0 for no method group or a method without row.
+		/// </summary>
+		byte[] ExtensionMethodGroup(RustResolverQuery query)
+		{
+			var context = body ?? throw new InvalidOperationException("The engine asked about a C# body without the body's context");
+			var result = context.Resolver.ResolveMemberAccess(TargetResolveResult(query), query.Name, query.TypeArguments, NameLookupMode.InvocationTarget);
+			if (result is not MethodGroupResolveResult group)
+				return [0];
+			var lists = EncodeMethodLists(group.MethodsGroupedByDeclaringType
+				.Select(l => (l.DeclaringType, (IReadOnlyList<IParameterizedMember>)l)).ToList());
+			if (lists.Length == 1)
+				return [0];
+			var output = new List<byte>(lists);
+			var groups = group.GetExtensionMethods().Select(g => g.ToList()).ToList();
+			UVar(groups.Count);
+			foreach (var methods in groups)
+			{
+				UVar(methods.Count);
+				foreach (var method in methods)
+				{
+					var definition = (IMethod)method.MemberDefinition;
+					int module = -1;
+					for (int i = 0; i < modules.Count; i++)
+					{
+						if (modules[i] == definition.ParentModule)
+							module = i;
+					}
+					if (module < 0 || definition.MetadataToken.Kind != HandleKind.MethodDefinition)
+						return [0];
+					UVar(module);
+					UVar(MetadataTokens.GetRowNumber(definition.MetadataToken));
+				}
+			}
+			return output.ToArray();
+
+			void UVar(int value)
+			{
+				uint v = checked((uint)value);
+				while (v >= 0x80)
+				{
+					output.Add((byte)((v & 0x7F) | 0x80));
+					v >>= 7;
+				}
+				output.Add((byte)v);
+			}
 		}
 
 		/// <summary>

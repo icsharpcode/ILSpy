@@ -36,6 +36,23 @@ static class BodyGapExtensions
 	public static int ExtensionLength(this string? s) => s?.Length ?? 0;
 
 	public static void Add(this BodyGapBag bag, int value) => bag.Items.Add(value);
+
+	public static int TupleExtension(this (int, string) t) => t.Item1;
+
+#nullable disable
+	public static int ObliviousGenericExtension<T>(this System.Collections.Generic.IEnumerable<T> e) => 0;
+#nullable restore
+}
+
+struct BodyGapLiftable
+{
+	public static bool operator ==(BodyGapLiftable a, BodyGapLiftable b) => true;
+
+	public static bool operator !=(BodyGapLiftable a, BodyGapLiftable b) => false;
+
+	public override bool Equals(object? obj) => false;
+
+	public override int GetHashCode() => 0;
 }
 
 class BodyGapBag : System.Collections.IEnumerable
@@ -179,6 +196,31 @@ public class BodyGapTests
 
 	static Func<string?, int> UnboundExtensionMethod() => BodyGapExtensions.ExtensionLength;
 
+	static Func<int> BoundExtensionMethod(string s) => s.ExtensionLength;
+
+	static Func<int> BoundExtensionMethodOnNull() => ((string?)null).ExtensionLength;
+
+	static int ExtensionOnTuple(int i) => (i, "x").TupleExtension();
+
+#nullable disable
+	static int ObliviousGenericExtensionOnNull() => ((System.Collections.Generic.IEnumerable<int>)null).ObliviousGenericExtension();
+#nullable restore
+
+	static bool LiftedUserDefinedOperator(BodyGapLiftable? a, BodyGapLiftable? b) => a == b;
+
+	static int GenericLocalFunction(int x)
+	{
+		return Local(x) + Local(x + 1);
+
+		static T Local<T>(T value) => value;
+	}
+
+	[TestCase(nameof(BoundExtensionMethod))]
+	[TestCase(nameof(BoundExtensionMethodOnNull))]
+	[TestCase(nameof(ExtensionOnTuple))]
+	[TestCase(nameof(ObliviousGenericExtensionOnNull))]
+	[TestCase(nameof(LiftedUserDefinedOperator))]
+	[TestCase(nameof(GenericLocalFunction))]
 	[TestCase(nameof(SwitchOfTuples))]
 	[TestCase(nameof(UnboundExtensionMethod))]
 	[TestCase(nameof(DictionaryInitializer))]

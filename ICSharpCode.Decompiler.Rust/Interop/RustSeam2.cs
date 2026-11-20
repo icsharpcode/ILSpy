@@ -165,8 +165,8 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		public bool LambdaConversion;
 		/// <summary>For a binary operator: whether its resolve result is <c>ResolveBinaryOperator</c> over the operands'.</summary>
 		public bool ResolveOperator;
-		/// <summary>For a method reference: whether it has a target, and the type arguments and method of its <see cref="MethodGroupResolveResult"/>.</summary>
-		public (bool HasTarget, IType[] TypeArguments, IMethod Method)? MethodGroup;
+		/// <summary>For a method reference: whether it has a target, the type arguments and method of its <see cref="MethodGroupResolveResult"/>, and whether it references an extension method.</summary>
+		public (bool HasTarget, IType[] TypeArguments, IMethod Method, bool Extension)? MethodGroup;
 		/// <summary>For a lambda: <see cref="DecompiledLambdaResolveResult.IsImplicitlyTyped"/>.</summary>
 		public bool ImplicitlyTyped;
 		/// <summary>For a lambda: <see cref="DecompiledLambdaResolveResult.IsAnonymousMethod"/>.</summary>
@@ -896,7 +896,14 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		static AstNode Build(RustBodyNode node, ExpressionBuilder exprBuilder)
 		{
 			var syntax = BuildNode(node, exprBuilder);
-			if (node.MethodGroup is var (hasTarget, typeArguments, groupMethod))
+			if (node.MethodGroup is (true, var extensionTypeArguments, var extensionMethod, true))
+			{
+				// `IsUnambiguousMethodReference` of an extension method: the member access on the
+				// built target expression as an invocation target.
+				syntax.AddAnnotation(exprBuilder.resolver.ResolveMemberAccess(((MemberReferenceExpression)syntax).Target.GetResolveResult(),
+					extensionMethod.Name, extensionTypeArguments, NameLookupMode.InvocationTarget));
+			}
+			else if (node.MethodGroup is var (hasTarget, typeArguments, groupMethod, _))
 			{
 				// `Disambiguator.LookUpName` without invocation, from the built target expression,
 				// then `WithChosenMethod`.

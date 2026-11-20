@@ -311,9 +311,11 @@ fn rr(w: &mut FunctionWriter<'_, '_, '_, '_>, rr: Option<&Rr>) -> Result<(), Str
             target,
             method,
             type_arguments,
+            extension,
             ..
         }) => {
-            w.out.u8(23);
+            // 100: the group of an extension method reference.
+            w.out.u8(if *extension { 100 } else { 23 });
             // The host takes the target's resolve result from the built target expression.
             w.out.bool(target.is_some());
             w.out.len(type_arguments.len());
