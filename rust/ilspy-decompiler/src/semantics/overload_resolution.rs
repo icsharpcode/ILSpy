@@ -709,8 +709,12 @@ impl OverloadResolution {
             if r != 0 {
                 return r;
             }
-            // (Non-lifted operators come before lifted ones; no lifted operator is a
-            // candidate here.)
+            // non-lifted operators are better
+            match (c1.member.lifted, c2.member.lifted) {
+                (false, true) => return 1,
+                (true, false) => return 2,
+                _ => {}
+            }
             // by-value parameters before `in` parameters
             let r = better_parameter_passing_choice(c1, c2);
             if r != 0 {

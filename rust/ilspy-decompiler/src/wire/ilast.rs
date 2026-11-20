@@ -1699,6 +1699,78 @@ pub fn method_group_reference_query(
     lookup_query(ts, 11, name, target, type_arguments)
 }
 
+/// Encodes the host's `ResolveMemberAccess` of a name as an invocation target (kind 100), as
+/// `method_group_query` with a target; the answer is decoded with
+/// `extension_method_group_answer`.
+pub fn extension_method_group_query(
+    ts: &TypeSystem<'_, '_>,
+    name: &str,
+    target: crate::il::transforms::LookupTarget,
+    type_arguments: &[crate::typesystem::types::TypeId],
+) -> Result<Vec<u8>, String> {
+    lookup_query(ts, 100, name, Some(target), type_arguments)
+}
+
+/// The answer to `extension_method_group_query`: the method lists as `method_group_answer`
+/// reads them, then the number of extension method groups and per group the number of
+/// methods and their module indices and MethodDef rows, as unsigned LEB128.
+pub fn extension_method_group_answer(
+    bytes: &[u8],
+) -> Option<crate::il::transforms::ExtensionMethodGroup> {
+    use crate::typesystem::compilation::{ModuleId, TypeDefId};
+    use crate::typesystem::members::MethodDefId;
+    let mut pos = 0;
+    let mut uvar = || -> Option<u32> {
+        let mut value = 0u32;
+        let mut shift = 0;
+        loop {
+            let b = *bytes.get(pos)?;
+            pos += 1;
+            value |= u32::from(b & 0x7F).checked_shl(shift)?;
+            if b & 0x80 == 0 {
+                return Some(value);
+            }
+            shift += 7;
+        }
+    };
+    if uvar()? == 0 {
+        return None;
+    }
+    let mut methods = Vec::new();
+    for _ in 0..uvar()? {
+        let declaring = TypeDefId {
+            module: ModuleId(uvar()?),
+            row: uvar()?,
+        };
+        let mut list = Vec::new();
+        for _ in 0..uvar()? {
+            list.push(MethodDefId {
+                module: ModuleId(uvar()?),
+                row: uvar()?,
+            });
+        }
+        methods.push(crate::il::transforms::MethodGroupList {
+            declaring,
+            methods: list,
+        });
+    }
+    let mut extension_methods = Vec::new();
+    for _ in 0..uvar()? {
+        let mut group = Vec::new();
+        for _ in 0..uvar()? {
+            group.push(MethodDefId {
+                module: ModuleId(uvar()?),
+                row: uvar()?,
+            });
+        }
+        extension_methods.push(group);
+    }
+    Some(crate::il::transforms::ExtensionMethodGroup {
+        methods,
+        extension_methods,
+    })
+}
+
 /// Encodes the host's indexer lookup on `target` (kind 10), as `method_group_query` with an
 /// empty name; the answer is decoded with `method_group_answer`.
 pub fn indexers_query(
@@ -1821,7 +1893,10 @@ pub fn extension_method_syntax_query(
                 w.ty(t);
             }
         }
-        let operand = |w: &mut FunctionWriter<'_, '_, '_, '_>, rr: &ResolveResult| {
+        fn operand(
+            w: &mut FunctionWriter<'_, '_, '_, '_>,
+            rr: &ResolveResult,
+        ) -> Result<(), String> {
             match rr {
                 ResolveResult::Expression(ty) => {
                     w.out.u8(0);
@@ -1861,10 +1936,19 @@ pub fn extension_method_syntax_query(
                     w.out.bool(d.has_parameter_list);
                     w.out.bool(d.is_async);
                 }
+                // 6: a tuple literal, its type and its elements as operands.
+                ResolveResult::Tuple { ty, elements } => {
+                    w.out.u8(6);
+                    w.ty(*ty);
+                    w.out.len(elements.len());
+                    for e in elements {
+                        operand(w, e)?;
+                    }
+                }
                 _ => return Err("an operand of another kind".to_owned()),
             }
             Ok(())
-        };
+        }
         operand(w, target)?;
         w.out.len(arguments.len());
         for (i, a) in arguments.iter().enumerate() {

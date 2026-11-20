@@ -628,12 +628,15 @@ pub enum Rr {
     ResolvedOperator { ty: TypeId },
     /// `MethodGroupResolveResult` of a method reference (`Ast::method_groups[index]` for the
     /// engine), which the host looks up again from the target (or the simple name) with the
-    /// type arguments and narrows to `method` (`WithChosenMethod`).
+    /// type arguments and narrows to `method` (`WithChosenMethod`); for an extension method
+    /// reference (`extension`) the host resolves the member access as an invocation target
+    /// (`ResolveMemberAccess`) and keeps the whole group.
     MethodGroup {
         index: usize,
         target: Option<Box<Rr>>,
         method: Box<crate::il::ast::MethodOperand>,
         type_arguments: Vec<TypeId>,
+        extension: bool,
     },
     /// `CSharpInvocationResolveResult` without target of the constructor `method` of the type
     /// `ty`, whose arguments are the resolve results of the object creation's arguments.

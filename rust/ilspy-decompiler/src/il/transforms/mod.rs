@@ -413,6 +413,21 @@ pub trait Resolver {
         None
     }
 
+    /// `CSharpResolver.ResolveMemberAccess(target, name, type_arguments,
+    /// NameLookupMode.InvocationTarget)` as the decompiled method's `ExpressionBuilder`
+    /// resolves it: the method group's methods as `method_group` returns them, and the
+    /// definitions of its extension methods (`GetExtensionMethods`), the innermost scope
+    /// first; `None` when the name is no method group or the host cannot name its methods.
+    fn extension_method_group(
+        &self,
+        _ts: &TypeSystem<'_, '_>,
+        _name: &str,
+        _target: LookupTarget,
+        _type_arguments: &[TypeId],
+    ) -> Option<ExtensionMethodGroup> {
+        None
+    }
+
     /// `MemberLookup.LookupIndexers(target)`: the indexers of the target's type, grouped by
     /// declaring type, base types first, each as its getter (or its setter where it has none);
     /// `None` when the host cannot name them all by metadata row.
@@ -455,6 +470,15 @@ pub enum AccessorBinding {
 pub struct MethodGroupList {
     pub declaring: crate::typesystem::compilation::TypeDefId,
     pub methods: Vec<crate::typesystem::members::MethodDefId>,
+}
+
+/// The method group of a member access with its extension methods
+/// (`Resolver::extension_method_group`).
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct ExtensionMethodGroup {
+    pub methods: Vec<MethodGroupList>,
+    /// The extension method definitions, grouped by using scope, the innermost first.
+    pub extension_methods: Vec<Vec<crate::typesystem::members::MethodDefId>>,
 }
 
 /// How `ConvertField` treats a field, which depends on the declarations around the body.

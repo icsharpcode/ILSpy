@@ -264,9 +264,24 @@ impl Decompiler {
             run_prefix(&mut read, &mut nested, LOCAL_FUNCTION_DECOMPILER_LEAF);
             read.flush_pending_variables();
         }
-        let reduced =
-            self.reduce_to_local_function(ctx, id, &read_method_params(ctx.ts, &read), skip_count);
-        let function = import_function(r, read, reduced, target.method.ret, parameters);
+        let read_params = read_method_params(ctx.ts, &read);
+        let reduced = self.reduce_to_local_function(ctx, id, &read_params, skip_count);
+        // `ILFunction(method)` of the method `ReadIL` specialized for the context: its return
+        // type and parameters are the definition's seen through the context, not the use
+        // site's.
+        let (ret, _) = ctx.ts.method_signature(id);
+        let ret = match read.generic_context.explicit {
+            Some(e) => {
+                let e = &ctx.ts.explicit_contexts()[e as usize];
+                let (class, method) = (
+                    (!e.class.is_empty()).then(|| e.class.clone()),
+                    (!e.method.is_empty()).then(|| e.method.clone()),
+                );
+                ctx.ts.substitute(ret, class.as_deref(), method.as_deref())
+            }
+            None => ret,
+        };
+        let function = import_function(r, read, reduced, ret, read_params);
         r.function.local_functions.push(function);
         r.function.connect_root(function);
         if let Inst::Function { body, .. } = *r.function.inst(function) {

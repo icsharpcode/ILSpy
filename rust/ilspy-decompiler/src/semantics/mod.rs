@@ -80,11 +80,15 @@ pub struct Method {
     /// The parameters and return type after the substitution.
     pub parameters: Vec<Parameter>,
     pub return_type: TypeId,
+    /// `LiftedUserDefinedOperator`: the lifted form of a user-defined operator, whose
+    /// parameters (and return type, except for comparisons) are nullable.
+    pub lifted: bool,
 }
 
 impl PartialEq for Method {
     fn eq(&self, other: &Self) -> bool {
         self.key == other.key
+            && self.lifted == other.lifted
             && self.class_args == other.class_args
             && self.method_args == other.method_args
     }
@@ -111,6 +115,7 @@ impl Method {
             method_args: None,
             parameters,
             return_type,
+            lifted: false,
         }
     }
 
@@ -174,6 +179,7 @@ impl Method {
             method_args: m.method_args.clone(),
             parameters,
             return_type: m.ret,
+            lifted: false,
         })
     }
 

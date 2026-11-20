@@ -63,13 +63,25 @@ impl Builder<'_, '_, '_, '_> {
             .ts
             .delegate_invoke(delegate_type)
             .ok_or("a delegate type without Invoke")?;
+        if self.ts.accessor_owner(id).is_some() || operand.method.name.starts_with('<') {
+            return Err("a delegate of an extension method, accessor or local function".to_owned());
+        }
         // An extension method bound to its first argument is referenced as an extension
         // method (`target.Method`); one with all its parameters unbound as any static method.
-        if (flags.extension && invoke.parameters.len() + 1 == method.parameters.len())
-            || self.ts.accessor_owner(id).is_some()
-            || operand.method.name.starts_with('<')
-        {
-            return Err("a delegate of an extension method, accessor or local function".to_owned());
+        if flags.extension && invoke.parameters.len() + 1 == method.parameters.len() {
+            let reference = self.extension_method_reference(this_arg, operand, &method, op)?;
+            let e = self.ast.add(AstNode::DelegateCreate {
+                ty: delegate_type,
+                reference,
+                method: operand.clone(),
+                is_virtual: op == CallOp::CallVirt,
+            });
+            self.ast.with_il(e, inst);
+            self.ast.with_rr(e, Rr::Plain(delegate_type));
+            return Ok(TranslatedExpression {
+                expression: e,
+                ty: delegate_type,
+            });
         }
         if invoke.parameters.len() != method.parameters.len()
             || (method.is_static && !matches!(self.f.inst(this_arg), Inst::LdNull))
@@ -393,9 +405,172 @@ impl Builder<'_, '_, '_, '_> {
                 target: target_rr,
                 method: Box::new(operand.clone()),
                 type_arguments: written,
+                extension: false,
             },
         );
         Ok(reference)
+    }
+
+    /// `DisambiguateDelegateReference` of an extension method bound to its first argument:
+    /// `target.Name`, with `Disambiguator.ForMethodReference` over `ExtensionMethodReferenceSteps`
+    /// (the target cast to the receiver's type, then the type arguments); a null target is cast
+    /// up front.
+    fn extension_method_reference(
+        &mut self,
+        this_arg: NodeId,
+        operand: &MethodOperand,
+        method: &Method,
+        op: CallOp,
+    ) -> Result<AstId, Unsupported> {
+        let mut target_type = method.parameters[0].ty;
+        let mut this_arg = this_arg;
+        if let crate::typesystem::types::TypeData::ByRef(element) = *self.ts.data(target_type)
+            && let Inst::Box { arg, .. } = *self.f.inst(this_arg)
+        {
+            target_type = element;
+            this_arg = arg;
+        }
+        let mut target = self.translate(this_arg, Some(target_type))?;
+        let mut spent_cast = false;
+        if matches!(self.f.inst(this_arg), Inst::LdNull) {
+            spent_cast = true;
+            target = self.convert_to(target, target_type, false)?;
+        }
+        let mut type_arguments = false;
+        let mut spent_type_arguments = false;
+        let found = loop {
+            let written = if type_arguments {
+                method.method_args.clone().unwrap_or_default()
+            } else {
+                Vec::new()
+            };
+            if let Some(group) =
+                self.probe_extension_method_reference(&target, method, op, &written)?
+            {
+                break group;
+            }
+            if !spent_cast {
+                spent_cast = true;
+                target = self.convert_to(target, target_type, false)?;
+                continue;
+            }
+            if !spent_type_arguments {
+                spent_type_arguments = true;
+                type_arguments = true;
+                continue;
+            }
+            // shortcut: no spelling resolves; the managed reference then carries the resolve
+            // result of its last probe, which may be none. Upgrade when a fixture needs it.
+            return Err("an extension method reference that does not resolve".to_owned());
+        };
+        let written = found.type_arguments.clone();
+        let name = method.name.clone();
+        let reference = if written.is_empty() {
+            self.ast.add(AstNode::MemberReference {
+                target: target.expression,
+                name,
+            })
+        } else {
+            self.ast.add(AstNode::GenericMemberReference {
+                target: target.expression,
+                name,
+                type_arguments: written.clone(),
+            })
+        };
+        let target_rr = Box::new(self.rr_of(target.expression));
+        let index = self.ast.method_groups.len();
+        self.ast.method_groups.push(found);
+        self.ast.with_rr(
+            reference,
+            Rr::MethodGroup {
+                index,
+                target: Some(target_rr),
+                method: Box::new(operand.clone()),
+                type_arguments: written,
+                extension: true,
+            },
+        );
+        Ok(reference)
+    }
+
+    /// `IsUnambiguousMethodReference` with `isExtensionMethodReference`: the member access as
+    /// an invocation target, its overload resolution with the parameter types past the
+    /// receiver standing in for arguments (extension methods allowed), not ambiguous and with
+    /// the method as its best candidate; the method group where it resolves back.
+    fn probe_extension_method_reference(
+        &mut self,
+        target: &TranslatedExpression,
+        method: &Method,
+        op: CallOp,
+        type_arguments: &[TypeId],
+    ) -> Result<Option<Rc<MethodGroup>>, Unsupported> {
+        let resolver = self
+            .resolver
+            .ok_or("a member reference without the host's resolver")?;
+        let lookup_target = match self.rr_of(target.expression) {
+            Rr::This {
+                ty,
+                causes_non_virtual_invocation,
+                ..
+            } => LookupTarget::This {
+                ty,
+                causes_non_virtual_invocation,
+            },
+            Rr::Type(ty) => LookupTarget::Type(ty),
+            _ => LookupTarget::Expression(target.ty),
+        };
+        let Some(answer) =
+            resolver.extension_method_group(self.ts, &method.name, lookup_target, type_arguments)
+        else {
+            return Ok(None);
+        };
+        let method_lists = self.method_lists(&answer.methods, Some(target.ty));
+        let mut extension_methods = Vec::with_capacity(answer.extension_methods.len());
+        for group in &answer.extension_methods {
+            let mut methods = Vec::with_capacity(group.len());
+            for &id in group {
+                let definition = self.ts.method_definition(id).map_err(|e| e.to_string())?;
+                // Explicit type arguments specialize the candidates (`GetExtensionMethods`).
+                let resolved = if type_arguments.is_empty() {
+                    definition
+                } else {
+                    self.ts
+                        .specialize(definition, None, Some(type_arguments.to_vec()))
+                };
+                methods.push(
+                    Method::from_resolved(self.ts, &resolved)
+                        .ok_or("an extension method without definition")?,
+                );
+            }
+            extension_methods.push(methods);
+        }
+        let group = MethodGroup {
+            target: self.semantic_rr(target.expression, target.ty),
+            name: method.name.clone(),
+            method_lists,
+            type_arguments: type_arguments.to_vec(),
+            extension_methods,
+        };
+        let arguments: Vec<ResolveResult> = method.parameters[1..]
+            .iter()
+            .map(|p| ResolveResult::Type(p.ty))
+            .collect();
+        let mut conversions = Conversions::new(self.ts);
+        let or = conversions.perform_overload_resolution(
+            &group,
+            arguments,
+            crate::semantics::overload_resolution::OverloadOptions::default(),
+        );
+        if or.is_ambiguous() {
+            return Ok(None);
+        }
+        let Some(found) = or.best_candidate_with_substituted_type_arguments(self.ts) else {
+            return Ok(None);
+        };
+        if !self.is_appropriate_call_target(op, method, &found)? {
+            return Ok(None);
+        }
+        Ok(Some(Rc::new(group)))
     }
 
     /// `IsUnambiguousMethodReference`: overload resolution over the method group with the
