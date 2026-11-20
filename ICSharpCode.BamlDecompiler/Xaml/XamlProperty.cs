@@ -81,14 +81,11 @@ namespace ICSharpCode.BamlDecompiler.Xaml
 			}
 
 			var declType = ResolvedMember.DeclaringType;
-			var t = type.ResolvedType;
-
-			do
+			foreach (var t in type.ResolvedType.GetNonInterfaceBaseTypes())
 			{
 				if (t.FullName == declType.FullName && t.TypeParameterCount == declType.TypeParameterCount)
 					return false;
-				t = t.DirectBaseTypes.FirstOrDefault();
-			} while (t != null);
+			}
 			return true;
 		}
 
