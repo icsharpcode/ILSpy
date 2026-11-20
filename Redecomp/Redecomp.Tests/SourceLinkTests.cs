@@ -67,6 +67,21 @@ public static class SourceLinkTests
 	}
 
 	[Test]
+	public static void RecoversFilesCheckedOutWithOtherLineEndingsThanTheRepository()
+	{
+		// A Windows checkout compiles CRLF files while the repository serves LF ones, and the reverse
+		// happens too: the checksum only matches once the line endings are converted back.
+		var downloader = new SampleDownloader("Facturation") { FlipLineEndings = true };
+		string output = Reconstruct(downloader, out var result);
+		Assert.AreEqual(SourceOrigin.SourceLink, result.Origin, "origin");
+		foreach (string relative in new[] { "Program.cs", "Models/Facture.cs", "Services/CalculateurFacture.cs" })
+		{
+			byte[] original = File.ReadAllBytes(Path.Combine(SampleBuilder.SourceDirectory("Facturation"), relative));
+			Assert.That(original.AsSpan().SequenceEqual(File.ReadAllBytes(Path.Combine(output, relative))), $"{relative} differs from the compiled file");
+		}
+	}
+
+	[Test]
 	public static void FallsBackToDecompilationWhenSourcesAreUnreachable()
 	{
 		string output = Reconstruct(new SampleDownloader("Facturation") { Offline = true }, out var result);
@@ -86,6 +101,7 @@ public static class SourceLinkTests
 	sealed class SampleDownloader(string sample) : ISourceDownloader
 	{
 		public bool Tamper { get; init; }
+		public bool FlipLineEndings { get; init; }
 		public bool Offline { get; init; }
 		public int Requests { get; private set; }
 
@@ -99,7 +115,17 @@ public static class SourceLinkTests
 			if (!File.Exists(path))
 				return null;
 			byte[] content = File.ReadAllBytes(path);
+			if (FlipLineEndings)
+				content = Flip(content);
 			return Tamper ? [.. content, .. "// tampered\n"u8.ToArray()] : content;
+		}
+
+		static byte[] Flip(byte[] content)
+		{
+			string text = System.Text.Encoding.UTF8.GetString(content);
+			text = text.Contains("\r\n") ? text.Replace("\r\n", "\n") : text.Replace("\n", "\r\n");
+			// Keeps a byte order mark, if any, since GetString decoded it as U+FEFF.
+			return System.Text.Encoding.UTF8.GetBytes(text);
 		}
 	}
 }

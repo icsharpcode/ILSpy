@@ -85,7 +85,7 @@ Le code de sortie vaut `0` si toutes les méthodes sont identiques, `1` sinon (o
 ## Ce qui est récupéré, dans l'ordre
 
 1. **Sources embarquées** dans le PDB : fichiers d'origine, commentaires compris.
-2. **SourceLink** : fichiers d'origine téléchargés, gardés seulement si leur checksum correspond au PDB. Un fichier modifié depuis la compilation est ignoré.
+2. **SourceLink** : fichiers d'origine téléchargés, gardés seulement si leur checksum correspond au PDB. Si le dépôt sert des fins de ligne différentes de celles compilées (LF sur GitHub, CRLF sur un checkout Windows), la conversion est essayée et vérifiée par le même checksum. Un fichier modifié depuis la compilation est ignoré.
 3. **Décompilation** pour tout le reste, avec :
    - les noms de variables du PDB s'il existe, sinon des noms déduits du code ;
    - les fichiers placés aux chemins d'origine lus dans le PDB ;

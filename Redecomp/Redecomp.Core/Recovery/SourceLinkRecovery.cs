@@ -24,8 +24,8 @@ namespace Redecomp.Core.Recovery;
 
 /// <summary>
 /// Downloads the original source files from the locations recorded in the SourceLink map of a PDB.
-/// A file is kept only when its checksum equals the one the compiler stored in the PDB, so a
-/// recovered file is byte-for-byte the file that was compiled.
+/// A file is kept only when its checksum equals the one the compiler stored in the PDB, possibly
+/// after converting its line endings, so a recovered file is byte-for-byte the file that was compiled.
 /// </summary>
 public static class SourceLinkRecovery
 {
@@ -63,10 +63,54 @@ public static class SourceLinkRecovery
 			if (ProjectPaths.IsGenerated(path) || map.Map(path) is not Uri uri)
 				continue;
 			byte[]? content = downloader.TryDownload(uri);
-			if (content != null && MatchesChecksum(pdb, document, content))
-				files.Add(new EmbeddedSourceFile(path, content));
+			if (content != null && CompiledContent(pdb, document, content) is byte[] compiled)
+				files.Add(new EmbeddedSourceFile(path, compiled));
 		}
 		return files;
+	}
+
+	/// <summary>
+	/// Returns the bytes that were compiled: the downloaded content, or the same content with its
+	/// line endings converted, whichever matches the PDB checksum; null when none matches. Git
+	/// repositories store LF while Windows checkouts compile CRLF files (and the reverse can happen),
+	/// so the conversion is needed for most files built on Windows; the checksum still guarantees
+	/// that the result is exactly the compiled file.
+	/// </summary>
+	static byte[]? CompiledContent(MetadataReader pdb, Document document, byte[] downloaded)
+	{
+		if (MatchesChecksum(pdb, document, downloaded))
+			return downloaded;
+		foreach (byte[] candidate in new[] { ToCrLf(downloaded), ToLf(downloaded) })
+		{
+			if (!candidate.AsSpan().SequenceEqual(downloaded) && MatchesChecksum(pdb, document, candidate))
+				return candidate;
+		}
+		return null;
+	}
+
+	static byte[] ToLf(byte[] content)
+	{
+		var result = new List<byte>(content.Length);
+		for (int i = 0; i < content.Length; i++)
+		{
+			if (content[i] == (byte)'\r' && i + 1 < content.Length && content[i + 1] == (byte)'\n')
+				continue;
+			result.Add(content[i]);
+		}
+		return [.. result];
+	}
+
+	static byte[] ToCrLf(byte[] content)
+	{
+		byte[] lf = ToLf(content);
+		var result = new List<byte>(lf.Length + lf.Length / 20);
+		foreach (byte b in lf)
+		{
+			if (b == (byte)'\n')
+				result.Add((byte)'\r');
+			result.Add(b);
+		}
+		return [.. result];
 	}
 
 	static bool MatchesChecksum(MetadataReader pdb, Document document, byte[] content)
