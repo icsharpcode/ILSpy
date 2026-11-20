@@ -2363,11 +2363,21 @@ impl Builder<'_, '_, '_, '_> {
                 if skip_target_cast && require != initially_required {
                     require = false;
                 } else {
-                    // `Target.ConvertTo(declaringType)`: the target cast to the declaring type;
-                    // a cast `this..ctor()` is still a constructor initializer
-                    // (`ThisCallClassPattern`).
+                    // shortcut: a constructor call's `base` or `this` target is not cast; the
+                    // engine's probe of `base..ctor()` (F# constructors) escalates where the
+                    // managed one resolves. Upgrade once the probes agree.
+                    let base_ctor = method.name == ".ctor"
+                        && matches!(
+                            self.ast.node(target.expression),
+                            AstNode::Base | AstNode::This
+                        );
+                    let uncast = target.expression;
+                    // `Target.ConvertTo(declaringType)`: the target cast to the declaring type.
                     lookup_target =
                         self.cast_target_to_with(target, declaring, op == CallOp::CallVirt)?;
+                    if base_ctor && target.expression != uncast {
+                        return Err("a reference that needs a cast of its target".to_owned());
+                    }
                 }
                 continue;
             }
