@@ -1762,10 +1762,11 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					node.Children = [BodyNode()];
 					break;
 				case RustBodyNode.Foreach:
-					// Whether it is `await foreach`, the variable, the three instructions of the annotation,
-					// the collection and the body.
+					// Whether it is `await foreach`, whether its tuple variable is declared with `var`,
+					// the variable, the three instructions of the annotation, the collection and the body.
 					node.Flag = Bool();
 					bool hasDesignation = Bool();
+					node.ImplicitlyTyped = Bool();
 					node.Value = Variable();
 					node.ForeachInstructions = [materialized[Len()], materialized[Len()], materialized[Len()]];
 					node.Children = hasDesignation ? [BodyNode(), BodyNode(), BodyNode()] : [BodyNode(), BodyNode()];

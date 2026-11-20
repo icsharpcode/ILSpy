@@ -571,7 +571,7 @@ impl Builder<'_, '_, '_, '_> {
             }
             Inst::IsInst { arg, ty } => {
                 if self.ts.is_reference_type(ty.ty) != Some(true) {
-                    return Err("an isinst of a value type".to_owned());
+                    return self.isinst_of_value_type(inst, arg, ty.ty);
                 }
                 let a = self.translate(arg, None)?;
                 let a = self.unwrap_boxing_conversion(a);
@@ -4266,6 +4266,51 @@ impl Builder<'_, '_, '_, '_> {
         let e = self.ast.add(AstNode::DefaultValue { ty: Some(ty) });
         self.ast.with_rr(e, Rr::Constant { ty, value });
         Ok(TranslatedExpression { expression: e, ty })
+    }
+
+    /// `VisitIsInst` of a type that is no reference type: `arg is T ? arg : null` for a pure
+    /// argument (or a box of one), whose translation is written twice. Other arguments are
+    /// an error expression in the managed builder and are not translated.
+    fn isinst_of_value_type(
+        &mut self,
+        inst: NodeId,
+        arg: NodeId,
+        ty: TypeId,
+    ) -> Result<TranslatedExpression, Unsupported> {
+        use crate::il::semantic_helper::is_pure;
+        let pure = is_pure(self.f.flags(arg))
+            || matches!(*self.f.inst(arg), Inst::Box { arg: boxed, .. } if is_pure(self.f.flags(boxed)));
+        if !pure {
+            return Err("an isinst of a value type".to_owned());
+        }
+        let tested = self.translate(arg, None)?;
+        let value = self.translate(arg, None)?;
+        let is = self.ast.add(AstNode::IsType {
+            expression: tested.expression,
+            ty,
+        });
+        self.ast.with_il(is, inst);
+        self.ast.with_rr(is, Rr::TypeIs { ty });
+        let null_type = self.ts.intern(TypeData::Null);
+        let null = self.ast.add(AstNode::Null);
+        self.ast.with_rr(
+            null,
+            Rr::Constant {
+                ty: null_type,
+                value: ConstValue::Null,
+            },
+        );
+        let e = self.ast.add(AstNode::Conditional {
+            condition: is,
+            true_expression: value.expression,
+            false_expression: null,
+            resolve: false,
+        });
+        self.ast.with_rr(e, Rr::Plain(tested.ty));
+        Ok(TranslatedExpression {
+            expression: e,
+            ty: tested.ty,
+        })
     }
 
     /// `IsType`: `arg is T`, without the boxing cast of a value.

@@ -342,10 +342,46 @@ impl Builder<'_, '_, '_, '_> {
         // reference, without the names the target's type gives its type arguments, and is not
         // translated.
         let mut translated = translated;
+        // A `ValueTuple` of one element is no tuple type (C# has no syntax for it).
+        if !matches!(self.ts.data(translated.ty), TypeData::Tuple { .. })
+            && self
+                .ts
+                .tuple_element_types(translated.ty)
+                .is_some_and(|e| e.len() <= 1)
+        {
+            return self.convert_field(field, Some(target));
+        }
         let names_known = match self.rr_of(translated.expression) {
             Rr::Variable { .. } => true,
+            // A field of a generic type takes the type arguments, with their names, of the
+            // target's type, as for a property below.
+            Rr::Field {
+                field: f,
+                target: Some(field_target),
+            } if f
+                .field
+                .declaring
+                .is_some_and(|d| matches!(self.ts.data(d), TypeData::Inst { .. })) =>
+            {
+                match self.field_type_of_target(&f.field, &field_target) {
+                    Some(ty)
+                        if matches!(*field_target, Rr::Variable { .. })
+                            || self.tuple_has_names(ty) =>
+                    {
+                        translated.ty = ty;
+                        true
+                    }
+                    _ => false,
+                }
+            }
             // The best common type of tuple literals has the names the literals write.
             Rr::Plain(_) if self.switch_of_tuple_literals(translated.expression) => true,
+            // A tuple literal has the names of its type hint.
+            Rr::Plain(_)
+                if matches!(self.ast.node(translated.expression), AstNode::Tuple { .. }) =>
+            {
+                true
+            }
             Rr::Field { field, .. } => field
                 .field
                 .declaring
@@ -447,6 +483,30 @@ impl Builder<'_, '_, '_, '_> {
             m.specialize_definition(self.ts, Some(args.to_vec()), method_args)
                 .return_type,
         )
+    }
+
+    /// The type of `field`, a field of a generic type, substituted with the type arguments of
+    /// `target`'s type where that is the same type up to tuple names and nullability; `None`
+    /// otherwise.
+    fn field_type_of_target(
+        &mut self,
+        field: &crate::typesystem::resolve::ResolvedField,
+        target: &Rr,
+    ) -> Option<TypeId> {
+        let declaring = field.declaring?;
+        let FieldOrigin::Def { module, row } = field.origin else {
+            return None;
+        };
+        let target_ty = self.rr_type(target);
+        let n = Normalization::TYPE_ERASURE;
+        if self.ts.normalize_with(target_ty, n) != self.ts.normalize_with(declaring, n) {
+            return None;
+        }
+        let TypeData::Inst { args, .. } = self.ts.data(target_ty).clone() else {
+            return None;
+        };
+        let (ty, _) = self.ts.field_type(module, row);
+        Some(self.ts.substitute(ty, Some(&args), None))
     }
 
     /// `ConvertField(field, targetInstruction)` for a field that is no backing field.

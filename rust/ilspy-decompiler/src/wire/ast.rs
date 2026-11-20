@@ -1042,9 +1042,11 @@ fn node_without_comment(
             get_current,
             is_async,
             designation,
+            use_var,
         } => {
             w.out.bool(is_async);
             w.out.bool(designation.is_some());
+            w.out.bool(use_var);
             let v = var_index(w, variable)?;
             w.out.len(v);
             for inst in [get_enumerator, move_next, get_current] {

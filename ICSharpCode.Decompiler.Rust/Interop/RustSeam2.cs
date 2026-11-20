@@ -175,7 +175,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		public bool ResolveOperator;
 		/// <summary>For a method reference: whether it has a target, the type arguments and method of its <see cref="MethodGroupResolveResult"/>, and whether it references an extension method.</summary>
 		public (bool HasTarget, IType[] TypeArguments, IMethod Method, bool Extension)? MethodGroup;
-		/// <summary>For a lambda: <see cref="DecompiledLambdaResolveResult.IsImplicitlyTyped"/>.</summary>
+		/// <summary>For a lambda: <see cref="DecompiledLambdaResolveResult.IsImplicitlyTyped"/>; for a foreach statement: whether its tuple variable is declared with <c>var</c>.</summary>
 		public bool ImplicitlyTyped;
 		/// <summary>For a lambda: <see cref="DecompiledLambdaResolveResult.IsAnonymousMethod"/>.</summary>
 		public bool AnonymousMethod;
@@ -1461,10 +1461,10 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					{
 						designation = new SingleVariableDesignation { Identifier = variable.Name! };
 						designation.AddAnnotation(new ILVariableResolveResult(variable, variable.Type));
-						// `var` for a variable of an anonymous type, and for one of a tuple type,
-						// which the engine only translates where it is the type `var` infers.
+						// `var` for a variable of an anonymous type, and for one of a tuple type
+						// where the engine gave it the type `var` infers.
 						useVar = exprBuilder.settings.AnonymousTypes && variable.Type.ContainsAnonymousType()
-							|| TupleType.IsTupleCompatible(variable.Type, out _);
+							|| node.ImplicitlyTyped;
 					}
 					var statement = new ForeachStatement {
 						IsAsync = node.Flag,

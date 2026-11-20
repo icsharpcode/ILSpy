@@ -6,7 +6,8 @@
 //! string concatenation and interpolation, ranges, accessors, operators, extension methods,
 //! span helpers) fall back.
 
-use crate::il::ast::{CallData, Inst, MethodOperand, NodeId};
+use crate::il::ast::{CallData, Inst, MethodOperand, NodeId, TypeOperand};
+use crate::il::transforms::transform_collection_and_object_initializers::contains_anonymous_type;
 use crate::il::transforms::{AccessorBinding, LookupTarget, MethodGroupList, MethodGroupOperand};
 use crate::semantics::overload_resolution::OverloadResolutionErrors;
 use crate::semantics::types::TypeKind;
@@ -794,12 +795,15 @@ impl Builder<'_, '_, '_, '_> {
             _ => Vec::new(),
         };
         // The managed builder leaves out type arguments with anonymous types.
-        if type_arguments
-            .iter()
-            .any(|&t| self.may_contain_anonymous_type(t))
+        let type_arguments = if self.settings.anonymous_types
+            && type_arguments
+                .iter()
+                .any(|&t| contains_anonymous_type(self.ts, t))
         {
-            return Err("type arguments that may be anonymous types".to_owned());
-        }
+            Vec::new()
+        } else {
+            type_arguments
+        };
         if is_extension
             && let Some(e) = self.extension_method_call(
                 inst,
@@ -1821,7 +1825,6 @@ impl Builder<'_, '_, '_, '_> {
         }
         let special = match name.as_ref() {
             None => Some("an unnamed type"),
-            Some((ns, name)) if ns == "System" && name.starts_with("ValueTuple") => Some("a tuple"),
             _ => None,
         };
         if let Some(form) = special {
@@ -2490,17 +2493,21 @@ impl Builder<'_, '_, '_, '_> {
             && !extension_call_on_null
             && !self.can_infer_type_arguments(method, list)
         {
-            if method
-                .method_args
-                .iter()
-                .flatten()
-                .any(|&a| self.may_contain_anonymous_type(a))
-            {
-                return Err("a generic call of anonymous types inference does not reach".to_owned());
+            // Anonymous types cannot be written as type arguments; null arguments of one are
+            // pinned to it where that makes every type argument inferable.
+            let pinned = self.settings.anonymous_types
+                && method
+                    .method_args
+                    .iter()
+                    .flatten()
+                    .any(|&a| contains_anonymous_type(self.ts, a))
+                && self.pin_types_of_null_arguments(method, list)?
+                && self.can_infer_type_arguments(method, list);
+            if !pinned {
+                spent_type_arguments = true;
+                type_arguments = true;
+                type_arguments_up_front = true;
             }
-            spent_type_arguments = true;
-            type_arguments = true;
-            type_arguments_up_front = true;
         }
         loop {
             let probe_target = require.then_some(lookup_target);
@@ -2790,6 +2797,109 @@ impl Builder<'_, '_, '_, '_> {
             *a = self.convert_to(*a, ty, false)?;
         }
         Ok(())
+    }
+
+    /// `PinTypesOfNullArguments`: each null literal argument of an anonymous parameter type
+    /// becomes `true ? null : new { ... }`, which gives it that type. Whether any was replaced.
+    fn pin_types_of_null_arguments(
+        &mut self,
+        method: &Method,
+        list: &mut ArgumentList,
+    ) -> Result<bool, Unsupported> {
+        let expected = list.expected_parameters(method);
+        let mut any = false;
+        for (a, p) in list.arguments.iter_mut().zip(&expected) {
+            if !matches!(self.ast.node(a.expression), AstNode::Null) {
+                continue;
+            }
+            let ty = p.ty;
+            if !self.is_anonymous(ty) {
+                continue;
+            }
+            let first_synthesized = self.f.nodes.len() as u32;
+            let Some(new_obj) = self.new_anonymous_type_instance(ty)? else {
+                continue;
+            };
+            let first_node = self.ast.nodes.len();
+            let creation = self.translate(new_obj, Some(ty))?;
+            // The synthesized instructions are no part of the function, so the syntax does not
+            // name them.
+            for (_, annotations) in &mut self.ast.nodes[first_node..] {
+                annotations.il.retain(|i| i.0 < first_synthesized);
+            }
+            let condition = self.ast.add(AstNode::ConstantValue {
+                ty: self.ts.known_type(KnownTypeCode::Boolean),
+                value: ConstValue::Boolean(true),
+                allow_implicit_conversion: false,
+            });
+            let e = self.ast.add(AstNode::Conditional {
+                condition,
+                true_expression: a.expression,
+                false_expression: creation.expression,
+                resolve: false,
+            });
+            for inst in self.ast.annotations(a.expression).il.clone() {
+                self.ast.with_il(e, inst);
+            }
+            self.ast.with_rr(e, Rr::Plain(ty));
+            *a = TranslatedExpression { expression: e, ty };
+            any = true;
+        }
+        Ok(any)
+    }
+
+    /// `IsAnonymousType` of a type definition or its instance.
+    fn is_anonymous(&mut self, ty: TypeId) -> bool {
+        self.ts.definition(ty).is_some_and(|d| {
+            crate::il::transforms::transform_collection_and_object_initializers::is_anonymous_type(
+                self.ts, d,
+            )
+        })
+    }
+
+    /// `NewAnonymousTypeInstance`: a synthesized `newobj` of the anonymous type `ty` with
+    /// default property values, `None` where a property type contains an anonymous type other
+    /// than by direct nesting.
+    fn new_anonymous_type_instance(&mut self, ty: TypeId) -> Result<Option<NodeId>, Unsupported> {
+        let ctors = self
+            .ts
+            .get_constructors(ty, crate::typesystem::lookup::MemberOptions::DECLARED)
+            .map_err(|e| e.to_string())?;
+        let [ctor] =
+            <[_; 1]>::try_from(ctors).map_err(|_| "an anonymous type of many constructors")?;
+        let params = ctor.params().map_err(|e| e.to_string())?;
+        let mut args = Vec::with_capacity(params.len());
+        for p in params {
+            let argument = if self.is_anonymous(p) {
+                self.new_anonymous_type_instance(p)?
+            } else if contains_anonymous_type(self.ts, p) {
+                None
+            } else {
+                Some(self.f.add(Inst::DefaultValue {
+                    ty: TypeOperand { token: 0, ty: p },
+                    il_stack_was_empty: false,
+                }))
+            };
+            let Some(argument) = argument else {
+                return Ok(None);
+            };
+            args.push(argument);
+        }
+        Ok(Some(self.f.add(Inst::NewObj(CallData {
+            method: MethodOperand {
+                token: 0,
+                method: ctor,
+                context: 0,
+                lifted: false,
+                range_accessor: None,
+                specialized_by: None,
+                local_function: None,
+            },
+            args,
+            is_tail: false,
+            constrained_to: None,
+            il_stack_was_empty: false,
+        }))))
     }
 
     /// `CanInferTypeArgumentsFromArguments`: whether type inference from the arguments
@@ -3374,8 +3484,8 @@ impl Builder<'_, '_, '_, '_> {
     }
 
     /// `MatchTupleConstruction` in `CallBuilder.Build`: `new ValueTuple<...>(a, b)` as the tuple
-    /// literal `(a, b)`, with the element names of a tuple type hint. Tuples of more than seven
-    /// elements (nested through `Rest`) are not translated.
+    /// literal `(a, b)`, with the element names of a tuple type hint; the elements after the
+    /// seventh are those of the creation of `Rest`.
     fn tuple_construction(
         &mut self,
         inst: NodeId,
@@ -3385,23 +3495,43 @@ impl Builder<'_, '_, '_, '_> {
         let Some(declaring) = call.method.method.declaring else {
             return Ok(None);
         };
-        let is_value_tuple = self
-            .ts
-            .definition(declaring)
-            .and_then(|d| self.ts.comp.type_def(d).ok())
-            .is_some_and(|i| {
-                i.kind == crate::typesystem::compilation::TypeKind::Struct
-                    && i.full_name.top.ns == "System"
-                    && i.full_name.name() == "ValueTuple"
-                    && (2..8).contains(&i.type_parameter_count)
-            });
-        if !self.settings.tuple_types || !is_value_tuple {
+        use crate::semantics::types::TUPLE_REST;
+        if !self.settings.tuple_types {
             return Ok(None);
         }
-        let TypeData::Inst { args, .. } = self.ts.data(declaring).clone() else {
+        let Some(args) = self.ts.tuple_element_types(declaring) else {
             return Ok(None);
         };
-        if call.args.len() != args.len() {
+        // `MatchTupleConstruction`: the elements of the tuple, through the `Rest` creations.
+        let mut element_insts = Vec::with_capacity(args.len());
+        let mut count = args.len();
+        let mut current = call.args.clone();
+        while count >= TUPLE_REST {
+            if current.len() != TUPLE_REST {
+                return Ok(None);
+            }
+            element_insts.extend_from_slice(&current[..TUPLE_REST - 1]);
+            count -= TUPLE_REST - 1;
+            let Inst::NewObj(rest) = self.f.inst(current[TUPLE_REST - 1]) else {
+                return Ok(None);
+            };
+            let rest = rest.clone();
+            let rest_count = rest
+                .method
+                .method
+                .declaring
+                .and_then(|d| self.ts.tuple_element_types(d))
+                .map(|e| e.len());
+            if rest_count != Some(count) {
+                return Ok(None);
+            }
+            current = rest.args;
+        }
+        if current.len() != count {
+            return Ok(None);
+        }
+        element_insts.extend_from_slice(&current);
+        if element_insts.len() < 2 {
             return Ok(None);
         }
         let names: Vec<Option<String>> = match self.ts.data(hint) {
@@ -3418,7 +3548,7 @@ impl Builder<'_, '_, '_, '_> {
         };
         let mut elements = Vec::with_capacity(args.len());
         let mut types = Vec::with_capacity(args.len());
-        for (&a, &ty) in call.args.iter().zip(args.iter()) {
+        for (&a, &ty) in element_insts.iter().zip(args.iter()) {
             let e = self.translate(a, Some(ty))?;
             let e = self.convert_to(e, ty, true)?;
             elements.push(e.expression);
