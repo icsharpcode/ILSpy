@@ -21,8 +21,8 @@ pub struct DecompiledLambda {
     /// `AttemptedConversionWithTypeMismatch`: a conversion to a delegate whose parameter
     /// types differ from the lambda's (beyond nullability) was tried.
     pub attempted_conversion_with_type_mismatch: Cell<bool>,
-    /// `IsImplicitlyTyped`: the parameter list is written without types (a parameter of an
-    /// anonymous type).
+    /// The parameter list is written without types (a parameter of an anonymous type); see
+    /// `rr_implicitly_typed` for `IsImplicitlyTyped`.
     pub implicitly_typed: bool,
     /// `IsAnonymousMethod`: `delegate (...) { ... }`.
     pub anonymous_method: bool,
@@ -30,6 +30,15 @@ pub struct DecompiledLambda {
     pub has_parameter_list: bool,
     /// `IsAsync`.
     pub is_async: bool,
+}
+
+impl DecompiledLambda {
+    /// `DecompiledLambdaResolveResult.IsImplicitlyTyped`: only an anonymous method keeps the
+    /// parameter list it is computed from, so a lambda whose parameters are written without
+    /// types (`implicitly_typed`) still counts as explicitly typed in overload resolution.
+    pub fn rr_implicitly_typed(&self) -> bool {
+        self.implicitly_typed && self.anonymous_method
+    }
 }
 
 impl Lambda for DecompiledLambda {
@@ -42,7 +51,7 @@ impl Lambda for DecompiledLambda {
     }
 
     fn is_implicitly_typed(&self) -> bool {
-        self.implicitly_typed
+        self.rr_implicitly_typed()
     }
 
     fn is_async(&self) -> bool {
@@ -89,7 +98,7 @@ impl Lambda for DecompiledLambda {
             self.attempted_conversion_with_type_mismatch.set(true);
             if !conversions.identity(t, p.ty) {
                 // Other parameter types may make an implicitly typed lambda valid too.
-                return if self.implicitly_typed {
+                return if self.rr_implicitly_typed() {
                     Conversion::ANONYMOUS_FUNCTION
                 } else {
                     Conversion::None

@@ -2473,10 +2473,22 @@ fn decompiled_lambda_conversions() {
         let string = known(c, KnownTypeCode::String);
         assert_eq!(lambda(int).is_valid(c, &[int], string), C::None);
 
-        // An implicitly typed lambda (of anonymous-type parameters) can convert with other
-        // parameter types, and the attempt is recorded.
+        // A lambda written without parameter types (of anonymous-type parameters) still
+        // counts as explicitly typed, as `IsImplicitlyTyped` is computed after the lambda took
+        // the parameters over: no conversion with other parameter types.
         let l = DecompiledLambda {
             implicitly_typed: true,
+            ..lambda(int)
+        };
+        assert!(!l.rr_implicitly_typed());
+        assert_eq!(l.is_valid(c, &[double], int), C::None);
+        assert!(l.attempted_conversion_with_type_mismatch.get());
+
+        // An implicitly typed anonymous method can convert with other parameter types, and
+        // the attempt is recorded.
+        let l = DecompiledLambda {
+            implicitly_typed: true,
+            anonymous_method: true,
             ..lambda(int)
         };
         assert!(l.is_valid(c, &[double], int).is_anonymous_function());

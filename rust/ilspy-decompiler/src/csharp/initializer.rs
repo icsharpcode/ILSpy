@@ -124,10 +124,12 @@ impl Builder<'_, '_, '_, '_> {
         let init = Rr::InitializedObject(object.ty);
         let mut stack: Vec<Vec<AstId>> = vec![Vec::new()];
         let mut current: Option<Vec<PathElement>> = None;
+        let mut index_variables: Vec<(VarId, NodeId)> = Vec::new();
         for &inst in instructions {
             // The index variables of C# 6 dictionary initializers.
-            if matches!(self.f.inst(inst), Inst::StLoc { .. }) {
-                return Err("a dictionary initializer".to_owned());
+            if let Inst::StLoc { var, value, .. } = *self.f.inst(inst) {
+                index_variables.push((var, value));
+                continue;
             }
             let info = self.access_path(inst, &init)?;
             // The IL transform makes no invalid access paths; the managed builder skips one.
@@ -149,7 +151,12 @@ impl Builder<'_, '_, '_, '_> {
                         let member_path = previous[stack.len() - 1].clone();
                         let value_path = previous[stack.len() - 2].clone();
                         let values = stack.pop().expect("an open initializer");
-                        let a = self.initializer_assignment(&member_path, &value_path, values)?;
+                        let a = self.initializer_assignment(
+                            &member_path,
+                            &value_path,
+                            values,
+                            &index_variables,
+                        )?;
                         stack.last_mut().expect("the root initializer").push(a);
                     }
                     current = Some(info.path.clone());
@@ -167,12 +174,16 @@ impl Builder<'_, '_, '_, '_> {
                     stack.last_mut().expect("an open initializer").push(e);
                 }
                 AccessPathKind::Setter => {
-                    if last.indices.as_ref().is_some_and(|i| !i.is_empty()) {
-                        return Err("a dictionary initializer".to_owned());
-                    }
                     let [value] = info.values[..] else {
                         return Err("a setter with other values".to_owned());
                     };
+                    if let Some(indices) = last.indices.as_ref().filter(|i| !i.is_empty()) {
+                        let indices = self.indices_of(indices, &index_variables);
+                        let e =
+                            self.dictionary_initializer_element(inst, &indices, value, object)?;
+                        stack.last_mut().expect("an open initializer").push(e);
+                        continue;
+                    }
                     let v = self.translate(value, Some(last.ty))?;
                     let v = self.convert_to(v, last.ty, true)?;
                     let e = self.ast.add(AstNode::Named {
@@ -191,7 +202,8 @@ impl Builder<'_, '_, '_, '_> {
             let member_path = path[stack.len() - 1].clone();
             let value_path = path[stack.len() - 2].clone();
             let values = stack.pop().expect("an open initializer");
-            let a = self.initializer_assignment(&member_path, &value_path, values)?;
+            let a =
+                self.initializer_assignment(&member_path, &value_path, values, &index_variables)?;
             stack.last_mut().expect("the root initializer").push(a);
         }
         Ok(stack.pop().expect("the root initializer"))
@@ -204,6 +216,7 @@ impl Builder<'_, '_, '_, '_> {
         member_path: &PathElement,
         value_path: &PathElement,
         values: Vec<AstId>,
+        index_variables: &[(VarId, NodeId)],
     ) -> Result<AstId, Unsupported> {
         let single = match values[..] {
             [v] if !member_path.is_add
@@ -227,8 +240,18 @@ impl Builder<'_, '_, '_, '_> {
                 e
             }
         };
-        if value_path.indices.as_ref().is_some_and(|i| !i.is_empty()) {
-            return Err("a dictionary initializer".to_owned());
+        if let Some(indices) = value_path.indices.as_ref().filter(|i| !i.is_empty()) {
+            let mut keys = Vec::with_capacity(indices.len());
+            for i in self.indices_of(indices, index_variables) {
+                keys.push(self.translate(i, None)?.expression);
+            }
+            let index = self.ast.add(AstNode::InitializerIndexer { indices: keys });
+            let e = self.ast.add(AstNode::Assignment {
+                left: index,
+                right: value,
+            });
+            self.ast.with_rr(e, value_path.member.clone());
+            return Ok(e);
         }
         let e = self.ast.add(AstNode::Named {
             name: value_path.name.clone(),
@@ -236,6 +259,21 @@ impl Builder<'_, '_, '_, '_> {
         });
         self.ast.with_rr(e, value_path.member.clone());
         Ok(e)
+    }
+
+    /// `GetIndices`: the indices with the index variables replaced by the values stored in
+    /// them.
+    fn indices_of(&self, indices: &[NodeId], index_variables: &[(VarId, NodeId)]) -> Vec<NodeId> {
+        indices
+            .iter()
+            .map(|&i| match *self.f.inst(i) {
+                Inst::LdLoc { var } => index_variables
+                    .iter()
+                    .find(|&&(v, _)| v == var)
+                    .map_or(i, |&(_, value)| value),
+                _ => i,
+            })
+            .collect()
     }
 
     /// `AccessPathElement.Equals`: the same member, and the same indices (pure and

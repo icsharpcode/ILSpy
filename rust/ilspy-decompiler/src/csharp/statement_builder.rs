@@ -58,6 +58,7 @@ pub fn convert_body(
         is_iterator: read.is_iterator,
         is_async: read.async_return_type.is_some(),
         in_lambda: false,
+        emit_as_ref_readonly: false,
         root_variables: read.variables.clone(),
         found_override: None,
         loaded_stack_slots: Vec::new(),
@@ -589,6 +590,12 @@ impl Builder<'_, '_, '_, '_> {
         }
         let block = self.convert_block_container(container, blocks, false)?;
         self.declare_local_functions(container, block)?;
+        if container == self.return_container && self.emit_as_ref_readonly {
+            let helper = self.ast.add(AstNode::AsRefReadOnlyHelper);
+            if let AstNode::Block { statements } = self.ast.node_mut(block) {
+                statements.push(helper);
+            }
+        }
         Ok(self.ast.with_il(block, container))
     }
 

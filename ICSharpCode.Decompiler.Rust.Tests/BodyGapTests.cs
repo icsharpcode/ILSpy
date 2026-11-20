@@ -18,6 +18,7 @@
 
 using System;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
@@ -33,6 +34,20 @@ namespace ICSharpCode.Decompiler.Rust.Tests;
 static class BodyGapExtensions
 {
 	public static int ExtensionLength(this string? s) => s?.Length ?? 0;
+
+	public static void Add(this BodyGapBag bag, int value) => bag.Items.Add(value);
+}
+
+class BodyGapBag : System.Collections.IEnumerable
+{
+	public readonly System.Collections.Generic.List<int> Items = new();
+
+	public System.Collections.IEnumerator GetEnumerator() => Items.GetEnumerator();
+}
+
+struct BodyGapValue
+{
+	public override string ToString() => "value";
 }
 
 class BodyGapBase
@@ -46,6 +61,44 @@ class BodyGapDerived : BodyGapBase
 }
 
 record BodyGapRecord(int X, string Y);
+
+class BodyGapDefaults
+{
+	public virtual int this[int x, int y = 10] => x + y;
+
+	public virtual int Method(int x, int y = 10) => x + y;
+}
+
+class BodyGapRedeclaredDefaults : BodyGapDefaults
+{
+	public override int this[int x, int y = 20] => x + y + 1;
+
+	public override int Method(int x, int y = 20) => x + y + 1;
+}
+
+class BodyGapVirtualBase
+{
+	public virtual void M()
+	{
+	}
+}
+
+class BodyGapHidingDerived : BodyGapVirtualBase
+{
+	public new void M()
+	{
+	}
+
+	public Action BaseVirtual() => ((BodyGapVirtualBase)this).M;
+}
+
+class BodyGapNamedIndexer
+{
+	public int this[int x, int y] {
+		get => x;
+		set { }
+	}
+}
 
 /// <summary>
 /// Bodies of the calls, casts, arguments and object creations the engine translates itself:
@@ -105,6 +158,36 @@ public class BodyGapTests
 		return d && d.Flag ? true : false;
 	}
 
+	static object QueryWithLet(int[] xs) => from x in xs let y = x * 2 where y > 1 select x + y;
+
+	static int RedeclaredDefaults(BodyGapRedeclaredDefaults d) => d[1, 10] + d.Method(1, 10);
+
+	static void NamedIndexerSetter(BodyGapNamedIndexer o, Func<int, int> f)
+	{
+		o[y: f(1), x: f(2)] = f(3);
+	}
+
+	static object DictionaryInitializer(string key) => new System.Collections.Generic.Dictionary<string, int> { [key] = 1, ["b"] = 2 };
+
+	static object NestedDictionaryInitializer() => new System.Collections.Generic.Dictionary<int, System.Collections.Generic.List<int>> { [1] = { 2, 3 } };
+
+	static object ExtensionCollectionInitializer() => new BodyGapBag { 1, 2 };
+
+	static string BoxedValueToString(BodyGapValue v) => ((object)v).ToString()!;
+
+	static bool SwitchOfTuples(int i) => (i switch { 0 => (0, true), 1 => (1, true), _ => (i, false) }).Item2;
+
+	static Func<string?, int> UnboundExtensionMethod() => BodyGapExtensions.ExtensionLength;
+
+	[TestCase(nameof(SwitchOfTuples))]
+	[TestCase(nameof(UnboundExtensionMethod))]
+	[TestCase(nameof(DictionaryInitializer))]
+	[TestCase(nameof(NestedDictionaryInitializer))]
+	[TestCase(nameof(ExtensionCollectionInitializer))]
+	[TestCase(nameof(BoxedValueToString))]
+	[TestCase(nameof(QueryWithLet))]
+	[TestCase(nameof(RedeclaredDefaults))]
+	[TestCase(nameof(NamedIndexerSetter))]
 	[TestCase(nameof(DynamicMember))]
 	[TestCase(nameof(DynamicSetIndexAndMember))]
 	[TestCase(nameof(DynamicConvert))]
@@ -122,7 +205,17 @@ public class BodyGapTests
 	[TestCase(nameof(HiddenMethodReference))]
 	public void EngineServesBody(string name)
 	{
-		var method = typeof(BodyGapTests).GetMethod(name, BindingFlags.Static | BindingFlags.NonPublic)!;
+		AssertEngineServes(typeof(BodyGapTests).GetMethod(name, BindingFlags.Static | BindingFlags.NonPublic)!);
+	}
+
+	[TestCase(typeof(BodyGapHidingDerived), nameof(BodyGapHidingDerived.BaseVirtual))]
+	public void EngineServesInstanceBody(Type type, string name)
+	{
+		AssertEngineServes(type.GetMethod(name, BindingFlags.Instance | BindingFlags.Public)!);
+	}
+
+	static void AssertEngineServes(MethodInfo method)
+	{
 		var handle = (MethodDefinitionHandle)MetadataTokens.EntityHandle(method.MetadataToken);
 		string path = typeof(BodyGapTests).Assembly.Location;
 		string managed = DecompileMethod(path, handle, engineBodies: false);

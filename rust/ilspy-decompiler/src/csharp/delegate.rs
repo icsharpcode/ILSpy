@@ -55,17 +55,19 @@ impl Builder<'_, '_, '_, '_> {
             return self.local_function_delegate(inst, this_arg, operand, &method, delegate_type);
         }
         let flags = self.ts.method_flags(id, None);
-        if flags.extension
-            || self.ts.accessor_owner(id).is_some()
-            || operand.method.name.starts_with('<')
-        {
-            return Err("a delegate of an extension method, accessor or local function".to_owned());
-        }
         // `CanUseDelegateConstruction`
         let invoke = self
             .ts
             .delegate_invoke(delegate_type)
             .ok_or("a delegate type without Invoke")?;
+        // An extension method bound to its first argument is referenced as an extension
+        // method (`target.Method`); one with all its parameters unbound as any static method.
+        if (flags.extension && invoke.parameters.len() + 1 == method.parameters.len())
+            || self.ts.accessor_owner(id).is_some()
+            || operand.method.name.starts_with('<')
+        {
+            return Err("a delegate of an extension method, accessor or local function".to_owned());
+        }
         if invoke.parameters.len() != method.parameters.len()
             || (method.is_static && !matches!(self.f.inst(this_arg), Inst::LdNull))
         {
@@ -214,7 +216,8 @@ impl Builder<'_, '_, '_, '_> {
             if !spent_cast {
                 spent_cast = true;
                 // `Target.ConvertTo(declaringType)`
-                lookup_target = self.cast_target_to(&mut target, declaring)?;
+                lookup_target =
+                    self.cast_target_to_with(&mut target, declaring, op == CallOp::CallVirt)?;
                 continue;
             }
             // No spelling resolves; the most explicit one, with the resolve result of its last

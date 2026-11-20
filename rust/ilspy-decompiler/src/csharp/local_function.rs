@@ -126,8 +126,10 @@ impl Builder<'_, '_, '_, '_> {
         let saved_function = self.current_function.replace(lf);
         let saved_async = std::mem::replace(&mut self.is_async, read.async_return_type.is_some());
         let saved_end_labels = std::mem::take(&mut self.end_container_labels);
+        let saved_emit = std::mem::take(&mut self.emit_as_ref_readonly);
         let block = self.convert_as_block(body);
         self.end_container_labels = saved_end_labels;
+        self.emit_as_ref_readonly = saved_emit;
         self.current_function = saved_function;
         self.is_async = saved_async;
         self.return_statements = saved.6;
