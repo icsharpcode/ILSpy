@@ -329,6 +329,9 @@ pub enum AstNode {
         /// The designation of a deconstructing foreach (`var (a, b)`), whose `variable` is the
         /// pattern's.
         designation: Option<AstId>,
+        /// `useVar` of a variable of a tuple type: it takes the type `var` infers. The host
+        /// also writes `var` for a deconstruction and for a variable of an anonymous type.
+        use_var: bool,
     },
     /// `ObjectCreateExpression` of a delegate from a method reference, with the
     /// `ConversionResolveResult` of the method group conversion the host computes.

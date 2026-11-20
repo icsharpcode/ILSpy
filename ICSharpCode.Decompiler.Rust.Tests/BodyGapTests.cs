@@ -62,6 +62,13 @@ class BodyGapDerived : BodyGapBase
 
 record BodyGapRecord(int X, string Y);
 
+struct BodyGapGenericStruct<T>
+{
+	public T Field;
+
+	public BodyGapGenericStruct(T value) => Field = value;
+}
+
 class BodyGapDefaults
 {
 	public virtual int this[int x, int y = 10] => x + y;
@@ -178,6 +185,52 @@ public class BodyGapTests
 	static bool SwitchOfTuples(int i) => (i switch { 0 => (0, true), 1 => (1, true), _ => (i, false) }).Item2;
 
 	static Func<string?, int> UnboundExtensionMethod() => BodyGapExtensions.ExtensionLength;
+
+	static void Identify<T>(T value) { }
+
+	static T MakeDefault<T>() => default!;
+
+	static void NullOfAnonymousType() => Identify(true ? null : new { X = 0, Inner = new { S = "" } });
+
+	static object TupleTypeArgument() => MakeDefault<(int, string)>();
+
+	static void DynamicForeach(dynamic d)
+	{
+		foreach (var x in d)
+			Console.WriteLine(x);
+	}
+
+	static void NonGenericTupleForeach(System.Collections.IEnumerable input)
+	{
+		foreach ((string, int) item in input)
+			Console.WriteLine(item.Item1);
+	}
+
+	static object ValueTupleOfOne(ValueTuple<int> t) => new ValueTuple<int>(t.Item1);
+
+	static object LongTuple() => (1, 2, 3, 4, 5, 6, 7, 8, 9).Item9;
+
+	static int GenericFieldElementNames(BodyGapGenericStruct<(int A, int B)> s) => s.Field.A;
+
+	static int FirstOfNamedTuples(System.Collections.Generic.List<(string C, int D)> l) => l.First().D;
+
+	static System.Collections.Generic.Dictionary<(int, string), (string C, int D)> TupleDict { get; } = new();
+
+	static string IndexerOfNamedTuples() => TupleDict[(1, "abc")].C;
+
+	[TestCase(nameof(NullOfAnonymousType))]
+	[TestCase(nameof(TupleTypeArgument))]
+	[TestCase(nameof(DynamicForeach))]
+	[TestCase(nameof(NonGenericTupleForeach))]
+	[TestCase(nameof(ValueTupleOfOne))]
+	[TestCase(nameof(LongTuple))]
+	[TestCase(nameof(GenericFieldElementNames))]
+	[TestCase(nameof(FirstOfNamedTuples))]
+	[TestCase(nameof(IndexerOfNamedTuples))]
+	public void EngineServesTupleAndAnonymousBody(string name)
+	{
+		AssertEngineServes(typeof(BodyGapTests).GetMethod(name, BindingFlags.Static | BindingFlags.NonPublic)!);
+	}
 
 	[TestCase(nameof(SwitchOfTuples))]
 	[TestCase(nameof(UnboundExtensionMethod))]

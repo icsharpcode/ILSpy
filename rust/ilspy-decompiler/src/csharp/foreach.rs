@@ -231,39 +231,51 @@ impl Builder<'_, '_, '_, '_> {
         } else {
             collection
         };
-        // `IsDynamicCastToIEnumerable`
-        if let AstNode::Cast { expression, .. } = *self.ast.node(collection) {
-            let input = self.rr_of(expression);
-            let input_ty = self.rr_type(&input);
-            if self.ts.kind(input_ty) == crate::semantics::types::TypeKind::Dynamic {
-                return Err("a foreach over a dynamic collection".to_owned());
+        // `IsDynamicCastToIEnumerable`: a dynamic collection is written without its cast.
+        let collection = match *self.ast.node(collection) {
+            AstNode::Cast { expression, .. }
+                if matches!(
+                    self.rr_of(collection),
+                    Rr::Conversion { ty } | Rr::DynamicConversion { ty, .. }
+                        if self.ts.is_known(ty, KnownTypeCode::IEnumerable)
+                ) =>
+            {
+                let input = self.rr_of(expression);
+                let input_ty = self.rr_type(&input);
+                if self.ts.kind(input_ty) == crate::semantics::types::TypeKind::Dynamic {
+                    expression
+                } else {
+                    collection
+                }
             }
-        }
+            _ => collection,
+        };
+        // `useVar`, apart from a variable of an anonymous type, for which the host writes `var`.
+        let mut use_var = false;
         let (foreach_variable, designation) = if let Some(deconstruction) =
             get_current.deconstruction
         {
             let (variable, designation) = self.foreach_designation(deconstruction)?;
             (variable, Some(designation))
         } else {
-            let getter_type = if matches!(self.ts.data(getter_type), TypeData::Tuple { .. })
-                || self.ts.tuple_element_types(getter_type).is_some()
+            // Where the getter's value is not cast and is of a tuple type, the variable takes
+            // the type `var` infers, with the tuple names of the collection's type, if that is
+            // the same type.
+            let getter_type = if get_current.replaced == single_getter
+                && (matches!(self.ts.data(getter_type), TypeData::Tuple { .. })
+                    || self.ts.tuple_element_types(getter_type).is_some())
             {
-                // The type `var` infers, with the tuple names of the collection's type, where
-                // the getter's value is not cast; the host writes `var` for it.
-                let element = if get_current.replaced == single_getter {
-                    self.foreach_element_type(collection)?
-                } else {
-                    None
-                };
                 let n = Normalization::TYPE_ERASURE;
-                match element {
+                match self.foreach_element_type(collection)? {
                     Some(e)
                         if self.ts.normalize_with(e, n)
                             == self.ts.normalize_with(getter_type, n) =>
                     {
+                        use_var = true;
                         e
                     }
-                    _ => return Err("a foreach variable of a tuple type".to_owned()),
+                    Some(_) => getter_type,
+                    None => return Err("a foreach variable of a tuple type".to_owned()),
                 }
             } else {
                 getter_type
@@ -350,6 +362,7 @@ impl Builder<'_, '_, '_, '_> {
             get_current: single_getter,
             is_async,
             designation,
+            use_var,
         });
         for inst in self.ast.annotations(while_loop).il.clone() {
             self.ast.with_il(foreach, inst);
