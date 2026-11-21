@@ -590,7 +590,7 @@ impl<'c, 'a> TypeSystem<'c, 'a> {
         Ok((ret, params))
     }
 
-    fn unnamed_parameter(&self, ty: TypeId) -> ParamInfo {
+    pub(crate) fn unnamed_parameter(&self, ty: TypeId) -> ParamInfo {
         ParamInfo {
             ty,
             name: String::new(),

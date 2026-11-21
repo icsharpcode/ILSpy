@@ -326,20 +326,51 @@ impl Builder<'_, '_, '_, '_> {
                     inst = Some(next);
                     let is_accessor = method.accessor_kind != 0;
                     if is_accessor {
-                        let MethodOrigin::Def(id) = method.origin else {
-                            return Err("an initializer of an unresolved accessor".to_owned());
+                        // The property: its key, name and whether it has a setter.
+                        let (key, name, can_set) = match method.origin {
+                            MethodOrigin::Def(id) => {
+                                let (token, _) = self
+                                    .ts
+                                    .accessor_owner(id)
+                                    .ok_or("an accessor without owner")?;
+                                if token >> 24 != 0x17 {
+                                    return Err("an initializer of an event".to_owned());
+                                }
+                                let row = token & 0x00FF_FFFF;
+                                // `CanBeUsedInInitializer` without a resolve context.
+                                let can_set =
+                                    self.ts.comp.module(id.module).md.property_accessors(row).1
+                                        != 0;
+                                let key = MemberKey::Property {
+                                    module: id.module.0,
+                                    token,
+                                    declaring: method.declaring,
+                                };
+                                (key, self.property_info(id.module, row)?.0, can_set)
+                            }
+                            // `GuessFakeMethodAccessor`: the fake property of the call's own
+                            // fake method, which has that one accessor.
+                            MethodOrigin::Fake
+                                if matches!(
+                                    method.accessor_kind,
+                                    ACCESSOR_GETTER | ACCESSOR_SETTER
+                                ) =>
+                            {
+                                let key = MemberKey::Property {
+                                    module: u32::MAX,
+                                    token: current.0,
+                                    declaring: method.declaring,
+                                };
+                                let can_set = method.accessor_kind == ACCESSOR_SETTER;
+                                (key, method.name[4..].to_owned(), can_set)
+                            }
+                            MethodOrigin::Fake => {
+                                return Err("an initializer of an event".to_owned());
+                            }
+                            MethodOrigin::DummyConstructor(_) => {
+                                return Err("an initializer of an unresolved accessor".to_owned());
+                            }
                         };
-                        let (token, _) = self
-                            .ts
-                            .accessor_owner(id)
-                            .ok_or("an accessor without owner")?;
-                        if token >> 24 != 0x17 {
-                            return Err("an initializer of an event".to_owned());
-                        }
-                        let row = token & 0x00FF_FFFF;
-                        // `CanBeUsedInInitializer` without a resolve context.
-                        let can_set =
-                            self.ts.comp.module(id.module).md.property_accessors(row).1 != 0;
                         if !can_set && kind == AccessPathKind::Setter {
                             kind = AccessPathKind::Invalid;
                             break;
@@ -355,7 +386,6 @@ impl Builder<'_, '_, '_, '_> {
                             kind = AccessPathKind::Invalid;
                             break;
                         }
-                        let name = self.property_info(id.module, row)?.0;
                         let ty = if method.accessor_kind == ACCESSOR_SETTER {
                             *method
                                 .params()
@@ -368,11 +398,7 @@ impl Builder<'_, '_, '_, '_> {
                         path.insert(
                             0,
                             PathElement {
-                                key: MemberKey::Property {
-                                    module: id.module.0,
-                                    token,
-                                    declaring: method.declaring,
-                                },
+                                key,
                                 indices: Some(indices),
                                 name,
                                 member: Rr::Property {

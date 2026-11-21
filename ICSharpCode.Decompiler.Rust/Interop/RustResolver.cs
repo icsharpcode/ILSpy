@@ -492,6 +492,10 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				.Where(c => lookup.IsAccessible(c, allowProtectedAccess))
 				.Where(c => !(takesArguments && c.Parameters.Count == 0 && c.MetadataToken.IsNil))
 				.ToList<IParameterizedMember>();
+			// The candidates are added one by one, so no constructors (as of an unknown type,
+			// which has no definition to encode) are no method lists.
+			if (constructors.Count == 0)
+				return EncodeMethodLists([]);
 			return EncodeMethodLists([(method.DeclaringType, constructors)]);
 		}
 
