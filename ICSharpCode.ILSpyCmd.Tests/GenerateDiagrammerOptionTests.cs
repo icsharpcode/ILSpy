@@ -16,9 +16,14 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System;
 using System.IO;
+using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
+
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
 
 using NUnit.Framework;
 
@@ -77,6 +82,38 @@ namespace ICSharpCode.ILSpyCmd.Tests
 			Assert.That(html, Does.Contain("\"TypesByNamespace\""));
 			Assert.That(html, Does.Contain("\"ICSharpCode.ILSpyCmd.Tests\""));
 			Assert.That(html, Does.Contain("\"" + nameof(DumpTableSample) + "\""));
+		}
+
+		[Test]
+		public async Task HtmlOutputEscapesAssemblyNameAndDoesNotReprocessTemplateTokens()
+		{
+			const string assemblyName = "Lib<img src=x onerror=alert(1)> {{Model}}";
+			Directory.CreateDirectory(outputDirectory);
+			string assemblyPath = Path.Combine(outputDirectory, "HostileAssembly.dll");
+			string diagramDirectory = Path.Combine(outputDirectory, "diagram");
+			CreateAssembly(assemblyPath, assemblyName);
+
+			var result = await RunAsync(assemblyPath, "--generate-diagrammer", "-o", diagramDirectory);
+
+			Assert.That(result.ExitCode, Is.EqualTo(0), result.Error);
+			string html = File.ReadAllText(Path.Combine(diagramDirectory, "index.html"));
+			Assert.That(html, Does.Not.Contain("<img src=x onerror=alert(1)>"));
+			Assert.That(html, Does.Contain("Lib&lt;img src=x onerror=alert(1)&gt; {{Model}}"));
+			Assert.That(html.Split("\"TypesByNamespace\"").Length - 1, Is.EqualTo(1));
+		}
+
+		static void CreateAssembly(string assemblyPath, string assemblyName)
+		{
+			var references = ((string)AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES")!)
+				.Split(Path.PathSeparator)
+				.Select(path => MetadataReference.CreateFromFile(path));
+			var compilation = CSharpCompilation.Create(assemblyName,
+				[CSharpSyntaxTree.ParseText("public class TestType { }")],
+				references,
+				new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+			using var output = File.Create(assemblyPath);
+			var result = compilation.Emit(output);
+			Assert.That(result.Success, Is.True, () => string.Join(Environment.NewLine, result.Diagnostics));
 		}
 
 		static void AssertModelDescribesThisAssembly(JsonElement model)

@@ -2,6 +2,16 @@
   "version": 2,
   "dependencies": {
     "net11.0": {
+      "Microsoft.CodeAnalysis.CSharp": {
+        "type": "Direct",
+        "requested": "[5.12.0-1.26529.118, )",
+        "resolved": "5.12.0-1.26529.118",
+        "contentHash": "hsnjeT1sBfA+Ox55b1FFNbJu6pJ/BetjzMpWKeSYw4Qp3fEBs7hSLjn3HXuMU8eNW/qYzxIjDUPKL2dfLYdU2A==",
+        "dependencies": {
+          "Microsoft.CodeAnalysis.Analyzers": "5.12.0-1.26465.4",
+          "Microsoft.CodeAnalysis.Common": "[5.12.0-1.26529.118]"
+        }
+      },
       "Microsoft.Testing.Extensions.TrxReport": {
         "type": "Direct",
         "requested": "[2.5.2, )",
@@ -55,6 +65,11 @@
         "dependencies": {
           "System.Diagnostics.DiagnosticSource": "5.0.0"
         }
+      },
+      "Microsoft.CodeAnalysis.Analyzers": {
+        "type": "Transitive",
+        "resolved": "5.12.0-1.26465.4",
+        "contentHash": "rnxXLw/9kD5+v1zpUCI/Wch4/CZ0sldZwuvM2oaZgPEsF6yOdCwsytyCZho3OspInUE5AGZ+WsdLiM1ZlkCHFg=="
       },
       "Microsoft.Extensions.Configuration.Abstractions": {
         "type": "Transitive",
@@ -392,6 +407,15 @@
           "McMaster.Extensions.CommandLineUtils": "5.1.0",
           "Microsoft.Extensions.Hosting.Abstractions": "10.0.5",
           "Microsoft.Extensions.Logging.Abstractions": "10.0.5"
+        }
+      },
+      "Microsoft.CodeAnalysis.Common": {
+        "type": "CentralTransitive",
+        "requested": "[5.12.0-1.26529.118, )",
+        "resolved": "5.12.0-1.26529.118",
+        "contentHash": "Q9bwMaOtx2FZXQmC6jdVakNTlIEiGXlmBsoPv/+PLeLpWCgUu0vCh3ZhMAz4VDVU+jvuYEgRJg/27+nStwHEcw==",
+        "dependencies": {
+          "Microsoft.CodeAnalysis.Analyzers": "5.12.0-1.26465.4"
         }
       },
       "Microsoft.Extensions.Configuration": {
