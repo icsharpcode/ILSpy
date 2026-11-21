@@ -352,14 +352,18 @@ impl Builder<'_, '_, '_, '_> {
             }
             this_arg = Some(target);
         }
-        // A constructor call is non-virtual whatever its opcode (`method.IsConstructor`).
-        let mut target = self.translate_constrained_target(
+        // A constructor call is non-virtual whatever its opcode (`method.IsConstructor`). The
+        // named argument map is this call's, not that of a call in the target.
+        let named_argument_map = self.named_argument_map.take();
+        let target = self.translate_constrained_target(
             this_arg,
             op == CallOp::Call || method.name == ".ctor" || method.name == ".cctor",
             method.is_static,
             declaring,
             constrained_to,
-        )?;
+        );
+        self.named_argument_map = named_argument_map;
+        let mut target = target?;
         // A boxing conversion of the target to `object` is made implicit, with the boxing kept
         // in mind for the overload found (`NeedsBoxingConversion`).
         let mut needs_boxing_conversion = false;
@@ -459,13 +463,9 @@ impl Builder<'_, '_, '_, '_> {
             }
             list.params_candidate = None;
         }
-        // Named arguments of an extension method, a property or event accessor or a delegate
-        // invocation are not translated; an indexer's are written as they are.
-        if list.parameter_map.is_some()
-            && (is_extension
-                || (property.is_some() && indexer.is_none())
-                || (method.name == "Invoke" && self.ts.kind(declaring) == TypeKind::Delegate))
-        {
+        // Named arguments of a property or event accessor are not translated; an indexer's, an
+        // extension method's and a delegate invocation's are written as they are.
+        if list.parameter_map.is_some() && property.is_some() && indexer.is_none() {
             return Err("named arguments of an extension, accessor or delegate call".to_owned());
         }
 
@@ -1010,7 +1010,9 @@ impl Builder<'_, '_, '_, '_> {
         }
         // The target is the first argument, written first and positionally.
         let names = list.argument_names();
-        if names.as_ref().is_some_and(|n| n[0].is_some()) {
+        if names.as_ref().is_some_and(|n| n[0].is_some())
+            || list.parameter_map.as_ref().is_some_and(|m| m[0] != 0)
+        {
             return Ok(None);
         }
         let mut first = list.arguments[0];
@@ -1068,19 +1070,11 @@ impl Builder<'_, '_, '_, '_> {
         let mut groups = Vec::with_capacity(arguments.len());
         for a in &list.arguments[1..list.actual_count()] {
             groups.push(match self.rr_of(a.expression) {
-                // shortcut: the host looks a method group argument up without its extension
-                // methods; teach `QueryMethodGroup` `ResolveMemberAccess` when a body needs it.
-                Rr::MethodGroup {
-                    extension: true, ..
-                } => {
-                    return Err(
-                        "an extension method question with an extension method group".to_owned(),
-                    );
-                }
                 Rr::MethodGroup {
                     target,
                     method,
                     type_arguments,
+                    extension,
                     ..
                 } => {
                     let target = match target.as_deref() {
@@ -1096,10 +1090,10 @@ impl Builder<'_, '_, '_, '_> {
                         Some(&Rr::Type(ty)) => Some(LookupTarget::Type(ty)),
                         Some(rr) => Some(LookupTarget::Expression(self.rr_type(rr))),
                     };
-                    Some((*method, target, type_arguments, None))
+                    Some((*method, target, type_arguments, None, extension))
                 }
                 Rr::LocalFunctionGroup { name, method, .. } => {
-                    Some((*method, None, Vec::new(), Some(name)))
+                    Some((*method, None, Vec::new(), Some(name), false))
                 }
                 _ => None,
             });
@@ -1110,15 +1104,17 @@ impl Builder<'_, '_, '_, '_> {
         let method_groups: Vec<_> = groups
             .iter()
             .map(|g| {
-                g.as_ref()
-                    .map(
-                        |(method, target, type_arguments, local_function)| MethodGroupOperand {
+                g.as_ref().map(
+                    |(method, target, type_arguments, local_function, extension)| {
+                        MethodGroupOperand {
                             method,
                             target: *target,
                             type_arguments,
                             local_function: local_function.as_deref(),
-                        },
-                    )
+                            extension: *extension,
+                        }
+                    },
+                )
             })
             .collect();
         // The question carries expressions, constants, references, `out var`, lambdas, method
@@ -1136,14 +1132,14 @@ impl Builder<'_, '_, '_, '_> {
                 | ResolveResult::Constant { .. }
                 | ResolveResult::ByReference { .. }
                 | ResolveResult::OutVar(_)
-                | ResolveResult::Lambda(_) => continue,
+                | ResolveResult::Lambda(_)
+                | ResolveResult::InterpolatedString(_)
+                | ResolveResult::DefaultLiteral(_) => continue,
                 ResolveResult::Tuple { elements, .. } if plain_tuple(elements) => continue,
                 ResolveResult::MethodGroup(_) if i > 0 && method_groups[i - 1].is_some() => {
                     continue;
                 }
                 ResolveResult::Type(_) => "a type",
-                ResolveResult::DefaultLiteral(_) => "a default literal",
-                ResolveResult::InterpolatedString(_) => "an interpolated string",
                 ResolveResult::Throw => "a throw expression",
                 ResolveResult::Tuple { .. } => "a tuple",
                 ResolveResult::This { .. } => "this",
@@ -2672,7 +2668,7 @@ impl Builder<'_, '_, '_, '_> {
 
     /// `Target.ConvertTo(declaringType)` of a member reference's target, and the lookup target
     /// of the cast (`base` is cast as `this`). A `this` target cast to a class is not
-    /// translated, nor a null-conditional target, which would be cast inside its `?`.
+    /// translated, nor a null-conditional target of a declaring type that is no reference type.
     pub(crate) fn cast_target_to(
         &mut self,
         target: &mut TranslatedExpression,
@@ -2728,10 +2724,14 @@ impl Builder<'_, '_, '_, '_> {
             );
         if (self.ts.is_reference_type(target.ty) != Some(true) && !value_type)
             || refuse_this
-            || matches!(
-                self.ast.node(target.expression),
-                AstNode::NullConditional { .. }
-            )
+            || match self.ast.node(target.expression) {
+                // `ConvertTo` casts inside the `?` only to a reference type.
+                AstNode::NullConditional { rewrap: false, .. } => {
+                    self.ts.is_reference_type(declaring) != Some(true)
+                }
+                AstNode::NullConditional { .. } => true,
+                _ => false,
+            }
         {
             return Err("a reference that needs a cast of its target".to_owned());
         }
@@ -2768,10 +2768,10 @@ impl Builder<'_, '_, '_, '_> {
     ) -> Result<(), Unsupported> {
         for (a, p) in arguments.iter_mut().zip(parameters) {
             if self.settings.anonymous_types && self.contains_anonymous_type_name(p.ty) {
-                // An argument of an anonymous type cannot be cast; a lambda's return type
-                // would be adjusted (`ModifyReturnTypeOfLambda`), which is not translated.
-                if matches!(self.ast.node(a.expression), AstNode::Lambda { .. }) {
-                    return Err("argument casts to anonymous, dynamic or in parameters".to_owned());
+                // An argument of an anonymous type cannot be cast; a lambda's return type is
+                // adjusted instead.
+                if let AstNode::Lambda { .. } = *self.ast.node(a.expression) {
+                    self.modify_return_type_of_lambda(a.expression)?;
                 }
                 continue;
             }
@@ -2788,6 +2788,57 @@ impl Builder<'_, '_, '_, '_> {
             }
             *a = self.convert_to(*a, ty, false)?;
         }
+        Ok(())
+    }
+
+    /// `Disambiguator.ModifyReturnTypeOfLambda`: the lambda's body, or the expressions its
+    /// return statements return, converted to its return type, which becomes the type its
+    /// body infers.
+    fn modify_return_type_of_lambda(&mut self, e: AstId) -> Result<(), Unsupported> {
+        let AstNode::Lambda {
+            body,
+            expression_body,
+            lambda,
+            ..
+        } = *self.ast.node(e)
+        else {
+            unreachable!("a lambda");
+        };
+        let decompiled = self.ast.lambdas[lambda].clone();
+        if decompiled.is_async {
+            return Err("argument casts to anonymous, dynamic or in parameters".to_owned());
+        }
+        let return_type = decompiled.return_type;
+        let convert = |b: &mut Self, x: AstId| -> Result<AstId, Unsupported> {
+            let rr = b.rr_of(x);
+            let x = TranslatedExpression {
+                expression: x,
+                ty: b.rr_type(&rr),
+            };
+            Ok(b.convert_to(x, return_type, false)?.expression)
+        };
+        if expression_body {
+            let converted = convert(self, body)?;
+            if let AstNode::Lambda { body, .. } = self.ast.node_mut(e) {
+                *body = converted;
+            }
+        } else {
+            // shortcut: the return statements of the lambda's own function; the managed walk
+            // also converts those of a local function declared in the body. Upgrade when a
+            // fixture has one.
+            for s in self.ast.lambda_returns[lambda].clone() {
+                if let AstNode::Return {
+                    expression: Some(x),
+                } = *self.ast.node(s)
+                {
+                    let converted = convert(self, x)?;
+                    *self.ast.node_mut(s) = AstNode::Return {
+                        expression: Some(converted),
+                    };
+                }
+            }
+        }
+        decompiled.inferred_return_type.set(return_type);
         Ok(())
     }
 

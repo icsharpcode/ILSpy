@@ -112,8 +112,9 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		readonly bool nonVirtual;
 		readonly IType? target;
 		readonly IType[] typeArguments;
+		readonly bool extension;
 
-		public QueryMethodGroup(IMethod method, byte targetKind, bool nonVirtual, IType? target, IType[] typeArguments)
+		public QueryMethodGroup(IMethod method, byte targetKind, bool nonVirtual, IType? target, IType[] typeArguments, bool extension)
 			: base(SpecialType.UnknownType)
 		{
 			this.method = method;
@@ -121,21 +122,32 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 			this.nonVirtual = nonVirtual;
 			this.target = target;
 			this.typeArguments = typeArguments;
+			this.extension = extension;
 		}
 
 		/// <summary>The method group, or null where the name does not find one.</summary>
 		public MethodGroupResolveResult? LookUp(CSharpResolver resolver)
 		{
+			if (extension)
+			{
+				// `IsUnambiguousMethodReference` with `isExtensionMethodReference`: the member
+				// access as an invocation target, extension methods included, not narrowed.
+				if (target == null)
+					return null;
+				return resolver.ResolveMemberAccess(TargetResult(), method.Name, typeArguments, NameLookupMode.InvocationTarget) as MethodGroupResolveResult;
+			}
 			var found = target == null
 				? resolver.ResolveSimpleName(method.Name, typeArguments, isInvocationTarget: false)
 				: new MemberLookup(resolver.CurrentTypeDefinition, resolver.CurrentTypeDefinition.ParentModule)
-					.Lookup(targetKind switch {
-						1 => new ThisResolveResult(new ILVariable(VariableKind.Parameter, target, -1), target, nonVirtual),
-						2 => new TypeResolveResult(target),
-						_ => new ResolveResult(target),
-					}, method.Name, typeArguments, isInvocation: false);
+					.Lookup(TargetResult(), method.Name, typeArguments, isInvocation: false);
 			return (found as MethodGroupResolveResult)?.WithChosenMethod(method);
 		}
+
+		ResolveResult TargetResult() => targetKind switch {
+			1 => new ThisResolveResult(new ILVariable(VariableKind.Parameter, target!, -1), target!, nonVirtual),
+			2 => new TypeResolveResult(target!),
+			_ => new ResolveResult(target!),
+		};
 	}
 
 	/// <summary>

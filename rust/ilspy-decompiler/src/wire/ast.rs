@@ -911,7 +911,7 @@ fn node_without_comment(
         } => {
             let l = &ast.lambdas[lambda];
             w.ty(l.delegate_type);
-            w.ty(l.inferred_return_type);
+            w.ty(l.inferred_return_type.get());
             w.out.bool(l.attempted_conversion_with_type_mismatch.get());
             w.out.bool(l.implicitly_typed);
             w.out.bool(l.anonymous_method);

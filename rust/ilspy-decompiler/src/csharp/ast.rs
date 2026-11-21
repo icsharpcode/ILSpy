@@ -745,6 +745,8 @@ pub struct Ast {
     pub nodes: Vec<(AstNode, Annotations)>,
     /// The resolve results of the lambdas, which overload resolution can update.
     pub lambdas: Vec<std::rc::Rc<crate::semantics::decompiled_lambda::DecompiledLambda>>,
+    /// The return statements of each lambda's own function, indexed like `lambdas`.
+    pub lambda_returns: Vec<Vec<AstId>>,
     /// The method groups of method references, as overload resolution sees them.
     pub method_groups: Vec<std::rc::Rc<crate::semantics::MethodGroup>>,
 }

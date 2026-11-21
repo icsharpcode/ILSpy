@@ -13,8 +13,9 @@ use super::{Conversion, Conversions, Lambda, Parameter};
 pub struct DecompiledLambda {
     pub delegate_type: TypeId,
     /// `InferredReturnType`: the type the body infers, which can differ from the function's
-    /// return type where a return statement converts implicitly.
-    pub inferred_return_type: TypeId,
+    /// return type where a return statement converts implicitly; `ModifyReturnTypeOfLambda`
+    /// sets it to the return type.
+    pub inferred_return_type: Cell<TypeId>,
     /// `ReturnType`: the function's return type.
     pub return_type: TypeId,
     pub parameters: Vec<Parameter>,
@@ -72,7 +73,7 @@ impl Lambda for DecompiledLambda {
         _conversions: &mut Conversions<'_, '_, '_>,
         _parameter_types: Option<&[TypeId]>,
     ) -> TypeId {
-        self.inferred_return_type
+        self.inferred_return_type.get()
     }
 
     fn is_valid(
@@ -107,7 +108,7 @@ impl Lambda for DecompiledLambda {
         }
         if conversions.identity(self.return_type, return_type)
             || conversions
-                .implicit_type(self.inferred_return_type, return_type)
+                .implicit_type(self.inferred_return_type.get(), return_type)
                 .is_valid()
         {
             Conversion::ANONYMOUS_FUNCTION
