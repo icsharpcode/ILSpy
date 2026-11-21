@@ -865,6 +865,12 @@ the reasons. This file holds only the ordered steps, their gates and their rules
       extension delegates, extension calls on `null`, generic local function references,
       lifted user-defined operators, anonymous-type inference, foreach over dynamic or a static
       `GetEnumerator` extension.
+      Round 3 (ee4869c67, lecture 3.229): 36 reasons, three groups (calls and delegates;
+      anonymous types, tuples and foreach; ranges and IL leftovers). Left 13 reasons in about 60
+      assemblies: generic local function references, unresolved methods, the void-lambda
+      overload choice (also a silent `(Action)` cast divergence), tuple names through generic
+      member access, extension calls on `null` with type arguments, constrained-call and
+      constructor target casts, non-slicing range accessors, and five single-assembly reasons.
     - [ ] **85f.** Rerun the matrix strict; repeat for what the first failure per test hid; then
       merge the switch into `ILSPY_RUST_STRICT`.
 

@@ -5130,6 +5130,38 @@ function references, lifted user-defined operators, anonymous-type inference for
 and foreach over a dynamic collection or a static `GetEnumerator` extension, which the served
 bodies now reach.
 
+### 3.229 The body gaps, third round (item 85e)
+
+The tally after round 2 had 36 reasons; three agents took them on the same terms as round 2.
+
+- **Calls and delegates**: lifted user-defined operators (the operator candidates are looked up
+  on the operands' underlying types and followed by their lifted forms, `LiftUserDefinedOperator`;
+  `Method` carries a lifted flag that takes part in method equality), bound extension-method
+  delegates (a new host query answers `ResolveMemberAccess` as an invocation target; the engine
+  then runs `IsUnambiguousMethodReference` itself), extension questions on tuples, and direct
+  calls of explicit interface implementations. A local function now takes its signature from its
+  definition as ReadIL specializes it, not from the first use site.
+- **Anonymous types, tuples, foreach**: `PinTypesOfNullArguments` and `NewAnonymousTypeInstance`
+  build a synthesized ILAst (`true ? null : new { X = default(int) }`) and translate it; the
+  synthesized instructions are not part of the function, so their IL annotations are stripped
+  from the syntax they produce. Long tuple literals through the `Rest` creations, foreach over
+  `dynamic`, and foreach with a tuple variable (the engine now decides `var`, which the host used
+  to guess from the variable's type).
+- **Ranges and IL leftovers**: a range node, slices, vararg instance calls, `LdFtn` as function
+  pointers, and comment trivia. A comment is an annotation on the node it precedes, not a wrapper
+  node, so engine code that matches node shapes does not see it; the wire writes it as a node of
+  its own in front of the commented one.
+
+A lesson from this round: comparing strict with non-strict ilspycmd output only proves the
+fallback is gone, because non-strict output already comes from the engine wherever it serves.
+The oracles are the comparisons against the managed builder (AstPrefixEquality, BodyGapTests)
+and the decompiler suite. One silent divergence is known and not yet caught by any test: for
+`Task.Run(() => { a = GetPair().Item1; })` the engine's overload resolution prefers
+`Run<?>(Func<?>)` where managed picks `Run(Action)`, and writes a spurious `(Action)` cast.
+
+The full gates after the merges were green apart from the Newtonsoft round trip, whose NUnit
+runner fails under load and passes alone (3,055 tests).
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |
