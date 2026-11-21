@@ -1923,7 +1923,7 @@ pub fn extension_method_syntax_query(
                     w.out.u8(4);
                     w.ty(d.delegate_type);
                     w.ty(d.return_type);
-                    w.ty(d.inferred_return_type);
+                    w.ty(d.inferred_return_type.get());
                     w.out.len(d.parameters.len());
                     for p in &d.parameters {
                         w.ty(p.ty);
@@ -1945,6 +1945,16 @@ pub fn extension_method_syntax_query(
                         operand(w, e)?;
                     }
                 }
+                // 170: an interpolated string, of which overload resolution sees only the type.
+                ResolveResult::InterpolatedString(ty) => {
+                    w.out.u8(170);
+                    w.ty(*ty);
+                }
+                // 172: a default literal and the type it was shortened from.
+                ResolveResult::DefaultLiteral(ty) => {
+                    w.out.u8(172);
+                    w.ty(*ty);
+                }
                 _ => return Err("an operand of another kind".to_owned()),
             }
             Ok(())
@@ -1954,8 +1964,9 @@ pub fn extension_method_syntax_query(
         for (i, a) in arguments.iter().enumerate() {
             // 5: a method group, which the host looks up again (`Disambiguator.LookUpName`
             // without invocation, then `WithChosenMethod`).
+            // 171: an extension method reference's group, as 5.
             if let Some(Some(group)) = method_groups.get(i) {
-                w.out.u8(5);
+                w.out.u8(if group.extension { 171 } else { 5 });
                 w.call_method(group.method)?;
                 match group.target {
                     // 4: a local function's group, by its name.

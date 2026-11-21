@@ -522,6 +522,9 @@ pub struct MethodGroupOperand<'a> {
     /// The name of a local function's method group (`ToMethodGroup`), which the host builds
     /// without lookup.
     pub local_function: Option<&'a str>,
+    /// Whether the group is an extension method reference (`target.Extension`), which the host
+    /// resolves as a member access with extension methods (`IsUnambiguousMethodReference`).
+    pub extension: bool,
 }
 
 /// A `CanTransformToExtensionMethodCall` question.

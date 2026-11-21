@@ -242,7 +242,7 @@ impl Builder<'_, '_, '_, '_> {
             None => {
                 // `InferReturnType`: the best common type of the returned expressions.
                 let mut expressions = Vec::new();
-                for s in returns {
+                for &s in &returns {
                     if let AstNode::Return {
                         expression: Some(e),
                     } = *self.ast.node(s)
@@ -266,7 +266,7 @@ impl Builder<'_, '_, '_, '_> {
         let lambda = self.ast.lambdas.len();
         self.ast.lambdas.push(Rc::new(DecompiledLambda {
             delegate_type,
-            inferred_return_type,
+            inferred_return_type: Cell::new(inferred_return_type),
             return_type,
             parameters: parameters
                 .iter()
@@ -287,6 +287,7 @@ impl Builder<'_, '_, '_, '_> {
             has_parameter_list,
             is_async,
         }));
+        self.ast.lambda_returns.push(returns);
         let l = self.ast.add(AstNode::Lambda {
             body,
             expression_body: expression_body.is_some(),

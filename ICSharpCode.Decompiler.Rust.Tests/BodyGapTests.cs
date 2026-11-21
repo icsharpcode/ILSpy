@@ -112,6 +112,34 @@ class BodyGapHidingDerived : BodyGapVirtualBase
 	public Action BaseVirtual() => ((BodyGapVirtualBase)this).M;
 }
 
+interface IBodyGapLineInfo
+{
+	int Line { get; }
+}
+
+class BodyGapExplicitLineInfo : IBodyGapLineInfo
+{
+	int IBodyGapLineInfo.Line => 1;
+}
+
+class BodyGapNamedTarget
+{
+	public int V;
+
+	public int Sum(int a, int b) => V + a + b;
+}
+
+static class BodyGapStatementExtensions
+{
+	public static int Measure(this string s, int start, int count) => s.Length + start + count;
+
+	public static string Describe(this string s, IFormattable f) => s + f;
+
+	public static bool Has(this string s, char c) => s.IndexOf(c) >= 0;
+
+	public static int Wait(this string s, System.Threading.CancellationToken token) => s.Length;
+}
+
 class BodyGapNamedIndexer
 {
 	public int this[int x, int y] {
@@ -332,6 +360,89 @@ public class BodyGapTests
 
 	static string? ConstrainedCallOnCast<T>(object o) => ((T)o)!.ToString();
 
+	static int ForWithLabels(int[] a)
+	{
+		int n = 0;
+		for (int i = 0; i < a.Length; i++)
+		{
+			int c = a[i];
+			if (c == 1)
+				goto one;
+			if (c == 2)
+				goto two;
+			if (c == 3)
+			{
+				i++;
+				if (i < a.Length)
+				{
+					c = a[i];
+					if (c == 1)
+						goto one;
+					goto two;
+				}
+			}
+			n++;
+			continue;
+			one:
+			if (n == 5)
+				return -1;
+			n += 10;
+			continue;
+			two:
+			if (n == 7)
+				return -2;
+			n += 20;
+		}
+		return n;
+	}
+
+	static int? NullConditionalInterfaceTarget(BodyGapExplicitLineInfo? o) => ((IBodyGapLineInfo?)o)?.Line;
+
+	static int NamedArgumentsOfExtension(string s, Func<int> f) => s.Measure(count: f(), start: f());
+
+	static int NamedArgumentsOnObjectInitializerTarget(Func<int> f) => new BodyGapNamedTarget { V = f() }.Sum(b: f(), a: f());
+
+	static int NamedArgumentsOfDelegate(Func<int, int, int> d, Func<int> f) => d(arg2: f(), arg1: f());
+
+	static string InterpolatedStringArgumentOfExtension(string s, int i) => s.Describe($"{i} items");
+
+	static int DefaultLiteralArgumentOfExtension(string s) => s.Wait(default);
+
+	static bool ExtensionMethodGroupArgument(string s, string t) => t.All(s.Has);
+
+	static void TakeAnonymous<T>(Func<int, T> f, object o) { }
+
+	static void TakeAnonymous<T>(Func<int, T> f, string s) { }
+
+	static void AnonymousTypeLambdaArgument() => TakeAnonymous(x => new { X = x }, (object)"s");
+
+	[TestCase(nameof(ForWithLabels))]
+	[TestCase(nameof(NullConditionalInterfaceTarget))]
+	[TestCase(nameof(NamedArgumentsOfExtension))]
+	[TestCase(nameof(NamedArgumentsOnObjectInitializerTarget))]
+	[TestCase(nameof(NamedArgumentsOfDelegate))]
+	[TestCase(nameof(InterpolatedStringArgumentOfExtension))]
+	[TestCase(nameof(ExtensionMethodGroupArgument))]
+	[TestCase(nameof(DefaultLiteralArgumentOfExtension))]
+	[TestCase(nameof(AnonymousTypeLambdaArgument))]
+	public void EngineServesStatementAndCallBody(string name)
+	{
+		AssertEngineServes(typeof(BodyGapTests).GetMethod(name, BindingFlags.Static | BindingFlags.NonPublic)!);
+	}
+
+	static Func<int> LocalFunctionReference()
+	{
+		static int F() => 42;
+		return F;
+	}
+
+	[TestCase(nameof(LocalFunctionReference))]
+	public void EngineServesBodyWithoutLocalFunctions(string name)
+	{
+		AssertEngineServes(typeof(BodyGapTests).GetMethod(name, BindingFlags.Static | BindingFlags.NonPublic)!,
+			new DecompilerSettings(CSharp.LanguageVersion.CSharp1));
+	}
+
 	[TestCase(nameof(GenericLocalFunctionArgs))]
 	[TestCase(nameof(ConstrainedCallOnCast))]
 	[TestCase(nameof(GenericExtensionOnNull))]
@@ -399,18 +510,18 @@ public class BodyGapTests
 			unresolvedAssembly: "ICSharpCode.Decompiler");
 	}
 
-	static void AssertEngineServes(MethodInfo method, string? unresolvedAssembly = null)
+	static void AssertEngineServes(MethodInfo method, DecompilerSettings? settings = null, string? unresolvedAssembly = null)
 	{
 		var handle = (MethodDefinitionHandle)MetadataTokens.EntityHandle(method.MetadataToken);
 		string path = typeof(BodyGapTests).Assembly.Location;
-		string managed = DecompileMethod(path, handle, engineBodies: false, unresolvedAssembly);
+		string managed = DecompileMethod(path, handle, engineBodies: false, settings, unresolvedAssembly);
 		RustSeam2.LastFallbackReason = null;
-		string engine = DecompileMethod(path, handle, engineBodies: true, unresolvedAssembly);
+		string engine = DecompileMethod(path, handle, engineBodies: true, settings, unresolvedAssembly);
 		Assert.That(RustSeam2.LastFallbackReason, Is.Null);
 		Assert.That(engine, Is.EqualTo(managed));
 	}
 
-	static string DecompileMethod(string path, MethodDefinitionHandle handle, bool engineBodies, string? unresolvedAssembly)
+	static string DecompileMethod(string path, MethodDefinitionHandle handle, bool engineBodies, DecompilerSettings? settings, string? unresolvedAssembly)
 	{
 		RustSeam2.Enabled = engineBodies;
 		try
@@ -419,7 +530,7 @@ public class BodyGapTests
 			IAssemblyResolver resolver = new UniversalAssemblyResolver(path, false, module.DetectTargetFrameworkId());
 			if (unresolvedAssembly != null)
 				resolver = new ResolverWithout(resolver, unresolvedAssembly);
-			var decompiler = new CSharpDecompiler(module, resolver, new DecompilerSettings());
+			var decompiler = new CSharpDecompiler(module, resolver, settings?.Clone() ?? new DecompilerSettings());
 			return decompiler.DecompileAsString(handle);
 		}
 		finally

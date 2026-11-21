@@ -103,7 +103,7 @@ impl Builder<'_, '_, '_, '_> {
             .ts
             .delegate_invoke(delegate_type)
             .ok_or("a delegate type without Invoke")?;
-        if self.ts.accessor_owner(id).is_some() || operand.method.name.starts_with('<') {
+        if self.ts.accessor_owner(id).is_some() {
             return Err("a delegate of an extension method, accessor or local function".to_owned());
         }
         // An extension method bound to its first argument is referenced as an extension

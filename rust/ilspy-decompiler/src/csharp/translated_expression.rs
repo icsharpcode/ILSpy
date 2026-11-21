@@ -384,6 +384,26 @@ impl Builder<'_, '_, '_, '_> {
             self.ast.with_rr(n, Rr::Plain(ty));
             return Ok(TranslatedExpression { expression: n, ty });
         }
+        // `(T)(x?).AccessChain` is invalid, `((T)x)?.AccessChain` is valid and equivalent.
+        if let AstNode::NullConditional {
+            expression: inner,
+            rewrap: false,
+        } = *self.ast.node(e.expression)
+            && self.ts.is_reference_type(target) == Some(true)
+        {
+            let inner = self.unwrap_child(e.expression, inner);
+            let converted =
+                self.convert_to_checked(inner, target, check, allow_implicit_conversion)?;
+            let n = self.ast.add(AstNode::NullConditional {
+                expression: converted.expression,
+                rewrap: false,
+            });
+            self.ast.with_rr(n, Rr::Plain(target));
+            return Ok(TranslatedExpression {
+                expression: n,
+                ty: target,
+            });
+        }
         let utype = self.ts.nullable_underlying(ty);
         let target_utype = self.ts.nullable_underlying(target);
         let target_ustack = self.ts.stack_type(target_utype);

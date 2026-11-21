@@ -2439,7 +2439,7 @@ fn decompiled_lambda_conversions() {
         let dynamic = c.ts.intern(TypeData::Dynamic);
         let lambda = |param: TypeId| DecompiledLambda {
             delegate_type: object,
-            inferred_return_type: int,
+            inferred_return_type: std::cell::Cell::new(int),
             return_type: int,
             parameters: vec![param_x(param)],
             attempted_conversion_with_type_mismatch: std::cell::Cell::new(false),
@@ -2530,7 +2530,7 @@ fn lambda_converts_to_annotated_delegate_type() {
         assert!(matches!(c.ts.data(annotated), TypeData::Annotated { .. }));
         let lambda = Rc::new(DecompiledLambda {
             delegate_type: action,
-            inferred_return_type: void,
+            inferred_return_type: std::cell::Cell::new(void),
             return_type: void,
             parameters: Vec::new(),
             attempted_conversion_with_type_mismatch: std::cell::Cell::new(false),

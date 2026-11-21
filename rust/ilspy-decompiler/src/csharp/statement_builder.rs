@@ -145,6 +145,33 @@ impl Builder<'_, '_, '_, '_> {
                 try_block,
                 finally_block,
             } => self.visit_try_finally(inst, try_block, finally_block),
+            // `VisitTryFault`: a catch-all clause with a `try-fault` comment that rethrows.
+            Inst::TryFault {
+                try_block,
+                fault_block,
+            } => {
+                let try_block = self.convert_as_block(try_block)?;
+                let body = self.convert_as_block(fault_block)?;
+                let marker = self.ast.add(AstNode::Empty);
+                self.ast.with_trailing_comment(marker, "try-fault", 0);
+                let rethrow = self.ast.add(AstNode::Throw { expression: None });
+                if let AstNode::Block { statements } = self.ast.node_mut(body) {
+                    statements.insert(0, marker);
+                    statements.push(rethrow);
+                }
+                let c = self.ast.add(AstNode::CatchClause {
+                    variable_name: None,
+                    ty: None,
+                    condition: None,
+                    body,
+                });
+                let s = self.ast.add(AstNode::TryCatch {
+                    try_block,
+                    catch_clauses: vec![c],
+                    finally_block: None,
+                });
+                Ok(self.ast.with_il(s, inst))
+            }
             // `VisitLockInstruction`
             Inst::Lock {
                 on_expression,
@@ -307,7 +334,7 @@ impl Builder<'_, '_, '_, '_> {
                 });
                 Ok(self.ast.with_il(s, inst))
             }
-            Inst::Switch { .. } | Inst::Branch { .. } | Inst::TryFault { .. } => Err(format!(
+            Inst::Switch { .. } | Inst::Branch { .. } => Err(format!(
                 "the statement {}",
                 super::inst_name(self.f.inst(inst))
             )),
@@ -981,17 +1008,26 @@ impl Builder<'_, '_, '_, '_> {
                 if !ends_in_branch {
                     return Err("an invalid increment block in a for loop".to_owned());
                 }
-                if blocks.len() != 3 || blocks[1] != body_block {
-                    return Err("a for loop with labeled blocks".to_owned());
-                }
+                let rest: Vec<_> = blocks[..blocks.len() - 1]
+                    .iter()
+                    .skip(1)
+                    .copied()
+                    .filter(|&b| b != body_block)
+                    .collect();
+                let body = self.convert_block_container_into(body, container, &rest, true)?;
                 let condition = self.translate_condition(condition)?.expression;
                 self.remove_trailing_continue(body);
                 let mut iterators = Vec::with_capacity(instructions.len() - 1);
                 for &i in &instructions[..instructions.len() - 1] {
                     iterators.push(self.convert(i)?);
                 }
+                // Branches to the increment block that are no `continue` jump to a label.
                 if self.f.node(increment).incoming_edge_count > self.continue_count {
-                    return Err("a for loop with a jump to its increment".to_owned());
+                    let name = self.ensure_unique_label(increment);
+                    let label = self.ast.add(AstNode::Label { name });
+                    if let AstNode::Block { statements } = self.ast.node_mut(body) {
+                        statements.push(label);
+                    }
                 }
                 self.declare_local_functions(container, body)?;
                 Ok(self.ast.add(AstNode::For {

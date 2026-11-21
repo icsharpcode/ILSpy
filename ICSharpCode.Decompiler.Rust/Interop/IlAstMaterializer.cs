@@ -1243,12 +1243,15 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		/// An operand of a resolver query: 0 and the type of an expression, 1, the type and the
 		/// constant, 2, the element type and the <see cref="ReferenceKind"/> of a by-reference
 		/// argument, 3 and the type of an <c>out var</c>, 4 and the delegate type of a lambda; 5, a
-		/// method group as a <see cref="QueryMethodGroup"/>.
+		/// method group as a <see cref="QueryMethodGroup"/>; 6, a tuple literal; 170 and the type
+		/// of an interpolated string; 171, an extension method group as 5; 172 and the type a
+		/// default literal was shortened from.
 		/// </summary>
 		ResolveResult QueryOperand()
 		{
 			byte kind = U8();
-			if (kind == 5)
+			// 171: an extension method reference's group, as 5.
+			if (kind is 5 or 171)
 			{
 				var method = CallMethod();
 				byte targetKind = U8();
@@ -1266,7 +1269,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				var typeArguments = new IType[Len()];
 				for (int i = 0; i < typeArguments.Length; i++)
 					typeArguments[i] = Type();
-				return new QueryMethodGroup(method, targetKind, nonVirtual, target, typeArguments);
+				return new QueryMethodGroup(method, targetKind, nonVirtual, target, typeArguments, extension: kind == 171);
 			}
 			var type = Type();
 			return kind switch {
@@ -1276,6 +1279,9 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				3 => new OutVarResolveResult(type),
 				4 => QueryLambda(type),
 				6 => QueryTuple(type),
+				// Overload resolution sees only the type of an interpolated string.
+				170 => new InterpolatedStringResolveResult(type, string.Empty),
+				172 => new DefaultLiteralResolveResult(type),
 				_ => throw new InvalidOperationException("Unknown resolver query operand"),
 			};
 		}
