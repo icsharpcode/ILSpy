@@ -826,22 +826,44 @@ impl Builder<'_, '_, '_, '_> {
         {
             return Ok(self.bool_literal(e.expression, v != 0, boolean));
         }
-        if matches!(self.ts.kind(e.ty), TypeKind::Pointer | TypeKind::Enum) {
-            return Err("a conversion to bool of a pointer or enum".to_owned());
-        }
-        let int = self.ts.known_type(KnownTypeCode::Int32);
-        let zero = self.ast.add(AstNode::ConstantValue {
-            ty: int,
-            value: ConstValue::Int32(0),
-            allow_implicit_conversion: false,
-        });
-        self.ast.with_rr(
-            zero,
-            Rr::Constant {
+        // A pointer compared with `null`; an enum with a member of value zero with the zero
+        // constant of the enum, which names that member; others with the `int` zero.
+        let zero = if self.ts.kind(e.ty) == TypeKind::Pointer {
+            let null = self.ts.intern(TypeData::Null);
+            let n = self.ast.add(AstNode::Null);
+            self.ast.with_rr(
+                n,
+                Rr::Constant {
+                    ty: null,
+                    value: ConstValue::Null,
+                },
+            );
+            n
+        } else if self.ts.kind(e.ty) == TypeKind::Enum && self.enum_has_zero_member(e.ty) {
+            let z = self.ast.add(AstNode::ConstantValue {
+                ty: e.ty,
+                value: ConstValue::Int32(0),
+                allow_implicit_conversion: true,
+            });
+            let (ty, value) = self.constant_value_rr(e.ty, ConstValue::Int32(0), true)?;
+            self.ast.with_rr(z, Rr::Constant { ty, value });
+            z
+        } else {
+            let int = self.ts.known_type(KnownTypeCode::Int32);
+            let z = self.ast.add(AstNode::ConstantValue {
                 ty: int,
                 value: ConstValue::Int32(0),
-            },
-        );
+                allow_implicit_conversion: false,
+            });
+            self.ast.with_rr(
+                z,
+                Rr::Constant {
+                    ty: int,
+                    value: ConstValue::Int32(0),
+                },
+            );
+            z
+        };
         let c = self.ast.add(AstNode::BinaryOperator {
             overflow: super::ast::Overflow::None,
             op: super::ast::BinaryOp::InEquality,
@@ -852,6 +874,21 @@ impl Builder<'_, '_, '_, '_> {
         Ok(TranslatedExpression {
             expression: c,
             ty: boolean,
+        })
+    }
+
+    /// Whether the definition of the enum `t` has a constant field of value zero.
+    fn enum_has_zero_member(&self, t: TypeId) -> bool {
+        let Some(d) = self.ts.definition(t) else {
+            return false;
+        };
+        let md = &self.ts.comp.module(d.module).md;
+        let Ok(fields) = md.type_fields(d.row) else {
+            return false;
+        };
+        fields.into_iter().any(|row| {
+            self.ts.field_is_const(d.module, row)
+                && integral_value(&self.ts.field_constant(d.module, row)) == Some(0)
         })
     }
 

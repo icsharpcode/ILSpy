@@ -2,7 +2,7 @@
 
 use crate::il::ast::{
     BinaryNumericOperator, BlockKind, ComparisonKind, ComparisonLiftingKind, ConversionKind, Inst,
-    NodeId, VariableKind,
+    NodeId, NullCoalescingKind, VariableKind,
 };
 use crate::il::types::{PrimitiveType, Sign, StackType};
 use crate::metadata::tables::rows;
@@ -392,8 +392,11 @@ impl Builder<'_, '_, '_, '_> {
                 self.convert_to(e, ty.ty, false)
             }
             Inst::NullCoalescing {
-                value, fallback, ..
-            } => self.null_coalescing(inst, value, fallback),
+                kind,
+                ty,
+                value,
+                fallback,
+            } => self.null_coalescing(inst, kind, ty, value, fallback),
             Inst::If {
                 condition,
                 true_inst,
@@ -1860,6 +1863,10 @@ impl Builder<'_, '_, '_, '_> {
         if lc == 3 && rc == 3 {
             return Ok(Some(false));
         }
+        // A `bool` and another primitive type, which no operator takes together.
+        if (lc == 3 || rc == 3) && (3..=15).contains(&lc) && (3..=15).contains(&rc) {
+            return Ok(None);
+        }
         // A reference comparison converts both operands to object.
         if self.ts.is_known(lt, KnownTypeCode::Object)
             && self.ts.is_known(rt, KnownTypeCode::Object)
@@ -1994,10 +2001,15 @@ impl Builder<'_, '_, '_, '_> {
         if let Some((op, rhs)) = logic {
             let is_bool = self.ts.is_known(rhs.ty, KnownTypeCode::Boolean);
             if is_bool || self.is_in_condition_slot(inst) {
-                // `ConvertToBoolean` returns a bool unchanged.
-                if !is_bool {
-                    return Err("a logic operator with an operand that is no bool".to_owned());
-                }
+                // A value wider than 4 bytes is truncated to a 4-byte integer of its sign first.
+                let rhs = if !is_bool && stack_size(self.ts.stack_type(rhs.ty)) > 4 {
+                    let sign = self.ts.type_sign(rhs.ty);
+                    let target = self.find_type(StackType::I4, sign);
+                    self.convert_to(rhs, target, false)?
+                } else {
+                    rhs
+                };
+                let rhs = self.convert_to_boolean(rhs)?;
                 let boolean = self.ts.known_type(KnownTypeCode::Boolean);
                 let e = self.ast.add(AstNode::BinaryOperator {
                     overflow: Overflow::None,
@@ -2177,11 +2189,86 @@ impl Builder<'_, '_, '_, '_> {
             _ => false,
         }
     }
+    /// `VisitNullCoalescingInstruction` where `ResolveNullCoalescingOperator` reports an error:
+    /// the value converted to the nullable of the target type (to the target type itself for
+    /// a reference), the fallback (the value again for `NullCoalescingKind.Nullable`) to the
+    /// target type, which is the type of the instruction's underlying result stack type where
+    /// the operands have two different types, else the type of the one that is not `null`.
+    fn null_coalescing_with_conversions(
+        &mut self,
+        inst: NodeId,
+        kind: NullCoalescingKind,
+        ty: TypeId,
+        value: TranslatedExpression,
+        fallback: TranslatedExpression,
+    ) -> Result<TranslatedExpression, Unsupported> {
+        let null = |b: &Self, t: TypeId| b.ts.kind(t) == TypeKind::Null;
+        // shortcut: a throw expression fallback is not translated here; upgrade when a fixture
+        // needs it.
+        if matches!(
+            self.ast.node(fallback.expression),
+            AstNode::ThrowExpression { .. }
+        ) || self.ts.kind(fallback.ty) == TypeKind::None
+        {
+            return Err("a ?? that needs conversions".to_owned());
+        }
+        let target = if !null(self, value.ty) && !null(self, fallback.ty) && value.ty != fallback.ty
+        {
+            let underlying_result = match kind {
+                NullCoalescingKind::Ref => StackType::Obj,
+                NullCoalescingKind::Nullable => {
+                    let underlying = self.ts.nullable_underlying(ty);
+                    self.ts.stack_type(underlying)
+                }
+                NullCoalescingKind::NullableWithValueFallback => self.ts.stack_type(ty),
+            };
+            let code = underlying_result.to_known(Sign::None);
+            if matches!(code, KnownTypeCode::None | KnownTypeCode::Void) {
+                return Err("a ?? that needs conversions".to_owned());
+            }
+            self.ts.known_type(code)
+        } else if null(self, value.ty) {
+            fallback.ty
+        } else {
+            value.ty
+        };
+        let (value, fallback) = if kind == NullCoalescingKind::Ref {
+            let value = self.convert_to(value, target, false)?;
+            (value, self.convert_to(fallback, target, false)?)
+        } else {
+            // A nullable of a reference type is no type C# can name.
+            if self.ts.is_reference_type(target) != Some(false) {
+                return Err("a ?? of a nullable value type that needs conversions".to_owned());
+            }
+            let nullable = self.ts.make_nullable(target);
+            let value = self.convert_to(value, nullable, false)?;
+            if kind == NullCoalescingKind::Nullable {
+                (self.convert_to(value, nullable, false)?, fallback)
+            } else {
+                (value, self.convert_to(fallback, target, false)?)
+            }
+        };
+        let e = self.ast.add(AstNode::BinaryOperator {
+            overflow: Overflow::None,
+            op: BinaryOp::NullCoalescing,
+            left: value.expression,
+            right: fallback.expression,
+        });
+        self.ast.with_il(e, inst);
+        self.ast.with_rr(e, Rr::Plain(target));
+        Ok(TranslatedExpression {
+            expression: e,
+            ty: target,
+        })
+    }
+
     /// `VisitNullCoalescingInstruction` where `ResolveNullCoalescingOperator` needs no
     /// conversion: a value that is no nullable value type and a fallback of its type.
     fn null_coalescing(
         &mut self,
         inst: NodeId,
+        kind: NullCoalescingKind,
+        ty: TypeId,
         value: NodeId,
         fallback: NodeId,
     ) -> Result<TranslatedExpression, Unsupported> {
@@ -2209,7 +2296,7 @@ impl Builder<'_, '_, '_, '_> {
                 if conversions.implicit(&value_rr, fallback.ty).is_valid() {
                     fallback.ty
                 } else {
-                    return Err("a ?? of a nullable value type that needs conversions".to_owned());
+                    return self.null_coalescing_with_conversions(inst, kind, ty, value, fallback);
                 }
             };
             let e = self.ast.add(AstNode::BinaryOperator {
@@ -2238,7 +2325,7 @@ impl Builder<'_, '_, '_, '_> {
             } else if conversions.implicit(&value_rr, fallback.ty).is_valid() {
                 fallback.ty
             } else {
-                return Err("a ?? that needs conversions".to_owned());
+                return self.null_coalescing_with_conversions(inst, kind, ty, value, fallback);
             }
         };
         let resolved = fallback.ty != value.ty;
@@ -2327,9 +2414,24 @@ impl Builder<'_, '_, '_, '_> {
         let r = self.adjust_constant_expression_to_type(r, l.ty)?;
         // The enum comparison operators of two operands of one enum type.
         let same_enum = self.ts.kind(l.ty) == TypeKind::Enum && l.ty == r.ty;
+        // An enum and a non-constant operand of another type that is no nullable: the enum
+        // operators take neither (only a constant zero converts implicitly to an enum), nor does
+        // a predefined numeric operator take the enum.
+        let constant = |b: &Self, e: &TranslatedExpression| {
+            matches!(b.rr_of(e.expression), Rr::Constant { .. })
+        };
+        let enum_mismatch = !same_enum
+            && [&l, &r]
+                .iter()
+                .any(|e| self.ts.kind(e.ty) == TypeKind::Enum)
+            && [&l, &r].iter().all(|e| {
+                !constant(self, e)
+                    && (self.ts.kind(e.ty) == TypeKind::Enum
+                        || (3..=15).contains(&self.ts.type_code(e.ty)))
+            });
         for t in [l.ty, r.ty] {
             let k = self.ts.kind(self.ts.nullable_underlying(t));
-            if (k == TypeKind::Enum && !same_enum)
+            if (k == TypeKind::Enum && !same_enum && !enum_mismatch)
                 || matches!(
                     k,
                     TypeKind::Pointer | TypeKind::Dynamic | TypeKind::TypeParameter
@@ -2344,6 +2446,8 @@ impl Builder<'_, '_, '_, '_> {
         // converts implicitly in ways the promotion does not model.
         let promoted = if same_enum {
             Some(l.ty)
+        } else if enum_mismatch {
+            None
         } else if self.is_native_integer(l.ty) || self.is_native_integer(r.ty) {
             self.native_integer_promotion(&l, &r)?
         } else {
@@ -2354,6 +2458,12 @@ impl Builder<'_, '_, '_, '_> {
             if lc == 15 && rc == 15 {
                 // The predefined decimal operator.
                 Some(self.ts.known_type(KnownTypeCode::Decimal))
+            } else if [lc, rc].iter().all(|c| (3..=15).contains(c))
+                && [lc, rc].iter().any(|&c| c == 3 || c == 15)
+            {
+                // No relational operator takes a `bool`; one over `decimal` has no stack type
+                // of a comparison's input. Either way the operands are cast to the input type.
+                None
             } else {
                 if !(4..=14).contains(&lc) || !(4..=14).contains(&rc) {
                     return Err("a relational comparison of these types".to_owned());
@@ -2597,10 +2707,26 @@ impl Builder<'_, '_, '_, '_> {
         let nullable_result = is_lifted
             && (self.ts.is_known(l.ty, KnownTypeCode::NullableOfT)
                 || self.ts.is_known(r.ty, KnownTypeCode::NullableOfT));
+        // A bitwise operator of a nullable enum and a primitive operand that is no constant
+        // zero (the one constant that converts implicitly to an enum) takes no lifted enum
+        // operator, and no numeric operator takes the enum: the operands are cast.
+        let is_enum =
+            |b: &Self, t: TypeId| b.ts.kind(b.ts.nullable_underlying(t)) == TypeKind::Enum;
+        let lifted_enum_mismatch = bitwise && is_enum(self, l.ty) != is_enum(self, r.ty) && {
+            let other = if is_enum(self, l.ty) { &r } else { &l };
+            let zero = matches!(self.rr_of(other.expression), Rr::Constant { value, .. }
+                if super::translated_expression::integral_value(&value) == Some(0));
+            !zero && (3..=15).contains(&self.ts.type_code(self.ts.nullable_underlying(other.ty)))
+        };
+        // A bitwise operator of operands of one enum type, one or both nullable: the lifted
+        // enum operator, of the nullable enum.
+        let lifted_same_enum = bitwise
+            && is_enum(self, l.ty)
+            && self.ts.nullable_underlying(l.ty) == self.ts.nullable_underlying(r.ty);
         if nullable_result
-            && [l.ty, r.ty]
-                .iter()
-                .any(|&t| self.ts.kind(self.ts.nullable_underlying(t)) == TypeKind::Enum)
+            && !lifted_enum_mismatch
+            && !lifted_same_enum
+            && [l.ty, r.ty].iter().any(|&t| is_enum(self, t))
         {
             return Err("a lifted arithmetic operation".to_owned());
         }
@@ -2650,8 +2776,14 @@ impl Builder<'_, '_, '_, '_> {
         };
         let enum_arithmetic = matches!(op, BinaryOp::Add | BinaryOp::Subtract)
             && (self.ts.kind(l.ty) == TypeKind::Enum || self.ts.kind(r.ty) == TypeKind::Enum);
-        let promoted = if enum_operands {
+        let promoted = if enum_operands && !nullable_result {
             (l.ty == r.ty).then_some(l.ty)
+        } else if lifted_same_enum {
+            let (lu, ru) = (
+                self.ts.nullable_underlying(l.ty),
+                self.ts.nullable_underlying(r.ty),
+            );
+            (lu == ru && self.ts.kind(lu) == TypeKind::Enum).then_some(lu)
         } else if enum_arithmetic {
             // The enum operators `E + U`, `U + E`, `E - U` (of type `E`) and `E - E` (of type
             // `U`); where they do not resolve, the constants as the enum's bit patterns.
@@ -2686,6 +2818,10 @@ impl Builder<'_, '_, '_, '_> {
                 None
             } else if self.is_native_integer(l.ty) || self.is_native_integer(r.ty) {
                 self.native_integer_promotion(&l, &r)?
+            } else if (lc == 3 && (3..=15).contains(&rc)) || (rc == 3 && (3..=15).contains(&lc)) {
+                // No predefined operator of this kind takes a `bool` (which converts to no
+                // numeric type) with another primitive type.
+                None
             } else {
                 if !(4..=14).contains(&lc) || !(4..=14).contains(&rc) {
                     return Err(format!("arithmetic on the type codes {lc} and {rc}"));
@@ -2990,11 +3126,11 @@ impl Builder<'_, '_, '_, '_> {
         ty: TypeId,
         check_overflow: bool,
     ) -> Result<(ConstValue, bool), Unsupported> {
-        // shortcut: checked, floating point, bitwise and enum folding are not ported; port
-        // them when such a constant operation is to be served.
+        // shortcut: a checked operation that overflows, floating point, bitwise and enum folding
+        // are not ported; port them when such a constant operation is to be served.
         let unsupported = || "an arithmetic operation on constants".to_owned();
         let code = self.ts.type_code(ty);
-        if check_overflow || self.ts.kind(ty) == TypeKind::Enum || !(9..=12).contains(&code) {
+        if self.ts.kind(ty) == TypeKind::Enum || !(9..=12).contains(&code) {
             return Err(unsupported());
         }
         let l = super::translated_expression::integral_value(left).ok_or_else(unsupported)?;
@@ -3020,6 +3156,10 @@ impl Builder<'_, '_, '_, '_> {
         };
         // `MinValue / -1` and `MinValue % -1` throw even unchecked.
         if matches!(op, BinaryOp::Divide | BinaryOp::Modulus) && r == -1 {
+            return Err(unsupported());
+        }
+        // A checked operation that overflows is no constant (`ErrorResolveResult`).
+        if check_overflow && wrapped != exact {
             return Err(unsupported());
         }
         Ok((value, wrapped != exact))
