@@ -17,6 +17,46 @@ use super::call_builder::CallOp;
 use super::{Builder, TranslatedExpression, Unsupported};
 
 impl Builder<'_, '_, '_, '_> {
+    /// `CanUseDelegateConstruction` of a delegate's `newobj D(target, ldftn)`: otherwise the
+    /// delegate constructor is called with the function pointer as an argument. A construction
+    /// of another shape or of an unresolved method counts as one.
+    pub(crate) fn can_use_delegate_construction(&mut self, call: &CallData) -> bool {
+        let [this_arg, func] = call.args[..] else {
+            return true;
+        };
+        let (Inst::LdFtn { method: operand }
+        | Inst::LdVirtFtn {
+            method: operand, ..
+        }) = self.f.inst(func).clone()
+        else {
+            return true;
+        };
+        let MethodOrigin::Def(id) = operand.method.origin else {
+            return true;
+        };
+        // Accessors cannot be referenced as a method group.
+        if self.ts.accessor_owner(id).is_some() {
+            return false;
+        }
+        let Some(declaring) = call.method.method.declaring else {
+            return true;
+        };
+        let Some(invoke) = self.ts.delegate_invoke(declaring) else {
+            return true;
+        };
+        let target_parameters = operand.method.base_params.len();
+        if operand.method.is_static {
+            if invoke.parameters.len() == target_parameters {
+                matches!(self.f.inst(this_arg), Inst::LdNull)
+            } else {
+                self.ts.method_flags(id, None).extension
+                    && invoke.parameters.len() + 1 == target_parameters
+            }
+        } else {
+            invoke.parameters.len() == target_parameters
+        }
+    }
+
     /// `HandleDelegateConstruction(CallInstruction)` where `CanUseDelegateConstruction` holds
     /// for an instance method, or a static method of a delegate without a bound first
     /// argument. Extension methods, accessors, compiler-generated methods and value-type targets
@@ -108,7 +148,7 @@ impl Builder<'_, '_, '_, '_> {
             method.is_static,
             declaring,
         )?;
-        let reference = self.method_reference(operand, &method, op, target, declaring)?;
+        let reference = self.method_reference(operand, &method, op, target, declaring, false)?;
         let e = self.ast.add(AstNode::DelegateCreate {
             ty: delegate_type,
             reference,
@@ -148,7 +188,7 @@ impl Builder<'_, '_, '_, '_> {
             reference
         } else {
             let target = self.translate_target(None, true, method.is_static, declaring)?;
-            self.method_reference(operand, &method, CallOp::Call, target, declaring)?
+            self.method_reference(operand, &method, CallOp::Call, target, declaring, true)?
         };
         // `MemberResolveResult.ComputeType`: a by-reference return is of its element type.
         let member_type = match *self.ts.data(method.return_type) {
@@ -296,6 +336,7 @@ impl Builder<'_, '_, '_, '_> {
     /// `BuildDelegateReference` with `Disambiguator.ForMethodReference`: `target.Name` or
     /// `Name`, with type arguments where they are needed, written once the method group of the
     /// name, resolved with the parameter types as arguments, resolves back to the method.
+    /// `rr_replaced`: the caller replaces the reference's resolve result.
     fn method_reference(
         &mut self,
         operand: &MethodOperand,
@@ -303,6 +344,7 @@ impl Builder<'_, '_, '_, '_> {
         op: CallOp,
         mut target: TranslatedExpression,
         declaring: TypeId,
+        rr_replaced: bool,
     ) -> Result<AstId, Unsupported> {
         let resolver = self
             .resolver
@@ -350,7 +392,7 @@ impl Builder<'_, '_, '_, '_> {
                     &written,
                 )?
             {
-                break found;
+                break Some(found);
             }
             if !spent_type_arguments {
                 spent_type_arguments = true;
@@ -369,8 +411,12 @@ impl Builder<'_, '_, '_, '_> {
                     self.cast_target_to_with(&mut target, declaring, op == CallOp::CallVirt)?;
                 continue;
             }
-            // No spelling resolves; the most explicit one, with the resolve result of its last
-            // probe, is not translated.
+            // No spelling resolves; the most explicit one is written where the caller replaces
+            // its resolve result (`BuildMethodReference`); with the resolve result of its last
+            // probe it is not translated.
+            if rr_replaced {
+                break None;
+            }
             return Err("a method reference that needs a cast of its target".to_owned());
         };
         let written = if type_arguments {
@@ -394,6 +440,9 @@ impl Builder<'_, '_, '_, '_> {
                 name,
                 type_arguments: written.clone(),
             }),
+        };
+        let Some(found) = found else {
+            return Ok(reference);
         };
         let target_rr = require.then(|| Box::new(self.rr_of(target.expression)));
         let index = self.ast.method_groups.len();

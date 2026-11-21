@@ -736,6 +736,8 @@ pub struct Annotations {
     /// `AddLeadingTrivia(new Comment(text, type))`: a comment before the node, with its
     /// `CommentType` (0 single-line, 1 multi-line).
     pub leading_comment: Option<(String, u8)>,
+    /// `AddTrailingTrivia(new Comment(text, type))`: a comment after the node.
+    pub trailing_comment: Option<(String, u8)>,
 }
 
 #[derive(Clone, Debug, Default)]
@@ -782,6 +784,12 @@ impl Ast {
     /// `AddLeadingTrivia(new Comment(text, type))`, `CommentType` 0 single-line, 1 multi-line.
     pub fn with_leading_comment(&mut self, id: AstId, text: &str, comment_type: u8) -> AstId {
         self.annotations_mut(id).leading_comment = Some((text.to_owned(), comment_type));
+        id
+    }
+
+    /// `AddTrailingTrivia(new Comment(text, type))`.
+    pub fn with_trailing_comment(&mut self, id: AstId, text: &str, comment_type: u8) -> AstId {
+        self.annotations_mut(id).trailing_comment = Some((text.to_owned(), comment_type));
         id
     }
 

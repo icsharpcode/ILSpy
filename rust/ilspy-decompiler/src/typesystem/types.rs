@@ -160,6 +160,9 @@ pub struct GenericContext {
     pub explicit: Option<u32>,
 }
 
+/// A class and a method substitution, `None` leaving that kind of type parameter alone.
+pub type Substitution = (Option<Vec<TypeId>>, Option<Vec<TypeId>>);
+
 /// The type parameters of an explicit `GenericContext`.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct ExplicitContext {
@@ -170,6 +173,10 @@ pub struct ExplicitContext {
     /// them): `IMethod.TypeParameters` of a specialized method see their constraints through
     /// its type arguments, which a definition's type parameters cannot express.
     pub method_type_parameters_of: Option<(u32, u32, u32)>,
+    /// With `method_type_parameters_of`: the class and method type arguments of that
+    /// specialized method, through which its type parameters (`TypeParamOwner::ContextMethod`
+    /// of this context) see their constraints (`SpecializedTypeParameter.DirectBaseTypes`).
+    pub constraint_args: Option<Substitution>,
 }
 
 impl GenericContext {
@@ -256,7 +263,27 @@ impl<'c, 'a> TypeSystem<'c, 'a> {
 
     /// The explicit context with these type parameters, added on first use.
     pub fn explicit_context(&mut self, class: Vec<TypeId>, method: Vec<TypeId>) -> GenericContext {
-        self.explicit_context_of(class, method, None)
+        self.explicit_context_of(class, method, None, None)
+    }
+
+    /// The constraints of type parameter `ContextMethod { context, .. }` seen through the
+    /// context's `constraint_args`.
+    pub(crate) fn context_method_constraints(
+        &mut self,
+        context: u32,
+        constraints: Vec<TypeId>,
+    ) -> Vec<TypeId> {
+        let Some((class, method)) = self
+            .explicit_contexts
+            .get(context as usize)
+            .and_then(|c| c.constraint_args.clone())
+        else {
+            return constraints;
+        };
+        constraints
+            .into_iter()
+            .map(|c| self.substitute(c, class.as_deref(), method.as_deref()))
+            .collect()
     }
 
     /// `explicit_context` with `ExplicitContext::method_type_parameters_of`.
@@ -265,11 +292,13 @@ impl<'c, 'a> TypeSystem<'c, 'a> {
         class: Vec<TypeId>,
         method: Vec<TypeId>,
         method_type_parameters_of: Option<(u32, u32, u32)>,
+        constraint_args: Option<Substitution>,
     ) -> GenericContext {
         let context = ExplicitContext {
             class,
             method,
             method_type_parameters_of,
+            constraint_args,
         };
         let index = match self.explicit_contexts.iter().position(|c| *c == context) {
             Some(i) => i,

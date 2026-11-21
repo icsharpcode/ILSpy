@@ -96,10 +96,15 @@ impl TypeSystem<'_, '_> {
                 return Some(self.synthetic_type_parameter(id).clone());
             }
         };
-        self.type_parameters(module, table, row)
+        let mut info = self
+            .type_parameters(module, table, row)
             .ok()?
             .into_iter()
-            .nth(index as usize)
+            .nth(index as usize)?;
+        if let TypeParamOwner::ContextMethod { context, .. } = owner {
+            info.constraints = self.context_method_constraints(context, info.constraints);
+        }
+        Some(info)
     }
 
     /// A nullability-annotated type parameter is still that type parameter.

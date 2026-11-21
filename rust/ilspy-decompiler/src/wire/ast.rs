@@ -112,6 +112,7 @@ mod kind {
     pub const INITIALIZER_INDEXER: u8 = 160;
     pub const AS_REF_READONLY_HELPER: u8 = 161;
     pub const LEADING_COMMENT: u8 = 190;
+    pub const TRAILING_COMMENT: u8 = 200;
     pub const RANGE: u8 = 191;
 }
 
@@ -457,10 +458,18 @@ fn dynamic_parameters(w: &mut FunctionWriter<'_, '_, '_, '_>, parameters: &[(Typ
 }
 
 fn node(w: &mut FunctionWriter<'_, '_, '_, '_>, ast: &Ast, id: AstId) -> Result<(), String> {
-    // A leading comment is a node of its own before the commented one: no annotations, the
-    // text and the `CommentType`.
-    if let Some((text, comment_type)) = &ast.annotations(id).leading_comment {
-        w.out.u8(kind::LEADING_COMMENT);
+    // A leading or trailing comment is a node of its own before the commented one: no
+    // annotations, the text and the `CommentType`.
+    let annotations = ast.annotations(id);
+    let comments = [
+        (kind::LEADING_COMMENT, &annotations.leading_comment),
+        (kind::TRAILING_COMMENT, &annotations.trailing_comment),
+    ];
+    for (comment_kind, comment) in comments {
+        let Some((text, comment_type)) = comment else {
+            continue;
+        };
+        w.out.u8(comment_kind);
         w.out.len(0);
         w.out.bool(false);
         rr(w, None)?;
