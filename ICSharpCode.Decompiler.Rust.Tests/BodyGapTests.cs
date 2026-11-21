@@ -340,6 +340,26 @@ public class BodyGapTests
 		AssertEngineServes(typeof(BodyGapTests).GetMethod(name, BindingFlags.Static | BindingFlags.NonPublic)!);
 	}
 
+	static bool EnumLessEqual(System.Collections.Generic.List<int> l, DayOfWeek d) => l.Count <= (int)d;
+
+	static object CoalesceUnrelated(System.Collections.Generic.List<int>? a, string b) => (object?)a ?? b;
+
+	static int CoalesceEnumWithInt(DayOfWeek? d, bool b) => (int?)d ?? (b ? 1 : 4);
+
+	static bool LiftedEnumAnd(DayOfWeek? d) => ((int?)d & 2) == 2;
+
+	static bool LiftedEnumFlag(DayOfWeek? v, DayOfWeek f) => (v & f) == f;
+
+	[TestCase(nameof(EnumLessEqual))]
+	[TestCase(nameof(CoalesceUnrelated))]
+	[TestCase(nameof(CoalesceEnumWithInt))]
+	[TestCase(nameof(LiftedEnumAnd))]
+	[TestCase(nameof(LiftedEnumFlag))]
+	public void EngineServesOperatorBody(string name)
+	{
+		AssertEngineServes(typeof(BodyGapTests).GetMethod(name, BindingFlags.Static | BindingFlags.NonPublic)!);
+	}
+
 	static void AssertEngineServes(MethodInfo method)
 	{
 		var handle = (MethodDefinitionHandle)MetadataTokens.EntityHandle(method.MetadataToken);
