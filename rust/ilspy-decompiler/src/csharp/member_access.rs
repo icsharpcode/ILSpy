@@ -463,7 +463,7 @@ impl Builder<'_, '_, '_, '_> {
     /// The return type of `method`, a member of a generic type, specialized with the type
     /// arguments of `target`'s type where that is the same type up to tuple names and
     /// nullability; `None` otherwise.
-    fn member_type_of_target(
+    pub(crate) fn member_type_of_target(
         &mut self,
         method: &crate::typesystem::resolve::ResolvedMethod,
         target: &Rr,

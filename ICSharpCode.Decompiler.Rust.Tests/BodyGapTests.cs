@@ -231,6 +231,30 @@ public class BodyGapTests
 
 	static string IndexerOfNamedTuples() => TupleDict[(1, "abc")].C;
 
+	static int ValuesOfNamedTuples() => TupleDict.Values.ToList().First().D;
+
+	static (int, int) Pair() => (1, 2);
+
+	static System.Threading.Tasks.Task VoidLambdaOfTaskRun()
+	{
+		int a = 0;
+		return System.Threading.Tasks.Task.Run(() => {
+			a = Pair().Item1;
+		});
+	}
+
+	static System.Threading.Tasks.Task DeconstructionInVoidLambda()
+	{
+		int a = 0;
+		int b = 0;
+		return System.Threading.Tasks.Task.Run(() => {
+			(a, b) = Pair();
+		});
+	}
+
+	[TestCase(nameof(ValuesOfNamedTuples))]
+	[TestCase(nameof(VoidLambdaOfTaskRun))]
+	[TestCase(nameof(DeconstructionInVoidLambda))]
 	[TestCase(nameof(NullOfAnonymousType))]
 	[TestCase(nameof(TupleTypeArgument))]
 	[TestCase(nameof(DynamicForeach))]
