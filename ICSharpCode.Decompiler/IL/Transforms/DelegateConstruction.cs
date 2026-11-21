@@ -34,6 +34,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		ILTransformContext context;
 		ITypeResolveContext decompilationContext;
 		readonly Stack<MethodDefinitionHandle> activeMethods = new Stack<MethodDefinitionHandle>();
+		readonly Dictionary<MethodDefinitionHandle, int> embeddedMethodCounts = new Dictionary<MethodDefinitionHandle, int>();
+		const int MaxEmbeddingsPerMethod = 16;
 
 		void IILTransform.Run(ILFunction function, ILTransformContext context)
 		{
@@ -41,6 +43,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return;
 			var prevContext = this.context;
 			var prevDecompilationContext = this.decompilationContext;
+			bool topLevel = activeMethods.Count == 0;
+			if (topLevel)
+				embeddedMethodCounts.Clear();
 			try
 			{
 				activeMethods.Push((MethodDefinitionHandle)function.Method.MetadataToken);
@@ -81,6 +86,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				this.context = prevContext;
 				this.decompilationContext = prevDecompilationContext;
 				activeMethods.Pop();
+				if (topLevel)
+					embeddedMethodCounts.Clear();
 			}
 		}
 
@@ -187,6 +194,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				this.context.Function.Warnings.Add(" Found self-referencing delegate construction. Abort transformation to avoid stack overflow.");
 				return null;
 			}
+			if (!embeddedMethodCounts.TryGetValue(handle, out int embeddingCount))
+				embeddingCount = 0;
+			if (embeddingCount >= MaxEmbeddingsPerMethod)
+			{
+				this.context.Function.Warnings.Add($" Delegate construction embedding limit reached for {targetMethod.Name}. Abort transformation.");
+				return null;
+			}
+			embeddedMethodCounts[handle] = embeddingCount + 1;
 			var methodDefinition = context.PEFile.Metadata.GetMethodDefinition((MethodDefinitionHandle)targetMethod.MetadataToken);
 			if (!methodDefinition.HasBody())
 				return null;
@@ -199,6 +214,20 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (TryUnwrapVisualBasicDelegateWrapper(function, targetMethod, out var unwrappedMethod))
 			{
 				targetMethod = unwrappedMethod;
+				handle = (MethodDefinitionHandle)targetMethod.MetadataToken;
+				if (activeMethods.Contains(handle))
+				{
+					this.context.Function.Warnings.Add(" Found self-referencing delegate construction after Visual Basic wrapper unwrapping. Abort transformation to avoid stack overflow.");
+					return null;
+				}
+				if (!embeddedMethodCounts.TryGetValue(handle, out embeddingCount))
+					embeddingCount = 0;
+				if (embeddingCount >= MaxEmbeddingsPerMethod)
+				{
+					this.context.Function.Warnings.Add($" Delegate construction embedding limit reached for {targetMethod.Name}. Abort transformation.");
+					return null;
+				}
+				embeddedMethodCounts[handle] = embeddingCount + 1;
 				methodDefinition = context.PEFile.Metadata.GetMethodDefinition((MethodDefinitionHandle)targetMethod.MetadataToken);
 				if (!methodDefinition.HasBody())
 					return null;
