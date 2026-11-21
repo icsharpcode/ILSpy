@@ -5162,6 +5162,33 @@ and the decompiler suite. One silent divergence is known and not yet caught by a
 The full gates after the merges were green apart from the Newtonsoft round trip, whose NUnit
 runner fails under load and passes alone (3,055 tests).
 
+### 3.230 The body gaps, fourth round (item 85e)
+
+The tally after round 3 had 13 reasons in about 60 assemblies; two agents took them.
+
+- **Overload resolution and tuple names**: the void-lambda `Task.Run` choice, which was both a
+  fallback and the silent `(Action)` divergence of round 3. The cause was not betterness but
+  constraint validation: `validate_constraints` ignored the implicit direct base type (`object`,
+  or `System.ValueType` for `struct`) that `MetadataTypeParameter` adds, and constructed-type
+  validation found no type parameters on a nullability-annotated generic such as
+  `Func<TResult>`, so it checked nothing. Managed rejects `Run<?>(Func<?>)` for a constraint
+  failure; now the engine does too. A property getter on a generic target now takes the
+  property type specialized for the target, which keeps tuple element names. A dictionary
+  initializer of a parameterized property goes through the indexer path.
+- **Calls and local functions**: generic local-function references (the constraints of a
+  context type parameter are now substituted with the use site's arguments, as
+  `SpecializedTypeParameter.DirectBaseTypes` does), extension calls on `null` (the same
+  annotated-generic bug, found independently), constrained-call casts (a trailing-comment
+  annotation, wire kind 200), constructor calls treated as non-virtual (F# `callvirt
+  Object::.ctor` is `base..ctor()`), non-slicing range accessors, `CanUseDelegateConstruction`,
+  value-type equality operators, and `LdMemberToken`.
+
+Both agents found the annotated-generic bug in shared code; the merge kept the version that reads
+the type parameters of the definition. Two reasons stay as counted fallbacks: calls of unresolved
+methods (11 assemblies) and an unresolved field (1). Serving them means fake members in a call
+builder that assumes every method has a definition, which is out of proportion to 12 assemblies;
+85e is closed with them on the list.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

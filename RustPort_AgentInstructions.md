@@ -848,7 +848,7 @@ the reasons. This file holds only the ordered steps, their gates and their rules
     - [x] **85c.** Bodies: native integers and IntPtr (conversions, box, arithmetic,
       comparisons; 64). Checked conversions came along (lecture 3.226).
     - [x] **85d.** Member walk: record member order (39; the order part of 68z6, lecture 3.224).
-    - [ ] **85e.** Bodies: the remaining reasons (about 90 in 25 groups: lifted comparisons and
+    - [x] **85e.** Bodies: the remaining reasons (about 90 in 25 groups: lifted comparisons and
       switches, MinValue/MaxValue constants, checked conversions, addresses, PinnedRegion,
       TryFault, range/index/span creation, UserDefinedCompoundAssign and smaller ones).
       Round 1 (3fab3d093, lecture 3.227): the ilspycmd strict tally over the 3,260 TestCases
@@ -871,6 +871,11 @@ the reasons. This file holds only the ordered steps, their gates and their rules
       overload choice (also a silent `(Action)` cast divergence), tuple names through generic
       member access, extension calls on `null` with type arguments, constrained-call and
       constructor target casts, non-slicing range accessors, and five single-assembly reasons.
+      Round 4 (f665d3586, lecture 3.230): two groups (calls and local functions; overload
+      resolution and tuple names) served 11 of the 13. Closed with two reasons left as counted
+      fallbacks: "a call of an unresolved method" (11 assemblies) and "an unresolved field" (1).
+      Serving them needs `FakeMethod`/`FakeField` and `GuessFakeMethodAccessor` in a call
+      builder that is keyed on `MethodDefId` throughout; revisit if 85f finds them elsewhere.
     - [ ] **85f.** Rerun the matrix strict; repeat for what the first failure per test hid; then
       merge the switch into `ILSPY_RUST_STRICT`.
 
