@@ -64,3 +64,25 @@
     .field public static literal valuetype TestEnum.EnumWithNestedClass One = int32(1)
     
 } // end of class EnumWithNestedClass
+
+.class public auto ansi sealed TestEnum.ArrayEnum
+	extends [mscorlib]System.Enum
+{
+	.field public specialname rtspecialname int32[] value__
+}
+
+.class public auto ansi sealed TestEnum.FloatEnum
+	extends [mscorlib]System.Enum
+{
+	.field public specialname rtspecialname float32 value__
+	.field public static literal valuetype TestEnum.FloatEnum Half = float32(0.5)
+	.field public static literal valuetype TestEnum.FloatEnum One = float32(1.0)
+}
+
+.class public auto ansi sealed TestEnum.DoubleEnum
+	extends [mscorlib]System.Enum
+{
+	.field public specialname rtspecialname float64 value__
+	.field public static literal valuetype TestEnum.DoubleEnum Half = float64(0.5)
+	.field public static literal valuetype TestEnum.DoubleEnum One = float64(1.0)
+}

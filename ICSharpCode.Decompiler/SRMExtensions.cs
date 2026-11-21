@@ -134,7 +134,7 @@ namespace ICSharpCode.Decompiler
 					if (blob.ReadSignatureHeader().Kind != SignatureKind.Field)
 						return false;
 					underlyingType = (PrimitiveTypeCode)blob.ReadByte();
-					return true;
+					return underlyingType.IsEnumUnderlyingType();
 				}
 				return false;
 			}
@@ -143,6 +143,13 @@ namespace ICSharpCode.Decompiler
 				underlyingType = 0;
 				return false;
 			}
+		}
+
+		static bool IsEnumUnderlyingType(this PrimitiveTypeCode typeCode)
+		{
+			return typeCode.ToKnownTypeCode() is (>= KnownTypeCode.Boolean and <= KnownTypeCode.Double)
+				or KnownTypeCode.IntPtr
+				or KnownTypeCode.UIntPtr;
 		}
 
 		public static bool IsDelegate(this TypeDefinitionHandle handle, MetadataReader reader)
