@@ -217,6 +217,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 #endif
 
 			public int Property { get; set; }
+
+#if CS72
+			public void MethodWithInParameter(in int value)
+			{
+			}
+#endif
 		}
 
 		internal class SimpleTypeWithCtor
@@ -874,6 +880,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			Test<Action<object>>((object o) => {
 				TestCall(ref o);
 			}, (object o) => TestCall(ref o));
+#if CS72
+			ToCode(null, (SimpleType s) => s.MethodWithInParameter(42));
+			Test<Action<SimpleType, int>>((SimpleType s, int i) => {
+				s.MethodWithInParameter(i + 1);
+			}, (SimpleType s, int i) => s.MethodWithInParameter(i + 1));
+#endif
 		}
 
 		public static void Quote()
