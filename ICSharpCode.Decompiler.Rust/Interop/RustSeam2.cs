@@ -497,6 +497,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		static Expression ConstantFallback(Expression expression)
 		{
 			ThrowIfStrict("this constant syntax", expression.ToString());
+			lastFallbackReason = "this constant syntax: " + expression;
 			Interlocked.Increment(ref constantSyntaxFallbacks);
 			return expression;
 		}
@@ -821,8 +822,9 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		static string? lastFallbackReason;
 
 		/// <summary>
-		/// The reason of the last body the engine did not serve on this thread, for tests that
-		/// decompile one method and ask whether the engine translated its body; tests reset it.
+		/// The reason of the last body (or constant of a served body) the engine did not serve on
+		/// this thread, for tests that decompile one method and ask whether the engine translated
+		/// its body; tests reset it.
 		/// </summary>
 		public static string? LastFallbackReason {
 			get => lastFallbackReason;
@@ -1752,7 +1754,10 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					AstNode resourceAcquisition = Build(node.Children[0], exprBuilder);
 					if (node.Value is ILVariable variable)
 					{
-						var declaration = new VariableDeclarationStatement(ConvertType(exprBuilder, variable.Type), variable.Name!, (Expression)resourceAcquisition);
+						var type = exprBuilder.settings.AnonymousTypes && variable.Type.ContainsAnonymousType()
+							? new SimpleType("var")
+							: ConvertType(exprBuilder, variable.Type);
+						var declaration = new VariableDeclarationStatement(type, variable.Name!, (Expression)resourceAcquisition);
 						declaration.Variables.Single().AddAnnotation(new ILVariableResolveResult(variable, variable.Type));
 						resourceAcquisition = declaration;
 					}

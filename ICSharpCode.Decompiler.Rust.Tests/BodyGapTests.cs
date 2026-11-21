@@ -436,6 +436,91 @@ public class BodyGapTests
 		return F;
 	}
 
+	sealed class BodyGapDisposable<T>(T value) : IDisposable
+	{
+		public T Value = value;
+
+		public void Dispose() { }
+	}
+
+	static BodyGapDisposable<T> Wrap<T>(T value) => new(value);
+
+	static int UsingOfAnonymousType(int i)
+	{
+		using (var d = Wrap(new { A = i }))
+		{
+			return d.Value.GetHashCode();
+		}
+	}
+
+	// The local function's display class lives in the switch container, which the managed
+	// builder declares no local functions in.
+	static int LocalFunctionInSwitch(int k, int[] a)
+	{
+		switch (k)
+		{
+			case 0:
+			{
+				int n = 0;
+				Add(a.Length);
+				Add(1);
+				return n;
+
+				void Add(int x)
+				{
+					n += x;
+				}
+			}
+			case 1:
+				return 10;
+			case 2:
+				return 20;
+			case 3:
+				return 30;
+			case 4:
+				return 40;
+			default:
+				return -1;
+		}
+	}
+
+	[TestCase(nameof(UsingOfAnonymousType))]
+	[TestCase(nameof(LocalFunctionInSwitch))]
+	public void EngineServesDeclarationInBody(string name)
+	{
+		AssertEngineServes(typeof(BodyGapTests).GetMethod(name, BindingFlags.Static | BindingFlags.NonPublic)!);
+	}
+
+	// `MathF` is a direct import only of a module referencing netstandard, as the decompiler's does
+	// (this assembly's float constants are written with `Math`).
+	[Test]
+	public void EngineServesMathFConstant()
+	{
+		AssertEngineServes(typeof(CSharp.Syntax.TypeSystemAstBuilder).GetMethod("TryExtractExpression", BindingFlags.Instance | BindingFlags.NonPublic)!);
+	}
+
+	// A local function declared in a switch section, as the decompiler's own body builder has one.
+	[Test]
+	public void EngineServesLocalFunctionInSwitchOfDecompiler()
+	{
+		AssertEngineServes(typeof(RustSeam2).GetMethod("BuildNode", BindingFlags.Static | BindingFlags.NonPublic)!);
+	}
+
+	static bool UsingOfUnresolvedTypeArgument()
+	{
+		using (var t = new System.Threading.ThreadLocal<ICSharpCode.Decompiler.Util.BitSet>())
+		{
+			return t.IsValueCreated;
+		}
+	}
+
+	[TestCase(nameof(UsingOfUnresolvedTypeArgument))]
+	public void EngineServesDeclarationInBodyWithUnresolvedMembers(string name)
+	{
+		AssertEngineServes(typeof(BodyGapTests).GetMethod(name, BindingFlags.Static | BindingFlags.NonPublic)!,
+			unresolvedAssembly: "ICSharpCode.Decompiler");
+	}
+
 	[TestCase(nameof(LocalFunctionReference))]
 	public void EngineServesBodyWithoutLocalFunctions(string name)
 	{
@@ -513,7 +598,7 @@ public class BodyGapTests
 	static void AssertEngineServes(MethodInfo method, DecompilerSettings? settings = null, string? unresolvedAssembly = null)
 	{
 		var handle = (MethodDefinitionHandle)MetadataTokens.EntityHandle(method.MetadataToken);
-		string path = typeof(BodyGapTests).Assembly.Location;
+		string path = method.Module.Assembly.Location;
 		string managed = DecompileMethod(path, handle, engineBodies: false, settings, unresolvedAssembly);
 		RustSeam2.LastFallbackReason = null;
 		string engine = DecompileMethod(path, handle, engineBodies: true, settings, unresolvedAssembly);
