@@ -203,13 +203,6 @@ impl Builder<'_, '_, '_, '_> {
         let declaring = method.declaring.ok_or("a method without declaring type")?;
         // The identifier is annotated with the function (`ide.AddAnnotation(localFunction)`).
         let target = self.local_function_reference(operand, &method, true)?;
-        // shortcut: the arguments of a call of a generic local function are converted to
-        // parameter types whose type parameters the engine does not relate to the caller's
-        // (a cast `LocalFunctions.TestGenericArgs` does without); find the difference before
-        // lifting this.
-        if matches!(self.ast.node(target), AstNode::GenericIdentifier { .. }) {
-            return Err("a reference of a generic local function".to_owned());
-        }
         let mut list = self.argument_list(call, &method, id, 0, declaring, false)?;
         // `TransformParamsArgument` never takes the expanded form: `IsUnambiguousCall` looks
         // the name up on the local function's method group, whose type has no members.

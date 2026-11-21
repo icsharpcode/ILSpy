@@ -1054,6 +1054,12 @@ fn validate_constructed_types(
     let TypeData::Inst { generic, args } = conversions.ts.data(new_type).clone() else {
         return true;
     };
+    // `ParameterizedType.TypeParameters`: those of the definition, also where the generic
+    // type carries a nullability annotation.
+    let Some(definition) = conversions.ts.definition(generic) else {
+        return true;
+    };
+    let generic = conversions.ts.intern_def(definition);
     let type_parameters = conversions.ts.type_arguments(generic);
     for (i, &tp) in type_parameters.iter().enumerate() {
         let Some(&argument) = args.get(i) else {

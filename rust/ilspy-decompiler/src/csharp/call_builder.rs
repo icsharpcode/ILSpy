@@ -184,9 +184,10 @@ impl Builder<'_, '_, '_, '_> {
             return self.local_function_call(inst, call);
         }
         // A proxy call `ProxyCallReplacer` replaced calls the specialized method as any other.
-        // A slicing range accessor is written by `HandleRangeConstruction`.
+        // A slicing range accessor is written by `HandleRangeConstruction`, another one as the
+        // indexer of its underlying accessor.
         let slicing = operand.range_accessor.as_ref().is_some_and(|r| r.slicing);
-        if operand.local_function.is_some() || (operand.range_accessor.is_some() && !slicing) {
+        if operand.local_function.is_some() {
             return Err(
                 "a call of a local function, proxy, range accessor or lifted operator".to_owned(),
             );
@@ -201,6 +202,12 @@ impl Builder<'_, '_, '_, '_> {
         if slicing {
             // `SyntheticRangeIndexAccessor.Parameters`: one unnamed parameter of type `Range`.
             method.parameters.truncate(1);
+            if let Some(p) = method.parameters.first_mut() {
+                *p = crate::semantics::Parameter::of_type(p.ty);
+            }
+        } else if operand.range_accessor.is_some() {
+            // `SyntheticRangeIndexAccessor.Parameters`: an unnamed `Index` parameter in place of
+            // the underlying accessor's first.
             if let Some(p) = method.parameters.first_mut() {
                 *p = crate::semantics::Parameter::of_type(p.ty);
             }
@@ -345,9 +352,10 @@ impl Builder<'_, '_, '_, '_> {
             }
             this_arg = Some(target);
         }
+        // A constructor call is non-virtual whatever its opcode (`method.IsConstructor`).
         let mut target = self.translate_constrained_target(
             this_arg,
-            op == CallOp::Call,
+            op == CallOp::Call || method.name == ".ctor" || method.name == ".cctor",
             method.is_static,
             declaring,
             constrained_to,
@@ -756,11 +764,6 @@ impl Builder<'_, '_, '_, '_> {
             self.disambiguate_call(&method, id, op, &mut target, &mut list, require, declaring);
         self.needs_boxing_conversion = false;
         let (mut require, require_type_arguments) = disambiguated?;
-        // The managed builder comments a cast target of a `constrained.` call, which is not
-        // translated.
-        if constrained_to.is_some() && self.is_cast_target(target.expression) {
-            return Err("a cast target of a constrained call".to_owned());
-        }
         // The overload the call resolves to may be an override of the method, or the method
         // with other inferred type arguments; the written argument names take its parameter
         // names, and the call its return type.
@@ -847,6 +850,10 @@ impl Builder<'_, '_, '_, '_> {
                 overflow: Overflow::None,
             });
             name.clone_from(&interface_member.name);
+        }
+        if require && constrained_to.is_some() && self.is_cast_target(callee_target) {
+            self.ast
+                .with_trailing_comment(callee_target, "cast due to constrained. prefix", 1);
         }
         let callee = match (require, type_arguments.is_empty()) {
             (true, true) => self.ast.add(AstNode::MemberReference {
@@ -1020,13 +1027,6 @@ impl Builder<'_, '_, '_, '_> {
             }
         );
         if null_target {
-            // shortcut: where the call needs its type arguments, the engine writes them where
-            // the managed builder may leave them out (`((IEnumerable<int>)null).Any()` in
-            // `QualifierTests` compiled with nullable annotations); find where the managed
-            // escalation differs before lifting this.
-            if !type_arguments.is_empty() {
-                return Err("an extension method call on null".to_owned());
-            }
             let ty = method.parameters[0].ty;
             target_rr = Rr::Conversion { ty };
             first = TranslatedExpression {
@@ -1236,14 +1236,12 @@ impl Builder<'_, '_, '_, '_> {
             arglist.optional = false;
             infos.extend(std::iter::repeat_n(arglist, extra.len()));
         }
-        // A slicing `SyntheticRangeIndexAccessor` has one parameter, no optional one.
-        if call
-            .method
-            .range_accessor
-            .as_ref()
-            .is_some_and(|r| r.slicing)
-        {
-            infos.truncate(1);
+        // A slicing `SyntheticRangeIndexAccessor` has one parameter, no optional one; another
+        // one an unnamed first parameter.
+        if let Some(range) = &call.method.range_accessor {
+            if range.slicing {
+                infos.truncate(1);
+            }
             if let Some(first) = infos.first_mut() {
                 first.optional = false;
                 first.name.clear();
@@ -1801,9 +1799,10 @@ impl Builder<'_, '_, '_, '_> {
             .definition(declaring)
             .and_then(|d| ts.comp.type_def(d).ok())
             .map(|i| (i.full_name.top.ns.clone(), i.full_name.name().to_owned()));
-        if ts.kind(declaring) == TypeKind::Delegate {
+        if ts.kind(declaring) == TypeKind::Delegate && self.can_use_delegate_construction(call) {
             return self.delegate_construction(inst, call, declaring);
         }
+        let ts = &*self.ts;
         let is_span = ts.is_known(declaring, KnownTypeCode::SpanOfT)
             || ts.is_known(declaring, KnownTypeCode::ReadOnlySpanOfT);
         // `VisitNewObj`: a span of a stackalloc initializer.
@@ -2582,21 +2581,9 @@ impl Builder<'_, '_, '_, '_> {
                 if skip_target_cast && require != initially_required {
                     require = false;
                 } else {
-                    // shortcut: a constructor call's `base` or `this` target is not cast; the
-                    // engine's probe of `base..ctor()` (F# constructors) escalates where the
-                    // managed one resolves. Upgrade once the probes agree.
-                    let base_ctor = method.name == ".ctor"
-                        && matches!(
-                            self.ast.node(target.expression),
-                            AstNode::Base | AstNode::This
-                        );
-                    let uncast = target.expression;
                     // `Target.ConvertTo(declaringType)`: the target cast to the declaring type.
                     lookup_target =
                         self.cast_target_to_with(target, declaring, op == CallOp::CallVirt)?;
-                    if base_ctor && target.expression != uncast {
-                        return Err("a reference that needs a cast of its target".to_owned());
-                    }
                 }
                 continue;
             }

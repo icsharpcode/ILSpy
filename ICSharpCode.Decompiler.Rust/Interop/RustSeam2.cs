@@ -139,6 +139,8 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		public const byte LeadingComment = 190;
 		/// <summary>A range <c>start..end</c>, a child left out being null.</summary>
 		public const byte Range = 191;
+		/// <summary>A comment added as trailing trivia of its only child, which it builds into.</summary>
+		public const byte TrailingComment = 200;
 
 		public byte Kind;
 		/// <summary>The instructions the node is annotated with, in order.</summary>
@@ -1890,6 +1892,12 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				{
 					var commented = Build(node.Children[0], exprBuilder);
 					commented.AddLeadingTrivia((Comment)node.Value!);
+					return commented;
+				}
+				case RustBodyNode.TrailingComment:
+				{
+					var commented = Build(node.Children[0], exprBuilder);
+					commented.AddTrailingTrivia((Comment)node.Value!);
 					return commented;
 				}
 				default:

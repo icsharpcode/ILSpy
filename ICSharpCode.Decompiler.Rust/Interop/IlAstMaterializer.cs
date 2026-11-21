@@ -2058,6 +2058,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 					break;
 				}
 				case RustBodyNode.LeadingComment:
+				case RustBodyNode.TrailingComment:
 				{
 					// The comment's text and CommentType, then the node it precedes.
 					string text = Str();

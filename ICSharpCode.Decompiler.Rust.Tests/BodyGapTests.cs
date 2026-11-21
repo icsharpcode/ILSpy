@@ -292,6 +292,30 @@ public class BodyGapTests
 		AssertEngineServes(type.GetMethod(name, BindingFlags.Instance | BindingFlags.Public)!);
 	}
 
+	static void GenericLocalFunctionArgs<T2>() where T2 : System.Collections.Generic.List<T2>
+	{
+		Outer<T2>(null!);
+		static void Nop<T>(T data)
+		{
+		}
+		static void Outer<T3>(T3 t3) where T3 : T2
+		{
+			Nop<System.Collections.Generic.List<T2>>(t3);
+		}
+	}
+
+	static bool GenericExtensionOnNull() => ((System.Collections.Generic.IEnumerable<int>)null!).Any();
+
+	static string? ConstrainedCallOnCast<T>(object o) => ((T)o)!.ToString();
+
+	[TestCase(nameof(GenericLocalFunctionArgs))]
+	[TestCase(nameof(ConstrainedCallOnCast))]
+	[TestCase(nameof(GenericExtensionOnNull))]
+	public void EngineServesCallBody(string name)
+	{
+		AssertEngineServes(typeof(BodyGapTests).GetMethod(name, BindingFlags.Static | BindingFlags.NonPublic)!);
+	}
+
 	static void AssertEngineServes(MethodInfo method)
 	{
 		var handle = (MethodDefinitionHandle)MetadataTokens.EntityHandle(method.MetadataToken);

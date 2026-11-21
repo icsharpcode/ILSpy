@@ -921,7 +921,18 @@ fn generic_context_from_type_arguments(
             });
         }
     }
-    Some(Some(ts.explicit_context_of(class, method, of)))
+    let constraint_args = of.map(|_| {
+        (
+            target.method.class_args.clone(),
+            target.method.method_args.clone(),
+        )
+    });
+    Some(Some(ts.explicit_context_of(
+        class,
+        method,
+        of,
+        constraint_args,
+    )))
 }
 
 /// Moves a read local function into `r`'s arena (its body still holding the reference of its

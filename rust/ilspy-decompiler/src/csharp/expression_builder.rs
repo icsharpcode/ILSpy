@@ -192,6 +192,7 @@ impl Builder<'_, '_, '_, '_> {
                     ty: handle,
                 })
             }
+            Inst::LdMemberToken { member } => self.ld_member_token(inst, &member),
             // `VisitBox`: `(object)arg`, its boxing conversion resolved by the host's `ResolveCast`.
             Inst::Box { arg, ty } => {
                 let mut target = ty.ty;
@@ -1621,6 +1622,100 @@ impl Builder<'_, '_, '_, '_> {
         Ok(TranslatedExpression { expression: n, ty })
     }
 
+    /// `VisitLdMemberToken`: the pseudo-syntax `__ldtoken(DeclaringType.Field)` or
+    /// `__ldtoken(DeclaringType.Method<T>(ParameterTypes))`.
+    fn ld_member_token(
+        &mut self,
+        inst: NodeId,
+        member: &crate::il::ast::MemberOperand,
+    ) -> Result<TranslatedExpression, Unsupported> {
+        use crate::il::ast::MemberOperand;
+        let (declaring, name, token_type) = match member {
+            MemberOperand::Field(f) => (
+                f.field.declaring,
+                f.field.name.clone(),
+                KnownTypeCode::RuntimeFieldHandle,
+            ),
+            MemberOperand::Method(m) => (
+                m.method.declaring,
+                m.method.name.clone(),
+                KnownTypeCode::RuntimeMethodHandle,
+            ),
+        };
+        let declaring = declaring.ok_or("a member token without declaring type")?;
+        let class = self.ast.add(AstNode::TypeReference { ty: declaring });
+        let member_expr = match member {
+            MemberOperand::Field(f) => {
+                let mre = self.ast.add(AstNode::MemberReference {
+                    target: class,
+                    name,
+                });
+                self.ast.with_rr(
+                    mre,
+                    Rr::Field {
+                        target: None,
+                        field: f.clone(),
+                    },
+                );
+                mre
+            }
+            MemberOperand::Method(m) => {
+                let method = Method::from_resolved(self.ts, &m.method)
+                    .ok_or("a member token of an unresolved method")?;
+                // `IMethod.TypeArguments`: an unspecialized method's are its type parameters.
+                let type_arguments = method
+                    .method_args
+                    .clone()
+                    .unwrap_or_else(|| method.type_parameters.clone());
+                let mre = if type_arguments.is_empty() {
+                    self.ast.add(AstNode::MemberReference {
+                        target: class,
+                        name,
+                    })
+                } else {
+                    self.ast.add(AstNode::GenericMemberReference {
+                        target: class,
+                        name,
+                        type_arguments,
+                    })
+                };
+                // `MemberResolveResult.ComputeType`: a by-reference return is of its element
+                // type.
+                let ty = match *self.ts.data(method.return_type) {
+                    TypeData::ByRef(element) => element,
+                    _ => method.return_type,
+                };
+                self.ast.with_rr(
+                    mre,
+                    Rr::MethodMember {
+                        method: Box::new(m.clone()),
+                        ty,
+                    },
+                );
+                let arguments = method
+                    .parameters
+                    .iter()
+                    .map(|p| self.ast.add(AstNode::TypeReference { ty: p.ty }))
+                    .collect();
+                self.ast.add(AstNode::Invocation {
+                    target: mre,
+                    arguments,
+                })
+            }
+        };
+        let ldtoken = self.ast.add(AstNode::Identifier {
+            name: "__ldtoken".to_owned(),
+        });
+        let e = self.ast.add(AstNode::Invocation {
+            target: ldtoken,
+            arguments: vec![member_expr],
+        });
+        let ty = self.ts.known_type(token_type);
+        self.ast.with_rr(e, Rr::Plain(ty));
+        self.ast.with_il(e, inst);
+        Ok(TranslatedExpression { expression: e, ty })
+    }
+
     /// `IsSpecialCasedReferenceComparisonWithNull`: a string or delegate compared with the
     /// null literal, which the compiler emits as a reference comparison.
     fn is_special_cased_reference_comparison_with_null(&self, lhs: TypeId, rhs: TypeId) -> bool {
@@ -1695,21 +1790,30 @@ impl Builder<'_, '_, '_, '_> {
         // (to `object` for references), after which the operator no longer applies.
         for t in [lt, rt] {
             if !(3..=15).contains(&self.ts.type_code(t)) && self.declares_method(t, name) {
-                if self.ts.is_reference_type(t) != Some(true) {
-                    return Err("a comparison with user-defined operators".to_owned());
-                }
+                let value_type = self.ts.is_reference_type(t) != Some(true);
                 // A cast null stays the null constant, which converts to every reference type.
                 let applies = [l, r].into_iter().all(|e| {
                     let mut node = e.expression;
                     while let AstNode::Cast { expression, .. } = *self.ast.node(node) {
                         node = expression;
                     }
-                    matches!(self.ast.node(node), AstNode::Null) || {
+                    (!value_type && matches!(self.ast.node(node), AstNode::Null)) || {
                         let rr = self.semantic_rr(e.expression, e.ty);
                         Conversions::new(self.ts).implicit(&rr, t).is_valid()
                     }
                 });
                 if applies {
+                    return Ok(None);
+                }
+                // A value type's operator that does not apply leaves overload resolution to the
+                // built-in operators, none of which take the value without a user-defined
+                // implicit conversion.
+                // shortcut: a value type with such a conversion is not translated; upgrade when
+                // a fixture needs it.
+                if value_type {
+                    if self.declares_method(t, "op_Implicit") {
+                        return Err("a comparison with user-defined operators".to_owned());
+                    }
                     return Ok(None);
                 }
             }

@@ -106,10 +106,16 @@ impl TypeSystem<'_, '_> {
                     }
                 };
                 let tps = self.type_parameters(module, table, row)?;
-                Ok(tps
+                let constraints = tps
                     .get(index as usize)
                     .map(|tp| tp.constraints.clone())
-                    .unwrap_or_default())
+                    .unwrap_or_default();
+                Ok(match owner {
+                    TypeParamOwner::ContextMethod { context, .. } => {
+                        self.context_method_constraints(context, constraints)
+                    }
+                    _ => constraints,
+                })
             }
             // `ArrayType.DirectBaseTypes`: System.Array, and for a single-dimensional array of
             // a non-pointer type IList<T> and IReadOnlyList<T>.
