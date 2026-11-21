@@ -59,6 +59,9 @@ Remarks:
 
 Examples:
     Decompile assembly to console out.
+        ilspycmd decompile sample.dll
+
+    Decompile assembly to console out.
         ilspycmd sample.dll
 
     Decompile assembly to destination directory (single C# file).
@@ -72,6 +75,9 @@ Examples:
         ilspycmd --nested-directories -p -o c:\decompiled sample.dll
 
     Generate a HTML diagrammer containing all type info into a folder next to the input assembly
+        ilspycmd diagram sample.dll
+
+    The legacy diagrammer option remains supported.
         ilspycmd sample.dll --generate-diagrammer
 
     Generate a HTML diagrammer containing filtered type info into a custom output folder
@@ -97,6 +103,11 @@ Examples:
 		// https://github.com/natemcmaster/CommandLineUtils/blob/main/docs/samples/dependency-injection/generic-host/Program.cs
 		public static async Task<int> Main(string[] args)
 		{
+			bool legacyInvocation = IsLegacyInvocation(args);
+			args = NormalizeCommandArguments(args);
+			if (legacyInvocation)
+				Console.Error.WriteLine("Warning: the verbless command-line form is deprecated and will be retired; use 'ilspycmd decompile' instead.");
+
 			try
 			{
 				return await new HostBuilder().RunCommandLineApplicationAsync<ILSpyCmdProgram>(args, app => {
@@ -127,6 +138,30 @@ Examples:
 		{
 			parsers.GetParser<(bool IsSet, string Value)>();
 			parsers.GetParser<LanguageVersion>();
+		}
+
+		static bool IsLegacyInvocation(string[] args)
+		{
+			int commandIndex = args.Length > 0 && args[0].Equals("--disable-updatecheck", StringComparison.OrdinalIgnoreCase) ? 1 : 0;
+			return args.Length > commandIndex &&
+				!args[commandIndex].Equals("decompile", StringComparison.OrdinalIgnoreCase) &&
+				!args[commandIndex].Equals("diagram", StringComparison.OrdinalIgnoreCase);
+		}
+
+		static string[] NormalizeCommandArguments(string[] args)
+		{
+			int commandIndex = args.Length > 0 && args[0].Equals("--disable-updatecheck", StringComparison.OrdinalIgnoreCase) ? 1 : 0;
+			if (args.Length <= commandIndex)
+				return args;
+
+			string command = args[commandIndex];
+			if (command.Equals("decompile", StringComparison.OrdinalIgnoreCase))
+				return args[..commandIndex].Concat(args[(commandIndex + 1)..]).ToArray();
+
+			if (command.Equals("diagram", StringComparison.OrdinalIgnoreCase))
+				return args[..commandIndex].Concat(["--generate-diagrammer"]).Concat(args[(commandIndex + 1)..]).ToArray();
+
+			return args;
 		}
 
 		[FilesExist]
