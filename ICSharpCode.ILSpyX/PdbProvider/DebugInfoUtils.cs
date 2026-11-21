@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Buffers.Binary;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Reflection.Metadata;
@@ -32,6 +33,23 @@ namespace ICSharpCode.ILSpyX.PdbProvider
 {
 	public static class DebugInfoUtils
 	{
+		internal const int MaxEmbeddedPortablePdbSize = 128 * 1024 * 1024;
+
+		public static bool IsEmbeddedPortablePdbTooLarge(PEReader reader, DebugDirectoryEntry entry)
+		{
+			if (entry.DataSize < 8)
+				return false;
+			try
+			{
+				int offset = reader.IsLoadedImage ? entry.DataRelativeVirtualAddress : entry.DataPointer;
+				var data = reader.GetEntireImage().GetContent(offset, 8);
+				return BinaryPrimitives.ReadUInt32LittleEndian(data.AsSpan().Slice(4, 4)) > MaxEmbeddedPortablePdbSize;
+			}
+			catch (ArgumentOutOfRangeException)
+			{
+				return false;
+			}
+		}
 		public static IDebugInfoProvider? LoadSymbols(PEFile module)
 		{
 			try
@@ -131,6 +149,9 @@ namespace ICSharpCode.ILSpyX.PdbProvider
 			{
 				if (entry.IsPortableCodeView)
 				{
+					if (entry.Type == DebugDirectoryEntryType.EmbeddedPortablePdb
+						&& IsEmbeddedPortablePdbTooLarge(reader, entry))
+						return false;
 					return reader.TryOpenAssociatedPortablePdb(module.FileName, OpenStream,
 						out provider, out pdbFileName);
 				}

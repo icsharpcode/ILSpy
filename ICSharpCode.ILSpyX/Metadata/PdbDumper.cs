@@ -20,6 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.Reflection.PortableExecutable;
 using System.Linq;
 using System.Text;
 using System.Text.Json;
@@ -116,6 +117,13 @@ namespace ICSharpCode.ILSpyX.Metadata
 
 		static ModuleDefinition ReadModuleWithSymbols(string assemblyFileName, string? pdbFileName)
 		{
+			using (var stream = File.OpenRead(assemblyFileName))
+			using (var reader = new PEReader(stream))
+			{
+				if (reader.ReadDebugDirectory().Any(e => e.Type == DebugDirectoryEntryType.EmbeddedPortablePdb
+					&& DebugInfoUtils.IsEmbeddedPortablePdbTooLarge(reader, e)))
+					throw new NoDebugSymbolsException($"Embedded Portable PDB is too large for '{assemblyFileName}'.");
+			}
 			var parameters = CreateReaderParameters(pdbFileName);
 			ModuleDefinition module;
 			try
@@ -137,6 +145,14 @@ namespace ICSharpCode.ILSpyX.Metadata
 
 		static ModuleDefinition ReadModuleWithSymbols(Stream assemblyStream, string assemblyName, string? pdbFileName)
 		{
+			long position = assemblyStream.Position;
+			using (var reader = new PEReader(assemblyStream, PEStreamOptions.LeaveOpen))
+			{
+				if (reader.ReadDebugDirectory().Any(e => e.Type == DebugDirectoryEntryType.EmbeddedPortablePdb
+					&& DebugInfoUtils.IsEmbeddedPortablePdbTooLarge(reader, e)))
+					throw new NoDebugSymbolsException($"Embedded Portable PDB is too large for '{assemblyName}'.");
+			}
+			assemblyStream.Position = position;
 			var parameters = new ReaderParameters { ReadSymbols = true, InMemory = true };
 			ApplyExplicitSymbolFile(parameters, pdbFileName);
 			ModuleDefinition module;
