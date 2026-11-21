@@ -340,24 +340,65 @@ public class BodyGapTests
 		AssertEngineServes(typeof(BodyGapTests).GetMethod(name, BindingFlags.Static | BindingFlags.NonPublic)!);
 	}
 
-	static void AssertEngineServes(MethodInfo method)
+	// Decompiled without the ICSharpCode.Decompiler reference, every member of it these bodies
+	// use is a fake member of an unknown type.
+	static ICSharpCode.Decompiler.Util.BitSet UnresolvedConstructorAndIndexer()
+	{
+		var bits = new ICSharpCode.Decompiler.Util.BitSet(8);
+		bits[1] = bits[2];
+		return bits;
+	}
+
+	static ICSharpCode.Decompiler.Util.BitSet UnresolvedIndexInitializer() => new ICSharpCode.Decompiler.Util.BitSet(8) { [0] = true };
+
+	static DecompilerSettings UnresolvedPropertiesAndMethod(DecompilerSettings settings)
+	{
+		settings.UsingDeclarations = !settings.UsingDeclarations;
+		return settings.Clone();
+	}
+
+	static DecompilerSettings UnresolvedObjectInitializer() => new DecompilerSettings { UsingDeclarations = false };
+
+	static void UnresolvedEvent(DecompilerSettings settings, System.ComponentModel.PropertyChangedEventHandler handler)
+	{
+		settings.PropertyChanged += handler;
+		settings.PropertyChanged -= handler;
+	}
+
+	static ICSharpCode.Decompiler.CSharp.Syntax.TextLocation UnresolvedStaticField() => ICSharpCode.Decompiler.CSharp.Syntax.TextLocation.Empty;
+
+	[TestCase(nameof(UnresolvedConstructorAndIndexer))]
+	[TestCase(nameof(UnresolvedIndexInitializer))]
+	[TestCase(nameof(UnresolvedPropertiesAndMethod))]
+	[TestCase(nameof(UnresolvedObjectInitializer))]
+	[TestCase(nameof(UnresolvedEvent))]
+	[TestCase(nameof(UnresolvedStaticField))]
+	public void EngineServesBodyWithUnresolvedMembers(string name)
+	{
+		AssertEngineServes(typeof(BodyGapTests).GetMethod(name, BindingFlags.Static | BindingFlags.NonPublic)!,
+			unresolvedAssembly: "ICSharpCode.Decompiler");
+	}
+
+	static void AssertEngineServes(MethodInfo method, string? unresolvedAssembly = null)
 	{
 		var handle = (MethodDefinitionHandle)MetadataTokens.EntityHandle(method.MetadataToken);
 		string path = typeof(BodyGapTests).Assembly.Location;
-		string managed = DecompileMethod(path, handle, engineBodies: false);
+		string managed = DecompileMethod(path, handle, engineBodies: false, unresolvedAssembly);
 		RustSeam2.LastFallbackReason = null;
-		string engine = DecompileMethod(path, handle, engineBodies: true);
+		string engine = DecompileMethod(path, handle, engineBodies: true, unresolvedAssembly);
 		Assert.That(RustSeam2.LastFallbackReason, Is.Null);
 		Assert.That(engine, Is.EqualTo(managed));
 	}
 
-	static string DecompileMethod(string path, MethodDefinitionHandle handle, bool engineBodies)
+	static string DecompileMethod(string path, MethodDefinitionHandle handle, bool engineBodies, string? unresolvedAssembly)
 	{
 		RustSeam2.Enabled = engineBodies;
 		try
 		{
 			var module = new PEFile(path, new MemoryStream(Corpus.ReadFile(path)));
-			var resolver = new UniversalAssemblyResolver(path, false, module.DetectTargetFrameworkId());
+			IAssemblyResolver resolver = new UniversalAssemblyResolver(path, false, module.DetectTargetFrameworkId());
+			if (unresolvedAssembly != null)
+				resolver = new ResolverWithout(resolver, unresolvedAssembly);
 			var decompiler = new CSharpDecompiler(module, resolver, new DecompilerSettings());
 			return decompiler.DecompileAsString(handle);
 		}
@@ -365,5 +406,23 @@ public class BodyGapTests
 		{
 			RustSeam2.Enabled = true;
 		}
+	}
+
+	/// <summary>A resolver that cannot find the assembly of the given name.</summary>
+	sealed class ResolverWithout(IAssemblyResolver inner, string name) : IAssemblyResolver
+	{
+		public MetadataFile? Resolve(IAssemblyReference reference)
+			=> reference.Name == name ? null : inner.Resolve(reference);
+
+		public MetadataFile? ResolveModule(MetadataFile mainModule, string moduleName)
+			=> inner.ResolveModule(mainModule, moduleName);
+
+		public System.Threading.Tasks.Task<MetadataFile?> ResolveAsync(IAssemblyReference reference)
+			=> reference.Name == name ? System.Threading.Tasks.Task.FromResult<MetadataFile?>(null) : inner.ResolveAsync(reference);
+
+		public System.Threading.Tasks.Task<MetadataFile?> ResolveModuleAsync(MetadataFile mainModule, string moduleName)
+			=> inner.ResolveModuleAsync(mainModule, moduleName);
+
+		public IDisposable? BeginSnapshot() => inner.BeginSnapshot();
 	}
 }

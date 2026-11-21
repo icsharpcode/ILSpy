@@ -516,24 +516,27 @@ impl Builder<'_, '_, '_, '_> {
         target_inst: Option<NodeId>,
     ) -> Result<TranslatedExpression, Unsupported> {
         let name = field.field.name.clone();
-        let FieldOrigin::Def { module, row } = field.field.origin else {
-            return Err("an unresolved field".to_owned());
-        };
         let declaring = field
             .field
             .declaring
             .ok_or("a field without declaring type")?;
         let declaring_def = self.ts.definition(declaring);
-        let is_static = self
-            .ts
-            .comp
-            .module(module)
-            .md
-            .get::<rows::Field>(row)
-            .map_err(|e| e.to_string())?
-            .flags
-            & FIELD_STATIC
-            != 0;
+        // A fake field (`FakeField`, of a reference that matched no field) is an instance
+        // field, whatever instruction references it.
+        let (module, is_static) = match field.field.origin {
+            FieldOrigin::Def { module, row } => {
+                let flags = self
+                    .ts
+                    .comp
+                    .module(module)
+                    .md
+                    .get::<rows::Field>(row)
+                    .map_err(|e| e.to_string())?
+                    .flags;
+                (Some(module), flags & FIELD_STATIC != 0)
+            }
+            FieldOrigin::Fake => (None, false),
+        };
         let resolver = self
             .resolver
             .ok_or("a member reference without the host's resolver")?;
@@ -543,6 +546,7 @@ impl Builder<'_, '_, '_, '_> {
         };
         let kind = resolver.field_kind(self.ts, field, target_is_this);
         if let FieldKind::AutoEventBackingField { event_row } = kind {
+            let module = module.ok_or("an unresolved field")?;
             return self.event_reference(module, event_row, target_inst, declaring, declaring_def);
         }
         if kind == FieldKind::FieldKeyword {
@@ -568,6 +572,7 @@ impl Builder<'_, '_, '_, '_> {
             // would, because PatternStatementTransform turns the reference into one to the
             // property.
             FieldKind::AutoPropertyBackingField { property_row } => {
+                let module = module.ok_or("an unresolved field")?;
                 let (property_name, property_static) = self.property_info(module, property_row)?;
                 self.requires_qualifier(
                     &property_name,
@@ -795,6 +800,25 @@ impl Builder<'_, '_, '_, '_> {
                 expression: e,
                 ty: base_type,
             });
+        }
+        // A reference converted to an unknown type is the target of a member of an unknown
+        // type as it is.
+        let mut target = target;
+        if let Inst::Conv {
+            arg,
+            input: StackType::Ref,
+            input_sign,
+            target: crate::il::types::PrimitiveType::Unknown,
+            ..
+        } = *self.f.inst(target)
+            && crate::il::ast::conversion_kind(
+                crate::il::types::PrimitiveType::Unknown,
+                StackType::Ref,
+                input_sign,
+            ) == crate::il::ast::ConversionKind::Invalid
+            && self.ts.is_unknown_kind(target_type)
+        {
+            target = arg;
         }
         // `CallInstruction.ExpectedTypeForThisPointer`
         let expected = match self.ts.is_reference_type(declaring) {

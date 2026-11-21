@@ -193,11 +193,14 @@ impl Builder<'_, '_, '_, '_> {
             );
         }
         let resolved = &operand.method;
-        let MethodOrigin::Def(id) = resolved.origin else {
-            return Err("a call of an unresolved method".to_owned());
+        // The definition, `None` for a fake method (a reference that matched no method).
+        let def = match resolved.origin {
+            MethodOrigin::Def(id) => Some(id),
+            MethodOrigin::Fake if !slicing && operand.range_accessor.is_none() => None,
+            _ => return Err("a call of an unresolved method".to_owned()),
         };
-        let mut method =
-            Method::from_resolved(self.ts, resolved).ok_or("a call of an unresolved method")?;
+        let mut method = Method::from_resolved_or_fake(self.ts, resolved)
+            .ok_or("a call of an unresolved method")?;
         method.lifted = operand.lifted;
         if slicing {
             // `SyntheticRangeIndexAccessor.Parameters`: one unnamed parameter of type `Range`.
@@ -212,10 +215,13 @@ impl Builder<'_, '_, '_, '_> {
                 *p = crate::semantics::Parameter::of_type(p.ty);
             }
         }
-        let explicit_implementation = self
-            .ts
-            .is_explicit_interface_implementation(id)
-            .map_err(|e| e.to_string())?;
+        let explicit_implementation = match def {
+            Some(id) => self
+                .ts
+                .is_explicit_interface_implementation(id)
+                .map_err(|e| e.to_string())?,
+            None => false,
+        };
         let declaring = method.declaring.ok_or("a method without declaring type")?;
         // A direct non-virtual call of an explicit interface implementation cannot be written
         // in C#; in a sealed class it is equivalent to a virtual call of the interface member.
@@ -233,7 +239,9 @@ impl Builder<'_, '_, '_, '_> {
         {
             let implemented = self
                 .ts
-                .explicit_implementations(id)
+                .explicit_implementations(
+                    def.ok_or("an explicit implementation without definition")?,
+                )
                 .map_err(|e| e.to_string())?;
             if let [interface_member] = &implemented[..] {
                 let call = CallData {
@@ -258,9 +266,33 @@ impl Builder<'_, '_, '_, '_> {
         // For an event's add or remove accessor: the compound assignment operator, `+=` (1) or
         // `-=` (2) as `AssignmentOperatorType`.
         let mut event_op: Option<u8> = None;
-        let property = match self.ts.accessor_owner(id) {
-            None => None,
-            Some((token, semantics)) if token >> 24 == 0x14 => {
+        // `GuessFakeMethodAccessor`: a fake getter or setter belongs to a fake property named
+        // after it, an indexer where it has index parameters; a fake adder or remover to a fake
+        // event. `IsWrittenAsMemberAccess`: an accessor of an event (or a property that is no
+        // indexer) is written as an access only with one parameter returning void or none
+        // returning a value, else as a call.
+        let void = self.ts.is_known(method.return_type, KnownTypeCode::Void);
+        let member_access = method.parameters.len() == usize::from(void);
+        let fake_owner = match (def, resolved.accessor_kind) {
+            (Some(_), _) | (None, 0) => None,
+            (None, 0x08 | 0x10 | 0x20) if !member_access => None,
+            (None, 0x08 | 0x10) => {
+                event_op = Some(if resolved.accessor_kind == 0x08 { 1 } else { 2 });
+                let prefix = if resolved.accessor_kind == 0x08 { 4 } else { 7 };
+                Some(method.name[prefix..].to_owned())
+            }
+            (None, kind @ (ACCESSOR_GETTER | ACCESSOR_SETTER)) => {
+                if method.parameters.len() > usize::from(kind == ACCESSOR_SETTER) {
+                    indexer = Some(kind == ACCESSOR_SETTER);
+                }
+                Some(method.name[4..].to_owned())
+            }
+            (None, _) => return Err("an event raise call".to_owned()),
+        };
+        let owner = def.and_then(|id| self.ts.accessor_owner(id).map(|o| (id, o)));
+        let property = match owner {
+            None => fake_owner,
+            Some((id, (token, semantics))) if token >> 24 == 0x14 => {
                 event_op = Some(match semantics {
                     0x08 => 1,
                     0x10 => 2,
@@ -272,7 +304,7 @@ impl Builder<'_, '_, '_, '_> {
                     .map_err(|e| e.to_string())?;
                 Some(md.string(e.name).map_err(|e| e.to_string())?.into_owned())
             }
-            Some((token, semantics)) => {
+            Some((id, (token, semantics))) => {
                 if token >> 24 != 0x17 {
                     return Err("an accessor of another kind".to_owned());
                 }
@@ -332,7 +364,7 @@ impl Builder<'_, '_, '_, '_> {
                 }
             }
         };
-        let is_extension = self.ts.method_flags(id, None).extension;
+        let is_extension = def.is_some_and(|id| self.ts.method_flags(id, None).extension);
         if explicit_implementation && (property.is_some() || is_extension || method.is_operator) {
             return Err("a call of an explicit interface implementation".to_owned());
         }
@@ -375,7 +407,8 @@ impl Builder<'_, '_, '_, '_> {
         let is_setter =
             (property.is_some() && method.parameters.len() == 1) || indexer == Some(true);
         let first_argument_node = self.ast.nodes.len();
-        let mut list = self.argument_list(call, &method, id, first_param, declaring, is_setter)?;
+        let mut list =
+            self.argument_list_of(call, &method, def, first_param, declaring, is_setter)?;
         if resolved.varargs.is_some() {
             method = self.vararg_argument_list(resolved, &mut list)?;
         }
@@ -735,7 +768,7 @@ impl Builder<'_, '_, '_, '_> {
         if let Some(is_setter) = indexer {
             self.needs_boxing_conversion = needs_boxing_conversion;
             let access = self.indexer_access(
-                inst, operand, id, &method, op, target, list, is_setter, declaring,
+                inst, operand, def, &method, op, target, list, is_setter, declaring,
             );
             self.needs_boxing_conversion = false;
             return access;
@@ -761,7 +794,7 @@ impl Builder<'_, '_, '_, '_> {
         self.found_override = None;
         self.needs_boxing_conversion = needs_boxing_conversion;
         let disambiguated =
-            self.disambiguate_call(&method, id, op, &mut target, &mut list, require, declaring);
+            self.disambiguate_call(&method, def, op, &mut target, &mut list, require, declaring);
         self.needs_boxing_conversion = false;
         let (mut require, require_type_arguments) = disambiguated?;
         // The overload the call resolves to may be an override of the method, or the method
@@ -836,7 +869,9 @@ impl Builder<'_, '_, '_, '_> {
             require = true;
             let implemented = self
                 .ts
-                .explicit_implementations(id)
+                .explicit_implementations(
+                    def.ok_or("an explicit implementation without definition")?,
+                )
                 .map_err(|e| e.to_string())?;
             let interface_member = implemented
                 .first()
@@ -1223,7 +1258,31 @@ impl Builder<'_, '_, '_, '_> {
         declaring: TypeId,
         is_setter: bool,
     ) -> Result<ArgumentList, Unsupported> {
-        let mut infos = self.ts.method_signature(id).1;
+        self.argument_list_of(call, method, Some(id), first_param, declaring, is_setter)
+    }
+
+    /// `argument_list` of a definition or, for `None`, of a fake method, whose parameters
+    /// are unnamed, by value and not optional (`DefaultParameter(type, "")`).
+    pub(crate) fn argument_list_of(
+        &mut self,
+        call: &CallData,
+        method: &Method,
+        def: Option<crate::typesystem::members::MethodDefId>,
+        first_param: usize,
+        declaring: TypeId,
+        is_setter: bool,
+    ) -> Result<ArgumentList, Unsupported> {
+        let mut infos = match def {
+            Some(id) => self.ts.method_signature(id).1,
+            None => method
+                .parameters
+                .iter()
+                .map(|p| crate::typesystem::members::ParamInfo {
+                    ref_kind: RefKind::None,
+                    ..self.ts.unnamed_parameter(p.ty)
+                })
+                .collect(),
+        };
         // A local function's reduced method has no closure parameters.
         if call.method.local_function.is_some() {
             infos.truncate(method.parameters.len());
@@ -1268,7 +1327,7 @@ impl Builder<'_, '_, '_, '_> {
             .unwrap_or_else(|| (0..method.parameters.len()).collect());
         // Names start at the first argument out of its place.
         let mut explicit_names: Option<Vec<Option<String>>> = None;
-        let named_parameters = if map.is_some() {
+        let named_parameters = if let Some(id) = def.filter(|_| map.is_some()) {
             self.named_parameters(id, method, declaring)?
         } else {
             None
@@ -1337,7 +1396,9 @@ impl Builder<'_, '_, '_, '_> {
             list.is_primitive_value.push(primitive);
             // The assigned value of a setter does not end the run of optional arguments.
             if !(is_setter && i + 1 == method.parameters.len()) {
-                if self.is_optional_argument(id, &infos[pi], arg)? {
+                if let Some(id) = def
+                    && self.is_optional_argument(id, &infos[pi], arg)?
+                {
                     if list.first_optional == -2 {
                         list.first_optional = i as i32;
                     }
@@ -1783,14 +1844,19 @@ impl Builder<'_, '_, '_, '_> {
             );
         }
         let resolved = &operand.method;
-        if !matches!(resolved.origin, MethodOrigin::Def(_)) {
-            return Err("a call of an unresolved method".to_owned());
-        }
+        // The definition, `None` for a fake constructor.
+        let def = match resolved.origin {
+            MethodOrigin::Def(id) => Some(id),
+            MethodOrigin::Fake => None,
+            MethodOrigin::DummyConstructor(_) => {
+                return Err("a call of an unresolved method".to_owned());
+            }
+        };
         if resolved.varargs.is_some() {
             return Err("a vararg call".to_owned());
         }
-        let method =
-            Method::from_resolved(self.ts, resolved).ok_or("a call of an unresolved method")?;
+        let method = Method::from_resolved_or_fake(self.ts, resolved)
+            .ok_or("a call of an unresolved method")?;
         let declaring = method.declaring.ok_or("a method without declaring type")?;
         // The forms `VisitNewObj` and `CallBuilder.Build` write with syntax of their own:
         // stackalloc spans, delegates, tuples, ranges and anonymous types.
@@ -1823,7 +1889,8 @@ impl Builder<'_, '_, '_, '_> {
             return self.stack_alloc_initializer(call.args[0], element);
         }
         let special = match name.as_ref() {
-            None => Some("an unnamed type"),
+            // An unknown type (of an unresolved reference) is created as any other.
+            None if !self.ts.is_unknown_kind(declaring) => Some("an unnamed type"),
             _ => None,
         };
         if let Some(form) = special {
@@ -1831,16 +1898,13 @@ impl Builder<'_, '_, '_, '_> {
                 "an object creation of {form} with syntax of its own"
             ));
         }
-        let MethodOrigin::Def(id) = resolved.origin else {
-            return Err("a call of an unresolved method".to_owned());
-        };
         let anonymous = self.settings.anonymous_types
             && self.ts.definition(declaring).is_some_and(|d| {
                 crate::il::transforms::transform_collection_and_object_initializers::is_anonymous_type(
                     self.ts, d,
                 )
             });
-        let mut list = self.argument_list(call, &method, id, 0, declaring, false)?;
+        let mut list = self.argument_list_of(call, &method, def, 0, declaring, false)?;
         // `HandleRangeConstruction`: `new Range(a, b)` is `a..b`.
         if self.settings.ranges
             && self.ts.is_known(declaring, KnownTypeCode::Range)
@@ -2125,7 +2189,7 @@ impl Builder<'_, '_, '_, '_> {
         &mut self,
         inst: NodeId,
         operand: &MethodOperand,
-        id: crate::typesystem::members::MethodDefId,
+        def: Option<crate::typesystem::members::MethodDefId>,
         method: &Method,
         op: CallOp,
         mut target: TranslatedExpression,
@@ -2177,7 +2241,7 @@ impl Builder<'_, '_, '_, '_> {
         let mut spent_cast_target = false;
         let mut found_type = None;
         loop {
-            let (errors, found) = self.probe_indexers(&group, target.ty, id, op, &list)?;
+            let (errors, found) = self.probe_indexers(&group, target.ty, def, op, &list)?;
             if errors == OverloadResolutionErrors::NONE {
                 found_type = found;
                 break;
@@ -2255,7 +2319,7 @@ impl Builder<'_, '_, '_, '_> {
         &mut self,
         group: &[MethodGroupList],
         lookup_type: TypeId,
-        accessor: crate::typesystem::members::MethodDefId,
+        accessor: Option<crate::typesystem::members::MethodDefId>,
         op: CallOp,
         list: &ArgumentList,
     ) -> Result<(OverloadResolutionErrors, Option<TypeId>), Unsupported> {
@@ -2294,6 +2358,10 @@ impl Builder<'_, '_, '_, '_> {
         // `IsAppropriateCallTarget` of the properties: the indexer itself, or for a virtual
         // call an override of it, which overrides the accessor alike.
         let crate::semantics::MethodKey::Def(found) = found_method.key else {
+            return ambiguous;
+        };
+        // A fake accessor belongs to a fake property, which no indexer found is.
+        let Some(accessor) = accessor else {
             return ambiguous;
         };
         let found_property = self
@@ -2437,7 +2505,7 @@ impl Builder<'_, '_, '_, '_> {
     fn disambiguate_call(
         &mut self,
         method: &Method,
-        id: crate::typesystem::members::MethodDefId,
+        def: Option<crate::typesystem::members::MethodDefId>,
         op: CallOp,
         target: &mut TranslatedExpression,
         list: &mut ArgumentList,
@@ -2461,17 +2529,17 @@ impl Builder<'_, '_, '_, '_> {
         };
         // `skipTargetCast`: a protected member of a base type cannot be reached through a cast.
         let declaring_def = self.ts.definition(declaring);
-        let skip_target_cast = self
-            .ts
-            .method_accessibility_of(id)
-            .is_ok_and(|a| a <= ACC_PROTECTED)
-            && match (self.current_type, declaring_def) {
-                (Some(current), Some(d)) => {
-                    let t = self.ts.intern_def(current);
-                    self.ts.all_base_type_definitions(t).contains(&d)
-                }
-                _ => false,
-            };
+        let skip_target_cast = def.is_some_and(|id| {
+            self.ts
+                .method_accessibility_of(id)
+                .is_ok_and(|a| a <= ACC_PROTECTED)
+        }) && match (self.current_type, declaring_def) {
+            (Some(current), Some(d)) => {
+                let t = self.ts.intern_def(current);
+                self.ts.all_base_type_definitions(t).contains(&d)
+            }
+            _ => false,
+        };
         let initially_required = require;
         let mut require = require;
         // The steps of `Disambiguator.CallSteps`, spent once each.
@@ -2488,7 +2556,7 @@ impl Builder<'_, '_, '_, '_> {
         // where inference from the arguments cannot succeed; casting the arguments takes the
         // guess back.
         let mut type_arguments_up_front = false;
-        let extension_call_on_null = self.ts.method_flags(id, None).extension
+        let extension_call_on_null = def.is_some_and(|id| self.ts.method_flags(id, None).extension)
             && list
                 .arguments
                 .first()
@@ -2726,7 +2794,9 @@ impl Builder<'_, '_, '_, '_> {
                 self.ts.data(target.ty),
                 TypeData::ByRef(_) | TypeData::Pointer(_)
             );
-        if (self.ts.is_reference_type(target.ty) != Some(true) && !value_type)
+        // A target of an unknown type (an unresolved reference) is cast as any other.
+        let unknown = self.ts.is_unknown_kind(target.ty);
+        if (self.ts.is_reference_type(target.ty) != Some(true) && !value_type && !unknown)
             || refuse_this
             || matches!(
                 self.ast.node(target.expression),
@@ -3351,24 +3421,36 @@ impl Builder<'_, '_, '_, '_> {
             _ => return Err("a dictionary initializer of another instruction".to_owned()),
         };
         let operand = &call.method;
-        let MethodOrigin::Def(id) = operand.method.origin else {
-            return Err("a dictionary initializer of an unresolved method".to_owned());
+        // The definition, `None` for a fake setter.
+        let def = match operand.method.origin {
+            MethodOrigin::Def(id) => Some(id),
+            MethodOrigin::Fake => None,
+            MethodOrigin::DummyConstructor(_) => {
+                return Err("a dictionary initializer of an unresolved method".to_owned());
+            }
         };
-        let method = Method::from_resolved(self.ts, &operand.method)
+        let method = Method::from_resolved_or_fake(self.ts, &operand.method)
             .ok_or("a dictionary initializer of an unresolved method")?;
         let declaring = method.declaring.ok_or("a method without declaring type")?;
         // An index initializer is an element access whatever the accessor is, even of a
         // parameterized property, which has no access syntax of its own.
-        self.ts
-            .accessor_owner(id)
-            .ok_or("a dictionary initializer of no accessor")?;
+        let is_accessor = match def {
+            Some(id) => self.ts.accessor_owner(id).is_some(),
+            None => matches!(
+                operand.method.accessor_kind,
+                ACCESSOR_GETTER | ACCESSOR_SETTER
+            ),
+        };
+        if !is_accessor {
+            return Err("a dictionary initializer of no accessor".to_owned());
+        }
         // `callArguments`: the target (not translated), the indices and the value.
         let mut args = Vec::with_capacity(indices.len() + 2);
         args.push(*call.args.first().ok_or("a setter without target")?);
         args.extend_from_slice(indices);
         args.push(value);
         let call = CallData { args, ..call };
-        let list = self.argument_list(&call, &method, id, 1, declaring, true)?;
+        let list = self.argument_list_of(&call, &method, def, 1, declaring, true)?;
         let target = self.ast.add(AstNode::Identifier {
             name: "initializedObject".to_owned(),
         });
@@ -3380,7 +3462,7 @@ impl Builder<'_, '_, '_, '_> {
         let assignment = self.indexer_access(
             element,
             &call.method,
-            id,
+            def,
             &method,
             op,
             target,

@@ -121,10 +121,22 @@ impl Method {
 
     /// The method a resolved member reference is, `None` for a fake reference.
     pub fn from_resolved(ts: &mut TypeSystem<'_, '_>, m: &ResolvedMethod) -> Option<Method> {
+        if m.origin == MethodOrigin::Fake {
+            return None;
+        }
+        Method::from_resolved_or_fake(ts, m)
+    }
+
+    /// `from_resolved`, where a fake reference is the `FakeMethod` (with unnamed parameters),
+    /// distinct from every other method.
+    pub fn from_resolved_or_fake(
+        ts: &mut TypeSystem<'_, '_>,
+        m: &ResolvedMethod,
+    ) -> Option<Method> {
         let key = match m.origin {
             MethodOrigin::Def(id) => MethodKey::Def(id),
             MethodOrigin::DummyConstructor(def) => MethodKey::DummyConstructor(def),
-            MethodOrigin::Fake => return None,
+            MethodOrigin::Fake => MethodKey::Fake(NEXT_FAKE.fetch_add(1, Ordering::Relaxed)),
         };
         let (definition_return_type, definition_parameters, type_parameters, flags) = match key {
             MethodKey::Def(id) => {
@@ -142,6 +154,18 @@ impl Method {
                     })
                     .collect();
                 (ret, params, definition.type_args, Some(flags))
+            }
+            // `FakeMethod.TypeParameters`: dummy method type parameters, one per type argument.
+            MethodKey::Fake(_) => {
+                let type_parameters = (0..m.type_args.len() as u32)
+                    .map(|index| {
+                        ts.intern(TypeData::TypeParam {
+                            owner: crate::typesystem::types::TypeParamOwner::DummyMethod,
+                            index,
+                        })
+                    })
+                    .collect();
+                (m.ret, Vec::new(), type_parameters, None)
             }
             _ => (m.ret, Vec::new(), Vec::new(), None),
         };

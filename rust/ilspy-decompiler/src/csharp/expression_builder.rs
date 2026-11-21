@@ -4481,9 +4481,6 @@ impl Builder<'_, '_, '_, '_> {
         is_lifted: bool,
         hint: TypeId,
     ) -> Result<TranslatedExpression, Unsupported> {
-        if target == PrimitiveType::Unknown {
-            return Err("a conversion to an unknown type".to_owned());
-        }
         let hint_sign = if input_sign == Sign::None {
             self.ts.type_sign(hint)
         } else {
