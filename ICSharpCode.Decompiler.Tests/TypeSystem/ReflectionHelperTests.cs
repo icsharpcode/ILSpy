@@ -162,6 +162,13 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 		}
 
 		[Test]
+		public void ParseReflectionNameWithExcessiveArityDoesNotCreateParameters()
+		{
+			var type = ReflectionHelper.ParseReflectionName("Unknown`40000", new SimpleTypeResolveContext(compilation.MainModule));
+			Assert.That(type.TypeParameterCount, Is.EqualTo(0));
+		}
+
+		[Test]
 		public void ArrayOfTypeParameter()
 		{
 			var context = new SimpleTypeResolveContext(compilation.MainModule);
