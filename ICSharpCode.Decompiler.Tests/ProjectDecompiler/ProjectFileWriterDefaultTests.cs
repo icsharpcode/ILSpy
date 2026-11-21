@@ -18,11 +18,15 @@
 
 using System;
 using System.IO;
+using System.Linq;
 
 using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.CSharp.ProjectDecompiler;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
+
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
 
 using NUnit.Framework;
 
@@ -66,12 +70,52 @@ public sealed class ProjectFileWriterDefaultTests
 		Assert.That(project, Does.Contain(@"<Compile Include=""Program.cs"" />"), project);
 	}
 
+	[TestCase(false)]
+	[TestCase(true)]
+	public void TargetFrameworkMetadataCannotInjectProjectContent(bool sdkStyleProject)
+	{
+		const string targetFramework = ".NETCoreApp\" /><Compile Include=\"planted.cs\" />,Version=v10.0,Profile=$(Injected)";
+		using var module = CreateAssembly("evil$(Assembly)", targetFramework);
+
+		string project = WriteProjectFile(Array.Empty<ProjectItemInfo>(), module, sdkStyleProject);
+
+		using (Assert.EnterMultipleScope())
+		{
+			Assert.That(project, Does.Contain("<AssemblyName>evil--Assembly-</AssemblyName>"), project);
+			Assert.That(project, Does.Not.Contain("planted.cs"), project);
+			Assert.That(project, Does.Not.Contain("$(Injected)"), project);
+			Assert.That(project, Does.Contain(sdkStyleProject
+				? "<TargetFramework>net100</TargetFramework>"
+				: "<TargetFrameworkVersion>v10.0</TargetFrameworkVersion>"), project);
+		}
+	}
+
 	static string WriteProjectFile(ProjectItemInfo[] files)
+		=> WriteProjectFile(files, new PEFile("ICSharpCode.Decompiler.dll"), sdkStyleProject: false);
+
+	static string WriteProjectFile(ProjectItemInfo[] files, MetadataFile module, bool sdkStyleProject)
 	{
 		StringWriter output = new();
-		ProjectFileWriterDefault.Instance.Write(output, new TestProjectInfoProvider(), files,
-			new PEFile("ICSharpCode.Decompiler.dll"));
+		IProjectFileWriter writer = sdkStyleProject ? ProjectFileWriterSdkStyle.Default : ProjectFileWriterDefault.Instance;
+		writer.Write(output, new TestProjectInfoProvider(), files, module);
 		return output.ToString();
+	}
+
+	static PEFile CreateAssembly(string assemblyName, string targetFramework)
+	{
+		string source = $"[assembly: System.Runtime.Versioning.TargetFrameworkAttribute({SymbolDisplay.FormatLiteral(targetFramework, quote: true)})] public class C {{ }}";
+		var references = ((string)AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES"))
+			.Split(Path.PathSeparator)
+			.Select(path => MetadataReference.CreateFromFile(path));
+		var compilation = CSharpCompilation.Create(assemblyName,
+			[CSharpSyntaxTree.ParseText(source)],
+			references,
+			new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+		MemoryStream assembly = new();
+		var result = compilation.Emit(assembly);
+		Assert.That(result.Success, Is.True, () => string.Join(Environment.NewLine, result.Diagnostics));
+		assembly.Position = 0;
+		return new PEFile(assemblyName + ".dll", assembly);
 	}
 
 	sealed class TestProjectInfoProvider : IProjectInfoProvider
@@ -79,7 +123,7 @@ public sealed class ProjectFileWriterDefaultTests
 		public IAssemblyResolver AssemblyResolver { get; } = new UniversalAssemblyResolver(null, false, null);
 		public IAssemblyReferenceClassifier AssemblyReferenceClassifier { get; } = new AssemblyReferenceClassifier();
 		public IDecompilerTypeSystem TypeSystem => null;
-		public LanguageVersion LanguageVersion => LanguageVersion.Latest;
+		public ICSharpCode.Decompiler.CSharp.LanguageVersion LanguageVersion => ICSharpCode.Decompiler.CSharp.LanguageVersion.Latest;
 		public bool CheckForOverflowUnderflow => false;
 		public Guid ProjectGuid { get; } = Guid.NewGuid();
 		public string TargetDirectory { get; } = Environment.CurrentDirectory;

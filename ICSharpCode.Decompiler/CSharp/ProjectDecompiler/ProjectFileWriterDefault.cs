@@ -104,11 +104,11 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 				w.WriteElementString("CheckForOverflowUnderflow", project.CheckForOverflowUnderflow ? "true" : "false");
 
 				w.WriteElementString("AssemblyName", MSBuildEscaping.EscapeAssemblyName(module.Name));
-				if (targetFramework.Identifier != null)
+				if (TargetServices.IsSafeFrameworkName(targetFramework.Identifier))
 					w.WriteElementString("TargetFrameworkIdentifier", MSBuildEscaping.Escape(targetFramework.Identifier));
 				if (targetFramework.VersionString != null)
 					w.WriteElementString("TargetFrameworkVersion", MSBuildEscaping.Escape(targetFramework.VersionString));
-				if (targetFramework.Profile != null)
+				if (TargetServices.IsSafeFrameworkName(targetFramework.Profile))
 					w.WriteElementString("TargetFrameworkProfile", MSBuildEscaping.Escape(targetFramework.Profile));
 				w.WriteElementString("WarningLevel", "4");
 				w.WriteElementString("AllowUnsafeBlocks", "True");

@@ -129,5 +129,14 @@ namespace ICSharpCode.Decompiler.Tests.ProjectDecompiler
 			Assert.That(id, Is.EqualTo(identifier));
 			Assert.That(v.ToString(3), Is.EqualTo(version));
 		}
+
+		[TestCase(".NETCoreApp", true)]
+		[TestCase(".NETFramework", true)]
+		[TestCase(".NETCoreApp\" /><Compile Include=\"planted.cs\" />", false)]
+		[TestCase("../../victim", false)]
+		public void VerifyTargetFrameworkNameSafety(string value, bool expected)
+		{
+			Assert.That(TargetServices.IsSafeFrameworkName(value), Is.EqualTo(expected));
+		}
 	}
 }
