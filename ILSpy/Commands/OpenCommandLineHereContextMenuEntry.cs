@@ -24,6 +24,7 @@ using System.IO;
 using System.Runtime.InteropServices;
 
 using ICSharpCode.ILSpy.Properties;
+using ICSharpCode.ILSpy.Util;
 using ICSharpCode.ILSpyX.TreeView;
 
 using ICSharpCode.ILSpy.TreeNodes;
@@ -77,16 +78,18 @@ namespace ICSharpCode.ILSpy.Commands
 				if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
 				{
 					// cmd.exe /k pins the window open at the chosen directory.
-					Process.Start(new ProcessStartInfo("cmd.exe", $"/k \"cd /d {directory}\"") {
-						UseShellExecute = true,
-					});
+					if (ShellHelper.LocateWindowsSystemProgram("cmd.exe") is string executable)
+						Process.Start(new ProcessStartInfo(executable, $"/k \"cd /d {directory}\"") {
+							UseShellExecute = true,
+						});
 				}
 				else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
 				{
 					// `open -a Terminal <path>` launches Terminal.app cd'd to the path.
-					Process.Start(new ProcessStartInfo("open", $"-a Terminal \"{directory}\"") {
-						UseShellExecute = false,
-					});
+					if (ShellHelper.LocateProgram("open") is string executable)
+						Process.Start(new ProcessStartInfo(executable, $"-a Terminal \"{directory}\"") {
+							UseShellExecute = false,
+						});
 				}
 				else
 				{
@@ -104,7 +107,9 @@ namespace ICSharpCode.ILSpy.Commands
 					{
 						try
 						{
-							Process.Start(new ProcessStartInfo(term) {
+							if (ShellHelper.LocateProgram(term) is not string executable)
+								continue;
+							Process.Start(new ProcessStartInfo(executable) {
 								WorkingDirectory = directory,
 								UseShellExecute = false,
 							});
