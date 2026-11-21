@@ -2169,6 +2169,9 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		EnumValueDisplayMode DetectBestEnumValueDisplayMode(ITypeDefinition typeDef, MetadataFile module)
 		{
+			if (typeDef.EnumUnderlyingType.IsKnownType(KnownTypeCode.Single)
+				|| typeDef.EnumUnderlyingType.IsKnownType(KnownTypeCode.Double))
+				return EnumValueDisplayMode.All;
 			if (typeDef.HasAttribute(KnownAttribute.Flags))
 				return EnumValueDisplayMode.AllHex;
 			bool first = true;

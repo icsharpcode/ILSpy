@@ -19,8 +19,8 @@ namespace TestEnum
 
 	public enum DoubleEnum : double
 	{
-		Half,
-		One
+		Half = 0.5,
+		One = 1.0
 	}
 
 	public enum EnumWithNestedClass
@@ -38,8 +38,8 @@ namespace TestEnum
 
 	public enum FloatEnum : float
 	{
-		Half,
-		One
+		Half = 0.5f,
+		One = 1f
 	}
 
 	public enum NativeIntEnum : IntPtr
