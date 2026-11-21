@@ -42,17 +42,6 @@ impl Builder<'_, '_, '_, '_> {
         else {
             return Err("a deconstruction of another pattern".to_owned());
         };
-        // shortcut: in a void lambda the enclosing call's overload resolution then needs a cast
-        // of the lambda the managed builder does without (`Task.Run(() => { (a, b) = ...; })`:
-        // the engine's best candidate is `Run<?>(Func<?>)`, the void lambda's unknown inferred
-        // return type fixing `TResult`, where the managed one picks `Run(Action)`, although
-        // inference, `Fix` and betterness are ported alike); find the difference before
-        // lifting it. Lambdas that return a value translate as the managed builder does.
-        if self.in_lambda
-            && self.ts.kind(self.result_type) == crate::semantics::types::TypeKind::Void
-        {
-            return Err("a deconstruction in a void lambda".to_owned());
-        }
         let rhs_type = self.f.var(variable).ty;
         let mut rhs = self.translate(tested_operand, Some(rhs_type))?;
         // Deconstructing a value type takes the address of the deconstructed value.

@@ -2062,12 +2062,18 @@ impl Builder<'_, '_, '_, '_> {
             target.expression,
             op != CallOp::CallVirt && method.is_overridable,
         );
-        let (require, found_by_lookup) =
+        let (require, found_by_lookup, resolved) =
             self.disambiguate_accessor(operand, op, &mut target, require, declaring)?;
         // A setter's only argument is the value, which is not part of the member reference.
         let value = list.arguments.first().copied();
+        let target_rr = self.rr_of(target.expression);
         let ty = match value {
             Some(_) => method.parameters[0].ty,
+            // The property found (`disambiguator.FoundMember`) is a member of the target's
+            // type, whose type arguments keep their tuple names and nullability.
+            None if resolved && require => self
+                .member_type_of_target(&operand.method, &target_rr)
+                .unwrap_or(method.return_type),
             None => method.return_type,
         };
         let reference = if require {
@@ -2078,7 +2084,6 @@ impl Builder<'_, '_, '_, '_> {
         } else {
             self.ast.add(AstNode::Identifier { name })
         };
-        let target_rr = self.rr_of(target.expression);
         self.ast.with_rr(
             reference,
             Rr::Property {
@@ -2319,7 +2324,7 @@ impl Builder<'_, '_, '_, '_> {
         target: &mut TranslatedExpression,
         require: bool,
         declaring: TypeId,
-    ) -> Result<(bool, bool), Unsupported> {
+    ) -> Result<(bool, bool, bool), Unsupported> {
         let resolver = self
             .resolver
             .ok_or("a member reference without the host's resolver")?;
@@ -2346,9 +2351,9 @@ impl Builder<'_, '_, '_, '_> {
                 probe_target,
                 op == CallOp::CallVirt,
             ) {
-                AccessorBinding::Owner => return Ok((require, false)),
+                AccessorBinding::Owner => return Ok((require, false, true)),
                 // The resolve result names the member found, which the host looks up again.
-                AccessorBinding::Other => return Ok((require, true)),
+                AccessorBinding::Other => return Ok((require, true, true)),
                 AccessorBinding::None => {}
             }
             if !spent_require {
@@ -2364,7 +2369,7 @@ impl Builder<'_, '_, '_, '_> {
                 continue;
             }
             // No spelling resolves; the most explicit one is emitted anyway.
-            return Ok((require, false));
+            return Ok((require, false, false));
         }
     }
 
@@ -3365,23 +3370,11 @@ impl Builder<'_, '_, '_, '_> {
         let method = Method::from_resolved(self.ts, &operand.method)
             .ok_or("a dictionary initializer of an unresolved method")?;
         let declaring = method.declaring.ok_or("a method without declaring type")?;
-        // An indexer is the property the type's `[DefaultMember]` names; another parameterized
-        // property has no access syntax, which `HandleAccessorCall` would write.
-        let (token, _) = self
-            .ts
+        // An index initializer is an element access whatever the accessor is, even of a
+        // parameterized property, which has no access syntax of its own.
+        self.ts
             .accessor_owner(id)
             .ok_or("a dictionary initializer of no accessor")?;
-        let name = self.property_info(id.module, token & 0x00FF_FFFF)?.0;
-        let default_member = match self.ts.definition(declaring) {
-            Some(def) => self
-                .ts
-                .default_member_name(def)
-                .map_err(|e| e.to_string())?,
-            None => None,
-        };
-        if default_member.as_deref() != Some(&name) {
-            return Err("a dictionary initializer of a parameterized property".to_owned());
-        }
         // `callArguments`: the target (not translated), the indices and the value.
         let mut args = Vec::with_capacity(indices.len() + 2);
         args.push(*call.args.first().ok_or("a setter without target")?);

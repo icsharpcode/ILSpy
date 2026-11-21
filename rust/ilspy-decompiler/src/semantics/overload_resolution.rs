@@ -1054,6 +1054,11 @@ fn validate_constructed_types(
     let TypeData::Inst { generic, args } = conversions.ts.data(new_type).clone() else {
         return true;
     };
+    // The generic definition of a nullability-annotated generic type is annotated, too.
+    let generic = match *conversions.ts.data(generic) {
+        TypeData::Annotated { inner, .. } => inner,
+        _ => generic,
+    };
     let type_parameters = conversions.ts.type_arguments(generic);
     for (i, &tp) in type_parameters.iter().enumerate() {
         let Some(&argument) = args.get(i) else {
@@ -1134,8 +1139,27 @@ pub fn validate_constraints(
             return false;
         }
     }
+    // `DirectBaseTypes` adds `System.ValueType` for a `struct` constraint, `object` when no
+    // constraint is a class or type parameter.
+    let implicit = if info.value_type {
+        Some(KnownTypeCode::ValueType)
+    } else if info
+        .constraints
+        .iter()
+        .all(|&c| conversions.ts.kind(c) == TypeKind::Interface)
+    {
+        Some(KnownTypeCode::Object)
+    } else {
+        None
+    };
     for constraint in info.constraints {
         let c = conversions.ts.substitute(constraint, class, method);
+        if !conversions.is_constraint_convertible(argument, c) {
+            return false;
+        }
+    }
+    if let Some(code) = implicit {
+        let c = conversions.ts.known_type(code);
         if !conversions.is_constraint_convertible(argument, c) {
             return false;
         }
