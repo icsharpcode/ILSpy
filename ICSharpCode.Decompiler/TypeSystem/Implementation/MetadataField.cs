@@ -23,7 +23,6 @@ using System.Linq;
 using System.Reflection;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
-using System.Threading;
 
 using ICSharpCode.Decompiler.Util;
 
@@ -45,7 +44,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		IType type;
 		bool isVolatile; // initialized together with this.type
 						 // this can't be bool? as bool? is not thread-safe from torn reads
-		byte decimalConstantState;
+		volatile byte decimalConstantState;
 
 		internal MetadataField(MetadataModule module, FieldDefinitionHandle handle)
 		{
@@ -231,7 +230,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				ty = fieldDef.DecodeSignature(module.TypeProvider, new GenericContext(DeclaringType?.TypeParameters));
 				if (ty is ModifiedType mod && mod.Modifier.Name == "IsVolatile" && mod.Modifier.Namespace == "System.Runtime.CompilerServices")
 				{
-					Volatile.Write(ref this.isVolatile, true);
+					this.isVolatile = true;
 				}
 				ty = ApplyAttributeTypeVisitor.ApplyAttributesToType(ty, Compilation,
 					fieldDef.GetCustomAttributes(), metadata, module.OptionsForEntity(this),
@@ -249,12 +248,14 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		bool IsDecimalConstant {
 			get {
-				if (decimalConstantState == ThreeState.Unknown)
+				var dcs = this.decimalConstantState;
+				if (dcs == ThreeState.Unknown)
 				{
 					var fieldDef = module.metadata.GetFieldDefinition(handle);
-					decimalConstantState = ThreeState.From(DecimalConstantHelper.IsDecimalConstant(module, fieldDef.GetCustomAttributes()));
+					dcs = ThreeState.From(DecimalConstantHelper.IsDecimalConstant(module, fieldDef.GetCustomAttributes()));
+					this.decimalConstantState = dcs;
 				}
-				return decimalConstantState == ThreeState.True;
+				return dcs == ThreeState.True;
 			}
 		}
 

@@ -33,7 +33,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		KnownTypeCache knownTypeCache;
 		IReadOnlyList<IModule> assemblies;
 		IReadOnlyList<IModule> referencedAssemblies;
-		bool initialized;
+		volatile bool initialized;
 		INamespace rootNamespace;
 
 		public SimpleCompilation(IModuleReference mainAssembly, params IModuleReference[] assemblyReferences)

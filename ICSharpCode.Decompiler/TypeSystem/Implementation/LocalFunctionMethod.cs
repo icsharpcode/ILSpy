@@ -123,27 +123,30 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		List<ITypeParameter> typeParameters;
 		public IReadOnlyList<ITypeParameter> TypeParameters {
 			get {
-				if (typeParameters == null)
-					typeParameters = new List<ITypeParameter>(baseMethod.TypeParameters.Skip(NumberOfCompilerGeneratedTypeParameters));
-				return typeParameters;
+				var result = LazyInit.VolatileRead(ref typeParameters);
+				if (result == null)
+					result = LazyInit.GetOrSet(ref typeParameters, new List<ITypeParameter>(baseMethod.TypeParameters.Skip(NumberOfCompilerGeneratedTypeParameters)));
+				return result;
 			}
 		}
 
 		List<IType> typeArguments;
 		public IReadOnlyList<IType> TypeArguments {
 			get {
-				if (typeArguments == null)
-					typeArguments = new List<IType>(baseMethod.TypeArguments.Skip(NumberOfCompilerGeneratedTypeParameters));
-				return typeArguments;
+				var result = LazyInit.VolatileRead(ref typeArguments);
+				if (result == null)
+					result = LazyInit.GetOrSet(ref typeArguments, new List<IType>(baseMethod.TypeArguments.Skip(NumberOfCompilerGeneratedTypeParameters)));
+				return result;
 			}
 		}
 
 		List<IParameter> parameters;
 		public IReadOnlyList<IParameter> Parameters {
 			get {
-				if (parameters == null)
-					parameters = new List<IParameter>(baseMethod.Parameters.SkipLast(NumberOfCompilerGeneratedParameters));
-				return parameters;
+				var result = LazyInit.VolatileRead(ref parameters);
+				if (result == null)
+					result = LazyInit.GetOrSet(ref parameters, new List<IParameter>(baseMethod.Parameters.SkipLast(NumberOfCompilerGeneratedParameters)));
+				return result;
 			}
 		}
 

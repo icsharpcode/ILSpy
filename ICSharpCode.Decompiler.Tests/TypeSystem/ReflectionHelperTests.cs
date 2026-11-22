@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
@@ -196,6 +197,52 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 				: DummyTypeParameter.GetClassTypeParameter(index);
 
 			Assert.That(second, Is.SameAs(first));
+		}
+
+		[Test]
+		public void DummyTypeParameterCachesAreSafeForConcurrentReaders()
+		{
+			int[] lengths = { 1, 32, 64, 65, 257 };
+			var lists = new IReadOnlyList<ITypeParameter>[1000];
+			var methods = new ITypeParameter[lists.Length];
+			Parallel.For(0, lists.Length, i => {
+				int length = lengths[i % lengths.Length];
+				lists[i] = DummyTypeParameter.GetClassTypeParameterList(length);
+				methods[i] = DummyTypeParameter.GetMethodTypeParameter(length - 1);
+			});
+
+			for (int i = 0; i < lists.Length; i++)
+			{
+				int length = lengths[i % lengths.Length];
+				Assert.That(lists[i].Count, Is.EqualTo(length));
+				for (int j = 0; j < length; j++)
+					Assert.That(lists[i][j], Is.SameAs(DummyTypeParameter.GetClassTypeParameter(j)));
+				Assert.That(methods[i], Is.SameAs(DummyTypeParameter.GetMethodTypeParameter(length - 1)));
+			}
+		}
+
+		[Test]
+		public void LocalFunctionSignatureCachesAreSafeForConcurrentReaders()
+		{
+			IMethod baseMethod = compilation.FindType(typeof(List<>)).GetMethods(m => m.Name == "ConvertAll").Single();
+			var functions = Enumerable.Range(0, 32)
+				.Select(_ => new LocalFunctionMethod(baseMethod, "Local", true, 0, 0)).ToArray();
+			var results = new (IReadOnlyList<ITypeParameter> typeParameters, IReadOnlyList<IType> typeArguments, IReadOnlyList<IParameter> parameters)[1024];
+			Parallel.For(0, results.Length, i => {
+				var function = functions[i % functions.Length];
+				results[i] = (function.TypeParameters, function.TypeArguments, function.Parameters);
+			});
+
+			for (int i = 0; i < results.Length; i++)
+			{
+				var function = functions[i % functions.Length];
+				Assert.That(results[i].typeParameters, Is.SameAs(function.TypeParameters));
+				Assert.That(results[i].typeArguments, Is.SameAs(function.TypeArguments));
+				Assert.That(results[i].parameters, Is.SameAs(function.Parameters));
+				Assert.That(results[i].typeParameters, Is.EqualTo(baseMethod.TypeParameters));
+				Assert.That(results[i].typeArguments, Is.EqualTo(baseMethod.TypeArguments));
+				Assert.That(results[i].parameters, Is.EqualTo(baseMethod.Parameters));
+			}
 		}
 
 		[Test]

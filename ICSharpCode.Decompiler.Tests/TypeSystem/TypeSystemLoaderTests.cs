@@ -25,6 +25,7 @@ using System.Reflection.Metadata;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Threading.Tasks;
 
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
@@ -76,6 +77,27 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 		protected ITypeDefinition GetTypeDefinition(Type type)
 		{
 			return compilation.FindType(type).GetDefinition();
+		}
+
+		[Test]
+		public void DefaultMemberNameIsSafeForConcurrentReaders()
+		{
+			var compilations = Enumerable.Range(0, 16)
+				.Select(_ => new SimpleCompilation(TestAssembly, Mscorlib)).ToArray();
+			var indexerTypes = compilations.Select(c => (MetadataTypeDefinition)c.FindType(typeof(PropertyTest)).GetDefinition()).ToArray();
+			var ordinaryTypes = compilations.Select(c => (MetadataTypeDefinition)c.FindType(typeof(SimplePublicClass)).GetDefinition()).ToArray();
+			var results = new (string indexerName, string ordinaryName)[1024];
+
+			Parallel.For(0, results.Length, i => {
+				int index = i % compilations.Length;
+				results[i] = (indexerTypes[index].DefaultMemberName, ordinaryTypes[index].DefaultMemberName);
+			});
+
+			foreach (var result in results)
+			{
+				Assert.That(result.indexerName, Is.EqualTo("Item"));
+				Assert.That(result.ordinaryName, Is.Null);
+			}
 		}
 
 		[Test]
