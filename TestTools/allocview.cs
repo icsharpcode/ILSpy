@@ -43,6 +43,8 @@ using Microsoft.Diagnostics.Tracing.Etlx;
 // Areas of interest, most specific prefix first: the first match wins, so
 // ICSharpCode.Decompiler.CSharp.Syntax is claimed by the AST rather than by the C# layer.
 var areas = new (string Prefix, string Area)[] {
+	// The Rust engine shim: its wire readers and materializers (ICSharpCode.Decompiler.Rust).
+	("ICSharpCode.Decompiler.Rust.Interop.", "Rust interop"),
 	("ICSharpCode.Decompiler.CSharp.Syntax.", "C# AST"),
 	("ICSharpCode.Decompiler.CSharp.OutputVisitor.", "C# output"),
 	("ICSharpCode.Decompiler.CSharp.", "C# construction"),

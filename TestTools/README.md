@@ -254,6 +254,32 @@ Collecting the trace needs no tool and no code in ILSpy - the runtime writes one
 **[allocview.md](allocview.md) has the full recipe**, including how to read the flamegraph and
 what the sampling does and does not tell you.
 
+## Performance: decompdiff --perf and perfcompare
+
+`--perf` adds per-type wall time and managed allocation (and each assembly's load) to
+`<report-dir>/perf.json` and a table to `summary.md`. `--side old|new` loads and measures only
+that side, so the two sides do not share JIT, GC or working set; it needs only the matching
+`--old`/`--new`. The first assembly is decompiled once unmeasured as warm-up. Use `-j 1` for
+timing. Against the Rust engine shim (`ICSharpCode.Decompiler.Rust`) the report also carries
+the engine's counters: time inside Rust, time in its callbacks into the host, marshaling and
+materialization, bytes per request, Rust bytes allocated and Rust peak live.
+
+```pwsh
+dotnet run decompdiff.cs -- --side new --new ../ICSharpCode.Decompiler.Rust/bin/Release/netstandard2.0/ICSharpCode.Decompiler.dll -j 1 -o perf-new some.dll
+```
+
+`perfcompare.ps1` runs the whole comparison: per input, three runs per side in separate
+processes, and the median as a markdown table (also written to `<Out>/perfcompare.md`):
+
+```pwsh
+./perfcompare.ps1 -Old ../ICSharpCode.Decompiler/bin/Release/netstandard2.0/ICSharpCode.Decompiler.dll `
+    -New ../ICSharpCode.Decompiler.Rust/bin/Release/netstandard2.0/ICSharpCode.Decompiler.dll `
+    a.dll b.dll "@crawl/top-200.corpus.txt"
+```
+
+Build both in Release: a Debug shim carries the engine built with debug assertions and
+overflow checks.
+
 ## Windows notes
 
 Both tools run on Windows, with two differences worth knowing:

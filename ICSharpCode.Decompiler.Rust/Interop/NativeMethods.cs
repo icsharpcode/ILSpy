@@ -80,6 +80,9 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		internal static extern void ilspy_buf_free(RustBuffer buffer);
 
 		[DllImport(Library, CallingConvention = CallingConvention.Cdecl)]
+		internal static extern void ilspy_stats(out RustNativeStats stats, byte resetPeak);
+
+		[DllImport(Library, CallingConvention = CallingConvention.Cdecl)]
 		internal static extern uint ilspy_il_prefix();
 
 		[DllImport(Library, CallingConvention = CallingConvention.Cdecl)]
@@ -130,6 +133,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 			try
 			{
 				var bytes = new byte[checked((int)(ulong)buffer.Length)];
+				RustStats.Received(bytes.Length);
 				if (bytes.Length > 0)
 					Marshal.Copy(buffer.Pointer, bytes, 0, bytes.Length);
 				return bytes;

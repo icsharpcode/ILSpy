@@ -83,8 +83,8 @@ catch (AssertionFailedException)
 	// hook works
 }
 
-string? oldSpec = null, newSpec = null, reportDir = null, packageList = null;
-bool build = true;
+string? oldSpec = null, newSpec = null, reportDir = null, packageList = null, sideOnly = null;
+bool build = true, perf = false;
 int jobs = Environment.ProcessorCount;
 bool help = false;
 var corpus = new List<string>();
@@ -122,6 +122,19 @@ for (int i = 0; i < args.Length; i++)
 		case "--packages":
 			packageList = args[++i];
 			break;
+		case "--perf":
+			perf = true;
+			break;
+		case "--side":
+			sideOnly = args[++i];
+			if (sideOnly is not ("old" or "new"))
+			{
+				Console.Error.WriteLine($"--side {sideOnly}: expected old or new");
+				return 1;
+			}
+			// One side per process is only useful for measuring it.
+			perf = true;
+			break;
 		default:
 			// @file lists corpus entries one per line, the same spelling nugetfuzz uses. Shells
 			// differ on how (or whether) a file expands into arguments, so the tool reads it.
@@ -155,6 +168,8 @@ if (help)
 	Console.WriteLine("  -j, --jobs <n>     Maximum assemblies to process concurrently");
 	Console.WriteLine("  --refs <dir>       Additional reference assembly directory (repeatable)");
 	Console.WriteLine("  --packages <@file> Download package IDs through nugetfuzz");
+	Console.WriteLine("  --perf             Measure time and allocations per type, write perf.json");
+	Console.WriteLine("  --side <old|new>   Decompile and measure only that side (implies --perf)");
 	Console.WriteLine("  -h, --help         Show this help");
 	return 0;
 }
@@ -169,16 +184,21 @@ if (oldSpec == null && newSpec == null && packageList != null)
 	newSpec = ".";
 	oldSpec = Side.GetMergeBase("HEAD");
 }
-if (newSpec == null)
+if (sideOnly != null && (sideOnly == "old" ? oldSpec : newSpec) == null)
+{
+	Console.Error.WriteLine($"--side {sideOnly} needs --{sideOnly} <spec>");
+	return 1;
+}
+if (sideOnly == null && newSpec == null)
 {
 	Console.Error.WriteLine("usage: decompdiff [--old <commit-ish|ILSpy-checkout|Decompiler.dll>] --new <...> [-o report-dir] [--build|--no-build] [--refs <dir>]... [--packages <@list>] <dll|dir|@list>...");
 	return 1;
 }
-if (oldSpec == null)
+if (sideOnly == null && oldSpec == null)
 {
 	try
 	{
-		oldSpec = Side.GetMergeBase(newSpec);
+		oldSpec = Side.GetMergeBase(newSpec!);
 	}
 	catch (ArgumentException ex)
 	{
@@ -237,11 +257,14 @@ if (Directory.Exists(reportDir))
 }
 Directory.CreateDirectory(reportDir);
 
-Side oldSide, newSide;
+// With --side only that one is created; the diff below never runs then.
+Side oldSide = null!, newSide = null!;
 try
 {
-	oldSide = Side.Create("old", oldSpec, build);
-	newSide = Side.Create("new", newSpec, build);
+	if (sideOnly != "new")
+		oldSide = Side.Create("old", oldSpec!, build);
+	if (sideOnly != "old")
+		newSide = Side.Create("new", newSpec!, build);
 }
 catch (ArgumentException ex)
 {
@@ -250,8 +273,10 @@ catch (ArgumentException ex)
 	Console.Error.WriteLine(ex.Message);
 	return 1;
 }
-Console.WriteLine($"old: {oldSide.Description}");
-Console.WriteLine($"new: {newSide.Description}");
+if (sideOnly != "new")
+	Console.WriteLine($"old: {oldSide.Description}");
+if (sideOnly != "old")
+	Console.WriteLine($"new: {newSide.Description}");
 
 var pathComparer = OperatingSystem.IsWindows() ? StringComparer.OrdinalIgnoreCase : StringComparer.Ordinal;
 var assemblies = corpus
@@ -268,6 +293,42 @@ Console.WriteLine($"corpus: {assemblies.Count} assemblies");
 var refIndex = new RefIndex(refDirs, corpus);
 Console.WriteLine($"references: {refIndex.Description}");
 var stageRoot = Path.Combine(reportDir, ".staging");
+var perfSides = new[] { oldSide, newSide }.Where(s => s != null).ToList();
+if (perf && assemblies.Count > 0)
+{
+	// JIT, type loading and first-use caches land on whatever runs first; decompile the first
+	// assembly once unmeasured so the measured pass starts warm.
+	Console.WriteLine($"warm-up: {Path.GetFileName(assemblies[0])}");
+	var (warmStaged, _) = RefIndex.Stage(assemblies[0], stageRoot, refIndex);
+	foreach (var s in perfSides)
+	{
+		s.DecompileAssembly(warmStaged, measure: false);
+		s.StartMeasuring();
+	}
+}
+if (sideOnly != null)
+{
+	var only = perfSides[0];
+	var perfResults = new AsmPerf[assemblies.Count];
+	int done = 0;
+	var doneLock = new object();
+	Parallel.For(0, assemblies.Count, new ParallelOptions { MaxDegreeOfParallelism = jobs }, idx => {
+		var (staged, _) = RefIndex.Stage(assemblies[idx], stageRoot, refIndex);
+		var (types, error, load) = only.DecompileAssembly(staged, measure: true);
+		perfResults[idx] = AsmPerf.From(assemblies[idx], types, error, load);
+		lock (doneLock)
+			RenderProgress(++done, assemblies.Count);
+	});
+	Console.WriteLine();
+	var sidePerf = only.FinishMeasuring(sideOnly, perfResults.ToList());
+	Perf.WriteJson(Path.Combine(reportDir, "perf.json"), assemblies.FirstOrDefault(), jobs, [sidePerf]);
+	var perfSummary = $"# decompdiff perf report\n\n- {sideOnly}: {only.Description}\n- corpus: {assemblies.Count} assemblies, -j {jobs}\n\n"
+		+ Perf.Table([sidePerf]);
+	File.WriteAllText(Path.Combine(reportDir, "summary.md"), perfSummary);
+	Console.WriteLine();
+	Console.Write(perfSummary);
+	return 0;
+}
 var unresolvedRefs = new SortedDictionary<string, List<string>>();  // assembly -> missing refs
 
 int asmCount = 0, unchanged = 0;
@@ -324,6 +385,20 @@ summary.AppendLine(MetricRow("compiler-generated name leaks", oldTotals.Generate
 summary.AppendLine();
 summary.AppendLine($"types: {unchanged} unchanged, {changed.Count} changed, {newErrors} NEW errors, {fixedErrors} fixed errors, {bothErrors} errored in both");
 summary.AppendLine();
+if (perf)
+{
+	// Both sides share this process here, so the peak working set is the same number for both;
+	// run each side with --side for a memory comparison.
+	var sides = new List<SidePerf> {
+		oldSide.FinishMeasuring("old", results.Select(r => r.OldPerf).OfType<AsmPerf>().ToList()),
+		newSide.FinishMeasuring("new", results.Select(r => r.NewPerf).OfType<AsmPerf>().ToList()),
+	};
+	Perf.WriteJson(Path.Combine(reportDir, "perf.json"), assemblies.FirstOrDefault(), jobs, sides);
+	summary.AppendLine("## Performance (both sides in one process; use --side for clean numbers)");
+	summary.AppendLine();
+	summary.Append(Perf.Table(sides));
+	summary.AppendLine();
+}
 if (changed.Count > 0)
 {
 	summary.AppendLine("## Changed types (largest line delta first)");
@@ -385,7 +460,8 @@ AsmResult ProcessAssembly(string dll)
 	var r = new AsmResult(asmName);
 	var (staged, missing) = RefIndex.Stage(dll, stageRoot, refIndex);
 	r.Missing = missing;
-	var (oldTypes, oldError) = oldSide.DecompileAssembly(staged);
+	var (oldTypes, oldError, oldLoad) = oldSide.DecompileAssembly(staged, perf);
+	r.OldPerf = AsmPerf.From(dll, oldTypes, oldError, oldLoad);
 	if (oldTypes == null)
 	{
 		var why = missing.Count > 0 ? $"; unresolved refs: {string.Join(", ", missing.Take(5))}" : "";
@@ -393,7 +469,8 @@ AsmResult ProcessAssembly(string dll)
 		r.Skipped = $"{asmName}: {oldError}{why}";
 		return r;
 	}
-	var (newTypes, newError) = newSide.DecompileAssembly(staged);
+	var (newTypes, newError, newLoad) = newSide.DecompileAssembly(staged, perf);
+	r.NewPerf = AsmPerf.From(dll, newTypes, newError, newLoad);
 	if (newTypes == null)
 	{
 		r.Log = $"  NEW-ERROR {asmName}: whole assembly failed only with new version ({newError})";
@@ -1060,7 +1137,7 @@ record ReportModel(
 	List<string> Transitions, List<string> Skipped, SortedDictionary<string, List<string>> UnresolvedRefs,
 	Metrics OldTotals, Metrics NewTotals, int NewErrors, int FixedErrors, int BothErrors, string ReportDir);
 
-record TypeResult(string? Code, string? Error, Metrics Metrics, Dictionary<string, string> MemberErrors);
+record TypeResult(string? Code, string? Error, Metrics Metrics, Dictionary<string, string> MemberErrors, double Ms = 0, long AllocatedBytes = 0);
 
 class AsmResult(string name)
 {
@@ -1073,9 +1150,87 @@ class AsmResult(string name)
 	public List<ChangedType> Changed = new();
 	public List<string> Transitions = new();
 	public Metrics OldTotals, NewTotals;
+	public AsmPerf? OldPerf, NewPerf;
 }
 
 record ChangedType(string Location, Metrics Old, Metrics New, string File);
+
+// --perf: one type's decompilation, one assembly's, and one side's over the whole corpus.
+record TypePerf(string Type, double Ms, long AllocatedBytes, string? Error);
+
+record AsmPerf(string Assembly, string? Error, double LoadMs, long LoadAllocatedBytes, List<TypePerf> Types)
+{
+	public static AsmPerf From(string dll, Dictionary<string, TypeResult>? types, string? error, (double Ms, long Allocated) load)
+		=> new(dll, error, load.Ms, load.Allocated, types == null ? [] : types
+			.OrderBy(t => t.Key, StringComparer.Ordinal)
+			.Select(t => new TypePerf(t.Key, t.Value.Ms, t.Value.AllocatedBytes, t.Value.Error))
+			.ToList());
+}
+
+record SidePerf(string Side, string Description, int Types, double TotalMs, double LoadMs, double TypesMs,
+	double P50Ms, double P95Ms, long ManagedAllocatedBytes, long PeakWorkingSetBytes,
+	Dictionary<string, long>? Engine, List<AsmPerf> Assemblies)
+{
+	// The allocations are the sum of the measured stretches (assembly loads and types), which
+	// stays per side when both sides share the process.
+	public static SidePerf From(string side, string description, List<AsmPerf> assemblies,
+		long peakWorkingSet, Dictionary<string, long>? engine)
+	{
+		var ms = assemblies.SelectMany(a => a.Types).Where(t => t.Error == null).Select(t => t.Ms).Order().ToList();
+		double load = assemblies.Sum(a => a.LoadMs);
+		double types = ms.Sum();
+		long allocated = assemblies.Sum(a => a.LoadAllocatedBytes + a.Types.Sum(t => t.AllocatedBytes));
+		return new(side, description, ms.Count, load + types, load, types, Percentile(ms, 50), Percentile(ms, 95),
+			allocated, peakWorkingSet, engine, assemblies);
+	}
+
+	// Nearest rank on sorted values.
+	static double Percentile(List<double> sorted, int p)
+		=> sorted.Count == 0 ? 0 : sorted[Math.Clamp((int)Math.Ceiling(p / 100.0 * sorted.Count) - 1, 0, sorted.Count - 1)];
+}
+
+static class Perf
+{
+	public static void WriteJson(string path, string? warmup, int jobs, List<SidePerf> sides)
+	{
+		var options = new System.Text.Json.JsonSerializerOptions {
+			WriteIndented = true,
+			PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase,
+		};
+		File.WriteAllText(path, System.Text.Json.JsonSerializer.Serialize(new { warmup, jobs, sides }, options));
+	}
+
+	public static string Table(List<SidePerf> sides)
+	{
+		var sb = new StringBuilder();
+		sb.AppendLine($"| | {string.Join(" | ", sides.Select(s => s.Side))} |");
+		sb.AppendLine($"|---|{string.Concat(sides.Select(_ => "---|"))}");
+		void Row(string name, Func<SidePerf, string> value) => sb.AppendLine($"| {name} | {string.Join(" | ", sides.Select(value))} |");
+		Row("types decompiled", s => s.Types.ToString());
+		Row("time total, wall (load + types)", s => $"{s.TotalMs:F0} ms");
+		Row("assembly load", s => $"{s.LoadMs:F0} ms");
+		Row("per type P50", s => $"{s.P50Ms:F2} ms");
+		Row("per type P95", s => $"{s.P95Ms:F2} ms");
+		Row("managed allocated", s => $"{s.ManagedAllocatedBytes / 1048576.0:F1} MB");
+		Row("peak working set", s => $"{s.PeakWorkingSetBytes / 1048576.0:F1} MB");
+		if (sides.Any(s => s.Engine != null))
+		{
+			string Engine(SidePerf s, string key, Func<long, string> format)
+				=> s.Engine != null && s.Engine.TryGetValue(key, out var v) ? format(v) : "-";
+			Row("engine time", s => Engine(s, "EngineNanoseconds", v => $"{v / 1e6:F0} ms"));
+			Row("engine callbacks into the host", s => Engine(s, "CallbackNanoseconds", v => $"{v / 1e6:F0} ms"));
+			Row("marshaling + materialization", s => Engine(s, "MarshalingNanoseconds", v => $"{v / 1e6:F0} ms"));
+			Row("marshaling share of shim requests", s => s.Engine != null && s.Engine.GetValueOrDefault("RequestNanoseconds") > 0
+				? $"{100.0 * s.Engine["MarshalingNanoseconds"] / s.Engine["RequestNanoseconds"]:F1} %" : "-");
+			Row("shim requests", s => Engine(s, "Requests", v => v.ToString()));
+			Row("bytes per request (sent + received)", s => s.Engine != null && s.Engine.GetValueOrDefault("Requests") > 0
+				? $"{(s.Engine["RequestBytes"] + s.Engine["ResponseBytes"]) / s.Engine["Requests"]}" : "-");
+			Row("Rust allocated", s => Engine(s, "RustAllocatedBytes", v => $"{v / 1048576.0:F1} MB"));
+			Row("Rust peak live", s => Engine(s, "RustPeakLiveBytes", v => $"{v / 1048576.0:F1} MB"));
+		}
+		return sb.ToString();
+	}
+}
 
 record struct Metrics(int Lines, int Gotos, int IlWarnings, int GeneratedNames)
 {
@@ -1258,10 +1413,14 @@ class Side
 	}
 
 	// Decompiles every top-level type; null when the assembly itself cannot be
-	// opened (not managed, type system init failed), with the reason in Error.
-	public (Dictionary<string, TypeResult>? Types, string? Error) DecompileAssembly(string dllPath)
+	// opened (not managed, type system init failed), with the reason in Error. LoadMs is the
+	// time the decompiler took to open the assembly; with measure, each type also carries the
+	// bytes the process allocated while it was decompiled.
+	public (Dictionary<string, TypeResult>? Types, string? Error, (double Ms, long Allocated) Load) DecompileAssembly(string dllPath, bool measure)
 	{
 		dynamic decompiler;
+		long loadAllocatedBefore = measure ? GC.GetTotalAllocatedBytes(precise: true) : 0;
+		var loadClock = Stopwatch.StartNew();
 		try
 		{
 			var settings = Activator.CreateInstance(assembly.GetType("ICSharpCode.Decompiler.DecompilerSettings", throwOnError: true)!)!;
@@ -1271,8 +1430,9 @@ class Side
 		}
 		catch (Exception ex)
 		{
-			return (null, Unwrap(ex).Message);
+			return (null, Unwrap(ex).Message, (loadClock.Elapsed.TotalMilliseconds, 0));
 		}
+		var load = (loadClock.Elapsed.TotalMilliseconds, measure ? GC.GetTotalAllocatedBytes(precise: true) - loadAllocatedBefore : 0);
 		var results = new Dictionary<string, TypeResult>();
 		foreach (object type in (IEnumerable)decompiler.TypeSystem.MainModule.TopLevelTypeDefinitions)
 		{
@@ -1284,8 +1444,12 @@ class Side
 			try
 			{
 				decompiler.CancellationToken = cts.Token;
+				long allocatedBefore = measure ? GC.GetTotalAllocatedBytes(precise: true) : 0;
+				long start = Stopwatch.GetTimestamp();
 				string code = decompiler.DecompileTypeAsString((dynamic)fullTypeName);
-				results[name] = new TypeResult(code, null, Metrics.Measure(code), GetMemberErrors(decompiler));
+				double ms = Stopwatch.GetElapsedTime(start).TotalMilliseconds;
+				long allocated = measure ? GC.GetTotalAllocatedBytes(precise: true) - allocatedBefore : 0;
+				results[name] = new TypeResult(code, null, Metrics.Measure(code), GetMemberErrors(decompiler), ms, allocated);
 			}
 			catch (Exception ex)
 			{
@@ -1296,7 +1460,44 @@ class Side
 				results[name] = new TypeResult(null, error, default, new Dictionary<string, string>());
 			}
 		}
-		return (results, null);
+		return (results, null, load);
+	}
+
+	Dictionary<string, long>? engineBefore;
+
+	// The counters of the Rust engine shim (ICSharpCode.Decompiler.Rust.Interop.RustStats);
+	// null for a build of the original decompiler, which has none.
+	Dictionary<string, long>? EngineStats(bool resetPeak)
+	{
+		var read = assembly.GetType("ICSharpCode.Decompiler.Rust.Interop.RustStats")?.GetMethod("Read");
+		if (read == null)
+			return null;
+		object snapshot = read.Invoke(null, [resetPeak])!;
+		return snapshot.GetType().GetProperties()
+			.Where(p => p.PropertyType == typeof(long))
+			.ToDictionary(p => p.Name, p => (long)p.GetValue(snapshot)!);
+	}
+
+	// Starts the measured stretch of the engine counters after the warm-up, whose work does not count.
+	public void StartMeasuring()
+	{
+		engineBefore = EngineStats(resetPeak: true);
+	}
+
+	public SidePerf FinishMeasuring(string name, List<AsmPerf> assemblies)
+	{
+		var engine = EngineStats(resetPeak: false);
+		if (engine != null && engineBefore != null)
+		{
+			// Live and peak bytes are levels; everything else is a running total.
+			foreach (var key in engine.Keys.ToList())
+			{
+				if (key is not ("RustLiveBytes" or "RustPeakLiveBytes"))
+					engine[key] -= engineBefore.GetValueOrDefault(key);
+			}
+		}
+		using var process = Process.GetCurrentProcess();
+		return SidePerf.From(name, Description, assemblies, process.PeakWorkingSet64, engine);
 	}
 
 	static Dictionary<string, string> GetMemberErrors(object decompiler)

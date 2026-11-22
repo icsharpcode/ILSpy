@@ -913,6 +913,8 @@ the reasons. This file holds only the ordered steps, their gates and their rules
   - Record CPU (P50, P95, total) and memory (peak RSS, Rust peak live, managed allocated
     bytes) for the three reference inputs and the top-200 NuGet corpus in the lecture.
   - Gate: numbers in the lecture, `cargo bench` runs, decompdiff report attached to the PR.
+  - Status: the tooling is in (lecture, "Tooling as built"); the Release measurements over the
+    three reference inputs and the top-200 corpus (`TestTools/perfcompare.ps1`) are still open.
 
 - [ ] **89. FORK: optional tail.** Present to the human, with the measured numbers: port the
   disassembler, port `CSharpOutputVisitor` for standalone Rust output, add a Rust portable

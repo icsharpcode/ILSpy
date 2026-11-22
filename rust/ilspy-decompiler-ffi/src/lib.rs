@@ -23,6 +23,11 @@ use ilspy_decompiler::typesystem::compilation::{Compilation, ModuleId, ModuleInp
 use ilspy_decompiler::typesystem::members::MethodDefId;
 use ilspy_decompiler::typesystem::types::TypeSystem;
 
+mod stats;
+
+#[global_allocator]
+static ALLOCATOR: stats::CountingAllocator = stats::CountingAllocator;
+
 static VERSION_C: &str = concat!(env!("CARGO_PKG_VERSION"), "\0");
 
 thread_local! {
@@ -62,7 +67,7 @@ pub enum Status {
 /// message.
 fn run<T>(f: impl FnOnce() -> Result<T, String>) -> Result<T, Status> {
     install_panic_hook();
-    match panic::catch_unwind(AssertUnwindSafe(f)) {
+    match stats::time_call(|| panic::catch_unwind(AssertUnwindSafe(f))) {
         Ok(Ok(value)) => Ok(value),
         Ok(Err(message)) => {
             set_last_error(message);
@@ -147,7 +152,7 @@ impl HostResolver {
     /// A yes/no or integer question.
     fn ask(&self, query: &[u8]) -> i32 {
         // SAFETY: the host contract above; `query` outlives the call and no answer is read.
-        unsafe {
+        stats::time_callback(|| unsafe {
             (self.callback)(
                 self.ctx,
                 query.as_ptr(),
@@ -155,7 +160,7 @@ impl HostResolver {
                 std::ptr::null_mut(),
                 0,
             )
-        }
+        })
     }
 
     /// A question answered with data; `None` when the host failed.
@@ -164,7 +169,7 @@ impl HostResolver {
         loop {
             // SAFETY: the host contract above; `query` and `answer` outlive the call and the
             // host writes at most `answer.len()` bytes.
-            let n = unsafe {
+            let n = stats::time_callback(|| unsafe {
                 (self.callback)(
                     self.ctx,
                     query.as_ptr(),
@@ -172,7 +177,7 @@ impl HostResolver {
                     answer.as_mut_ptr(),
                     answer.len(),
                 )
-            };
+            });
             let n = usize::try_from(n).ok()?;
             if n <= answer.len() {
                 answer.truncate(n);
@@ -245,6 +250,20 @@ pub unsafe extern "C" fn ilspy_session_free(session: *mut FfiSession) {
         }
         Ok(())
     })
+}
+
+/// The engine's process-wide performance counters (`stats::Stats`), written to `*out`. With
+/// `reset_peak` non-zero the peak of live bytes then restarts at the bytes live now.
+///
+/// # Safety
+/// `out` must be writable.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn ilspy_stats(out: *mut stats::Stats, reset_peak: u8) {
+    // SAFETY: the caller guarantees `out` is writable.
+    unsafe { out.write(stats::snapshot()) };
+    if reset_peak != 0 {
+        stats::reset_peak();
+    }
 }
 
 /// The last error reported on the calling thread, or null. The pointer stays valid until the
@@ -386,7 +405,7 @@ impl HostDebugInfo {
         let mut buf = vec![0u8; 256];
         loop {
             // SAFETY: the host contract above; `buf` is writable for its length.
-            let n = unsafe {
+            let n = stats::time_callback(|| unsafe {
                 (self.callback)(
                     self.ctx,
                     method_token,
@@ -395,7 +414,7 @@ impl HostDebugInfo {
                     buf.as_mut_ptr(),
                     buf.len(),
                 )
-            };
+            });
             let n = usize::try_from(n).ok()?;
             if n <= buf.len() {
                 buf.truncate(n);

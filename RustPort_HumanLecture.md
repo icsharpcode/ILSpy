@@ -5294,6 +5294,50 @@ same inputs, with the engine's own cost separated from marshaling and materializ
   three runs, median; inputs: the three reference assemblies and the top-200 NuGet corpus from
   `TestTools/nuget-top.ps1`.
 
+Tooling as built (item 88, first part):
+
+- `decompdiff --perf` adds per-type wall time and `GC.GetTotalAllocatedBytes(precise: true)`
+  deltas (plus the assembly load) to `perf.json` and a table in `summary.md`; `--side old|new`
+  decompiles and measures one side only, so each side gets its own process. The first assembly
+  is decompiled once unmeasured as warm-up and then measured like the rest. Managed allocation
+  is the sum of the measured stretches, so it stays per side even when both share a process;
+  peak working set is per process and only means something with `--side`.
+- Native probing from the ALC-loaded shim works without a `LoadUnmanagedDll` override: the
+  default `DllImport` search includes the directory of the calling assembly, where the build
+  puts `ilspy_decompiler_ffi` next to the shim.
+- Decision: `rust_elapsed_ns` is a process-wide counter in `ilspy_stats`, not a field of the
+  wire header. Every export runs through `run`, which times it; the callbacks into the host
+  (resolver, debug info, syntax oracle) are timed separately and subtracted, because they are
+  managed work done while the engine waits. A header field would have meant a wire version
+  bump in both materializers and in the syntax round trip for a number the tool only ever
+  aggregates.
+- The counting global allocator (`rust/ilspy-decompiler-ffi/src/stats.rs`) keeps bytes
+  allocated, allocations, live and peak live bytes in relaxed atomics. The shim exposes them
+  with its own request counters (wall time from encoding a request to materializing the
+  answer, bytes sent and received) as `ICSharpCode.Decompiler.Rust.Interop.RustStats.Read()`;
+  marshaling and materialization is request time minus engine time minus callback time.
+- `cargo bench --bench stages` (criterion, `rust/ilspy-decompiler/benches/stages.rs`) times
+  metadata parsing, the compilation, IL reading, the IL transforms, the C# body translation
+  and the wire serialization separately over `ILSPY_BENCH_INPUTS` (references from
+  `ILSPY_BENCH_REFS`). Limits of the crate API: metadata parsing and the compilation are lazy,
+  so their real cost lands in the first stage that touches the tables (IL reading); the
+  transforms are timed as one block (per-transform timing would need one `run_prefix(k)` run
+  per pipeline leaf); without the host's resolver and name lookups the engine translates only
+  a small part of the bodies (107 of 3552 in System.Reflection.Metadata), so the expression
+  building number covers those only; the AST transforms of seam 2 need a syntax tree from the
+  host and are not benched. `[profile.bench]` drops the debug assertions and overflow checks
+  of `release`, so the benches measure what `ship` builds.
+- `TestTools/perfcompare.ps1` runs the whole methodology: per input three runs per side, each
+  its own `decompdiff --side` process at `-j 1`, median, printed as the rows of the table below
+  plus per-type P50/P95.
+
+Smoke run (Debug builds of both sides, so engine profile `release` with debug assertions, on
+`ilspycmd.dll`, 19 types, median of 3, machine shared with other builds): managed 2139 ms,
+engine 5831 ms, marshaling share 2.8 %, peak RSS 122 MB / 134 MB, Rust peak live 8 MB; per
+type P50 29 / 35 ms, P95 1196 / 4377 ms (one type, `ILSpyCmdProgram`, is 1.0 s managed and
+3.9 s on the engine side); managed allocated 137 MB / 74 MB, Rust allocated 1.7 GB in 14.6 M
+allocations. These numbers only prove the tooling; the real measurement uses Release builds.
+
 Results (to be filled in by item 88):
 
 | Input | Managed CPU total | Engine CPU total | Marshaling share | Managed peak RSS | Engine peak RSS | Rust peak live |
