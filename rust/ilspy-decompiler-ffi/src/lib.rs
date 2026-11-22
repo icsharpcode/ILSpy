@@ -727,6 +727,28 @@ pub unsafe extern "C" fn ilspy_debug_read_il(
     }
 }
 
+/// The MethodDef token whose `ilspy_session_read_function` panics, 0 for none.
+#[cfg(debug_assertions)]
+static PANIC_ON_READ: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(0);
+
+/// Test-only hook, so a UI test can drive a real engine panic through to the host's error
+/// comment: makes every `ilspy_session_read_function` of `method_token` panic until it is
+/// called again with another token (0 disarms). Returns 1 when armed, 0 in builds without debug
+/// assertions, which ignore it.
+#[unsafe(no_mangle)]
+pub extern "C" fn ilspy_debug_panic_on_read(method_token: u32) -> u8 {
+    #[cfg(debug_assertions)]
+    {
+        PANIC_ON_READ.store(method_token, std::sync::atomic::Ordering::Relaxed);
+        1
+    }
+    #[cfg(not(debug_assertions))]
+    {
+        let _ = method_token;
+        0
+    }
+}
+
 /// The session as the host sees it: an opaque pointer.
 pub struct FfiSession {
     _ctx: *mut c_void,
@@ -938,6 +960,10 @@ pub unsafe extern "C" fn ilspy_session_read_function(
             .ok_or("the session has no compilation")?;
         if method_token >> 24 != 0x06 {
             return Err(format!("0x{method_token:08x} is not a MethodDef token"));
+        }
+        #[cfg(debug_assertions)]
+        if PANIC_ON_READ.load(std::sync::atomic::Ordering::Relaxed) == method_token {
+            panic!("forced panic for 0x{method_token:08x} (ilspy_debug_panic_on_read)");
         }
         let method = MethodDefId {
             module: ModuleId(0),
