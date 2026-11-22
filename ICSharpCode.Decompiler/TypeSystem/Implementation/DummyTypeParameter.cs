@@ -26,6 +26,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 {
 	public sealed class DummyTypeParameter : AbstractType, ITypeParameter
 	{
+		internal const int MaxCachedTypeParameterListLength = 64;
+
 		static ITypeParameter[] methodTypeParameters = { new DummyTypeParameter(SymbolKind.Method, 0) };
 		static ITypeParameter[] classTypeParameters = { new DummyTypeParameter(SymbolKind.TypeDefinition, 0) };
 		static IReadOnlyList<ITypeParameter>[] classTypeParameterLists = { EmptyList<ITypeParameter>.Instance };
@@ -42,6 +44,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		static ITypeParameter GetTypeParameter(ref ITypeParameter[] typeParameters, SymbolKind symbolKind, int index)
 		{
+			if (index >= ReflectionHelper.MaxTypeParameterCount)
+				return new DummyTypeParameter(symbolKind, index);
 			ITypeParameter[] tps = typeParameters;
 			while (index >= tps.Length)
 			{
@@ -74,6 +78,14 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		/// </summary>
 		internal static IReadOnlyList<ITypeParameter> GetClassTypeParameterList(int length)
 		{
+			length = Math.Min(length, ReflectionHelper.MaxTypeParameterCount);
+			if (length > MaxCachedTypeParameterListLength)
+			{
+				// Caching one array for every length would retain quadratic memory.
+				GetClassTypeParameter(length - 1);
+				return new ArraySegment<ITypeParameter>(classTypeParameters, 0, length);
+			}
+
 			IReadOnlyList<ITypeParameter>[] tps = classTypeParameterLists;
 			while (length >= tps.Length)
 			{

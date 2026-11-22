@@ -30,6 +30,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	/// </summary>
 	public static class ReflectionHelper
 	{
+		internal const int MaxTypeParameterCount = ushort.MaxValue;
+
 		#region ICompilation.FindType
 		/// <summary>
 		/// Retrieves the specified type in this compilation.
@@ -113,6 +115,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				if (value > int.MaxValue)
 					return false;
 			}
+			if (value > MaxTypeParameterCount)
+				return false;
 			typeParameterCount = (int)value;
 			return true;
 		}
@@ -193,6 +197,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			else if (result.IsConstructedGenericType)
 			{
 				IType genericType = ResolveTypeName(result.GetGenericTypeDefinition(), resolveContext);
+				if (genericType.TypeParameterCount > MaxTypeParameterCount)
+					return genericType;
 				var genericArgs = result.GetGenericArguments();
 				if (genericType.TypeParameterCount == 0)
 				{

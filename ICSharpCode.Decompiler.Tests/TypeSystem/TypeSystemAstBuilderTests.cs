@@ -72,5 +72,17 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 			Assert.That(output.ToString(),
 				Does.Contain("invalid array rank: 33, clamped to 32"));
 		}
+
+		[Test]
+		public void ConvertUnknownTypeWithHighArityDoesNotExpandTypeArguments()
+		{
+			var type = new UnknownType("Test", "Missing", 40000);
+
+			var astType = new TypeSystemAstBuilder().ConvertType(type);
+			StringWriter output = new();
+			astType.AcceptVisitor(new CSharpOutputVisitor(new TextWriterTokenWriter(output), FormattingOptionsFactory.CreateMono()));
+
+			Assert.That(output.ToString(), Is.EqualTo("Missing/*error: unbound generic arity 40000 exceeds display limit 64*/"));
+		}
 	}
 }

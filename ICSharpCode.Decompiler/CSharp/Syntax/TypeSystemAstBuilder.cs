@@ -439,6 +439,14 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 					case UnknownType _:
 						if (type.IsUnbound())
 						{
+							if (type is UnknownType && type.TypeParameterCount > DummyTypeParameter.MaxCachedTypeParameterListLength)
+							{
+								var simpleType = MakeSimpleType(type.Name);
+								simpleType.AddTrailingTrivia(new Comment(
+									$"error: unbound generic arity {type.TypeParameterCount} exceeds display limit {DummyTypeParameter.MaxCachedTypeParameterListLength}",
+									CommentType.MultiLine));
+								return simpleType;
+							}
 							if (ShowTypeParametersForUnboundTypes)
 							{
 								astType = ConvertTypeHelper(type, type.TypeArguments);
