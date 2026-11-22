@@ -27,9 +27,10 @@ using NUnit.Framework;
 namespace ICSharpCode.Decompiler.Rust.Tests;
 
 /// <summary>
-/// The engine's schema of the C# syntax tree (<c>csharp/syntax_schema.rs</c>) is generated from
-/// the node classes; this test fails while the checked-in file differs from what the classes
-/// give, and writes the new text next to it.
+/// The engine's schema of the C# syntax tree (<c>csharp/syntax_schema.rs</c>) and the declaration
+/// order the host sorts node members by (<c>Interop/SyntaxSchema.Order.cs</c>) are generated from
+/// the node classes; these tests fail while a checked-in file differs from what the classes give,
+/// and write the new text next to it.
 /// </summary>
 [TestFixture]
 public class SyntaxSchemaTests
@@ -37,16 +38,33 @@ public class SyntaxSchemaTests
 	static string SchemaPath([CallerFilePath] string thisFile = "")
 		=> Path.GetFullPath(Path.Combine(Path.Combine(Path.GetDirectoryName(thisFile)!, "..", "rust"), Path.Combine("ilspy-decompiler", "src", "csharp"), "syntax_schema.rs"));
 
+	static string InteropPath(string fileName, [CallerFilePath] string thisFile = "")
+		=> Path.GetFullPath(Path.Combine(Path.GetDirectoryName(thisFile)!, "..", "ICSharpCode.Decompiler.Rust", "Interop", fileName));
+
 	[Test]
 	public void SchemaIsUpToDate()
+		=> AssertUpToDate(SchemaPath(), SyntaxSchema.RustSource());
+
+	/// <summary>
+	/// The order is generated because reflection returns members in no guaranteed order and Native
+	/// AOT has no metadata tokens to sort them by. Its license header is the one of SyntaxSchema.cs.
+	/// </summary>
+	[Test]
+	public void DeclarationOrderIsUpToDate()
 	{
-		string generated = SyntaxSchema.RustSource().Replace("\r\n", "\n");
-		string path = SchemaPath();
+		string schema = File.ReadAllText(InteropPath("SyntaxSchema.cs")).Replace("\r\n", "\n");
+		string header = schema.Substring(0, schema.IndexOf("\n\n", StringComparison.Ordinal) + 2);
+		AssertUpToDate(InteropPath("SyntaxSchema.Order.cs"), SyntaxSchema.OrderSource(header));
+	}
+
+	static void AssertUpToDate(string path, string generated)
+	{
+		generated = generated.Replace("\r\n", "\n");
 		string current = File.Exists(path) ? File.ReadAllText(path).Replace("\r\n", "\n") : "";
 		if (current != generated)
 		{
 			File.WriteAllText(path + ".new", generated);
-			Assert.Fail($"{path} is out of date; the generated schema is in {path}.new");
+			Assert.Fail($"{path} is out of date; the generated text is in {path}.new");
 		}
 	}
 }
