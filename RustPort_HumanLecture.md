@@ -5189,6 +5189,34 @@ methods (11 assemblies) and an unresolved field (1). Serving them means fake mem
 builder that assumes every method has a definition, which is out of proportion to 12 assemblies;
 85e is closed with them on the list.
 
+### 3.231 The strict matrix runs green (item 85f)
+
+Strict throws inside a body land in `DecompileBody`'s error handler and come out as error
+comments, so the matrix runs with `ILSPY_RUST_STRICT=1` and `ILSPY_RUST_STRICT_SEAM2=1` show them
+as missing-body diffs; the reasons are tallied from the test log. The first run after 85e failed
+47 of 86,189 tests. Two rounds of agents took the reasons:
+
+- **Round 1**, three groups. Unresolved members: the call builder now takes an
+  `Option<MethodDefId>`, with `Method::from_resolved_or_fake` and the managed
+  `GuessFakeMethodAccessor` mirrored, which serves the two fallbacks 85e left. Operators: the
+  resolver's error outcome is ported as cast paths, with `ConvertToBoolean`, `??` with
+  conversions, lifted enum bitwise operators and checked constant folding (a `??` with a throw
+  expression and an overflowing checked fold stay shortcuts). Statements and calls: try-fault,
+  labeled for loops, named arguments, the null-conditional target cast,
+  `ModifyReturnTypeOfLambda` (shortcut: only the lambda's own returns) and the query operand
+  kinds 170-172. That run left 8 failures, 4 of them real.
+- **Round 2**, two groups. Tuple names and comparisons: a generic call's unnamed tuple result is
+  trusted when every argument keeps its names (variables, constants, or anything whose type has
+  no tuple), array elements take the element type, lifted enum comparisons follow
+  `HandleEnumComparison`, and a constant compared with the null literal is not folded, as in
+  `ResolveBinaryOperator`. Declarations in bodies: a using declaration converts unless the type
+  contains an anonymous type, `MathF` is interned for body constants, and a local function
+  declared in a switch is left undeclared, copying the managed `TranslateSwitch` on purpose.
+
+The third run failed 1 of 86,221, a process-listing UI test that passes alone. The seam 2 switch
+then merged into `ILSPY_RUST_STRICT`; the test projects already set that by default (item 66),
+so every test run is now strict in both seams.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |
