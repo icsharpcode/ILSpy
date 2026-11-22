@@ -419,6 +419,16 @@ impl<'c, 'a> TypeSystem<'c, 'a> {
             self.known_type(code);
         }
         self.find_top_level(super::names::TopLevelTypeName::new("System", "Math", 0));
+        // `MathF` only where a module defines it: a float constant falls back to `Math`.
+        let mathf = FullTypeName::top_level(TopLevelTypeName::new("System", "MathF", 0));
+        let comp = self.comp;
+        if let Some(def) = comp.module_ids().find_map(|m| {
+            comp.find_type_definition(m, &mathf, &mut Vec::new())
+                .ok()
+                .flatten()
+        }) {
+            self.intern_def(def);
+        }
         self.intern(TypeData::UnknownSpecial);
     }
 

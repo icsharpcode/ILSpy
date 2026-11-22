@@ -3037,27 +3037,6 @@ impl Builder<'_, '_, '_, '_> {
             .1
     }
 
-    /// Whether `t` may contain an anonymous type, which `WriteTypeArgumentsInferenceCannotReach`
-    /// treats apart: a type definition named like one (as `IsAnonymousType` checks the name),
-    /// or any type the check does not look into.
-    pub(crate) fn may_contain_anonymous_type(&self, t: TypeId) -> bool {
-        match self.ts.data(t) {
-            TypeData::Def(def) => self.ts.comp.type_def(*def).map_or(true, |i| {
-                i.full_name.top.ns.is_empty()
-                    && (i.full_name.name().contains("AnonType")
-                        || i.full_name.name().contains("AnonymousType"))
-            }),
-            TypeData::Inst { generic, args } => {
-                self.may_contain_anonymous_type(*generic)
-                    || args.iter().any(|&a| self.may_contain_anonymous_type(a))
-            }
-            TypeData::Array { elem, .. } => self.may_contain_anonymous_type(*elem),
-            TypeData::Pointer(e) | TypeData::ByRef(e) => self.may_contain_anonymous_type(*e),
-            TypeData::TypeParam { .. } => false,
-            _ => true,
-        }
-    }
-
     /// `VisitAwait`: `await value`, of the type `GetResult` returns. The operand is cast to the
     /// type declaring `GetAwaiter` where `Disambiguator.CheckSimpleCall` does not find it from
     /// the operand. A dynamic await, an extension `GetAwaiter`, a constrained operand and an

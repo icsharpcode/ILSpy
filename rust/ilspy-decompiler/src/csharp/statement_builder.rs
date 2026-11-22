@@ -587,11 +587,17 @@ impl Builder<'_, '_, '_, '_> {
             }
         }
         let (declaration, resource) = if used {
-            // `var` for anonymous types is not translated.
-            if self.may_contain_anonymous_type(ty) {
-                return Err("a using declaration of an anonymous type".to_owned());
+            // The host writes `var` for a type containing an anonymous type, whose resource
+            // keeps its own type.
+            let is_var = self.settings.anonymous_types
+                && crate::il::transforms::transform_collection_and_object_initializers::contains_anonymous_type(
+                    self.ts, ty,
+                );
+            if is_var {
+                (Some(variable), resource)
+            } else {
+                (Some(variable), self.convert_to(resource, ty, true)?)
             }
-            (Some(variable), self.convert_to(resource, ty, true)?)
         } else {
             (None, resource)
         };

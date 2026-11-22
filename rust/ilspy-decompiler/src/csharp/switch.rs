@@ -48,6 +48,22 @@ impl Builder<'_, '_, '_, '_> {
         let saved = self.break_target.replace(container);
         let result = self.switch_statement(container, blocks, value, &sections, ty, is_lifted);
         self.break_target = saved;
+        // `TranslateSwitch` declares no local functions: those declared in the switch
+        // container are left out of the output.
+        let left_out = self
+            .local_functions
+            .iter()
+            .filter(|&&lf| {
+                matches!(
+                    *self.f.inst(lf),
+                    Inst::Function {
+                        declaration_scope: Some(scope),
+                        ..
+                    } if scope == container
+                )
+            })
+            .count();
+        self.declared_local_functions += left_out;
         result
     }
 
