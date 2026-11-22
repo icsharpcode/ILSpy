@@ -95,8 +95,7 @@ namespace ICSharpCode.ILSpyX.PdbProvider
 			if (stream == null)
 				return null;
 
-			if (stream.Read(buffer, 0, buffer.Length) == LegacyPDBPrefix.Length
-				&& System.Text.Encoding.ASCII.GetString(buffer) == LegacyPDBPrefix)
+			if (IsWindowsPdb(stream))
 			{
 				stream.Dispose();
 				return new MonoCecilDebugInfoProvider(module, pdbFileName);
@@ -142,8 +141,7 @@ namespace ICSharpCode.ILSpyX.PdbProvider
 			}
 		}
 
-		const string LegacyPDBPrefix = "Microsoft C/C++ MSF 7.00";
-		static readonly byte[] buffer = new byte[LegacyPDBPrefix.Length];
+		static ReadOnlySpan<byte> LegacyPDBPrefix => "Microsoft C/C++ MSF 7.00"u8;
 
 		/// <summary>
 		/// True for a Windows (native MSF) PDB, false for a Portable PDB. Reads from the current
@@ -152,8 +150,15 @@ namespace ICSharpCode.ILSpyX.PdbProvider
 		public static bool IsWindowsPdb(Stream stream)
 		{
 			var signature = new byte[LegacyPDBPrefix.Length];
-			return stream.Read(signature, 0, signature.Length) == signature.Length
-				&& System.Text.Encoding.ASCII.GetString(signature) == LegacyPDBPrefix;
+			int bytesRead = 0;
+			while (bytesRead < signature.Length)
+			{
+				int count = stream.Read(signature, bytesRead, signature.Length - bytesRead);
+				if (count == 0)
+					return false;
+				bytesRead += count;
+			}
+			return signature.AsSpan().SequenceEqual(LegacyPDBPrefix);
 		}
 
 		static PortablePdbOpenResult TryOpenPortablePdb(PEFile module,
