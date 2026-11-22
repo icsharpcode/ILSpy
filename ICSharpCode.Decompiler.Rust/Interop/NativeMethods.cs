@@ -118,6 +118,11 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		[DllImport(Library, CallingConvention = CallingConvention.Cdecl)]
 		internal static extern RustStatus ilspy_session_read_function(RustSession session, uint methodToken, uint ilPrefix, uint readerFlags, ulong settings, ulong settingsHigh, IntPtr debugContext, RustDebugInfo.Callback? debugInfo, IntPtr resolverContext, RustResolver.Callback? resolver, byte[] rootNames, UIntPtr rootNamesLength, out RustBuffer wire);
 
+		// Test-only: makes reads of methodToken panic in the engine (0 disarms); returns 0 where the
+		// engine was built without debug assertions and ignores it.
+		[DllImport(Library, CallingConvention = CallingConvention.Cdecl)]
+		internal static extern byte ilspy_debug_panic_on_read(uint methodToken);
+
 		[DllImport(Library, CallingConvention = CallingConvention.Cdecl)]
 		static extern unsafe RustStatus ilspy_debug_list_members(byte* image, UIntPtr length, out RustBuffer listing);
 

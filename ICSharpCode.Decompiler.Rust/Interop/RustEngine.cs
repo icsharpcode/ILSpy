@@ -147,6 +147,11 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 				return new Entry { UnsupportedReason = "the main module has no PE image" };
 			if (!file.Reader.IsEntireImageAvailable)
 				return new Entry { UnsupportedReason = "the main module's PE image is not in memory" };
+			// shortcut: the engine is not given MinimalCorlib, so without any corlib in the closure
+			// every known type (void, object, int) would read as unknown and the ILAst would diverge;
+			// serve these once the engine models MinimalCorlib's types.
+			if (typeSystem.FindType(KnownTypeCode.Object).GetDefinition()?.ParentModule is not MetadataModule)
+				return new Entry { UnsupportedReason = "no corlib is resolved (the known types come from MinimalCorlib)" };
 			return new Entry { Engine = new RustEngine(typeSystem) };
 		}
 
