@@ -135,6 +135,25 @@
           CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>
 
+  <!-- -p:RustNativeAssetsDir=<dir>: <dir>/<rid>/<library> holds the engine built per RID (CI builds
+       each on its own OS). The package carries them as runtimes/<rid>/native/<library>. A RID-less
+       output (a framework-dependent tool) gets the other operating systems' libraries next to the
+       host's: their file names differ per OS, so DllImport probing finds the right one. -->
+  <ItemGroup Condition="'$(RustNativeAssetsDir)' != ''">
+    <None Include="$(RustNativeAssetsDir)\**\*ilspy_decompiler_ffi.*" Pack="true"
+          PackagePath="runtimes\%(RecursiveDir)native\%(Filename)%(Extension)" Visible="false" />
+  </ItemGroup>
+  <!-- shortcut: one architecture per OS (win-x64, linux-x64, osx-arm64) in a RID-less output; arm64
+       Windows and Linux need the RID-specific builds. Upgrade with a DllImport resolver per RID. -->
+  <ItemGroup Condition="'$(RustNativeAssetsDir)' != '' and ('$(RuntimeIdentifier)' == '' or '$(RuntimeIdentifier)' == 'any')">
+    <None Condition="'$(RustLibName)' != 'ilspy_decompiler_ffi.dll'" Include="$(RustNativeAssetsDir)\win-x64\ilspy_decompiler_ffi.dll"
+          Link="ilspy_decompiler_ffi.dll" Visible="false" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <None Condition="'$(RustLibName)' != 'libilspy_decompiler_ffi.so'" Include="$(RustNativeAssetsDir)\linux-x64\libilspy_decompiler_ffi.so"
+          Link="libilspy_decompiler_ffi.so" Visible="false" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <None Condition="'$(RustLibName)' != 'libilspy_decompiler_ffi.dylib'" Include="$(RustNativeAssetsDir)\osx-arm64\libilspy_decompiler_ffi.dylib"
+          Link="libilspy_decompiler_ffi.dylib" Visible="false" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+
   <Target Name="BuildRustEngine" BeforeTargets="BeforeBuild">
     <Exec Command="cargo build --locked --manifest-path &quot;$(RustWorkspaceDir)Cargo.toml&quot; -p ilspy-decompiler-ffi --profile $(RustProfile) $(RustTargetArg)"
           WorkingDirectory="$(RustWorkspaceDir)" />

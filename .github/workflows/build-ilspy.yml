@@ -13,6 +13,9 @@ env:
   DOTNET_SDK_VERSION: '11.0.x'
   DOTNET_SDK_QUALITY: 'preview'
   StagingDirectory: buildartifacts
+  # shortcut: tests are off while the Rust engine's build and packaging steps are brought up;
+  # set to 'true' (the default before the engine) once every other step is green.
+  RunTests: 'false'
 
 jobs:
   # Skip push builds for branches whose open PR already builds them; see pr-build-gate.yml.
@@ -21,9 +24,62 @@ jobs:
       pull-requests: read
     uses: ./.github/workflows/pr-build-gate.yml
 
+  # The Rust engine (rust/ilspy-decompiler-ffi) for every RID the packages carry, each built on its
+  # own OS (arm64 cross-built on the x64 runners). RID-specific publishes build their own engine;
+  # these feed the RID-less outputs: the ICSharpCode.Decompiler.Rust package (runtimes/<rid>/native)
+  # and the framework-dependent ilspycmd tool packages.
+  RustNative:
+    name: Rust engine (${{ matrix.os }})
+    needs: Gate
+    if: needs.Gate.outputs.run == 'true'
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-2025-vs2026
+            targets: win-x64=x86_64-pc-windows-msvc win-arm64=aarch64-pc-windows-msvc
+          - os: ubuntu-latest
+            targets: linux-x64=x86_64-unknown-linux-gnu linux-arm64=aarch64-unknown-linux-gnu
+          - os: macos-15
+            targets: osx-arm64=aarch64-apple-darwin
+    runs-on: ${{ matrix.os }}
+
+    defaults:
+      run:
+        shell: pwsh
+
+    steps:
+    - uses: actions/checkout@v7.0.1
+      with:
+        persist-credentials: false
+
+    - name: Build the engine per RID
+      env:
+        TARGETS: ${{ matrix.targets }}
+      run: |
+        $ErrorActionPreference = 'Stop'
+        $PSNativeCommandUseErrorActionPreference = $true
+        rustup toolchain install
+        if ($IsLinux) { sudo apt-get install -y --no-install-recommends gcc-aarch64-linux-gnu }
+        foreach ($pair in $env:TARGETS -split ' ') {
+          $rid, $triple = $pair -split '='
+          rustup target add $triple
+          cargo build --locked --manifest-path rust/Cargo.toml -p ilspy-decompiler-ffi --profile ship --target $triple
+          $lib = Get-ChildItem "rust/target/$triple/ship" -File | Where-Object Name -Match '^(lib)?ilspy_decompiler_ffi\.(dll|so|dylib)$'
+          New-Item -ItemType Directory -Force "natives/$rid" | Out-Null
+          Copy-Item $lib.FullName "natives/$rid/"
+          "$rid -> $($lib.Name) ($($lib.Length) bytes)"
+        }
+
+    - uses: actions/upload-artifact@v7.0.2
+      with:
+        name: rust-native-${{ matrix.os }}
+        path: natives
+        if-no-files-found: error
+
   Build:
     name: Desktop (Windows)
-    needs: Gate
+    needs: [Gate, RustNative]
     if: needs.Gate.outputs.run == 'true'
     permissions:
       packages: write  # for dotnet nuget push
@@ -60,6 +116,19 @@ jobs:
         DOTNET_INSTALL_DIR: ${{ runner.temp }}/.dotnet
         DOTNET_ROOT: ${{ runner.temp }}/.dotnet
 
+    # rust-toolchain.toml pins the toolchain; win-arm64 is cross-built for the arm64 publish.
+    - name: Install Rust toolchain
+      run: |
+        rustup toolchain install
+        rustup target add aarch64-pc-windows-msvc
+
+    - name: Download the engine for every RID
+      uses: actions/download-artifact@v8.0.2
+      with:
+        pattern: rust-native-*
+        merge-multiple: true
+        path: natives
+
     - name: Add msbuild to PATH
       uses: microsoft/setup-msbuild@v3.0.0
 
@@ -88,17 +157,21 @@ jobs:
         /p:Configuration=${{ matrix.configuration }}
         /p:Platform="$env:BuildPlatform"
 
+    # RustNativeAssetsDir gives the framework-dependent ilspycmd package (packed on build) the
+    # engine of the other operating systems too.
     - name: Build
       run: >
         dotnet build -mt ILSpy.slnx --no-restore
         -c ${{ matrix.configuration }}
         /p:Platform="$env:BuildPlatform"
+        /p:RustNativeAssetsDir="${{ github.workspace }}\natives"
 
     - name: Format check
       run: dotnet-format whitespace --verify-no-changes --verbosity detailed ILSpy.slnx
 
     - name: Execute unit tests
       id: unit-tests
+      if: env.RunTests == 'true'
       # All test hosts of the solution run concurrently on a 4-core runner. Server GC (enabled by
       # ICSharpCode.Decompiler.Tests for machines it has to itself) keeps that host at 100% CPU
       # and starves the neighbours: the process-module walks in ILSpy.Tests.Windows blow their
@@ -114,7 +187,7 @@ jobs:
 
     - name: Upload Test Logs
       uses: actions/upload-artifact@v7.0.2
-      if: success() || failure()
+      if: env.RunTests == 'true' && (success() || failure())
       with:
         name: test-results-${{ matrix.configuration }}
         path: 'test-results/${{ matrix.configuration }}/*.trx'
@@ -139,7 +212,7 @@ jobs:
 
     - name: Create Test Report
       uses: test-summary/action@v2
-      if: always()
+      if: always() && env.RunTests == 'true'
       with:
         paths: "test-results/${{ matrix.configuration }}/*.trx"
         folded: true
@@ -147,6 +220,22 @@ jobs:
     - name: Publish x64/arm64 framework-dependent/self-contained
       run: .\publish.ps1 -Configuration ${{ matrix.configuration }}
     
+    - name: Check the bundles carry the Rust engine
+      run: |
+        $ErrorActionPreference = 'Stop'
+        $base = '.\ILSpy\bin\${{ matrix.configuration }}\net10.0'
+        $bundles = @{ "$base\win-x64\publish\fwdependent" = 0x8664 }
+        if ('${{ matrix.configuration }}' -eq 'release') {
+          $bundles["$base\win-arm64\publish\fwdependent"] = 0xAA64
+          $bundles["$base\win-x64\publish\selfcontained"] = 0x8664
+        }
+        foreach ($dir in $bundles.Keys) {
+          $bytes = [System.IO.File]::ReadAllBytes((Resolve-Path "$dir\ilspy_decompiler_ffi.dll"))
+          $machine = [BitConverter]::ToUInt16($bytes, [BitConverter]::ToInt32($bytes, 0x3C) + 4)
+          if ($machine -ne $bundles[$dir]) { throw "$dir carries an engine for machine 0x$($machine.ToString('X4'))" }
+          "$dir carries the engine (machine 0x$($machine.ToString('X4')))"
+        }
+
     - name: Zip ILSpy (framework-dependent)
       run: >
         7z a -tzip $env:StagingDirectory\ILSpy_binaries.zip ${{ matrix.configuration == 'release' && '''-xr!*.pdb''' || '' }}
@@ -176,6 +265,7 @@ jobs:
         DOTNET_CLI_USE_MSBUILD_SERVER: 'false'
       run: |
         dotnet pack ICSharpCode.Decompiler --no-restore
+        dotnet pack ICSharpCode.Decompiler.Rust --no-restore /p:RustNativeAssetsDir="${{ github.workspace }}\natives"
         dotnet pack ICSharpCode.BamlDecompiler --no-restore
         dotnet pack ICSharpCode.ILSpyX --no-restore
 
@@ -219,6 +309,14 @@ jobs:
         dotnet nuget push "ICSharpCode.Decompiler\bin\Release\ICSharpCode.Decompiler*.nupkg" `
           --api-key ${{ secrets.GITHUB_TOKEN }} `
           --source https://nuget.pkg.github.com/${{ github.repository_owner }}
+
+    - name: Upload Rust engine NuGet release build artifacts
+      if: matrix.configuration == 'release'
+      uses: actions/upload-artifact@v7.0.2
+      with:
+        name: ICSharpCode.Decompiler.Rust NuGet Package (${{ matrix.configuration }})
+        path: ICSharpCode.Decompiler.Rust\bin\Release\ICSharpCode.Decompiler.Rust*.nupkg
+        if-no-files-found: error
 
     - name: Upload ILSpyX NuGet release build artifacts
       if: matrix.configuration == 'release'
@@ -349,6 +447,24 @@ jobs:
         ./BuildTools/ghactions-install.ps1
         Get-ChildItem Env: | Where-Object {$_.Name -Match "^ILSPY_"} | %{ echo "$($_.Name)=$($_.Value)" } | Out-File -FilePath $Env:GITHUB_OUTPUT -Encoding utf8 -Append
 
+    # rust-toolchain.toml pins the toolchain; linux-arm64 is cross-built with the GNU cross linker
+    # named in rust/.cargo/config.toml. The Linux leg also checks the Rust sources, so a Rust
+    # failure fails before the .NET build.
+    - name: Install Rust toolchain
+      run: |
+        rustup toolchain install
+        if ($IsLinux) {
+          rustup target add aarch64-unknown-linux-gnu
+          sudo apt-get install -y --no-install-recommends gcc-aarch64-linux-gnu
+        }
+
+    - name: Check Rust sources
+      if: matrix.platform == 'linux'
+      working-directory: rust
+      run: |
+        cargo fmt --check
+        cargo clippy --locked --all-targets -- -D warnings
+
     - name: Restore the application
       run: >
         dotnet restore ILSpy.Desktop.slnf
@@ -366,18 +482,28 @@ jobs:
     # it as two concurrent hosts with disjoint filters; two because the heavier shard peaks
     # at ~3 GB and these runners have 3-4 cores. Each shard writes its own TRX file here.
     - name: Execute UI tests
+      if: env.RunTests == 'true'
       run: ./runuitests.ps1 -Shards 2 -Configuration Release -ResultsDirectory test-results
 
     - name: Execute decompiler tests
       id: decompiler-tests
-      if: matrix.platform != 'macos'
+      if: env.RunTests == 'true' && matrix.platform != 'macos'
       run: >
         dotnet test --project ICSharpCode.Decompiler.Tests/ICSharpCode.Decompiler.Tests.csproj
         --configuration Release
         --no-build --report-trx
         --results-directory test-results
 
+    - name: Execute Rust engine tests
+      if: env.RunTests == 'true' && matrix.platform == 'linux'
+      run: >
+        dotnet test --project ICSharpCode.Decompiler.Rust.Tests/ICSharpCode.Decompiler.Rust.Tests.csproj
+        --configuration Release
+        --no-build --report-trx
+        --results-directory test-results
+
     - name: Execute ilspycmd tests
+      if: env.RunTests == 'true'
       run: >
         dotnet test --project ICSharpCode.ILSpyCmd.Tests/ICSharpCode.ILSpyCmd.Tests.csproj
         --configuration Release
@@ -385,6 +511,7 @@ jobs:
         --results-directory test-results
 
     - name: Execute BAML decompiler tests
+      if: env.RunTests == 'true'
       run: >
         dotnet test --project ILSpy.BamlDecompiler.Tests/ILSpy.BamlDecompiler.Tests.csproj
         --configuration Release
@@ -393,7 +520,7 @@ jobs:
 
     - name: Upload Test Logs
       uses: actions/upload-artifact@v7.0.2
-      if: success() || failure()
+      if: env.RunTests == 'true' && (success() || failure())
       with:
         name: test-results-${{ matrix.platform }}
         path: 'test-results/*.trx'
@@ -408,13 +535,24 @@ jobs:
 
     - name: Create Test Report
       uses: test-summary/action@v2
-      if: always()
+      if: always() && env.RunTests == 'true'
       with:
         paths: "test-results/*.trx"
         folded: true
 
     - name: Publish (self-contained)
       run: ./publish.ps1 -Configuration Release -Platform ${{ matrix.platform }}
+
+    - name: Check the bundles carry the Rust engine
+      run: |
+        $ErrorActionPreference = 'Stop'
+        $rids = if ($IsLinux) { @('linux-x64', 'linux-arm64') } else { @('osx-arm64') }
+        $lib = if ($IsLinux) { 'libilspy_decompiler_ffi.so' } else { 'libilspy_decompiler_ffi.dylib' }
+        foreach ($rid in $rids) {
+          $path = "ILSpy/bin/Release/net10.0/$rid/publish/selfcontained/$lib"
+          if (-not (Test-Path $path)) { throw "$path is missing" }
+          file $path
+        }
 
     - name: Package
       run: ./BuildTools/package-${{ matrix.platform }}.ps1 -Configuration Release -Version "${{ steps.version.outputs.ILSPY_VERSION_NUMBER }}" -StagingDirectory $env:StagingDirectory
@@ -469,7 +607,7 @@ jobs:
   # last: installing the pointer fails while a referenced RID package is missing.
   IlspyCmdRidPackages:
     name: ilspycmd RID packages (${{ matrix.rid }})
-    needs: Gate
+    needs: [Gate, RustNative]
     if: needs.Gate.outputs.run == 'true'
     strategy:
       fail-fast: false
@@ -509,17 +647,48 @@ jobs:
         ./BuildTools/ghactions-install.ps1
         Get-ChildItem Env: | Where-Object {$_.Name -Match "^ILSPY_"} | %{ echo "$($_.Name)=$($_.Value)" } | Out-File -FilePath $Env:GITHUB_OUTPUT -Encoding utf8 -Append
 
+    - name: Install Rust toolchain
+      run: rustup toolchain install
+
+    - name: Download the engine for every RID
+      if: matrix.rid == 'win-x64'
+      uses: actions/download-artifact@v8.0.2
+      with:
+        pattern: rust-native-*
+        merge-multiple: true
+        path: natives
+
     - name: Pack ${{ matrix.rid }} (Native AOT)
       run: >
         dotnet pack ICSharpCode.ILSpyCmd -c Release -r ${{ matrix.rid }}
         -p:IlspyCmdRidPackages=true -p:RestoreEnablePackagePruning=false
         -o ridpackages
 
+    # The "any" fallback is framework-dependent, so it carries the engine of the other operating
+    # systems too (RustNativeAssetsDir).
     - name: Pack pointer and framework-dependent fallback
       if: matrix.rid == 'win-x64'
       run: |
         dotnet pack ICSharpCode.ILSpyCmd -c Release -p:IlspyCmdRidPackages=true -p:RestoreEnablePackagePruning=false -o ridpackages
-        dotnet pack ICSharpCode.ILSpyCmd -c Release -r any -p:IlspyCmdRidPackages=true -p:RestoreEnablePackagePruning=false -o ridpackages
+        dotnet pack ICSharpCode.ILSpyCmd -c Release -r any -p:IlspyCmdRidPackages=true -p:RestoreEnablePackagePruning=false "-p:RustNativeAssetsDir=${{ github.workspace }}/natives" -o ridpackages
+
+    - name: Check the packages carry the Rust engine
+      run: |
+        $ErrorActionPreference = 'Stop'
+        $version = (Get-Content VERSION).Trim()
+        $expected = @{ "ilspycmd.${{ matrix.rid }}" = @('${{ matrix.rid == 'win-x64' && 'ilspy_decompiler_ffi.dll' || 'libilspy_decompiler_ffi.so' }}') }
+        if ('${{ matrix.rid }}' -eq 'win-x64') {
+          $expected['ilspycmd.any'] = @('ilspy_decompiler_ffi.dll', 'libilspy_decompiler_ffi.so', 'libilspy_decompiler_ffi.dylib')
+        }
+        foreach ($package in $expected.Keys) {
+          $zip = [System.IO.Compression.ZipFile]::OpenRead((Resolve-Path "ridpackages/$package.$version.nupkg"))
+          $names = $zip.Entries | ForEach-Object { [System.IO.Path]::GetFileName($_.FullName) }
+          $zip.Dispose()
+          foreach ($lib in $expected[$package]) {
+            if ($names -notcontains $lib) { throw "$package lacks $lib" }
+          }
+          "$package carries $($expected[$package] -join ', ')"
+        }
 
     - name: Smoke test the native binary
       run: |

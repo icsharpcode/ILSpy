@@ -1,0 +1,4 @@
+# linux-arm64 is cross-built on the x64 Linux runner (publish.ps1 -Platform linux); the GNU
+# cross linker comes from the gcc-aarch64-linux-gnu package.
+[target.aarch64-unknown-linux-gnu]
+linker = "aarch64-linux-gnu-gcc"
