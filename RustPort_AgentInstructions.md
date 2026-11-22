@@ -884,7 +884,7 @@ the reasons. This file holds only the ordered steps, their gates and their rules
 
 ### Phase 4: UI, CI, performance
 
-- [ ] **86. UI pass.** Size M. Subject: `Verify the ILSpy UI on the Rust engine`.
+- [x] **86. UI pass.** Size M. Subject: `Verify the ILSpy UI on the Rust engine`.
   - Debug Steps (`RecordSteps`, `StepLimit`) route to the managed engine by design; verify
     the pane still works. Verify `SelectCtorTransform` / `SelectFieldTransform`, bookmarks,
     PDB generation, go-to-definition and tooltips on materialized entity references
@@ -892,6 +892,8 @@ the reasons. This file holds only the ordered steps, their gates and their rules
     produced by a forced engine panic. Record the manual smoke list and results in the
     lecture.
   - Gate: G-ui, plus the smoke list in the lecture ticked.
+  - Done (b04f03ac7, lecture 3.232). Shortcut left: a type system without a resolved corlib
+    (known types from `MinimalCorlib`) stays managed, counted.
 
 - [ ] **87. CI and packaging.** Size M. Subject: `Build the Rust engine in CI and ship it with ILSpy`.
   - `.github/workflows/build-ilspy.yml`: Rust toolchain step per job (reads

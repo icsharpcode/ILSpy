@@ -5217,6 +5217,33 @@ The third run failed 1 of 86,221, a process-listing UI test that passes alone. T
 then merged into `ILSPY_RUST_STRICT`; the test projects already set that by default (item 66),
 so every test run is now strict in both seams.
 
+### 3.232 The UI pass (item 86)
+
+The smoke list became headless tests (`ILSpy.Tests/Languages/RustEngineUiTests.cs`). Under
+strict mode a fallback does not fail a UI test, because the shim turns it into the per-member
+error comment, so each test asserts the feature, the absence of that comment, and that the seam
+counters rose (`RustSeam1.Served`, `RustSeam2.Served`, `RustSeam2.RequestsServed`). Results, all
+on the strict engine:
+
+- [x] Debug Steps: managed by design; `DebugStepsTests` shows the IL transform steps in the tree.
+- [x] Constructor selection keeps the selected constructor and the fields it initializes.
+- [x] Field selection keeps the selected field only.
+- [x] Body bookmarks: `BookmarkDebugInfoCaptureTests` round-trips the IL offset/line map of engine
+  output.
+- [x] PDB generation: `PortablePdbWriter` writes sequence points for engine-decompiled bodies.
+- [x] Tooltip and go-to-definition on `List<int>.Add`: a `SpecializedMethod`, hover
+  `List<int>.Add(int ...)`, navigation to `List<T>.Add`.
+- [x] Cancelling `Enumerable` stops the engine before the end of the type, and the view stays
+  usable.
+- [x] A forced engine panic becomes the error comment and the view stays usable. The trigger is
+  a debug-assertions-only export, `ilspy_debug_panic_on_read(token)`.
+
+The pass found one gap. With "auto-load references" off, no corlib resolves and the known types
+come from `MinimalCorlib`, which the engine is not given (3.8). `void` and `object` then read as
+unknown, and the ILAst broke a managed `Debug.Assert`. As a counted shortcut, such a type system
+stays managed (`NoCorlibTests`); serving it needs the engine to model `MinimalCorlib`'s types.
+Gate: the UI suite, 1,356 tests, 0 failed.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |
