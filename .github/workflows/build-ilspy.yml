@@ -60,11 +60,14 @@ jobs:
         $ErrorActionPreference = 'Stop'
         $PSNativeCommandUseErrorActionPreference = $true
         rustup toolchain install
-        if ($IsLinux) { sudo apt-get install -y --no-install-recommends gcc-aarch64-linux-gnu }
+        if ($IsLinux) { sudo apt-get install -y --no-install-recommends gcc-aarch64-linux-gnu libc6-dev-arm64-cross }
         foreach ($pair in $env:TARGETS -split ' ') {
           $rid, $triple = $pair -split '='
           rustup target add $triple
-          cargo build --locked --manifest-path rust/Cargo.toml -p ilspy-decompiler-ffi --profile ship --target $triple
+          # From rust/, so that cargo reads rust/.cargo/config.toml (the cross linker).
+          Push-Location rust
+          cargo build --locked -p ilspy-decompiler-ffi --profile ship --target $triple
+          Pop-Location
           $lib = Get-ChildItem "rust/target/$triple/ship" -File | Where-Object Name -Match '^(lib)?ilspy_decompiler_ffi\.(dll|so|dylib)$'
           New-Item -ItemType Directory -Force "natives/$rid" | Out-Null
           Copy-Item $lib.FullName "natives/$rid/"
@@ -455,7 +458,7 @@ jobs:
         rustup toolchain install
         if ($IsLinux) {
           rustup target add aarch64-unknown-linux-gnu
-          sudo apt-get install -y --no-install-recommends gcc-aarch64-linux-gnu
+          sudo apt-get install -y --no-install-recommends gcc-aarch64-linux-gnu libc6-dev-arm64-cross
         }
 
     - name: Check Rust sources
