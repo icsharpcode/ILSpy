@@ -35,6 +35,24 @@ namespace ICSharpCode.ILSpy.Tests.PdbProvider;
 public class DebugInfoUtilsLoadingTests
 {
 	[Test]
+	public void OpenStreamCopiesPdbFileIntoMemory()
+	{
+		string path = Path.GetTempFileName();
+		File.WriteAllBytes(path, [1, 2, 3, 4]);
+		try
+		{
+			using var stream = DebugInfoUtils.OpenStream(path);
+			Assert.That(stream, Is.TypeOf<MemoryStream>());
+			File.WriteAllBytes(path, [5, 6, 7, 8]);
+			Assert.That(stream!.ReadByte(), Is.EqualTo(1));
+		}
+		finally
+		{
+			File.Delete(path);
+		}
+	}
+
+	[Test]
 	public void LoadSymbolsDoesNotFallBackToCecilForOversizedEmbeddedPdb()
 	{
 		byte[] image = CreateImageWithOversizedEmbeddedPdbHeader();

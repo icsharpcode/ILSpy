@@ -41,8 +41,17 @@ namespace ICSharpCode.ILSpyX.PdbProvider
 			Rejected
 		}
 
+		/// <summary>
+		/// Determines whether an embedded Portable PDB declares a decompressed size above the supported limit.
+		/// </summary>
+		/// <param name="reader">A PE reader with access to the entire image.</param>
+		/// <param name="entry">The embedded Portable PDB debug directory entry to inspect.</param>
+		/// <returns><see langword="true"/> if the declared decompressed size exceeds the limit; otherwise, <see langword="false"/>.</returns>
+		/// <exception cref="NotSupportedException">The reader does not provide access to the entire image.</exception>
 		public static bool IsEmbeddedPortablePdbTooLarge(PEReader reader, DebugDirectoryEntry entry)
 		{
+			if (!reader.IsEntireImageAvailable)
+				throw new NotSupportedException("The PE reader must provide access to the entire image.");
 			if (entry.DataSize < 8)
 				return false;
 			try
@@ -217,13 +226,15 @@ namespace ICSharpCode.ILSpyX.PdbProvider
 				? PortablePdbOpenResult.Opened : PortablePdbOpenResult.NotFound;
 		}
 
-		static Stream? OpenStream(string fileName)
+		internal static Stream? OpenStream(string fileName)
 		{
 			if (!File.Exists(fileName))
 				return null;
-			// The provider may retain this stream for the assembly lifetime; allow file replacement and deletion.
-			return new FileStream(fileName, FileMode.Open, FileAccess.Read,
-				FileShare.ReadWrite | FileShare.Delete);
+			var memory = new MemoryStream();
+			using (var stream = File.OpenRead(fileName))
+				stream.CopyTo(memory);
+			memory.Position = 0;
+			return memory;
 		}
 	}
 }
