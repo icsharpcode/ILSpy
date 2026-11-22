@@ -22,7 +22,7 @@ using System.Runtime.CompilerServices;
 namespace ICSharpCode.Decompiler.Rust.Tests;
 
 /// <summary>
-/// Test runs are strict by default: seam 1 fails a request the engine cannot serve instead of
+/// Test runs are strict by default: seams 1 and 2 fail a request the engine cannot serve instead of
 /// falling back to the managed pipeline. Setting <c>ILSPY_RUST_STRICT</c> before the run (for
 /// example to 0) overrides this. Linked into every test project that loads the shim; the
 /// variable is inherited by the processes a test starts.

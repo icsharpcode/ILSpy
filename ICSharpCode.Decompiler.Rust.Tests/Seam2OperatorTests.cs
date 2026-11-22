@@ -34,7 +34,7 @@ namespace ICSharpCode.Decompiler.Rust.Tests;
 /// <summary>
 /// Operators the engine translates in method bodies (seam 2): each method below decompiles
 /// with seam 2 strict, so a body the engine cannot serve fails, to the managed output.
-/// Non-parallelizable because strictness is the process-wide <c>ILSPY_RUST_STRICT_SEAM2</c>.
+/// Non-parallelizable because strictness is the process-wide <c>ILSPY_RUST_STRICT</c>.
 /// </summary>
 [TestFixture, NonParallelizable]
 public class Seam2OperatorTests
@@ -183,8 +183,8 @@ public class Seam2OperatorTests
 		var method = typeof(Seam2OperatorTests).GetMethod(name, BindingFlags.Static | BindingFlags.NonPublic)!;
 		var handle = (MethodDefinitionHandle)MetadataTokens.EntityHandle(method.MetadataToken);
 		string managed = DecompileMethod(handle, engineBodies: false);
-		string? previous = Environment.GetEnvironmentVariable("ILSPY_RUST_STRICT_SEAM2");
-		Environment.SetEnvironmentVariable("ILSPY_RUST_STRICT_SEAM2", "1");
+		string? previous = Environment.GetEnvironmentVariable("ILSPY_RUST_STRICT");
+		Environment.SetEnvironmentVariable("ILSPY_RUST_STRICT", "1");
 		string engine;
 		try
 		{
@@ -192,7 +192,7 @@ public class Seam2OperatorTests
 		}
 		finally
 		{
-			Environment.SetEnvironmentVariable("ILSPY_RUST_STRICT_SEAM2", previous);
+			Environment.SetEnvironmentVariable("ILSPY_RUST_STRICT", previous);
 		}
 		Assert.That(engine, Is.EqualTo(managed));
 	}

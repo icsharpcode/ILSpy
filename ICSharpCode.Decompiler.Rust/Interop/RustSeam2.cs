@@ -475,9 +475,8 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		[ThreadStatic]
 		static WireReader? currentTypes;
 
-		/// <summary>Whether seam 2 fallback is disabled (<c>ILSPY_RUST_STRICT_SEAM2=1</c>).</summary>
-		// shortcut: separate from ILSPY_RUST_STRICT while the test matrix still hits seam 2 gaps; merge once it runs green strict.
-		public static bool Strict => Environment.GetEnvironmentVariable("ILSPY_RUST_STRICT_SEAM2") == "1";
+		/// <summary>Whether seam 2 fallback is disabled (<c>ILSPY_RUST_STRICT=1</c>, shared with seam 1).</summary>
+		public static bool Strict => RustSeam1.Strict;
 
 		/// <summary>
 		/// Under strict mode (<see cref="Strict"/>) a seam 2 fallback where the engine lacks something
