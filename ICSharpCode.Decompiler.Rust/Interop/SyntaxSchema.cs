@@ -223,8 +223,8 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 			foreach (var t in declaring)
 			{
 				var names = SlotFields(t).Cast<MemberInfo>().Concat(InstanceProperties(t))
-					.OrderBy(m => m.MetadataToken).Select(m => $"\"{m.Name}\"");
-				sb.Append($"\t\t\t[\"{t.Name}\"] = new string[] {{ {string.Join(", ", names)} }},\n");
+					.OrderBy(m => m.MetadataToken).Select(m => $"\"{m.Name}\" ");
+				sb.Append($"\t\t\t[\"{t.Name}\"] = new string[] {{ {string.Join(", ", names).Replace(" ,", ",")}}},\n");
 			}
 			sb.Append("\t\t};\n\t}\n}\n");
 			return sb.ToString();
