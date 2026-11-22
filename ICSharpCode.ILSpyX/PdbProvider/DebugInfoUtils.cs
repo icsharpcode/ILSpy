@@ -216,11 +216,9 @@ namespace ICSharpCode.ILSpyX.PdbProvider
 		{
 			if (!File.Exists(fileName))
 				return null;
-			var memory = new MemoryStream();
-			using (var stream = File.OpenRead(fileName))
-				stream.CopyTo(memory);
-			memory.Position = 0;
-			return memory;
+			// The provider may retain this stream for the assembly lifetime; allow file replacement and deletion.
+			return new FileStream(fileName, FileMode.Open, FileAccess.Read,
+				FileShare.ReadWrite | FileShare.Delete);
 		}
 	}
 }
