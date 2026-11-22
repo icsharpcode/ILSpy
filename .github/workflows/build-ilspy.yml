@@ -13,9 +13,8 @@ env:
   DOTNET_SDK_VERSION: '11.0.x'
   DOTNET_SDK_QUALITY: 'preview'
   StagingDirectory: buildartifacts
-  # shortcut: tests are off while the Rust engine's build and packaging steps are brought up;
-  # set to 'true' (the default before the engine) once every other step is green.
-  RunTests: 'false'
+  # Set to 'false' to bring up build and packaging changes without the test steps; keep 'true' on master.
+  RunTests: 'true'
 
 jobs:
   # Skip push builds for branches whose open PR already builds them; see pr-build-gate.yml.
