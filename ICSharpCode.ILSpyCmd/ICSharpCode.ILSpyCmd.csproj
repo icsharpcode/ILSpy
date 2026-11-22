@@ -80,6 +80,9 @@
          the BAML HandlerMap discovers IHandler implementations via Assembly.GetTypes(). -->
     <TrimmerRootAssembly Include="ilspycmd" />
     <TrimmerRootAssembly Include="ICSharpCode.BamlDecompiler" />
+    <!-- The Rust engine shim builds its syntax-tree wire schema by reflection over the AST node
+         types (slot fields, properties, backing fields; Interop/SyntaxSchema.cs). -->
+    <TrimmerRootAssembly Include="ICSharpCode.Decompiler" />
   </ItemGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
