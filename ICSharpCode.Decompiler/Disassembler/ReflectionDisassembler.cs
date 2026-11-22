@@ -703,7 +703,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 								{
 									if (i + 1 == name.Length)
 										return type;
-									typeDefinitions = typeDef.GetNestedTypes();
+									typeDefinitions = typeDef.GetNestedTypes(metadata, type);
 									goto restart;
 								}
 							}
@@ -1812,7 +1812,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 					output.WriteLine();
 				}
 			}
-			var nestedTypes = Process(module, typeDefinition.GetNestedTypes());
+			var nestedTypes = Process(module, typeDefinition.GetNestedTypes(module.Metadata, type));
 			if (nestedTypes.Any())
 			{
 				output.WriteLine("// Nested Types");

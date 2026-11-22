@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.IO;
 using System.IO.MemoryMappedFiles;
@@ -44,6 +45,41 @@ namespace ICSharpCode.Decompiler
 			return ex is BadImageFormatException
 				or ArgumentOutOfRangeException
 				or IndexOutOfRangeException;
+		}
+
+		internal static ImmutableArray<TypeDefinitionHandle> GetNestedTypes(this TypeDefinition type,
+			MetadataReader metadata, TypeDefinitionHandle declaringType)
+		{
+			return FilterNestedTypes(type.GetNestedTypes(), metadata, declaringType);
+		}
+
+		internal static ImmutableArray<TypeDefinitionHandle> FilterNestedTypes(IEnumerable<TypeDefinitionHandle> candidates,
+			MetadataReader metadata, TypeDefinitionHandle declaringType)
+		{
+			var enclosingTypes = new HashSet<TypeDefinitionHandle>();
+			var enclosingType = declaringType;
+			int remaining = metadata.GetTableRowCount(TableIndex.TypeDef);
+			while (!enclosingType.IsNil && remaining-- > 0)
+			{
+				if (!enclosingTypes.Add(enclosingType))
+					return ImmutableArray<TypeDefinitionHandle>.Empty;
+				enclosingType = metadata.GetTypeDefinition(enclosingType).GetDeclaringType();
+			}
+			if (!enclosingType.IsNil)
+				return ImmutableArray<TypeDefinitionHandle>.Empty;
+
+			var result = ImmutableArray.CreateBuilder<TypeDefinitionHandle>();
+			var addedTypes = new HashSet<TypeDefinitionHandle>();
+			foreach (var nestedType in candidates)
+			{
+				if (nestedType == declaringType
+					|| enclosingTypes.Contains(nestedType)
+					|| metadata.GetTypeDefinition(nestedType).GetDeclaringType() != declaringType
+					|| !addedTypes.Add(nestedType))
+					continue;
+				result.Add(nestedType);
+			}
+			return result.ToImmutable();
 		}
 
 		public static bool HasFlag(this TypeDefinition typeDefinition, TypeAttributes attribute)
