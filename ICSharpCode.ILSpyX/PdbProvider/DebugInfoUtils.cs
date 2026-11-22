@@ -98,14 +98,25 @@ namespace ICSharpCode.ILSpyX.PdbProvider
 			if (stream.Read(buffer, 0, buffer.Length) == LegacyPDBPrefix.Length
 				&& System.Text.Encoding.ASCII.GetString(buffer) == LegacyPDBPrefix)
 			{
-				stream.Position = 0;
+				stream.Dispose();
 				return new MonoCecilDebugInfoProvider(module, pdbFileName);
 			}
-			else
+
+			stream.Position = 0;
+			MetadataReaderProvider? provider = null;
+			try
 			{
-				stream.Position = 0;
-				var provider = MetadataReaderProvider.FromPortablePdbStream(stream);
-				return new PortableDebugInfoProvider(module.FileName, provider, MetadataReaderOptions.Default, pdbFileName);
+				provider = MetadataReaderProvider.FromPortablePdbStream(stream);
+				var debugInfoProvider = new PortableDebugInfoProvider(
+					module.FileName, provider, MetadataReaderOptions.Default, pdbFileName);
+				provider = null;
+				return debugInfoProvider;
+			}
+			catch
+			{
+				provider?.Dispose();
+				stream.Dispose();
+				throw;
 			}
 		}
 
