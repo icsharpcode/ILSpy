@@ -5365,14 +5365,14 @@ type P50 29 / 35 ms, P95 1196 / 4377 ms (one type, `ILSpyCmdProgram`, is 1.0 s m
 3.9 s on the engine side); managed allocated 137 MB / 74 MB, Rust allocated 1.7 GB in 14.6 M
 allocations. These numbers only prove the tooling; the real measurement uses Release builds.
 
-Results (to be filled in by item 88):
+Results (item 88; medians of 3 runs, the corpus 1 run; analysis, per-type percentiles, engine counters, benches and what to optimize first in `RustPort_PerformanceComparison.md`):
 
 | Input | Managed CPU total | Engine CPU total | Marshaling share | Managed peak RSS | Engine peak RSS | Rust peak live |
 |---|---|---|---|---|---|---|
-| ICSharpCode.Decompiler.dll | | | | | | |
-| System.Reflection.Metadata.dll | | | | | | |
-| net10 reference assembly | | | | | | |
-| top-200 NuGet corpus | | | | | | |
+| ICSharpCode.Decompiler.dll | 12.1 s | 116.8 s | 3.7 % | 215 MB | 222 MB | 17 MB |
+| System.Reflection.Metadata.dll | 4.6 s | 8.5 s | 8.6 % | 119 MB | 142 MB | 8 MB |
+| net10 assembly (ILSpy.dll) | 7.8 s | 39.6 s | 4.6 % | 225 MB | 247 MB | 25 MB |
+| top-200 NuGet corpus | 259 s | 2,894 s | 3.0 % | 505 MB | 1,291 MB | 1,040 MB |
 
 ## 7. Bonus: CI so the main build action passes
 

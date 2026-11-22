@@ -907,7 +907,7 @@ the reasons. This file holds only the ordered steps, their gates and their rules
   - Gate: every job of `build-ilspy.yml` green on the PR, `git diff --exit-code` after the
     file list regeneration clean.
 
-- [ ] **88. Performance comparison.** Size M. Subject: `Measure the Rust engine against the managed decompiler`.
+- [x] **88. Performance comparison.** Size M. Subject: `Measure the Rust engine against the managed decompiler`.
   - Implement the methodology in the lecture ("Performance comparison"): `--perf` and
     `--side` in `TestTools/decompdiff.cs`, the counting allocator behind `ilspy_stats`,
     `rust_elapsed_ns` in the response header, `criterion` benches under
@@ -915,10 +915,13 @@ the reasons. This file holds only the ordered steps, their gates and their rules
   - Record CPU (P50, P95, total) and memory (peak RSS, Rust peak live, managed allocated
     bytes) for the three reference inputs and the top-200 NuGet corpus in the lecture.
   - Gate: numbers in the lecture, `cargo bench` runs, decompdiff report attached to the PR.
-  - Status: the tooling is in (lecture, "Tooling as built"); the Release measurements over the
-    three reference inputs and the top-200 corpus (`TestTools/perfcompare.ps1`) are still open.
+  - Done: tooling at 2310be4ee (lecture, "Tooling as built"); the Release measurements over the
+    three reference inputs and the top-200 corpus are in `RustPort_PerformanceComparison.md`
+    (engine 1.9x to 11x slower, 91 to 95 percent of it inside Rust; optimization not started).
 
-- [ ] **89. FORK: optional tail.** Present to the human, with the measured numbers: port the
+- [x] **89. FORK: optional tail.** Obsolete (human decision 2026-11-22): replaced by
+  `RustPort_PerformanceComparison.md`, whose "What to optimize first" list comes before any
+  further port. It was: present to the human, with the measured numbers: port the
   disassembler, port `CSharpOutputVisitor` for standalone Rust output, add a Rust portable
   PDB reader and assembly resolver for `cargo`-only use, port `WholeProjectDecompiler`. Each
   is a separate decision and a separate checklist to be appended here.
