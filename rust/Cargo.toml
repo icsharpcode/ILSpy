@@ -26,3 +26,8 @@ panic = "unwind"
 inherits = "release"
 debug-assertions = false
 overflow-checks = false
+
+# cargo bench measures what ships: the "ship" settings, not the checked "release" ones.
+[profile.bench]
+debug-assertions = false
+overflow-checks = false

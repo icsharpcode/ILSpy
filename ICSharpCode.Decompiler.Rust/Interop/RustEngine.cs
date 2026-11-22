@@ -71,8 +71,10 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		/// </summary>
 		public unsafe void RunAstTransforms(CSharp.Syntax.AstNode root, int prefix, AstRequestFlags flags, int single = -1, CSharp.Transforms.TransformContext? context = null)
 		{
+			using var timer = RustStats.Time();
 			var roundTrip = new SyntaxRoundTrip(context);
 			byte[] tree = roundTrip.Write(root);
+			RustStats.Sent(tree.Length);
 			Exception? failure = null;
 			RustResolver.Callback oracle = (context, query, length, answer, capacity) => {
 				try
@@ -120,6 +122,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 
 		RustEngine(IDecompilerTypeSystem typeSystem)
 		{
+			using var timer = RustStats.Time();
 			this.typeSystem = typeSystem;
 			session = RustSession.Create();
 			using var table = new RustModuleTable(typeSystem);
@@ -161,6 +164,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		public RustStatus ReadFunction(MethodDefinitionHandle method, int ilPrefix, DecompilerSettings settings,
 			IDebugInfoProvider? debugInfo, out ILFunction? function, out string? unsupportedReason, CSharpResolver? resolver = null, UsingScope? usingScope = null, bool combineExits = false, bool translateBody = false, RustBodyContext? body = null)
 		{
+			using var timer = RustStats.Time();
 			function = null;
 			unsupportedReason = null;
 			uint flags = settings.UseRefLocalsForAccurateOrderOfEvaluation ? 1u : 0u;
@@ -205,6 +209,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		/// </summary>
 		public CSharp.Syntax.EntityDeclaration? EntitySyntax(IEntity entity, bool useSpecialConstants, DecompilerSettings settings, out string? unsupportedReason, bool useCustomEvents = false, bool asExtension = false, bool asEnumMember = false)
 		{
+			using var timer = RustStats.Time();
 			unsupportedReason = null;
 			uint flags = (useSpecialConstants ? 1u : 0u)
 				| (settings.SortCustomAttributes ? 2u : 0u)
@@ -252,6 +257,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		/// </summary>
 		public bool MemberIsHidden(EntityHandle member, DecompilerSettings settings)
 		{
+			using var timer = RustStats.Time();
 			var status = NativeMethods.ilspy_session_member_is_hidden(session, (uint)MetadataTokens.GetToken(member), HiddenFlags(settings), out byte hidden);
 			switch (status)
 			{
@@ -269,6 +275,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		/// </summary>
 		public string FieldDataComment(EntityHandle field)
 		{
+			using var timer = RustStats.Time();
 			var status = NativeMethods.ilspy_session_field_data_comment(session, (uint)MetadataTokens.GetToken(field), out var buffer);
 			byte[] bytes = NativeMethods.TakeBuffer(buffer);
 			switch (status)
@@ -288,6 +295,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		/// </summary>
 		public bool? HidesBaseMember(EntityHandle entity, out string? unsupportedReason)
 		{
+			using var timer = RustStats.Time();
 			unsupportedReason = null;
 			var status = NativeMethods.ilspy_session_new_modifier(session, (uint)MetadataTokens.GetToken(entity), out var buffer);
 			byte[] bytes = NativeMethods.TakeBuffer(buffer);
@@ -343,6 +351,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		/// </summary>
 		public List<(EntityHandle Entity, byte Decision)>? MemberWalk(ITypeDefinition type, DecompilerSettings settings, out string? unsupportedReason, out byte enumDisplayMode, out bool removesDefaultMember)
 		{
+			using var timer = RustStats.Time();
 			unsupportedReason = null;
 			enumDisplayMode = 255;
 			removesDefaultMember = false;

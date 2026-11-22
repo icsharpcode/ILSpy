@@ -6,6 +6,7 @@ logs/
 # Generated reports (nugetfuzz-report.html, decompdiff report dirs)
 *-report.html
 decompdiff-report/
+perfcompare/
 
 # dotnet file-based app build output
 bin/

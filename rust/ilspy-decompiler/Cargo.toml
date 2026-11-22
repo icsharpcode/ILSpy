@@ -8,3 +8,11 @@ repository.workspace = true
 
 [lints]
 workspace = true
+
+[dev-dependencies]
+# Benchmarks only (benches/); not part of the engine or the shipped library.
+criterion = { version = "0.8.2", default-features = false }
+
+[[bench]]
+name = "stages"
+harness = false
