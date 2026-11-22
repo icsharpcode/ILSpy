@@ -382,6 +382,14 @@ impl Builder<'_, '_, '_, '_> {
             {
                 true
             }
+            // An element of an array variable has the element type of the variable's type.
+            Rr::Plain(_)
+                if matches!(*self.ast.node(translated.expression), AstNode::Indexer { target, .. }
+                    if matches!(self.ast.annotations(target).rr, Some(Rr::Variable { ty, .. })
+                        if matches!(self.ts.data(ty), TypeData::Array { .. }))) =>
+            {
+                true
+            }
             Rr::Field { field, .. } => field
                 .field
                 .declaring
@@ -400,8 +408,11 @@ impl Builder<'_, '_, '_, '_> {
                     .is_none_or(|m| m.method_args.is_some_and(|a| !a.is_empty()));
                 // The type arguments the overload resolution inferred carry the names of the
                 // arguments' types, which the engine may have lost: names it found are the
-                // resolver's, a tuple without names may lack them.
-                !generic || self.tuple_has_names(translated.ty)
+                // resolver's, a tuple without names may lack them unless every argument's
+                // type has exact names.
+                !generic
+                    || self.tuple_has_names(translated.ty)
+                    || self.arguments_keep_tuple_names(translated.expression)
             }
             // A member of a generic type takes the type arguments, with their names, of the
             // target's type, as the resolver substitutes it: exact for a variable, and for
@@ -453,6 +464,62 @@ impl Builder<'_, '_, '_, '_> {
             },
         );
         Ok(TranslatedExpression { expression: e, ty })
+    }
+
+    /// Whether the arguments of the invocation `e` (with the target of an extension method
+    /// call) have types with the tuple names of the managed resolve results: variables and
+    /// constants, lambdas whose inferred return type has no tuple, and any argument whose type
+    /// has no tuple.
+    fn arguments_keep_tuple_names(&mut self, e: AstId) -> bool {
+        let (
+            AstNode::Invocation { arguments, .. },
+            Some(Rr::Invocation {
+                target, extension, ..
+            }),
+        ) = (self.ast.node(e).clone(), self.ast.annotations(e).rr.clone())
+        else {
+            return false;
+        };
+        if extension && !self.rr_keeps_tuple_names(&target) {
+            return false;
+        }
+        arguments.into_iter().all(|a| {
+            let a = match *self.ast.node(a) {
+                AstNode::NamedArgument { expression, .. } => expression,
+                _ => a,
+            };
+            match self.ast.annotations(a).rr.clone() {
+                Some(rr) => self.rr_keeps_tuple_names(&rr),
+                None => false,
+            }
+        })
+    }
+
+    fn rr_keeps_tuple_names(&mut self, rr: &Rr) -> bool {
+        match rr {
+            Rr::Variable { .. } | Rr::This { .. } | Rr::Constant { .. } => true,
+            Rr::Lambda(index) => {
+                let t = self.ast.lambdas[*index].inferred_return_type.get();
+                !self.contains_tuple(t)
+            }
+            _ => {
+                let t = self.rr_type(rr);
+                !self.contains_tuple(t)
+            }
+        }
+    }
+
+    /// Whether `t` is or contains a tuple type.
+    fn contains_tuple(&self, t: TypeId) -> bool {
+        match self.ts.data(t) {
+            TypeData::Tuple { .. } => true,
+            TypeData::Inst { generic, args } => {
+                self.contains_tuple(*generic) || args.iter().any(|&a| self.contains_tuple(a))
+            }
+            TypeData::Array { elem, .. } => self.contains_tuple(*elem),
+            TypeData::Pointer(e) | TypeData::ByRef(e) => self.contains_tuple(*e),
+            _ => false,
+        }
     }
 
     /// Whether `ty` is a tuple type with at least one element name.

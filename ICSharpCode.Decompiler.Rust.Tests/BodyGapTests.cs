@@ -112,6 +112,12 @@ class BodyGapHidingDerived : BodyGapVirtualBase
 	public Action BaseVirtual() => ((BodyGapVirtualBase)this).M;
 }
 
+enum BodyGapByteEnum : byte
+{
+	A,
+	B
+}
+
 interface IBodyGapLineInfo
 {
 	int Line { get; }
@@ -545,6 +551,49 @@ public class BodyGapTests
 	static bool LiftedEnumAnd(DayOfWeek? d) => ((int?)d & 2) == 2;
 
 	static bool LiftedEnumFlag(DayOfWeek? v, DayOfWeek f) => (v & f) == f;
+
+	static BodyGapByteEnum? LiftedByteEnumLess(BodyGapByteEnum? a, BodyGapByteEnum? b)
+	{
+		if (!a.HasValue || !b.HasValue)
+			return null;
+		return a < b ? a : b;
+	}
+
+	static bool LiftedIntEnumLess(DayOfWeek? a, DayOfWeek? b) => a < b;
+
+	static int TupleOfGenericExtension(System.Collections.Generic.List<(int, string)> l)
+		=> l.FirstOrDefault().Item1 + l.FirstOrDefault(v => v.Item1 > 0).Item1;
+
+	static string TupleArrayElement((int, string)[] a, int i) => a[i].Item2;
+
+	static (Version? version, string name) BodyGapToVersion(string s) => (null, s);
+
+	static string? TupleNamesThroughQuery(string[] dirs, int? major)
+	{
+		var installed = dirs.Select(BodyGapToVersion).Where(v => v.version != null).OrderByDescending(v => v.version).ToList();
+		var match = installed.FirstOrDefault(v => v.version!.Major == major);
+		return match.name ?? installed.FirstOrDefault().name;
+	}
+
+	[TestCase(nameof(LiftedByteEnumLess))]
+	[TestCase(nameof(LiftedIntEnumLess))]
+	[TestCase(nameof(TupleOfGenericExtension))]
+	[TestCase(nameof(TupleArrayElement))]
+	[TestCase(nameof(TupleNamesThroughQuery))]
+	public void EngineServesTupleAndComparisonBody(string name)
+	{
+		AssertEngineServes(typeof(BodyGapTests).GetMethod(name, BindingFlags.Static | BindingFlags.NonPublic)!);
+	}
+
+	static T NullComparisonOfTypeParameter<T>() where T : new()
+		=> default(T) == null ? Activator.CreateInstance<T>() : default(T)!;
+
+	[TestCase(nameof(NullComparisonOfTypeParameter))]
+	public void EngineServesCSharp1Body(string name)
+	{
+		AssertEngineServes(typeof(BodyGapTests).GetMethod(name, BindingFlags.Static | BindingFlags.NonPublic)!,
+			new DecompilerSettings(CSharp.LanguageVersion.CSharp1));
+	}
 
 	[TestCase(nameof(EnumLessEqual))]
 	[TestCase(nameof(CoalesceUnrelated))]

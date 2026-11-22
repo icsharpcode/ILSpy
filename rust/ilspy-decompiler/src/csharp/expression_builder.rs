@@ -1384,7 +1384,9 @@ impl Builder<'_, '_, '_, '_> {
     }
 
     /// Whether the operator resolved over the comparison's stack type. Two constants resolve to
-    /// the folded constant, no `OperatorResolveResult`, so they never fit.
+    /// the folded constant, no `OperatorResolveResult`, so they never fit; except a nullable or
+    /// non-value type compared with the null literal, which `ResolveBinaryOperator` answers
+    /// before it folds constants (`default(T) == null`).
     fn fits_comparison(
         &mut self,
         resolved: Option<bool>,
@@ -1393,7 +1395,25 @@ impl Builder<'_, '_, '_, '_> {
         input: StackType,
     ) -> bool {
         let operand = self.equality_operand_type(l, r);
-        resolved.is_some() && self.ts.stack_type(operand) == input && !self.both_constant(l, r)
+        resolved.is_some()
+            && self.ts.stack_type(operand) == input
+            && (!self.both_constant(l, r) || self.is_comparison_with_null_literal(l.ty, r.ty))
+    }
+
+    /// The `ResolveBinaryOperator` case "compare type parameter or nullable type with the null
+    /// literal": one operand of the null type, the other a nullable or not a value type.
+    fn is_comparison_with_null_literal(&mut self, lt: TypeId, rt: TypeId) -> bool {
+        let (l_null, r_null) = (
+            self.ts.kind(lt) == TypeKind::Null,
+            self.ts.kind(rt) == TypeKind::Null,
+        );
+        let other = match (l_null, r_null) {
+            (true, false) => rt,
+            (false, true) => lt,
+            _ => return false,
+        };
+        self.ts.is_known(other, KnownTypeCode::NullableOfT)
+            || self.ts.is_reference_type(other) != Some(false)
     }
 
     /// The type of the operator's first operand (`rr.Operands[0].Type`): the promoted type of
@@ -2412,8 +2432,11 @@ impl Builder<'_, '_, '_, '_> {
         // Special case comparisons with enum and char literals
         let l = self.adjust_constant_expression_to_type(l, r.ty)?;
         let r = self.adjust_constant_expression_to_type(r, l.ty)?;
-        // The enum comparison operators of two operands of one enum type.
-        let same_enum = self.ts.kind(l.ty) == TypeKind::Enum && l.ty == r.ty;
+        // The enum comparison operators of two operands of one enum type (lifted, of one
+        // underlying enum type).
+        let enum_type = self.ts.nullable_underlying(l.ty);
+        let same_enum = self.ts.kind(enum_type) == TypeKind::Enum
+            && enum_type == self.ts.nullable_underlying(r.ty);
         // An enum and a non-constant operand of another type that is no nullable: the enum
         // operators take neither (only a constant zero converts implicitly to an enum), nor does
         // a predefined numeric operator take the enum.
@@ -2445,7 +2468,7 @@ impl Builder<'_, '_, '_, '_> {
         // (lifted, the promoted type of the underlying types); a constant of another type
         // converts implicitly in ways the promotion does not model.
         let promoted = if same_enum {
-            Some(l.ty)
+            Some(enum_type)
         } else if enum_mismatch {
             None
         } else if self.is_native_integer(l.ty) || self.is_native_integer(r.ty) {
