@@ -497,6 +497,21 @@ jobs:
         --no-build --report-trx
         --results-directory test-results
 
+    # The cargo tests read fixtures the decompiler tests leave behind: the .NET 5 reference
+    # System.Runtime.dll they download, and their own test assembly for the type system.
+    - name: Execute cargo tests
+      if: env.RunTests == 'true' && matrix.platform == 'linux'
+      working-directory: rust
+      run: |
+        $ErrorActionPreference = 'Stop'
+        $PSNativeCommandUseErrorActionPreference = $true
+        $bin = Resolve-Path ../ICSharpCode.Decompiler.Tests/bin/Release
+        $env:ILSPY_REF_SYSTEM_RUNTIME = (Get-ChildItem $bin -Recurse -Filter System.Runtime.dll | Where-Object FullName -Match '[\\/]ref[\\/]net5\.0[\\/]' | Select-Object -First 1).FullName
+        $env:ILSPY_TYPESYSTEM_TEST_ASSEMBLY = (Get-ChildItem $bin -Recurse -Filter ICSharpCode.Decompiler.Tests.dll | Select-Object -First 1).FullName
+        $env:ILSPY_LEGACY_REFERENCE_DIR = (Resolve-Path ../ILSpy-tests/dotnet/legacy).Path
+        if (-not $env:ILSPY_REF_SYSTEM_RUNTIME -or -not $env:ILSPY_TYPESYSTEM_TEST_ASSEMBLY) { throw "cargo test fixtures not found under $bin" }
+        cargo test --locked
+
     - name: Execute Rust engine tests
       if: env.RunTests == 'true' && matrix.platform == 'linux'
       run: >
