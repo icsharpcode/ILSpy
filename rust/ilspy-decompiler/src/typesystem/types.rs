@@ -209,6 +209,8 @@ pub struct TypeSystem<'c, 'a> {
     explicit_contexts: Vec<ExplicitContext>,
     /// The type parameters of `TypeParamOwner::Synthetic`, by id.
     synthetic_type_parameters: Vec<super::members::TypeParamInfo>,
+    /// `conversion_operator_methods` by type and whether `op_Explicit` is included.
+    pub(super) conversion_operators: HashMap<(TypeId, bool), Vec<super::resolve::ResolvedMethod>>,
 }
 
 impl<'c, 'a> TypeSystem<'c, 'a> {
@@ -220,6 +222,7 @@ impl<'c, 'a> TypeSystem<'c, 'a> {
             known: HashMap::new(),
             explicit_contexts: Vec::new(),
             synthetic_type_parameters: Vec::new(),
+            conversion_operators: HashMap::new(),
         }
     }
 

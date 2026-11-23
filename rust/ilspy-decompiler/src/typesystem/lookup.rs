@@ -92,6 +92,40 @@ impl TypeSystem<'_, '_> {
         type_arguments: Option<&[TypeId]>,
         options: MemberOptions,
     ) -> Result<Vec<ResolvedMethod>> {
+        self.get_methods_named(t, type_arguments, options, None)
+    }
+
+    /// The `op_Implicit` methods of `t` (with `explicit` also the `op_Explicit` ones), as
+    /// `get_methods` gives them; every conversion asks for them, so they are kept.
+    pub fn conversion_operator_methods(
+        &mut self,
+        t: TypeId,
+        explicit: bool,
+    ) -> Vec<ResolvedMethod> {
+        if let Some(methods) = self.conversion_operators.get(&(t, explicit)) {
+            return methods.clone();
+        }
+        let names: &[&str] = if explicit {
+            &["op_Implicit", "op_Explicit"]
+        } else {
+            &["op_Implicit"]
+        };
+        let methods = self
+            .get_methods_named(t, None, MemberOptions::default(), Some(names))
+            .unwrap_or_default();
+        self.conversion_operators
+            .insert((t, explicit), methods.clone());
+        methods
+    }
+
+    /// `get_methods` of only the methods named one of `names` (all with `None`).
+    pub fn get_methods_named(
+        &mut self,
+        t: TypeId,
+        type_arguments: Option<&[TypeId]>,
+        options: MemberOptions,
+        names: Option<&[&str]>,
+    ) -> Result<Vec<ResolvedMethod>> {
         let t = self.undecorated(t);
         let method_args = type_arguments.filter(|a| !a.is_empty());
         let mut result = Vec::new();
@@ -100,7 +134,7 @@ impl TypeSystem<'_, '_> {
                 continue;
             };
             let class = self.class_arguments(base);
-            for (m, kind) in self.definition_methods(def)? {
+            for (m, kind) in self.definition_methods_named(def, names)? {
                 if kind == SymbolKind::Constructor {
                     continue;
                 }

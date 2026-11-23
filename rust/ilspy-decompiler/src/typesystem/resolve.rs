@@ -214,6 +214,16 @@ impl TypeSystem<'_, '_> {
         &mut self,
         def: TypeDefId,
     ) -> Result<Vec<(ResolvedMethod, SymbolKind)>> {
+        self.definition_methods_named(def, None)
+    }
+
+    /// `definition_methods` of only the methods named one of `names` (all with `None`); the
+    /// rows are filtered by name before a signature is decoded.
+    pub fn definition_methods_named(
+        &mut self,
+        def: TypeDefId,
+        names: Option<&[&str]>,
+    ) -> Result<Vec<(ResolvedMethod, SymbolKind)>> {
         let md = &self.comp.module(def.module).md;
         let info = self.comp.type_def(def)?;
         let kind = info.kind;
@@ -224,6 +234,11 @@ impl TypeSystem<'_, '_> {
                 module: def.module,
                 row,
             };
+            if let Some(names) = names
+                && !names.contains(&md.string(md.get::<rows::MethodDef>(row)?.name)?.as_ref())
+            {
+                continue;
+            }
             if self.accessor_owner(m).is_some() || !self.comp.is_visible_method(def.module, row) {
                 continue;
             }
@@ -237,7 +252,10 @@ impl TypeSystem<'_, '_> {
             }
             result.push((method, symbol));
         }
-        if !has_default_ctor && matches!(kind, TypeKind::Struct | TypeKind::Enum) {
+        if !has_default_ctor
+            && matches!(kind, TypeKind::Struct | TypeKind::Enum)
+            && names.is_none_or(|n| n.contains(&".ctor"))
+        {
             let declaring = self.intern(TypeData::Def(def));
             let void = self.known_type(KnownTypeCode::Void);
             result.push((

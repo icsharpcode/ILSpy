@@ -1110,10 +1110,7 @@ impl<'t, 'c, 'a> Conversions<'t, 'c, 'a> {
             self.underlying_type_for_conversion(from),
             self.underlying_type_for_conversion(to),
         ] {
-            let methods = self
-                .ts
-                .get_methods(t, None, Default::default())
-                .unwrap_or_default();
+            let methods = self.ts.conversion_operator_methods(t, explicit);
             for m in methods {
                 if !(m.name == "op_Implicit" || (explicit && m.name == "op_Explicit"))
                     || !m.is_static
