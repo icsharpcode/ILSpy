@@ -314,11 +314,15 @@ public class BodyGapTests
 
 	static int ExtensionOnTuple(int i) => (i, "x").TupleExtension();
 
+	// Five strings bind Path.Combine(params ReadOnlySpan<string>), built in an inline array.
+	static string ParamsSpanInInlineArray(string a) => System.IO.Path.Combine(a, "b", "c", "d", "e");
+
 	static bool LiftedUserDefinedOperator(BodyGapLiftable? a, BodyGapLiftable? b) => a == b;
 
 	[TestCase(nameof(BoundExtensionMethod))]
 	[TestCase(nameof(BoundExtensionMethodOnNull))]
 	[TestCase(nameof(ExtensionOnTuple))]
+	[TestCase(nameof(ParamsSpanInInlineArray))]
 	[TestCase(nameof(LiftedUserDefinedOperator))]
 	[TestCase(nameof(SwitchOfTuples))]
 	[TestCase(nameof(UnboundExtensionMethod))]

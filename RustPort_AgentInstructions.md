@@ -328,7 +328,7 @@ the reasons. This file holds only the ordered steps, their gates and their rules
     `rust/ilast-divergence-allowlist.json`.
   - Gate: G-dotnet, G-oracle, G-ratchet, G-ilast(0).
 
-- [ ] **7-66. One IL transform per commit, in pipeline order.** Subject pattern:
+- [x] **7-66. One IL transform per commit, in pipeline order.** Subject pattern:
   `Port <TransformName> to Rust (IL prefix <N>)`. Each commit ports the transform, bumps
   `il_prefix` in the ratchet, and passes G-rust, G-oracle, G-ilast(N) and G-ratchet. `N`
   counts pipeline leaves (lecture 3.22), 59 in all: item `k` is prefix `k - 6` up to item 31,
@@ -729,7 +729,7 @@ the reasons. This file holds only the ordered steps, their gates and their rules
         constants; lecture 3.199). Subject: `Port TypeSystemAstBuilder.ConvertConstantValue to Rust`.
       - [x] 68z2b. Floating point constants (`ConvertFloatingPointLiteral`; lecture 3.200); floats
         choosing MathF by `IsDirectImportOf` and nulls of type parameter types stay counted. Subject: `Port floating point constant syntax to Rust`.
-      - [ ] 68z3. Member declarations: `ConvertEntity` for methods, constructors, fields,
+      - [x] 68z3. Member declarations: `ConvertEntity` for methods, constructors, fields,
         properties, indexers, events and operators, with modifiers, parameters and attributes.
         Subject: `Port member declarations of TypeSystemAstBuilder to Rust`. Split (agent
         recommendation): 68z3a the entity request (an FFI entry, the wire message, the host
@@ -743,7 +743,7 @@ the reasons. This file holds only the ordered steps, their gates and their rules
         Subject: `Write method declarations in the engine`.
       - [x] 68z3c. Property, indexer and event declarations with their accessors (lecture
         3.205). Subject: `Write property and event declarations in the engine`.
-      - [ ] 68z4. Type declarations, namespaces and usings: the request-level `SyntaxTree`
+      - [x] 68z4. Type declarations, namespaces and usings: the request-level `SyntaxTree`
         through `Interop/AstMaterializer.cs`, with `ExtensionInfo` and `ExtensionEverything`.
         Subject: `Add the Rust C# AST builders and the AST materializer`.
         Split (agent recommendation):
@@ -752,7 +752,7 @@ the reasons. This file holds only the ordered steps, their gates and their rules
         - [x] 68z4b. C# 14 extension blocks: `ExtensionInfo`, extension declarations and the
           members of extension blocks, with the loader test `ExtensionEverything` (lectures
           3.209-3.212).
-        - [ ] 68z4c. The request-level `SyntaxTree`: namespaces, usings, the member order and
+        - [x] 68z4c. The request-level `SyntaxTree`: namespaces, usings, the member order and
           the rest of `DoDecompile` through `Interop/AstMaterializer.cs`. Split (agent
           recommendation), each step gated by G-ast(0) with the host still decompiling what the
           engine does not yet:
@@ -780,15 +780,16 @@ the reasons. This file holds only the ordered steps, their gates and their rules
             compiler-generated members that decompiled bodies reference.
             The forwarders, the nested-in-enum comment and the work list need the finished member
             declarations with their bodies, so they come with 68z4c6 (agent recommendation).
-          - [ ] 68z7 (open, found 2026-11-17): bodies that build a `params ReadOnlySpan<T>` argument in
+          - [x] 68z7 (found 2026-11-17): bodies that build a `params ReadOnlySpan<T>` argument in
             an inline array (`LdElemaInlineArray`, e.g. `Path.Combine` with five or more arguments on
-            .NET 9) fall back to the statement builder, counted; the ratchet corpus avoids one such
-            call in `SyntaxSchemaTests` until the engine translates them.
+            .NET 9) fell back to the statement builder, counted. Served since the body gaps of 85e
+            (lecture 3.227); `BodyGapTests.ParamsSpanInInlineArray` checks it.
       - [x] 68z8. The syntax tree round trip (agent recommendation after the user chose speed, lecture
         3.221): the host sends the finished tree, the engine runs the ported AST transforms and
         sends it back. It replaces 68z4c6 and the resolve-result gap as prerequisites of 69-84,
         which are ported in parallel against `AstTransformEqualityTests` and served in order.
-          - [ ] 68z4c6. The type declaration assembled in the engine: declaration nodes in the
+          - [x] 68z4c6. Superseded by 68z8 (human decision 2026-11-23): the host assembles the type
+            declaration and the engine transforms the finished tree. The original item: the type declaration assembled in the engine: declaration nodes in the
             engine's AST arena beside the body nodes, one request per type that translates the
             members' bodies (the resolver callbacks stay per method) and returns the whole
             declaration, and `Interop/AstMaterializer.cs` building it; with it the work list of
