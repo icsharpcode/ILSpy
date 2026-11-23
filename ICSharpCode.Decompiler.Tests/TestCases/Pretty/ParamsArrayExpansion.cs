@@ -20,6 +20,16 @@ using System;
 
 public class ParamsArrayExpansion
 {
+	public static string ShortArray()
+	{
+		return string.Concat(new string[3]);
+	}
+
+	public static int ShortParamsArray()
+	{
+		return Sum(new int[3]);
+	}
+
 	public static string LargeArray()
 	{
 		return string.Concat(new string[50000000]);
@@ -31,6 +41,11 @@ public class ParamsArrayExpansion
 	}
 
 	private static int SpanLength(params ReadOnlySpan<int> values)
+	{
+		return values.Length;
+	}
+
+	private static int Sum(params int[] values)
 	{
 		return values.Length;
 	}
