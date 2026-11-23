@@ -66,5 +66,14 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			array[0, 1] = 2;
 			return array;
 		}
+
+		// The store is far away from the start of the array: the initializer transform
+		// must give up without padding the skipped slots one by one.
+		public int[,] SparseStore()
+		{
+			int[,] array = new int[65536, 65536];
+			array[65535, 0] = 1;
+			return array;
+		}
 	}
 }
