@@ -64,6 +64,9 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				// Detect all handlers that contain an await expression
 				AnalyzeHandlers(tryCatch.Handlers, out var catchHandlerIdentifier, out var transformableCatchBlocks);
 				var cfg = new ControlFlowGraph(container, context.CancellationToken);
+				if (transformableCatchBlocks.Any(result =>
+					AwaitInFinallyTransform.WouldMoveBlock(result.RealCatchBlockEntryPoint, null, cfg, (Block)tryCatch.Parent)))
+					continue;
 				if (transformableCatchBlocks.Count > 0)
 					changedContainers.Add(container);
 				SwitchInstruction switchInstructionOpt = null;

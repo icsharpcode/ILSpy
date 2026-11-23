@@ -351,6 +351,12 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
+		public async Task AsyncMultiCatchTryCatch()
+		{
+			await RunForLibrary(cscOptions: CompilerOptions.UseRoslynLatest);
+		}
+
+		[Test]
 		public async Task Lock([ValueSource(nameof(defaultOptionsWithMcs))] CompilerOptions cscOptions)
 		{
 			await RunForLibrary(cscOptions: cscOptions);

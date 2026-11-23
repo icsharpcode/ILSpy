@@ -321,6 +321,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			// Build the CFG once, before any structural changes. The dominator analysis below
 			// uses this snapshot to identify which blocks belong to the finally body.
 			var cfg = new ControlFlowGraph(container, context.CancellationToken);
+			if (AwaitInFinallyTransform.WouldMoveBlock(continuation, finallyExitBlock, cfg, parentBlock))
+				return false;
 
 			// Build a new BlockContainer for the finally body.
 			var finallyContainer = new BlockContainer().WithILRange(handler.Body);
@@ -544,28 +546,15 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			finallyExitBlock.Instructions.Add(leave);
 		}
 
-		static List<Block> CollectReachable(Block entry, List<Block> exclude)
+		static List<Block> CollectDominated(Block entry, ControlFlowGraph graph)
 		{
-			var excludeSet = new HashSet<Block>(exclude);
-			var visited = new HashSet<Block>();
+			var node = graph.GetNode(entry);
 			var result = new List<Block>();
-			var queue = new Queue<Block>();
-			queue.Enqueue(entry);
-			while (queue.Count > 0)
+			foreach (var n in graph.cfg)
 			{
-				var b = queue.Dequeue();
-				if (!visited.Add(b))
-					continue;
-				if (excludeSet.Contains(b))
-					continue;
-				if (b.Parent != entry.Parent)
-					continue;
-				result.Add(b);
-				foreach (var br in b.Descendants.OfType<Branch>())
-				{
-					if (br.TargetBlock != null && br.TargetBlock.Parent == entry.Parent)
-						queue.Enqueue(br.TargetBlock);
-				}
+				var block = (Block)n.UserData;
+				if (block.Parent == entry.Parent && node.Dominates(n))
+					result.Add(block);
 			}
 			return result;
 		}
@@ -656,7 +645,10 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			context.StepStartGroup("Rewrite runtime-async try-catch", tryCatch);
 
 			// Move catch body blocks (those dominated by catchBodyEntry within `container`) into the handler.
-			var bodyBlocks = CollectReachable(catchBodyEntry, new List<Block>());
+			var cfg = new ControlFlowGraph(container, context.CancellationToken);
+			var bodyBlocks = CollectDominated(catchBodyEntry, cfg);
+			if (bodyBlocks.Contains(parentBlock))
+				return false;
 			foreach (var b in bodyBlocks)
 			{
 				b.Remove();
@@ -801,6 +793,11 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 			context.StepStartGroup("Rewrite runtime-async multi-handler try-catch", tryCatch);
 			var cfg = new ControlFlowGraph(container, context.CancellationToken);
+			foreach (var info in handlerInfos)
+			{
+				if (AwaitInFinallyTransform.WouldMoveBlock(caseBlocks[info.k], null, cfg, (Block)tryCatch.Parent))
+					return false;
+			}
 
 			foreach (var info in handlerInfos)
 			{
