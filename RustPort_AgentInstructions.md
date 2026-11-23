@@ -895,7 +895,7 @@ the reasons. This file holds only the ordered steps, their gates and their rules
   - Done (b04f03ac7, lecture 3.232). Shortcut left: a type system without a resolved corlib
     (known types from `MinimalCorlib`) stays managed, counted.
 
-- [ ] **87. CI and packaging.** Size M. Subject: `Build the Rust engine in CI and ship it with ILSpy`.
+- [x] **87. CI and packaging.** (lecture 3.233) Size M. Subject: `Build the Rust engine in CI and ship it with ILSpy`.
   - `.github/workflows/build-ilspy.yml`: Rust toolchain step per job (reads
     `rust-toolchain.toml`, cache keyed on `rust/Cargo.lock`), targets per job as listed in
     the lecture, `cargo fmt --check`, `clippy`, `cargo test` before `dotnet build`; Linux job

@@ -5244,6 +5244,57 @@ unknown, and the ILAst broke a managed `Debug.Assert`. As a counted shortcut, su
 stays managed (`NoCorlibTests`); serving it needs the engine to model `MinimalCorlib`'s types.
 Gate: the UI suite, 1,356 tests, 0 failed.
 
+### 3.233 CI and packaging (item 87)
+
+A `RustNative` job builds the engine once per RID with the `ship` profile: win-x64 and win-arm64
+on Windows, linux-x64 and linux-arm64 (cross-linked with `aarch64-linux-gnu-gcc`, configured in
+`rust/.cargo/config.toml`, so cargo must run from `rust/`) on Ubuntu, osx-arm64 on macOS. The
+libraries travel as artifacts to the jobs that package: the Windows build, the NuGet pack and the
+ilspycmd RID packages take them through `-p:RustNativeAssetsDir`. The shim's NuGet package carries
+them under `runtimes/<rid>/native/`. A RID-less output (the framework-dependent ILSpy zip, `-r any`
+ilspycmd) gets one library per OS, flat next to the managed assemblies: win-x64, linux-x64 and
+osx-arm64. That is a shortcut: Windows and Linux on arm64 need their RID-specific builds, and the
+upgrade is a `DllImport` resolver that picks `runtimes/<rid>/native/`.
+
+Native AOT ilspycmd needed two fixes. The trimmer removed the AST node members the wire schema
+reflects over (`TrimmerRootAssembly ICSharpCode.Decompiler`), and Native AOT has no
+`MemberInfo.MetadataToken`, so the declaration order the schema sorts by is generated into
+`Interop/SyntaxSchema.Order.cs` and checked by `SyntaxSchemaTests`.
+
+Lessons from bringing it up:
+
+- Every action needs an entry in `.github/workflows/actions.lock` (`gh actions-lock`), or the
+  workflow ends in `startup_failure` with no job log.
+- The MSI and VSIX file lists had drifted before the branch; they are regenerated from the CI
+  artifacts, since the Debug job's verification step builds no installer.
+- A `RunTests` switch in the workflow env gates every test step, so build and packaging changes
+  run in minutes. It stays `'true'`.
+- The first run with tests found an engine gap no local gate had: `(await f()).Item1`, in
+  ilspycmd's tests decompiling themselves. An await is typed with the IL `GetResult` return type,
+  as in the C# builder, so its tuple names are known. In strict mode the refused body's error
+  text also tripped the PDB writer's duplicate sequence point assert.
+- The equality sweeps take hours over the full corpus on a 4-core runner, where the fixtures are
+  being compiled at the same time. CI sets `ILSPY_RUST_CORPUS=decompiler`, which sweeps
+  ICSharpCode.Decompiler.dll only; the full corpus stays a local gate. Tests that need one fixture
+  are ignored while it is not built.
+- The Windows job runs all test hosts at once. Next to the Rust engine's parallel sweeps every
+  suite there slowed about tenfold, so the Rust engine tests run only in the Linux job, and the
+  Windows step tests `BuildTools/WindowsCITests.slnf` (every other test project; a new test
+  project has to be added there too).
+- The test time left on Windows was the assembly round trips, 493 min of test time against 29 on
+  master, nearly all of it four generated conversion round trips (`ExplicitConversions`: 145 min
+  against 5.5). Stage timings put it in overload resolution: for every argument of every
+  candidate, `conversion_operators` resolved every method of both types and their bases to keep
+  a few `op_Implicit` ones. Filtering the MethodDef rows by name first and keeping the operators
+  per request took the `Conv_I1` type of `ExplicitConversions_32` from 113 s to 8.4 s. No
+  benchmark had shown it: the Conversions fixtures are the only inputs with thousands of calls
+  that each have many overloads with user-defined conversions in their parameter types.
+
+The first green run with tests (45175084742, on 0b854fc83, which also moves the workflows to the
+GA .NET 11 SDK) took, per test step: Windows Debug 24 min and Release 31 min (master: 15),
+Linux decompiler tests 6 min (master: 6), cargo tests 2 min, Rust engine tests 16 min, the UI
+tests 2 min on Linux and 4 on macOS.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |
