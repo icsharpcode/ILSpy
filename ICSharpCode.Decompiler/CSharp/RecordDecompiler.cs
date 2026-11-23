@@ -262,29 +262,38 @@ namespace ICSharpCode.Decompiler.CSharp
 
 			bool IsPrimaryConstructor(Block body, IMethod method, IMethod unspecializedMethod)
 			{
-				foreach (IParameter p in unspecializedMethod.Parameters)
+				CallInstruction? baseCtorCall = null;
+				bool unresolvedBaseType = false;
+				if (!isStruct)
 				{
+					if (body.Instructions.SecondToLastOrDefault() is not CallInstruction call)
+						return false;
+					if (!call.Method.IsConstructor)
+						return false;
+					if (call.Method.DeclaringType.Equals(method.DeclaringType))
+						return false;
+					baseCtorCall = call;
+					unresolvedBaseType = call.Method.DeclaringType.GetDefinition() == null;
+				}
+
+				for (int i = 0; i < unspecializedMethod.Parameters.Count; i++)
+				{
+					IParameter p = unspecializedMethod.Parameters[i];
 					// ref and out are not valid modifiers in this context
 					if (p.ReferenceKind is ReferenceKind.Ref or ReferenceKind.Out)
 						return false;
 
 					// for each positional parameter there must be a field or property of the same name and type
 					if (!nameToMemberMap.TryGetValue(p.Name, out var member))
-						return false;
+					{
+						// The parameter may represent an inherited positional member on an unresolved base record.
+						if (!unresolvedBaseType || baseCtorCall == null || !IsPassedToBaseConstructor(baseCtorCall, i))
+							return false;
+						continue;
+					}
 
 					var paramType = p.ReferenceKind != ReferenceKind.None ? p.Type.UnwrapByRef() : p.Type;
 					if (!NormalizeTypeVisitor.TypeErasure.EquivalentTypes(paramType, member.ReturnType))
-						return false;
-				}
-
-				if (!isStruct)
-				{
-					if (body.Instructions.SecondToLastOrDefault() is not CallInstruction baseCtorCall)
-						return false;
-					var baseCtor = baseCtorCall.Method;
-					if (!baseCtor.IsConstructor)
-						return false;
-					if (baseCtor.DeclaringType.Equals(method.DeclaringType))
 						return false;
 				}
 
@@ -342,6 +351,14 @@ namespace ICSharpCode.Decompiler.CSharp
 
 				var returnInst = body.Instructions.LastOrDefault();
 				return returnInst != null && returnInst.MatchReturn(out var retVal) && retVal.MatchNop();
+
+				bool IsPassedToBaseConstructor(CallInstruction call, int parameterIndex)
+				{
+					return call.Arguments.Skip(1).Any(argument =>
+						argument.MatchLdLoc(out var variable)
+						&& variable.Kind == VariableKind.Parameter
+						&& variable.Index == parameterIndex);
+				}
 
 				bool ValidateParameter(ILVariable v, int expectedMinimumIndex)
 				{
