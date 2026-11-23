@@ -139,6 +139,19 @@ namespace ICSharpCode.Decompiler.Metadata
 			}
 		}
 
+		/// <summary>
+		/// True when <paramref name="reference"/> asks for a different version than the assembly
+		/// defined by <paramref name="reader"/>. Unknown versions never count as a mismatch.
+		/// </summary>
+		public static bool IsVersionMismatch(this IAssemblyReference reference, MetadataReader reader)
+		{
+			if (reference == null)
+				throw new ArgumentNullException(nameof(reference));
+			if (reader == null)
+				throw new ArgumentNullException(nameof(reader));
+			return reference.Version != null && reader.IsAssembly && reference.Version != reader.GetAssemblyDefinition().Version;
+		}
+
 		public static string ToHexString(this IEnumerable<byte> bytes, int estimatedLength)
 		{
 			if (bytes == null)
