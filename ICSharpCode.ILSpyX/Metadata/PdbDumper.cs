@@ -20,6 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.Reflection.PortableExecutable;
 using System.Linq;
 using System.Text;
 using System.Text.Json;
@@ -65,8 +66,16 @@ namespace ICSharpCode.ILSpyX.Metadata
 		/// <exception cref="NoDebugSymbolsException">No readable debug symbols were found.</exception>
 		public static void Dump(string assemblyFileName, string? pdbFileName, TextWriter output, bool asJson)
 		{
-			using var module = ReadModuleWithSymbols(assemblyFileName, pdbFileName);
-			Dump(module, assemblyFileName, output, asJson);
+			var module = ReadModuleWithSymbols(assemblyFileName, pdbFileName, out var symbolStream);
+			try
+			{
+				Dump(module, assemblyFileName, output, asJson);
+			}
+			finally
+			{
+				module.Dispose();
+				symbolStream?.Dispose();
+			}
 		}
 
 		/// <summary>
@@ -78,8 +87,16 @@ namespace ICSharpCode.ILSpyX.Metadata
 		/// <exception cref="NoDebugSymbolsException">No readable debug symbols were found.</exception>
 		public static void Dump(Stream assemblyStream, string assemblyName, string? pdbFileName, TextWriter output, bool asJson)
 		{
-			using var module = ReadModuleWithSymbols(assemblyStream, assemblyName, pdbFileName);
-			Dump(module, assemblyName, output, asJson);
+			var module = ReadModuleWithSymbols(assemblyStream, assemblyName, pdbFileName, out var symbolStream);
+			try
+			{
+				Dump(module, assemblyName, output, asJson);
+			}
+			finally
+			{
+				module.Dispose();
+				symbolStream?.Dispose();
+			}
 		}
 
 		static void Dump(ModuleDefinition module, string assemblyName, TextWriter output, bool asJson)
@@ -114,48 +131,79 @@ namespace ICSharpCode.ILSpyX.Metadata
 			return parameters;
 		}
 
-		static ModuleDefinition ReadModuleWithSymbols(string assemblyFileName, string? pdbFileName)
+		static ModuleDefinition ReadModuleWithSymbols(string assemblyFileName, string? pdbFileName, out Stream? symbolStream)
 		{
-			var parameters = CreateReaderParameters(pdbFileName);
 			ModuleDefinition module;
+			symbolStream = null;
 			try
 			{
+				if (pdbFileName == null)
+				{
+					using (var stream = File.OpenRead(assemblyFileName))
+					using (var reader = new PEReader(stream))
+					{
+						CheckEmbeddedPortablePdbSize(reader, assemblyFileName);
+					}
+				}
+				var parameters = CreateReaderParameters(pdbFileName);
+				symbolStream = parameters.SymbolStream;
 				module = ModuleDefinition.ReadModule(assemblyFileName, parameters);
 			}
-			catch (Exception ex) when (ex is FileNotFoundException or InvalidOperationException or BadImageFormatException)
+			catch (Exception ex) when (ex is IOException or InvalidOperationException or BadImageFormatException)
 			{
+				symbolStream?.Dispose();
 				throw new NoDebugSymbolsException(
 					$"No debug symbols could be read for '{assemblyFileName}'.", ex);
 			}
 			if (module.SymbolReader == null)
 			{
 				module.Dispose();
+				symbolStream?.Dispose();
 				throw new NoDebugSymbolsException($"No debug symbols found for '{assemblyFileName}'.");
 			}
 			return module;
 		}
 
-		static ModuleDefinition ReadModuleWithSymbols(Stream assemblyStream, string assemblyName, string? pdbFileName)
+		static ModuleDefinition ReadModuleWithSymbols(Stream assemblyStream, string assemblyName, string? pdbFileName, out Stream? symbolStream)
 		{
-			var parameters = new ReaderParameters { ReadSymbols = true, InMemory = true };
-			ApplyExplicitSymbolFile(parameters, pdbFileName);
 			ModuleDefinition module;
+			symbolStream = null;
 			try
 			{
+				if (pdbFileName == null)
+				{
+					assemblyStream.Position = 0;
+					using (var reader = new PEReader(assemblyStream, PEStreamOptions.LeaveOpen))
+					{
+						CheckEmbeddedPortablePdbSize(reader, assemblyName);
+					}
+				}
 				assemblyStream.Position = 0;
+				var parameters = new ReaderParameters { ReadSymbols = true, InMemory = true };
+				ApplyExplicitSymbolFile(parameters, pdbFileName);
+				symbolStream = parameters.SymbolStream;
 				module = ModuleDefinition.ReadModule(assemblyStream, parameters);
 			}
-			catch (Exception ex) when (ex is FileNotFoundException or InvalidOperationException or BadImageFormatException)
+			catch (Exception ex) when (ex is IOException or InvalidOperationException or BadImageFormatException)
 			{
+				symbolStream?.Dispose();
 				throw new NoDebugSymbolsException(
 					$"No debug symbols could be read for '{assemblyName}'.", ex);
 			}
 			if (module.SymbolReader == null)
 			{
 				module.Dispose();
+				symbolStream?.Dispose();
 				throw new NoDebugSymbolsException($"No debug symbols found for '{assemblyName}'.");
 			}
 			return module;
+		}
+
+		static void CheckEmbeddedPortablePdbSize(PEReader reader, string assemblyName)
+		{
+			if (reader.ReadDebugDirectory().Any(e => e.Type == DebugDirectoryEntryType.EmbeddedPortablePdb
+				&& DebugInfoUtils.IsEmbeddedPortablePdbTooLarge(reader, e)))
+				throw new NoDebugSymbolsException($"Embedded Portable PDB is too large for '{assemblyName}'.");
 		}
 
 		static void ApplyExplicitSymbolFile(ReaderParameters parameters, string? pdbFileName)

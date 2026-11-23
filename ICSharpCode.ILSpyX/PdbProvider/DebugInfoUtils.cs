@@ -17,7 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using System.Diagnostics.CodeAnalysis;
+using System.Buffers.Binary;
 using System.IO;
 using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
@@ -32,26 +32,60 @@ namespace ICSharpCode.ILSpyX.PdbProvider
 {
 	public static class DebugInfoUtils
 	{
+		internal const int MaxEmbeddedPortablePdbSize = 128 * 1024 * 1024;
+
+		enum PortablePdbOpenResult
+		{
+			NotFound,
+			Opened,
+			Rejected
+		}
+
+		/// <summary>
+		/// Determines whether an embedded Portable PDB declares a decompressed size above the supported limit.
+		/// </summary>
+		/// <param name="reader">A PE reader with access to the entire image.</param>
+		/// <param name="entry">The embedded Portable PDB debug directory entry to inspect.</param>
+		/// <returns><see langword="true"/> if the declared decompressed size exceeds the limit; otherwise, <see langword="false"/>.</returns>
+		/// <exception cref="NotSupportedException">The reader does not provide access to the entire image.</exception>
+		public static bool IsEmbeddedPortablePdbTooLarge(PEReader reader, DebugDirectoryEntry entry)
+		{
+			if (!reader.IsEntireImageAvailable)
+				throw new NotSupportedException("The PE reader must provide access to the entire image.");
+			if (entry.DataSize < 8)
+				return false;
+			try
+			{
+				int offset = reader.IsLoadedImage ? entry.DataRelativeVirtualAddress : entry.DataPointer;
+				var data = reader.GetEntireImage().GetContent(offset, 8);
+				return BinaryPrimitives.ReadUInt32LittleEndian(data.AsSpan().Slice(4, 4)) > MaxEmbeddedPortablePdbSize;
+			}
+			catch (ArgumentOutOfRangeException)
+			{
+				return false;
+			}
+		}
+
 		public static IDebugInfoProvider? LoadSymbols(PEFile module)
 		{
 			try
 			{
 				// try to open portable pdb file/embedded pdb info:
-				if (TryOpenPortablePdb(module, out var provider, out var pdbFileName))
+				var result = TryOpenPortablePdb(module, out var provider, out var pdbFileName);
+				if (result == PortablePdbOpenResult.Opened)
 				{
-					return new PortableDebugInfoProvider(module.FileName, provider, MetadataReaderOptions.Default, pdbFileName);
+					return new PortableDebugInfoProvider(module.FileName, provider!, MetadataReaderOptions.Default, pdbFileName);
 				}
-				else
+				if (result == PortablePdbOpenResult.Rejected)
+					return null;
+				// search for pdb in same directory as dll
+				pdbFileName = Path.Combine(
+					Path.GetDirectoryName(module.FileName)!,
+					Path.GetFileNameWithoutExtension(module.FileName) + ".pdb"
+				);
+				if (File.Exists(pdbFileName))
 				{
-					// search for pdb in same directory as dll
-					pdbFileName = Path.Combine(
-						Path.GetDirectoryName(module.FileName)!,
-						Path.GetFileNameWithoutExtension(module.FileName) + ".pdb"
-					);
-					if (File.Exists(pdbFileName))
-					{
-						return new MonoCecilDebugInfoProvider(module, pdbFileName);
-					}
+					return new MonoCecilDebugInfoProvider(module, pdbFileName);
 				}
 			}
 			catch (Exception ex) when (ex is BadImageFormatException || ex is COMException)
@@ -70,17 +104,27 @@ namespace ICSharpCode.ILSpyX.PdbProvider
 			if (stream == null)
 				return null;
 
-			if (stream.Read(buffer, 0, buffer.Length) == LegacyPDBPrefix.Length
-				&& System.Text.Encoding.ASCII.GetString(buffer) == LegacyPDBPrefix)
+			if (IsWindowsPdb(stream))
 			{
-				stream.Position = 0;
+				stream.Dispose();
 				return new MonoCecilDebugInfoProvider(module, pdbFileName);
 			}
-			else
+
+			stream.Position = 0;
+			MetadataReaderProvider? provider = null;
+			try
 			{
-				stream.Position = 0;
-				var provider = MetadataReaderProvider.FromPortablePdbStream(stream);
-				return new PortableDebugInfoProvider(module.FileName, provider, MetadataReaderOptions.Default, pdbFileName);
+				provider = MetadataReaderProvider.FromPortablePdbStream(stream);
+				var debugInfoProvider = new PortableDebugInfoProvider(
+					module.FileName, provider, MetadataReaderOptions.Default, pdbFileName);
+				provider = null;
+				return debugInfoProvider;
+			}
+			catch
+			{
+				provider?.Dispose();
+				stream.Dispose();
+				throw;
 			}
 		}
 
@@ -106,8 +150,7 @@ namespace ICSharpCode.ILSpyX.PdbProvider
 			}
 		}
 
-		const string LegacyPDBPrefix = "Microsoft C/C++ MSF 7.00";
-		static readonly byte[] buffer = new byte[LegacyPDBPrefix.Length];
+		static ReadOnlySpan<byte> LegacyPDBPrefix => "Microsoft C/C++ MSF 7.00"u8;
 
 		/// <summary>
 		/// True for a Windows (native MSF) PDB, false for a Portable PDB. Reads from the current
@@ -116,47 +159,74 @@ namespace ICSharpCode.ILSpyX.PdbProvider
 		public static bool IsWindowsPdb(Stream stream)
 		{
 			var signature = new byte[LegacyPDBPrefix.Length];
-			return stream.Read(signature, 0, signature.Length) == signature.Length
-				&& System.Text.Encoding.ASCII.GetString(signature) == LegacyPDBPrefix;
+			int bytesRead = 0;
+			while (bytesRead < signature.Length)
+			{
+				int count = stream.Read(signature, bytesRead, signature.Length - bytesRead);
+				if (count == 0)
+					return false;
+				bytesRead += count;
+			}
+			return signature.AsSpan().SequenceEqual(LegacyPDBPrefix);
 		}
 
-		static bool TryOpenPortablePdb(PEFile module,
-			[NotNullWhen(true)] out MetadataReaderProvider? provider,
-			[NotNullWhen(true)] out string? pdbFileName)
+		static PortablePdbOpenResult TryOpenPortablePdb(PEFile module,
+			out MetadataReaderProvider? provider, out string? pdbFileName)
 		{
 			provider = null;
 			pdbFileName = null;
 			var reader = module.Reader;
-			foreach (var entry in reader.ReadDebugDirectory())
+			var entries = reader.ReadDebugDirectory();
+			bool hasPortableCodeView = false;
+			// Check all embedded entries before calling TryOpenAssociatedPortablePdb, which may
+			// decompress an embedded PDB after checking for a matching external PDB.
+			foreach (var entry in entries)
 			{
-				if (entry.IsPortableCodeView)
+				if (entry.Type == DebugDirectoryEntryType.EmbeddedPortablePdb
+					&& IsEmbeddedPortablePdbTooLarge(reader, entry))
+					return PortablePdbOpenResult.Rejected;
+				hasPortableCodeView |= entry.IsPortableCodeView;
+			}
+			// Native PDBs have CodeView entries but are not recognized as Portable CodeView.
+			// Let LoadSymbols route those sidecars to Mono.Cecil instead of the portable reader.
+			if (!hasPortableCodeView)
+			{
+				foreach (var entry in entries)
 				{
-					return reader.TryOpenAssociatedPortablePdb(module.FileName, OpenStream,
-						out provider, out pdbFileName);
-				}
-				if (entry.Type == DebugDirectoryEntryType.CodeView)
-				{
-					string pdbDirectory = Path.GetDirectoryName(module.FileName)!;
-					pdbFileName = Path.Combine(
-						pdbDirectory, Path.GetFileNameWithoutExtension(module.FileName) + ".pdb");
-					Stream? stream = OpenStream(pdbFileName);
-					if (stream != null)
+					if (entry.Type == DebugDirectoryEntryType.CodeView)
 					{
-						if (stream.Read(buffer, 0, buffer.Length) == LegacyPDBPrefix.Length
-							&& System.Text.Encoding.ASCII.GetString(buffer) == LegacyPDBPrefix)
+						pdbFileName = Path.Combine(
+							Path.GetDirectoryName(module.FileName)!,
+							Path.GetFileNameWithoutExtension(module.FileName) + ".pdb");
+						Stream? portablePdbStream = OpenStream(pdbFileName);
+						if (portablePdbStream != null)
 						{
-							return false;
+							if (IsWindowsPdb(portablePdbStream))
+							{
+								portablePdbStream.Dispose();
+								return PortablePdbOpenResult.NotFound;
+							}
+							try
+							{
+								portablePdbStream.Position = 0;
+								provider = MetadataReaderProvider.FromPortablePdbStream(portablePdbStream);
+								return PortablePdbOpenResult.Opened;
+							}
+							catch (Exception ex) when (ex is BadImageFormatException || ex is IOException || ex is ArgumentException)
+							{
+								portablePdbStream.Dispose();
+							}
 						}
-						stream.Position = 0;
-						provider = MetadataReaderProvider.FromPortablePdbStream(stream);
-						return true;
 					}
 				}
 			}
-			return false;
+			// Delegate external PDB matching and the now-validated embedded fallback to SRM.
+			return reader.TryOpenAssociatedPortablePdb(module.FileName, OpenStream,
+				out provider, out pdbFileName)
+				? PortablePdbOpenResult.Opened : PortablePdbOpenResult.NotFound;
 		}
 
-		static Stream? OpenStream(string fileName)
+		internal static Stream? OpenStream(string fileName)
 		{
 			if (!File.Exists(fileName))
 				return null;

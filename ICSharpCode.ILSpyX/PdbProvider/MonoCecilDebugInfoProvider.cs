@@ -59,8 +59,9 @@ namespace ICSharpCode.ILSpyX.PdbProvider
 			this.debugInfo = new Dictionary<SRM.MethodDefinitionHandle, (IList<SequencePoint> SequencePoints, IList<Variable> Variables)>();
 			using (UnmanagedMemoryStream stream = new UnmanagedMemoryStream(image.Pointer, image.Length))
 			using (var moduleDef = ModuleDefinition.ReadModule(stream))
+			using (Stream pdbStream = File.OpenRead(pdbFileName))
 			{
-				moduleDef.ReadSymbols(new PdbReaderProvider().GetSymbolReader(moduleDef, pdbFileName));
+				moduleDef.ReadSymbols(new PdbReaderProvider().GetSymbolReader(moduleDef, pdbStream));
 
 				foreach (var method in module.Metadata.MethodDefinitions)
 				{
