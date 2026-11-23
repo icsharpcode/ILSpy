@@ -182,10 +182,12 @@ jobs:
       # and starves the neighbours: the process-module walks in ILSpy.Tests.Windows blow their
       # 60 s budget and ILSpy.Tests takes almost twice as long, while the decompiler suite itself
       # gains little here. The environment variable overrides the runtimeconfig setting.
+      # BuildTools/WindowsCITests.slnf is every test project but the Rust engine's, which runs on
+      # Linux: next to the other hosts its parallel sweeps slow every suite here about tenfold.
       env:
         DOTNET_gcServer: 0
       run: >
-        dotnet test --solution ILSpy.slnx
+        dotnet test --solution BuildTools/WindowsCITests.slnf
         --configuration ${{ matrix.configuration }}
         --no-build --report-trx
         --results-directory test-results/${{ matrix.configuration }}

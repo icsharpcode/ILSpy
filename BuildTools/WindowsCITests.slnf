@@ -1,0 +1,13 @@
+{
+	"solution": {
+		"path": "..\\ILSpy.slnx",
+		"projects": [
+			"ICSharpCode.Decompiler.Tests\\ICSharpCode.Decompiler.Tests.csproj",
+			"ICSharpCode.ILSpyCmd.Tests\\ICSharpCode.ILSpyCmd.Tests.csproj",
+			"ILSpy.BamlDecompiler.Tests.Windows\\ILSpy.BamlDecompiler.Tests.Windows.csproj",
+			"ILSpy.BamlDecompiler.Tests\\ILSpy.BamlDecompiler.Tests.csproj",
+			"ILSpy.Tests.Windows\\ILSpy.Tests.Windows.csproj",
+			"ILSpy.Tests\\ILSpy.Tests.csproj"
+		]
+	}
+}
