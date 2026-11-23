@@ -857,6 +857,15 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 			Console.WriteLine(array.Length);
 		}
 
+		private static void SparseStore()
+		{
+			// The store is far away from the start of the array: the initializer transform
+			// must give up without padding the skipped slots one by one.
+			int[] array = new int[2147483632];
+			array[2147483616] = 1;
+			Console.WriteLine(array.Length);
+		}
+
 #if !NET40 && CS70
 		public static ReadOnlySpan<byte> ReadOnlySpanInitializer_ByteArray()
 		{

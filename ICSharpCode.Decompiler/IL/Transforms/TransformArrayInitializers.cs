@@ -629,6 +629,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		}
 
 		/// <summary>
+		/// Largest array for which a sparse initializer is still expanded when the transform is
+		/// mandatory (constructor initializers and catch-when filters).
+		/// </summary>
+		const int MaxForcedInitializerLength = 0x10000;
+
+		/// <summary>
 		/// Handle simple case where RuntimeHelpers.InitializeArray is not used.
 		/// </summary>
 		internal static bool HandleSimpleArrayInitializer(ILFunction function, Block block, int pos, ILVariable store, int[] arrayLength, out (ILInstruction[] Indices, ILInstruction Value)[] values, out int instructionsToRemove)
@@ -644,6 +650,23 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			// This should prevent list-resizing as well as out-of-memory errors.
 			values = null;
 			var valuesList = new List<(ILInstruction[] Indices, ILInstruction Value)>(Math.Min(block.Instructions.Count, length));
+
+			if (pos >= block.Instructions.Count)
+				return false;
+			bool mustTransform = ILInlining.IsCatchWhenBlock(block) || ILInlining.IsInConstructorInitializer(function, block.Instructions[pos]);
+			// Each remaining instruction can store at most one element. If this upper bound is
+			// already too sparse, abort before padding skipped array slots.
+			if (IsTooSparse(block.Instructions.Count - pos))
+				return false;
+
+			bool IsTooSparse(int count)
+			{
+				if (count >= length / 3 - 5)
+					return false;
+				// These contexts require the stores to be part of the initializer, but expansion
+				// must remain bounded by the array length.
+				return !mustTransform || length > MaxForcedInitializerLength;
+			}
 
 			int[] nextMinimumIndex = new int[arrayLength.Length];
 
@@ -768,17 +791,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (elementCount == 0)
 				return false;
 
-			bool mustTransform = ILInlining.IsCatchWhenBlock(block) || ILInlining.IsInConstructorInitializer(function, block.Instructions[pos]);
 			// If there are not enough user-defined elements after scanning all instructions, we can abort the transform.
-			// This avoids unnecessary allocations and OOM crashes (in case of int.MaxValue).
-			if (elementCount < length / 3 - 5)
-			{
-				if (!mustTransform)
-					return false;
-				// .NET does not allow allocation of arrays >= 2 GB.
-				if (length >= int.MaxValue)
-					return false;
-			}
+			// This avoids unnecessary allocations and OOM crashes while padding the remaining slots.
+			if (IsTooSparse(elementCount))
+				return false;
 
 			for (int j = valuesList.Count; j < length; j++)
 			{
