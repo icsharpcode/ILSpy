@@ -38,7 +38,6 @@ namespace ICSharpCode.Decompiler
 	{
 		internal const GenericParameterAttributes AllowByRefLike = (GenericParameterAttributes)0x0020;
 		internal const MethodImplAttributes MethodImplAsync = (MethodImplAttributes)0x2000;
-		const int MaxTypeNameNesting = 1024;
 
 		static bool IsMalformedMetadataException(Exception ex)
 		{
@@ -81,6 +80,7 @@ namespace ICSharpCode.Decompiler
 			}
 			return result.ToImmutable();
 		}
+
 
 		public static bool HasFlag(this TypeDefinition typeDefinition, TypeAttributes attribute)
 			=> (typeDefinition.Attributes & attribute) == attribute;
@@ -507,126 +507,129 @@ namespace ICSharpCode.Decompiler
 
 		public static FullTypeName GetFullTypeName(this TypeReferenceHandle handle, MetadataReader reader)
 		{
-			return GetFullTypeName(handle, reader, 0);
+			if (handle.IsNil)
+				throw new ArgumentNullException(nameof(handle));
+			var chain = handle.GetResolutionScopeChain(reader);
+			var names = new List<(string Name, int TypeParameterCount)>(chain.Count);
+			foreach (var current in chain)
+			{
+				var tr = reader.GetTypeReference(current);
+				string name;
+				try
+				{
+					name = reader.GetString(tr.Name);
+				}
+				catch (Exception ex) when (IsMalformedMetadataException(ex))
+				{
+					name = $"TR{reader.GetToken(current):x8}";
+				}
+				name = ReflectionHelper.SplitTypeParameterCountFromReflectionName(name, out var typeParameterCount);
+				names.Add((name, typeParameterCount));
+			}
+			var outer = reader.GetTypeReference(chain[^1]);
+			string ns;
+			try
+			{
+				ns = outer.Namespace.IsNil ? "" : reader.GetString(outer.Namespace);
+			}
+			catch (Exception ex) when (IsMalformedMetadataException(ex))
+			{
+				ns = "";
+			}
+			var result = new FullTypeName(new TopLevelTypeName(ns, names[^1].Name, names[^1].TypeParameterCount));
+			for (int i = names.Count - 2; i >= 0; i--)
+				result = result.NestedType(names[i].Name, names[i].TypeParameterCount);
+			return result;
 		}
 
-		static FullTypeName GetFullTypeName(TypeReferenceHandle handle, MetadataReader reader, int nesting)
+		internal static IReadOnlyList<TypeReferenceHandle> GetResolutionScopeChain(this TypeReferenceHandle handle, MetadataReader reader)
 		{
 			if (handle.IsNil)
 				throw new ArgumentNullException(nameof(handle));
-			if (nesting >= MaxTypeNameNesting)
-				return new FullTypeName(new TopLevelTypeName("", $"TR{reader.GetToken(handle):x8}", 0));
-			var tr = reader.GetTypeReference(handle);
-			string name;
-			try
+			var chain = new List<TypeReferenceHandle>();
+			int remaining = reader.GetTableRowCount(TableIndex.TypeRef);
+			while (remaining-- > 0)
 			{
-				name = reader.GetString(tr.Name);
-			}
-			catch (Exception ex) when (IsMalformedMetadataException(ex))
-			{
-				name = $"TR{reader.GetToken(handle):x8}";
-			}
-			name = ReflectionHelper.SplitTypeParameterCountFromReflectionName(
-				name, out var typeParameterCount);
-			TypeReferenceHandle declaringTypeHandle;
-			try
-			{
-				declaringTypeHandle = tr.GetDeclaringType();
-			}
-			catch (Exception ex) when (IsMalformedMetadataException(ex))
-			{
-				declaringTypeHandle = default;
-			}
-			if (declaringTypeHandle.IsNil)
-			{
-				string ns;
+				chain.Add(handle);
+				EntityHandle resolutionScope;
 				try
 				{
-					ns = tr.Namespace.IsNil ? "" : reader.GetString(tr.Namespace);
+					resolutionScope = reader.GetTypeReference(handle).ResolutionScope;
 				}
-				catch (BadImageFormatException)
+				catch (Exception ex) when (IsMalformedMetadataException(ex))
 				{
-					ns = "";
+					return chain;
 				}
-				return new FullTypeName(new TopLevelTypeName(ns, name, typeParameterCount));
+				if (resolutionScope.Kind != HandleKind.TypeReference)
+					return chain;
+				handle = (TypeReferenceHandle)resolutionScope;
 			}
-			else
+			throw new BadImageFormatException("Type reference resolution scope chain contains a cycle.");
+		}
+
+		internal static IReadOnlyList<ExportedType> GetImplementationChain(this ExportedType type, MetadataReader metadata)
+		{
+			var chain = new List<ExportedType>();
+			var current = type;
+			int remaining = metadata.GetTableRowCount(TableIndex.ExportedType);
+			while (remaining-- > 0)
 			{
-				return GetFullTypeName(declaringTypeHandle, reader, nesting + 1).NestedType(name, typeParameterCount);
+				chain.Add(current);
+				if (current.Implementation.Kind != HandleKind.ExportedType)
+					return chain;
+				current = metadata.GetExportedType((ExportedTypeHandle)current.Implementation);
 			}
+			throw new BadImageFormatException("Exported type implementation chain contains a cycle.");
 		}
 
 		public static FullTypeName GetFullTypeName(this TypeDefinitionHandle handle, MetadataReader reader)
 		{
-			return GetFullTypeName(handle, reader, 0);
-		}
-
-		static FullTypeName GetFullTypeName(TypeDefinitionHandle handle, MetadataReader reader, int nesting)
-		{
 			if (handle.IsNil)
 				throw new ArgumentNullException(nameof(handle));
-			if (nesting >= MaxTypeNameNesting)
-				return new FullTypeName(new TopLevelTypeName("", $"TD{reader.GetToken(handle):x8}", 0));
-			TypeDefinition td = reader.GetTypeDefinition(handle);
-			string name;
-			try
+			return reader.GetTypeDefinition(handle).GetFullTypeName(reader);
+		}
+
+		public static FullTypeName GetFullTypeName(this TypeDefinition td, MetadataReader reader)
+		{
+			var names = new List<(string Name, int TypeParameterCount)>();
+			var current = td;
+			int remaining = reader.GetTableRowCount(TableIndex.TypeDef);
+			TypeDefinitionHandle declaringTypeHandle = default;
+			while (remaining-- > 0)
 			{
-				name = reader.GetString(td.Name);
+				string name = ReflectionHelper.SplitTypeParameterCountFromReflectionName(
+					reader.GetString(current.Name), out var typeParameterCount);
+				names.Add((name, typeParameterCount));
+				declaringTypeHandle = current.GetDeclaringType();
+				if (declaringTypeHandle.IsNil)
+					break;
+				current = reader.GetTypeDefinition(declaringTypeHandle);
 			}
-			catch (Exception ex) when (IsMalformedMetadataException(ex))
-			{
-				name = $"TD{reader.GetToken(handle):x8}";
-			}
-			name = ReflectionHelper.SplitTypeParameterCountFromReflectionName(name, out var typeParameterCount);
-			TypeDefinitionHandle declaringTypeHandle;
-			try
-			{
-				declaringTypeHandle = td.GetDeclaringType();
-			}
-			catch (Exception ex) when (IsMalformedMetadataException(ex))
-			{
-				declaringTypeHandle = default;
-			}
-			if (declaringTypeHandle.IsNil)
-			{
-				string @namespace;
-				try
-				{
-					@namespace = td.Namespace.IsNil ? "" : reader.GetString(td.Namespace);
-				}
-				catch (Exception ex) when (ex is BadImageFormatException or ArgumentOutOfRangeException)
-				{
-					@namespace = "";
-				}
-				return new FullTypeName(new TopLevelTypeName(@namespace, name, typeParameterCount));
-			}
-			else
-			{
-				return GetFullTypeName(declaringTypeHandle, reader, nesting + 1).NestedType(name, typeParameterCount);
-			}
+			if (!declaringTypeHandle.IsNil)
+				throw new BadImageFormatException("Type definition nesting chain contains a cycle.");
+			string @namespace = current.Namespace.IsNil ? "" : reader.GetString(current.Namespace);
+			var result = new FullTypeName(new TopLevelTypeName(@namespace, names[^1].Name, names[^1].TypeParameterCount));
+			for (int i = names.Count - 2; i >= 0; i--)
+				result = result.NestedType(names[i].Name, names[i].TypeParameterCount);
+			return result;
 		}
 
 		public static FullTypeName GetFullTypeName(this ExportedType type, MetadataReader metadata)
 		{
-			return GetFullTypeName(type, metadata, 0);
-		}
-
-		static FullTypeName GetFullTypeName(ExportedType type, MetadataReader metadata, int nesting)
-		{
-			if (nesting >= MaxTypeNameNesting)
-				return new FullTypeName(new TopLevelTypeName("", "<cyclic exported type>", 0));
-			string name = ReflectionHelper.SplitTypeParameterCountFromReflectionName(
-				metadata.GetString(type.Name), out int typeParameterCount);
-			if (type.Implementation.Kind == HandleKind.ExportedType)
+			var chain = type.GetImplementationChain(metadata);
+			var names = new List<(string Name, int TypeParameterCount)>(chain.Count);
+			foreach (var current in chain)
 			{
-				var outerType = metadata.GetExportedType((ExportedTypeHandle)type.Implementation);
-				return GetFullTypeName(outerType, metadata, nesting + 1).NestedType(name, typeParameterCount);
+				string name = ReflectionHelper.SplitTypeParameterCountFromReflectionName(
+					metadata.GetString(current.Name), out var typeParameterCount);
+				names.Add((name, typeParameterCount));
 			}
-			else
-			{
-				string ns = type.Namespace.IsNil ? "" : metadata.GetString(type.Namespace);
-				return new TopLevelTypeName(ns, name, typeParameterCount);
-			}
+			var outerType = chain[^1];
+			string ns = outerType.Namespace.IsNil ? "" : metadata.GetString(outerType.Namespace);
+			var result = new FullTypeName(new TopLevelTypeName(ns, names[^1].Name, names[^1].TypeParameterCount));
+			for (int i = names.Count - 2; i >= 0; i--)
+				result = result.NestedType(names[i].Name, names[i].TypeParameterCount);
+			return result;
 		}
 
 		/// <summary>

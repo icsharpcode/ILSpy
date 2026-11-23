@@ -20,6 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Reflection.Metadata;
+using System.Reflection.Metadata.Ecma335;
 using System.Text;
 
 using ICSharpCode.Decompiler.Metadata;
@@ -302,14 +303,18 @@ namespace ICSharpCode.Decompiler.Documentation
 		{
 			var actual = new List<Part>();
 			var current = typeDef;
-			while (true)
+			TypeDefinitionHandle declaringType = default;
+			int remaining = metadata.GetTableRowCount(TableIndex.TypeDef);
+			while (remaining-- > 0)
 			{
 				actual.Insert(0, SplitArity(metadata.GetString(current.Name)));
-				var declaring = current.GetDeclaringType();
-				if (declaring.IsNil)
+				declaringType = current.GetDeclaringType();
+				if (declaringType.IsNil)
 					break;
-				current = metadata.GetTypeDefinition(declaring);
+				current = metadata.GetTypeDefinition(declaringType);
 			}
+			if (!declaringType.IsNil)
+				throw new BadImageFormatException("Type definition nesting chain contains a cycle.");
 			string ns = metadata.GetString(current.Namespace);
 			if (ns.Length > 0)
 			{

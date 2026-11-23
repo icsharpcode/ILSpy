@@ -399,15 +399,14 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			if (handle.IsNil)
 				return null;
-			var tr = metadata.GetTypeReference(handle);
-			switch (tr.ResolutionScope.Kind)
+			var chain = handle.GetResolutionScopeChain(metadata);
+			var resolutionScope = metadata.GetTypeReference(chain[^1]).ResolutionScope;
+			switch (resolutionScope.Kind)
 			{
-				case HandleKind.TypeReference:
-					return GetDeclaringModule((TypeReferenceHandle)tr.ResolutionScope);
 				case HandleKind.AssemblyReference:
-					return ResolveModule((AssemblyReferenceHandle)tr.ResolutionScope);
+					return ResolveModule((AssemblyReferenceHandle)resolutionScope);
 				case HandleKind.ModuleReference:
-					return ResolveModule((ModuleReferenceHandle)tr.ResolutionScope);
+					return ResolveModule((ModuleReferenceHandle)resolutionScope);
 				default:
 					return this;
 			}
@@ -998,16 +997,16 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 			IModule ResolveModule(ExportedType type)
 			{
-				switch (type.Implementation.Kind)
+				var outerType = type.GetImplementationChain(metadata)[^1];
+				switch (outerType.Implementation.Kind)
 				{
 					case HandleKind.AssemblyFile:
 						// TODO : Resolve assembly file (module)...
 						return this;
 					case HandleKind.ExportedType:
-						var outerType = metadata.GetExportedType((ExportedTypeHandle)type.Implementation);
-						return ResolveModule(outerType);
+						throw new BadImageFormatException("Exported type implementation chain contains a cycle.");
 					case HandleKind.AssemblyReference:
-						var asmRef = metadata.GetAssemblyReference((AssemblyReferenceHandle)type.Implementation);
+						var asmRef = metadata.GetAssemblyReference((AssemblyReferenceHandle)outerType.Implementation);
 						string shortName = metadata.GetString(asmRef.Name);
 						foreach (var asm in Compilation.Modules)
 						{
