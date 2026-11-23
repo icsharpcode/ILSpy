@@ -89,5 +89,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.ILPretty
 			A = ((BaseRecord)this).A;
 			B = this.B;
 		}
+
+		[CompilerGenerated]
+		private readonly int B__BackingField;
 	}
 }

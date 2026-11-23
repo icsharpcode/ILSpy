@@ -673,6 +673,16 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 		}
 
+		internal IProperty? GetBackingProperty(IField field)
+		{
+			foreach (var (backingField, property) in backingFieldToAutoProperty)
+			{
+				if (backingField.MemberDefinition.Equals(field.MemberDefinition))
+					return (IProperty)property.MemberDefinition;
+			}
+			return null;
+		}
+
 		public bool IsPropertyDeclaredByPrimaryConstructor(IProperty property)
 		{
 			var subst = recordTypeDef.AsParameterizedType().GetSubstitution();
