@@ -148,7 +148,7 @@ public class IlAstReadEqualityTests
 	[Test]
 	public void PrintoutCoversReaderOutput()
 	{
-		string path = Path.Combine(Corpus.TestCasesDirectory(), "Pretty", "ExceptionHandling.roslyn4.dll");
+		string path = Corpus.Fixture("Pretty/ExceptionHandling.roslyn4.dll");
 		var ts = TypeSystemListingEqualityTests.Load(path, TypeSystemOptions.Default);
 		using var table = new RustModuleTable(ts);
 		var engine = IlAstMaterializer.ReadModule(table.DebugReadIL(UseRefLocals), ts, table.Modules, new DecompilerSettings());

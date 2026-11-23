@@ -319,7 +319,7 @@ public class TypeSystemListingEqualityTests
 	[Test]
 	public void ListingCoversAttributeValues()
 	{
-		string path = Path.Combine(Corpus.TestCasesDirectory(), "Pretty", "CustomAttributes.roslyn4.dll");
+		string path = Corpus.Fixture("Pretty/CustomAttributes.roslyn4.dll");
 		var ts = Load(path, TypeSystemOptions.Default);
 		using var table = new RustModuleTable(ts);
 		string[] lines = table.DebugTypeListing().Split('\n');

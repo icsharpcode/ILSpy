@@ -15,6 +15,9 @@ env:
   StagingDirectory: buildartifacts
   # Set to 'false' to bring up build and packaging changes without the test steps; keep 'true' on master.
   RunTests: 'true'
+  # The Rust engine's equality sweeps cover only ICSharpCode.Decompiler.dll here; the full corpus
+  # (framework and fixtures) takes hours on a 4-core runner and is a local gate.
+  ILSPY_RUST_CORPUS: decompiler
 
 jobs:
   # Skip push builds for branches whose open PR already builds them; see pr-build-gate.yml.

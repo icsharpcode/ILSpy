@@ -49,6 +49,10 @@ static class Corpus
 	public static IEnumerable<TestCaseData> AllImages()
 	{
 		yield return new TestCaseData(typeof(CSharpDecompiler).Assembly.Location).SetArgDisplayNames("ICSharpCode.Decompiler.dll");
+		// CI sets ILSPY_RUST_CORPUS=decompiler: the full corpus takes hours of the AST sweeps on a
+		// 4-core runner, and the fixtures are being rebuilt by the decompiler tests meanwhile.
+		if (Environment.GetEnvironmentVariable("ILSPY_RUST_CORPUS") == "decompiler")
+			yield break;
 		string runtime = Path.GetDirectoryName(typeof(object).Assembly.Location)!;
 		foreach (var file in Assemblies(runtime, SearchOption.TopDirectoryOnly).Order())
 			yield return new TestCaseData(file).SetArgDisplayNames("runtime/" + Path.GetFileName(file));
@@ -91,6 +95,18 @@ static class Corpus
 		{
 			return false;
 		}
+	}
+
+	/// <summary>
+	/// The path of a fixture image ICSharpCode.Decompiler.Tests compiles; the test is ignored
+	/// while that suite has not built it yet.
+	/// </summary>
+	public static string Fixture(string relativePath)
+	{
+		string path = Path.Combine(TestCasesDirectory(), relativePath);
+		if (!File.Exists(path))
+			Assert.Ignore($"{relativePath} is not built; run ICSharpCode.Decompiler.Tests first");
+		return path;
 	}
 
 	/// <summary>

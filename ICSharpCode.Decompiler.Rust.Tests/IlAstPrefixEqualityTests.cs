@@ -342,7 +342,8 @@ public class IlAstPrefixEqualityTests
 	}
 
 	static IEnumerable<TestCaseData> AnalysisImages() => Corpus.ManagedImages().Where(c => Path.GetFileName((string)c.Arguments[0]!) is var name
-		&& (name.Contains("Record", StringComparison.Ordinal) || name.Contains("Event", StringComparison.Ordinal)));
+		&& (name.Contains("Record", StringComparison.Ordinal) || name.Contains("Event", StringComparison.Ordinal)
+			|| name.StartsWith("ICSharpCode.Decompiler", StringComparison.Ordinal)));
 
 	[Test]
 	public void EngineSettingsAreDecompilerSettings()

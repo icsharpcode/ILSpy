@@ -269,6 +269,10 @@ public class BodyGapTests
 
 	static (int, int) Pair() => (1, 2);
 
+	static System.Threading.Tasks.Task<(int Code, string Text)> NamedPairAsync() => System.Threading.Tasks.Task.FromResult((1, "x"));
+
+	static async System.Threading.Tasks.Task<int> ElementOfAwaitedTuple() => (await NamedPairAsync()).Code;
+
 	static System.Threading.Tasks.Task VoidLambdaOfTaskRun()
 	{
 		int a = 0;
@@ -287,6 +291,7 @@ public class BodyGapTests
 	}
 
 	[TestCase(nameof(ValuesOfNamedTuples))]
+	[TestCase(nameof(ElementOfAwaitedTuple))]
 	[TestCase(nameof(VoidLambdaOfTaskRun))]
 	[TestCase(nameof(DeconstructionInVoidLambda))]
 	[TestCase(nameof(NullOfAnonymousType))]

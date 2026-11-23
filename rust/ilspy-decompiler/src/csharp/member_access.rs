@@ -376,6 +376,12 @@ impl Builder<'_, '_, '_, '_> {
             }
             // The best common type of tuple literals has the names the literals write.
             Rr::Plain(_) if self.switch_of_tuple_literals(translated.expression) => true,
+            // An await has the return type of the IL's `GetResult`, as the C# builder types it.
+            Rr::Plain(_)
+                if matches!(self.ast.node(translated.expression), AstNode::Await { .. }) =>
+            {
+                true
+            }
             // A tuple literal has the names of its type hint.
             Rr::Plain(_)
                 if matches!(self.ast.node(translated.expression), AstNode::Tuple { .. }) =>
