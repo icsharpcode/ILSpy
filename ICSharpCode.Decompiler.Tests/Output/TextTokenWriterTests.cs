@@ -18,8 +18,10 @@
 
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Reflection.Metadata;
+using System.Text;
 
 using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.CSharp.OutputVisitor;
@@ -85,22 +87,58 @@ namespace ICSharpCode.Decompiler.Tests.Output
 		}
 	}
 
+	internal class DelegateEmbeddingLimitHost
+	{
+		static void Wrap<T>(T value, Func<T, T> identity)
+		{
+		}
+
+		static T Identity<T>(T value) => value;
+
+		public static void RepeatedUnembeddableMethodGroups()
+		{
+			var a = new { Value = 1 };
+			Wrap(a, Identity);
+			Wrap(a, Identity);
+			Wrap(a, Identity);
+			Wrap(a, Identity);
+			Wrap(a, Identity);
+			Wrap(a, Identity);
+			Wrap(a, Identity);
+			Wrap(a, Identity);
+			Wrap(a, Identity);
+			Wrap(a, Identity);
+			Wrap(a, Identity);
+			Wrap(a, Identity);
+			Wrap(a, Identity);
+			Wrap(a, Identity);
+			Wrap(a, Identity);
+			Wrap(a, Identity);
+			Wrap(a, Identity);
+			Wrap(a, Identity);
+			Wrap(a, Identity);
+			Wrap(a, Identity);
+		}
+	}
+
 	[TestFixture]
 	public class TextTokenWriterTests
 	{
 		sealed class ReferenceRecordingOutput : ITextOutput
 		{
+			readonly StringBuilder text = new StringBuilder();
 			public readonly List<(string Text, IMember Member)> MemberReferences = new();
 			public readonly List<(string Text, object Reference, bool IsDefinition, bool IsHoverOnly)> LocalReferences = new();
 			public readonly List<bool> FoldStartDefaultCollapsed = new();
 			public int FoldEndCount;
+			public string Text => text.ToString();
 
 			public string IndentationString { get; set; } = "\t";
 			public void Indent() { }
 			public void Unindent() { }
-			public void Write(char ch) { }
-			public void Write(string text) { }
-			public void WriteLine() { }
+			public void Write(char ch) => text.Append(ch);
+			public void Write(string value) => text.Append(value);
+			public void WriteLine() => text.AppendLine();
 			public void WriteReference(OpCodeInfo opCode, bool omitSuffix = false) { }
 			public void WriteReference(MetadataFile metadata, Handle handle, string text, string protocol = "decompile", bool isDefinition = false) { }
 			public void WriteReference(IType type, string text, bool isDefinition = false) { }
@@ -241,6 +279,39 @@ namespace ICSharpCode.Decompiler.Tests.Output
 
 			Assert.That(output.FoldStartDefaultCollapsed, Has.Count.EqualTo(1));
 			Assert.That(output.FoldEndCount, Is.EqualTo(1));
+		}
+
+		[TestCase(CommentType.SingleLine, "//")]
+		[TestCase(CommentType.Documentation, "///")]
+		public void SingleLineCommentNewlinesCannotEscapeTheComment(CommentType commentType, string prefix)
+		{
+			const string content = " warning\r\nSystem.Environment.Exit(1); //. Abort transformation.";
+			var settings = new DecompilerSettings();
+			var output = WriteLeadingTrivia(settings, new Comment(content, commentType));
+
+			Assert.That(output.Text, Is.EqualTo(prefix + " warning\\r\\nSystem.Environment.Exit(1); //. Abort transformation." + Environment.NewLine));
+
+			using var textWriterOutput = new StringWriter();
+			var textWriter = new TextWriterTokenWriter(textWriterOutput) { IndentationString = "" };
+			textWriter.WriteComment(commentType, content);
+
+			Assert.That(textWriterOutput.ToString(), Is.EqualTo(output.Text));
+		}
+
+		[Test]
+		public void FailedGenericMethodGroupsDoNotConsumeEmbeddingBudget()
+		{
+			using var module = OpenTestAssembly();
+			var resolver = new UniversalAssemblyResolver(module.FileName, false, module.Metadata.DetectTargetFrameworkId());
+			var settings = new DecompilerSettings();
+			var decompiler = new CSharpDecompiler(module, resolver, settings);
+			var syntaxTree = decompiler.DecompileType(new FullTypeName(typeof(DelegateEmbeddingLimitHost).FullName));
+
+			using var output = new StringWriter();
+			syntaxTree.AcceptVisitor(new CSharpOutputVisitor(
+				new TextWriterTokenWriter(output), settings.CSharpFormattingOptions));
+
+			Assert.That(output.ToString(), Does.Not.Contain("Delegate construction embedding limit reached"));
 		}
 
 		[Test]

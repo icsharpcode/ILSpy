@@ -140,6 +140,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			{
 				case CommentType.SingleLine:
 					textWriter.Write("//");
+					content = CommentUtilities.EscapeLineTerminators(content);
 					textWriter.WriteLine(content);
 					Length += 2 + content.Length + textWriter.NewLine.Length;
 					column = 1;
@@ -159,6 +160,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 					break;
 				case CommentType.Documentation:
 					textWriter.Write("///");
+					content = CommentUtilities.EscapeLineTerminators(content);
 					textWriter.WriteLine(content);
 					Length += 3 + content.Length + textWriter.NewLine.Length;
 					column = 1;
