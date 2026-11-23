@@ -11,7 +11,7 @@ permissions:
 
 env:
   DOTNET_SDK_VERSION: '11.0.x'
-  DOTNET_SDK_QUALITY: 'preview'
+  DOTNET_SDK_QUALITY: 'ga'
   StagingDirectory: buildartifacts
   # Set to 'false' to bring up build and packaging changes without the test steps; keep 'true' on master.
   RunTests: 'true'
