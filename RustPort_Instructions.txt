@@ -1,0 +1,28 @@
+I want to port ICSharpCode.Decompiler to Rust. ICSharpCode.Decompiler.Tests is the oracle.
+
+I want an idiomatic implementation, here is my idea that you should challenge:
+
+* One project that contains a port to idiomatic Rust for ICSharpCode.Decompiler (libicsdecompiler? What would be an appropriate Rust project name?)
+* One C# project that acts as shim/proxy to the compiled Rust port of ICSharpCode.Decompiler, keeping the public surface area (and namespaces) of ICSharpCode.Decompiler. Maybe something like ICSharpCode.DecompilerLib? The goal: callers only need to switch the project reference and immediately use the underlying Rust port of ICSharpCode.Decompiler
+
+Other guardrails:
+
+* Do not touch ICSharpCode.Decompiler, ICSharpCode.ILSpyCmd, ICSharpCode.Decompiler.PowerShell or ILSpy.AddIn.VS2022 (we don't fix everything in one go)
+* You should if possible only change the project reference in ICSharpCode.Decompiler.Tests, as little or not code changes. Otherwise it stops being an oracle.
+* You can change the ICSharpCode.Decompiler reference to ICSharpCode.DecompilerLib for all projects that are built for the ILSpy UI project so that the UI can be started at the end of the porting exercise.
+
+I know that memory handling and data structures (especially linked lists) don't translate from C# to Rust well. Don't force C#-isms or .NET-isms on the Rust port, favor Rust idiomatic solutions even if that means changing algorithms, class libraries and other things.
+
+What you should produce:
+
+* a RustPort_AgentInstructions.md that contains a detailled, ordered list of todos as a checklist that must be performed (and committed separately so we can see progress via the commits). 
+* a RustPort_HumanLecture.md that contains architecture, design decisions, pro/cons evaluated during the planning phase plus the final plan written to the audience of a senior developer.
+
+Add instruction that the future agent can change the files when he goes along (and should commit those files as well as part of the step). Make it check completed steps in RustPort_AgentInstructions.md.
+
+Bonus sections to research and document for the future agent:
+
+* A performance comparison (cpu, memory) between the pure C# version of ICSharpCode.Decompiler and ICSharpCode.DecompilerLib
+* Fixing the workflow so at least the main build action runs.
+
+Think hard and challenge all and any instructions. Use the current branch, commit the two files.
