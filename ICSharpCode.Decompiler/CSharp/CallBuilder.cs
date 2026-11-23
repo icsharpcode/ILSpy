@@ -1242,6 +1242,8 @@ namespace ICSharpCode.Decompiler.CSharp
 						return false;
 					case ArrayCreateResolveResult { SizeArguments: [{ ConstantValue: int arrayLength }] }:
 						arguments = new(((ArrayCreateExpression)paramsArgument.Expression).Initializer?.Elements.Select(e => new TranslatedExpression(e)) ?? []);
+						if (TransformArrayInitializers.IsTooSparse(arguments.Count, arrayLength, mustTransform: false))
+							return false;
 						parameters = new List<IParameter>(arrayLength);
 						for (int i = 0; i < arrayLength; i++)
 						{
@@ -1253,6 +1255,8 @@ namespace ICSharpCode.Decompiler.CSharp
 					case ConversionResolveResult { Conversion.IsImplicitSpanConversion: true, Input: ArrayCreateResolveResult { SizeArguments: [{ ConstantValue: int arrayLength }] } }:
 						var expr = paramsArgument.Expression is CastExpression cast ? cast.Expression : paramsArgument.Expression;
 						arguments = new(((ArrayCreateExpression)expr).Initializer?.Elements.Select(e => new TranslatedExpression(e)) ?? []);
+						if (TransformArrayInitializers.IsTooSparse(arguments.Count, arrayLength, mustTransform: false))
+							return false;
 						parameters = new List<IParameter>(arrayLength);
 						for (int i = 0; i < arrayLength; i++)
 						{
