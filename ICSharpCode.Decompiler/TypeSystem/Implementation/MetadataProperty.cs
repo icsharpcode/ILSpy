@@ -106,7 +106,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				if (parameters != null)
 					return parameters;
 				DecodeSignature();
-				return this.parameters;
+				return LazyInit.VolatileRead(ref this.parameters);
 			}
 		}
 
@@ -116,7 +116,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				if (returnType != null)
 					return returnType;
 				DecodeSignature();
-				return this.returnType;
+				return LazyInit.VolatileRead(ref this.returnType);
 			}
 		}
 

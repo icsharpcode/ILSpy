@@ -46,7 +46,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		{
 			if (index >= ReflectionHelper.MaxTypeParameterCount)
 				return new DummyTypeParameter(symbolKind, index);
-			ITypeParameter[] tps = typeParameters;
+			ITypeParameter[] tps = Volatile.Read(ref typeParameters);
 			while (index >= tps.Length)
 			{
 				// We don't have a normal type parameter for this index, so we need to extend our array.
@@ -83,10 +83,10 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			{
 				// Caching one array for every length would retain quadratic memory.
 				GetClassTypeParameter(length - 1);
-				return new ArraySegment<ITypeParameter>(classTypeParameters, 0, length);
+				return new ArraySegment<ITypeParameter>(Volatile.Read(ref classTypeParameters), 0, length);
 			}
 
-			IReadOnlyList<ITypeParameter>[] tps = classTypeParameterLists;
+			IReadOnlyList<ITypeParameter>[] tps = Volatile.Read(ref classTypeParameterLists);
 			while (length >= tps.Length)
 			{
 				// We don't have a normal type parameter for this index, so we need to extend our array.

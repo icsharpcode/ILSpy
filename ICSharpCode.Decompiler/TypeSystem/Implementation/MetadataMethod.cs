@@ -49,9 +49,9 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		string name;
 		IParameter[] parameters;
 		IType returnType;
-		byte returnTypeIsRefReadonly = ThreeState.Unknown;
-		byte thisIsRefReadonly = ThreeState.Unknown;
-		bool isInitOnly;
+		volatile byte returnTypeIsRefReadonly = ThreeState.Unknown;
+		volatile byte thisIsRefReadonly = ThreeState.Unknown;
+		volatile bool isInitOnly;
 
 		internal MetadataMethod(MetadataModule module, MethodDefinitionHandle handle)
 		{
@@ -168,7 +168,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				if (parameters != null)
 					return parameters;
 				DecodeSignature();
-				return this.parameters;
+				return LazyInit.VolatileRead(ref this.parameters);
 			}
 		}
 
@@ -178,7 +178,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				if (returnType != null)
 					return returnType;
 				DecodeSignature();
-				return this.returnType;
+				return LazyInit.VolatileRead(ref this.returnType);
 			}
 		}
 

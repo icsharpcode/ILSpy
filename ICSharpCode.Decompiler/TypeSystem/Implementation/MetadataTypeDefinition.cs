@@ -59,7 +59,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		IEvent[] events;
 		IMethod[] methods;
 		List<IType> directBaseTypes;
-		bool defaultMemberNameInitialized;
+		volatile bool defaultMemberNameInitialized;
 		string defaultMemberName;
 
 		internal MetadataTypeDefinition(MetadataModule module, TypeDefinitionHandle handle)
@@ -502,8 +502,9 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public string DefaultMemberName {
 			get {
+				bool initialized = defaultMemberNameInitialized;
 				string defaultMemberName = LazyInit.VolatileRead(ref this.defaultMemberName);
-				if (defaultMemberName != null || defaultMemberNameInitialized)
+				if (defaultMemberName != null || initialized)
 					return defaultMemberName;
 				var metadata = module.metadata;
 				var typeDefinition = metadata.GetTypeDefinition(handle);
@@ -815,7 +816,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		#endregion
 
 		#region IsRecord
-		byte isRecord = ThreeState.Unknown;
+		volatile byte isRecord = ThreeState.Unknown;
 
 		public bool IsRecord {
 			get {

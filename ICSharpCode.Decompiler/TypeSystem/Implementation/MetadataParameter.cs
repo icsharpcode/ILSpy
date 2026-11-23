@@ -38,8 +38,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		// lazy-loaded:
 		string name;
 		// these can't be bool? as bool? is not thread-safe from torn reads
-		byte constantValueInSignatureState;
-		byte decimalConstantState;
+		volatile byte constantValueInSignatureState;
+		volatile byte decimalConstantState;
 
 		internal MetadataParameter(MetadataModule module, IParameterizedMember owner, IType type, ParameterHandle handle)
 		{
