@@ -43,18 +43,10 @@ namespace ICSharpCode.ILSpy.Themes
 	/// <see cref="DockWorkspace.FreezeCurrentTab"/>. Each tab gets a fresh ContextMenu so the popup
 	/// has a unique parent (Avalonia visuals must have at most one parent).
 	/// </summary>
-	public static class PreviewTabContextMenuBehavior
+	public static partial class PreviewTabContextMenuBehavior
 	{
-		public static readonly AttachedProperty<bool> EnableProperty =
-			AvaloniaProperty.RegisterAttached<DocumentTabStripItem, bool>(
-				"Enable",
-				typeof(PreviewTabContextMenuBehavior));
-
-		public static void SetEnable(DocumentTabStripItem element, bool value)
-			=> element.SetValue(EnableProperty, value);
-
-		public static bool GetEnable(DocumentTabStripItem element)
-			=> element.GetValue(EnableProperty);
+		[GeneratedAttachedProperty]
+		public static partial bool GetEnable(DocumentTabStripItem element);
 
 		static PreviewTabContextMenuBehavior()
 		{

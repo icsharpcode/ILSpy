@@ -36,20 +36,12 @@ namespace ICSharpCode.ILSpy.Themes
 	/// different dockables, so the subscription is re-established (and the old one detached) on every
 	/// DataContextChanged.
 	/// </summary>
-	public static class PreviewTabClassBehavior
+	public static partial class PreviewTabClassBehavior
 	{
 		const string PreviewClass = "previewTab";
 
-		public static readonly AttachedProperty<bool> EnableProperty =
-			AvaloniaProperty.RegisterAttached<DocumentTabStripItem, bool>(
-				"Enable",
-				typeof(PreviewTabClassBehavior));
-
-		public static void SetEnable(DocumentTabStripItem element, bool value)
-			=> element.SetValue(EnableProperty, value);
-
-		public static bool GetEnable(DocumentTabStripItem element)
-			=> element.GetValue(EnableProperty);
+		[GeneratedAttachedProperty]
+		public static partial bool GetEnable(DocumentTabStripItem element);
 
 		// The tab and handler the item is currently subscribed to, so the exact handler instance can
 		// be detached when the container is recycled onto a different dockable (a fresh closure each

@@ -44,20 +44,12 @@ namespace ICSharpCode.ILSpy.Themes
 	/// SelectedItem, which activates that document. Uses a <see cref="ContextMenu"/> (the menu type the
 	/// app themes and renders reliably) opened on the next dispatcher turn after the click.
 	/// </summary>
-	public static class DocumentSwitcherDropdownBehavior
+	public static partial class DocumentSwitcherDropdownBehavior
 	{
 		const string DropdownTag = "DocumentSwitcherDropdown";
 
-		public static readonly AttachedProperty<bool> EnableProperty =
-			AvaloniaProperty.RegisterAttached<DocumentTabStrip, bool>(
-				"Enable",
-				typeof(DocumentSwitcherDropdownBehavior));
-
-		public static void SetEnable(DocumentTabStrip element, bool value)
-			=> element.SetValue(EnableProperty, value);
-
-		public static bool GetEnable(DocumentTabStrip element)
-			=> element.GetValue(EnableProperty);
+		[GeneratedAttachedProperty]
+		public static partial bool GetEnable(DocumentTabStrip element);
 
 		static DocumentSwitcherDropdownBehavior()
 		{

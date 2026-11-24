@@ -46,20 +46,12 @@ namespace ICSharpCode.ILSpy.Themes
 	/// close button's ControlTheme so it renders at the same size and inherits the same
 	/// <c>:pointerover</c> states.
 	/// </summary>
-	public static class PreviewTabFreezeButtonBehavior
+	public static partial class PreviewTabFreezeButtonBehavior
 	{
 		const string FreezeButtonTag = "PreviewTabFreezeButton";
 
-		public static readonly AttachedProperty<bool> EnableProperty =
-			AvaloniaProperty.RegisterAttached<DocumentTabStripItem, bool>(
-				"Enable",
-				typeof(PreviewTabFreezeButtonBehavior));
-
-		public static void SetEnable(DocumentTabStripItem element, bool value)
-			=> element.SetValue(EnableProperty, value);
-
-		public static bool GetEnable(DocumentTabStripItem element)
-			=> element.GetValue(EnableProperty);
+		[GeneratedAttachedProperty]
+		public static partial bool GetEnable(DocumentTabStripItem element);
 
 		static PreviewTabFreezeButtonBehavior()
 		{

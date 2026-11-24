@@ -33,7 +33,7 @@ namespace ICSharpCode.ILSpy.Controls
 	//   - presenter Indent step  = 16 px (DataGridHierarchicalPresenterIndent)
 	//   - expander column width  = 13 px (DataGridHierarchicalExpanderSize override)
 	//   - expander glyph centred at +8.5 px inside its column
-	public class TreeLines : Control
+	public partial class TreeLines : Control
 	{
 		// 18.5 = icon centre (25) - expander centre (6.5): one step puts a child's +/- box directly
 		// under its parent's icon, so the vertical line passes through both.
@@ -42,12 +42,6 @@ namespace ICSharpCode.ILSpy.Controls
 		const double IconLeftOffset = 17;          // expander column (13) + icon left margin (4)
 
 		static readonly IPen Pen;
-
-		public static readonly StyledProperty<SharpTreeNode?> NodeProperty =
-			AvaloniaProperty.Register<TreeLines, SharpTreeNode?>(nameof(Node));
-
-		public static readonly StyledProperty<int> LevelProperty =
-			AvaloniaProperty.Register<TreeLines, int>(nameof(Level));
 
 		/// <summary>
 		/// Inherited from the hosting <see cref="SharpTreeView"/>; stays at its default (lines
@@ -65,15 +59,11 @@ namespace ICSharpCode.ILSpy.Controls
 			IsHitTestVisibleProperty.OverrideDefaultValue<TreeLines>(false);
 		}
 
-		public SharpTreeNode? Node {
-			get => GetValue(NodeProperty);
-			set => SetValue(NodeProperty, value);
-		}
+		[GeneratedStyledProperty]
+		public partial SharpTreeNode? Node { get; set; }
 
-		public int Level {
-			get => GetValue(LevelProperty);
-			set => SetValue(LevelProperty, value);
-		}
+		[GeneratedStyledProperty]
+		public partial int Level { get; set; }
 
 		// Centre a 1px stroke on a pixel boundary.
 		static double Snap(double v) => Math.Floor(v) + 0.5;

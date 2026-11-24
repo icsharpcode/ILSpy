@@ -44,18 +44,10 @@ namespace ICSharpCode.ILSpy.Themes
 	/// Style, so this behaviour swaps the ItemsPanel directly and toggles the scroll-viewer's scroll
 	/// directions to match. Toggle via the attached Enable property in App.axaml.
 	/// </summary>
-	public static class MultiRowTabStripBehavior
+	public static partial class MultiRowTabStripBehavior
 	{
-		public static readonly AttachedProperty<bool> EnableProperty =
-			AvaloniaProperty.RegisterAttached<DocumentTabStrip, bool>(
-				"Enable",
-				typeof(MultiRowTabStripBehavior));
-
-		public static void SetEnable(DocumentTabStrip element, bool value)
-			=> element.SetValue(EnableProperty, value);
-
-		public static bool GetEnable(DocumentTabStrip element)
-			=> element.GetValue(EnableProperty);
+		[GeneratedAttachedProperty]
+		public static partial bool GetEnable(DocumentTabStrip element);
 
 		static MultiRowTabStripBehavior()
 		{
