@@ -200,7 +200,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				IMethod? chainedCtor = (IMethod?)FindChainedCtor(body)?.MemberDefinition;
 				ctorChainMap[method] = chainedCtor;
 
-				if (chainedCtor != null && chainedCtor.DeclaringTypeDefinition!.Equals(recordTypeDef))
+				if (chainedCtor != null && recordTypeDef.Equals(chainedCtor.DeclaringType))
 				{
 					continue;
 				}
@@ -233,7 +233,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					// follow this rule.
 					// we don't have to check the full chain, because the C# compiler enforces that
 					// there are no loops in the ctor call graph.
-					if (target == null || !target.DeclaringTypeDefinition!.Equals(recordTypeDef))
+					if (target == null || !recordTypeDef.Equals(target.DeclaringType))
 					{
 						guessedPrimaryCtor = null;
 						break;
@@ -671,6 +671,16 @@ namespace ICSharpCode.Decompiler.CSharp
 				default:
 					return IsPropertyDeclaredByPrimaryConstructor(property);
 			}
+		}
+
+		internal IProperty? GetBackingProperty(IField field)
+		{
+			foreach (var (backingField, property) in backingFieldToAutoProperty)
+			{
+				if (backingField.MemberDefinition.Equals(field.MemberDefinition))
+					return (IProperty)property.MemberDefinition;
+			}
+			return null;
 		}
 
 		public bool IsPropertyDeclaredByPrimaryConstructor(IProperty property)

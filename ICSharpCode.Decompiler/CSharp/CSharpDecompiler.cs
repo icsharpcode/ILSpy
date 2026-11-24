@@ -1877,6 +1877,9 @@ namespace ICSharpCode.Decompiler.CSharp
 					fieldsAndProperties.Concat(typeDef.Events).Concat(typeDef.Methods);
 
 				var allOrderedEntities = typeDef.NestedTypes.Concat<IEntity>(allOrderedMembers).ToArray();
+				var orderedEntitySet = new HashSet<IEntity>(allOrderedEntities);
+				var referencedOnlyEntities = new List<IEntity>();
+				var referencedOnlyEntitySet = new HashSet<IEntity>();
 
 				if (!partialTypes.TryGetValue((TypeDefinitionHandle)typeDef.MetadataToken, out var partialTypeInfo))
 				{
@@ -1918,11 +1921,23 @@ namespace ICSharpCode.Decompiler.CSharp
 						// Member is already decompiled.
 						continue;
 					}
+					if (!orderedEntitySet.Contains(entity)
+						&& entity is IField field
+						&& recordDecompiler?.GetBackingProperty(field) is IProperty property
+						&& entityMap.Contains(property)
+						&& referencedOnlyEntitySet.Add(entity))
+					{
+						referencedOnlyEntities.Add(entity);
+					}
 					DoDecompileMember(entity, recordDecompiler, partialTypeInfo, typeDef.ExtensionInfo);
 				}
 
 				// Add all decompiled members to syntax tree in the correct order.
 				foreach (var member in allOrderedEntities)
+				{
+					typeDecl.Members.AddRange(entityMap[member]);
+				}
+				foreach (var member in referencedOnlyEntities)
 				{
 					typeDecl.Members.AddRange(entityMap[member]);
 				}
@@ -2110,7 +2125,8 @@ namespace ICSharpCode.Decompiler.CSharp
 						var rr = node.GetResolveResult();
 						if (rr is MemberResolveResult mrr
 							&& mrr.Member.DeclaringTypeDefinition == typeDef
-							&& !(mrr.Member is IMethod { IsLocalFunction: true }))
+							&& mrr.Member is not IMethod { IsLocalFunction: true }
+							&& mrr.Member is not IMethod { AccessorOwner: not null })
 						{
 							// In generic types the reference is to a member specialized by the type's
 							// own type parameters, but entityMap and the dequeue dedupe are keyed by
