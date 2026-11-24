@@ -80,7 +80,10 @@ namespace ICSharpCode.ILSpy
 				// separate native child windows. On X11/XWayland native popups can lose focus and
 				// self-dismiss within ~100ms of opening (observed on the document-strip overflow
 				// dropdown: it opened and closed before becoming visible).
-				.With(new X11PlatformOptions { OverlayPopups = true });
+				// UseXShmFramebuffer only matters for CPU rendering (no usable GPU, e.g. in a VM): frames
+				// go to the X server through shared memory instead of the connection socket. It is
+				// ignored when the server lacks the MIT-SHM extension.
+				.With(new X11PlatformOptions { OverlayPopups = true, UseXShmFramebuffer = true });
 #if DEBUG
 			// Enables and attaches the Avalonia 12 DevTools bridge (it calls AttachDeveloperTools
 			// internally, so no separate App-level attach is needed -- a second call throws
