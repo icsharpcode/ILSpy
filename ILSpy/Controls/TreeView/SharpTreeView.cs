@@ -44,20 +44,8 @@ namespace ICSharpCode.ILSpy.Controls.TreeView
 	/// <see cref="INotifyCollectionChanged"/>) which is bound straight to the ListBox ItemsSource --
 	/// so the ListBox virtualizes it and provides anchor-based extend/shrink selection natively.
 	/// </summary>
-	public class SharpTreeView : ListBox
+	public partial class SharpTreeView : ListBox
 	{
-		public static readonly StyledProperty<SharpTreeNode?> RootProperty =
-			AvaloniaProperty.Register<SharpTreeView, SharpTreeNode?>(nameof(Root));
-
-		public static readonly StyledProperty<bool> ShowRootProperty =
-			AvaloniaProperty.Register<SharpTreeView, bool>(nameof(ShowRoot), defaultValue: true);
-
-		public static readonly StyledProperty<bool> ShowRootExpanderProperty =
-			AvaloniaProperty.Register<SharpTreeView, bool>(nameof(ShowRootExpander), defaultValue: false);
-
-		public static readonly StyledProperty<bool> ShowLinesProperty =
-			AvaloniaProperty.Register<SharpTreeView, bool>(nameof(ShowLines), defaultValue: true, inherits: true);
-
 		TreeFlattener? flattener;
 		string searchBuffer = string.Empty;
 		DispatcherTimer? searchResetTimer;
@@ -101,25 +89,17 @@ namespace ICSharpCode.ILSpy.Controls.TreeView
 			AddHandler(Button.ClickEvent, OnExpanderClick, RoutingStrategies.Bubble, handledEventsToo: true);
 		}
 
-		public SharpTreeNode? Root {
-			get => GetValue(RootProperty);
-			set => SetValue(RootProperty, value);
-		}
+		[GeneratedStyledProperty]
+		public partial SharpTreeNode? Root { get; set; }
 
-		public bool ShowRoot {
-			get => GetValue(ShowRootProperty);
-			set => SetValue(ShowRootProperty, value);
-		}
+		[GeneratedStyledProperty(DefaultValue = true)]
+		public partial bool ShowRoot { get; set; }
 
-		public bool ShowRootExpander {
-			get => GetValue(ShowRootExpanderProperty);
-			set => SetValue(ShowRootExpanderProperty, value);
-		}
+		[GeneratedStyledProperty]
+		public partial bool ShowRootExpander { get; set; }
 
-		public bool ShowLines {
-			get => GetValue(ShowLinesProperty);
-			set => SetValue(ShowLinesProperty, value);
-		}
+		[GeneratedStyledProperty(DefaultValue = true, Inherits = true)]
+		public partial bool ShowLines { get; set; }
 
 		protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
 		{

@@ -40,13 +40,8 @@ namespace ICSharpCode.ILSpy.TextView
 		/// 100% and only appears once the user actually zooms. When <c>true</c>, it stays
 		/// visible permanently. Matches WPF's <c>ZoomScrollViewer.AlwaysShowZoomButtons</c>.
 		/// </summary>
-		public static readonly StyledProperty<bool> AlwaysShowZoomButtonsProperty =
-			AvaloniaProperty.Register<ZoomButtons, bool>(nameof(AlwaysShowZoomButtons));
-
-		public bool AlwaysShowZoomButtons {
-			get => GetValue(AlwaysShowZoomButtonsProperty);
-			set => SetValue(AlwaysShowZoomButtonsProperty, value);
-		}
+		[GeneratedStyledProperty]
+		public partial bool AlwaysShowZoomButtons { get; set; }
 
 		DisplaySettings? settings;
 

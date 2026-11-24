@@ -37,11 +37,8 @@ namespace ICSharpCode.ILSpy.Controls.TreeView
 	/// shared SharpTreeView cell template support rich labels without every node becoming rich, and
 	/// without changing the <c>SharpTreeNode.Text</c> string used for search, copy and navigation.
 	/// </summary>
-	public static class RichNodeText
+	public static partial class RichNodeText
 	{
-		public static readonly AttachedProperty<SharpTreeNode?> NodeProperty =
-			AvaloniaProperty.RegisterAttached<TextBlock, SharpTreeNode?>("Node", typeof(RichNodeText));
-
 		// Live PropertyChanged subscription on the bound node, so a recycled TextBlock detaches cleanly.
 		static readonly AttachedProperty<PropertyChangedEventHandler?> TextHandlerProperty =
 			AvaloniaProperty.RegisterAttached<TextBlock, PropertyChangedEventHandler?>("TextHandler", typeof(RichNodeText));
@@ -69,8 +66,8 @@ namespace ICSharpCode.ILSpy.Controls.TreeView
 			NodeProperty.Changed.AddClassHandler<TextBlock>(OnNodeChanged);
 		}
 
-		public static void SetNode(TextBlock element, SharpTreeNode? value) => element.SetValue(NodeProperty, value);
-		public static SharpTreeNode? GetNode(TextBlock element) => element.GetValue(NodeProperty);
+		[GeneratedAttachedProperty]
+		public static partial SharpTreeNode? GetNode(TextBlock element);
 
 		static void OnNodeChanged(TextBlock textBlock, AvaloniaPropertyChangedEventArgs e)
 		{
