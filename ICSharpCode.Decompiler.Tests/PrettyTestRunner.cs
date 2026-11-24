@@ -513,6 +513,12 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
+		public async Task ParamsArrayExpansion()
+		{
+			await RunForLibrary(cscOptions: CompilerOptions.UseRoslynLatest);
+		}
+
+		[Test]
 		public async Task TargetTypedDefault([ValueSource(nameof(roslyn2OrNewerOptions))] CompilerOptions cscOptions)
 		{
 			await RunForLibrary(cscOptions: cscOptions);

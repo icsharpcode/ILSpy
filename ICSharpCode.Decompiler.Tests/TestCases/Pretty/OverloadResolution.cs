@@ -68,7 +68,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			Params(1);
 			Params(1, 2);
-			Params(default(int), default(int), default(int));
+			Params(new int[3]);
 			Params(new int[n]);
 		}
 

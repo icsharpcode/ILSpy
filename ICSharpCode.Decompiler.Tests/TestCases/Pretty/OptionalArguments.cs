@@ -211,9 +211,15 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		private void ParamsTests()
 		{
 			ParamsMethod(5, 10, 9, 8);
+#if EXPECTED_OUTPUT && LEGACY_CSC
+			ParamsMethod(null, new int[0]);
+			ParamsMethod(5, new int[0]);
+			ParamsMethod(10, new int[0]);
+#else
 			ParamsMethod(null);
 			ParamsMethod(5);
 			ParamsMethod(10);
+#endif
 			ParamsMethod(null, 1, 2, 3);
 		}
 

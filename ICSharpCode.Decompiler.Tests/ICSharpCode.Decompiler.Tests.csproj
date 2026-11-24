@@ -118,6 +118,7 @@
     <None Include="TestCases\ILPretty\Issue2260SwitchString.il" />
     <None Include="TestCases\ILPretty\Issue3442.il" />
     <None Include="TestCases\ILPretty\Issue3344CkFinite.il" />
+    <None Include="TestCases\ILPretty\NegativeParamsArrayLength.il" />
     <None Include="testcases\ilpretty\Issue3465.il" />
     <None Include="TestCases\ILPretty\Issue3466.il" />
     <None Include="testcases\ilpretty\Issue3504.il" />
@@ -225,6 +226,8 @@
     <Compile Remove="TestCases\ILPretty\Issue3729.cs" />
     <None Include="TestCases\ILPretty\Issue3729.cs" />
     <None Include="TestCases\ILPretty\Issue3729.il" />
+    <Compile Remove="TestCases\ILPretty\NegativeParamsArrayLength.cs" />
+    <None Include="TestCases\ILPretty\NegativeParamsArrayLength.cs" />
     <Compile Remove="TestCases\VBPretty\Issue3659.cs" />
     <None Include="TestCases\VBPretty\Issue3659.cs" />
     <Compile Remove="TestCases\ILPretty\ParameterizedPropertyInitializer.cs" />
