@@ -11,8 +11,8 @@
     <RoslynVersion>5.12.0-1.26529.118</RoslynVersion>
     <NetPackageVersion>10.0.15</NetPackageVersion>
     <TomsToolboxVersion>2.26.1</TomsToolboxVersion>
-    <AvaloniaVersion>12.1.6</AvaloniaVersion>
-    <DockVersion>12.1.5</DockVersion>
+    <AvaloniaVersion>12.2.0</AvaloniaVersion>
+    <DockVersion>12.2.0</DockVersion>
   </PropertyGroup>
   <ItemGroup>
     <!-- Avalonia (ILSpy port) -->
@@ -23,13 +23,13 @@
     <PackageVersion Include="Svg.Controls.Skia.Avalonia" Version="12.0.0.13" />
     <PackageVersion Include="Avalonia.AvaloniaEdit" Version="12.0.0" />
     <PackageVersion Include="AvaloniaEdit.TextMate" Version="12.0.0" />
-    <PackageVersion Include="Xaml.Behaviors.Avalonia" Version="12.1.5" />
+    <PackageVersion Include="Xaml.Behaviors.Avalonia" Version="12.2.0" />
     <PackageVersion Include="AvaloniaUI.DiagnosticsSupport" Version="2.2.3" />
     <PackageVersion Include="Dock.Avalonia" Version="$(DockVersion)" />
     <PackageVersion Include="Dock.Avalonia.Themes.Simple" Version="$(DockVersion)" />
     <PackageVersion Include="Dock.Controls.Recycling" Version="$(DockVersion)" />
     <PackageVersion Include="Dock.Model.Mvvm" Version="$(DockVersion)" />
-    <PackageVersion Include="ProDataGrid" Version="12.1.5" />
+    <PackageVersion Include="ProDataGrid" Version="12.2.0" />
     <PackageVersion Include="CommunityToolkit.Mvvm" Version="8.4.2" />
     <PackageVersion Include="AwesomeAssertions" Version="9.6.0" />
     <PackageVersion Include="CliWrap" Version="3.10.5" />
