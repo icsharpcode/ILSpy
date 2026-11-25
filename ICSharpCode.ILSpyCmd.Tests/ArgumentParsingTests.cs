@@ -86,6 +86,10 @@ namespace ICSharpCode.ILSpyCmd.Tests
 		[TestCase(new[] { Asm, "-lv", "CSharp8_0", "-t", sampleType }, "MemberOptionSample", TestName = "LanguageVersionCanonicalCase")]
 		[TestCase(new[] { Asm, "-usepdb", "-t", sampleType }, "MemberOptionSample", TestName = "UsePdbWithoutValueUsesThePdbNextToTheAssembly")]
 		[TestCase(new[] { Asm, "-usepdb:" + Pdb, "-t", sampleType }, "MemberOptionSample", TestName = "UsePdbWithColonValue")]
+		[TestCase(new[] { "-usepdb", Asm, "-t", sampleType }, "MemberOptionSample", TestName = "UsePdbWithoutValueKeepsTheNextTokenPositional")]
+		[TestCase(new[] { "--use-varnames-from-pdb", Asm, "-t", sampleType }, "MemberOptionSample", TestName = "UsePdbLongNameWithoutValueKeepsTheNextTokenPositional")]
+		[TestCase(new[] { Asm, "--use-varnames-from-pdb=" + Pdb, "-t", sampleType }, "MemberOptionSample", TestName = "UsePdbLongNameWithEqualsValue")]
+		[TestCase(new[] { "-r", AsmDir, Asm, "-t", sampleType }, "MemberOptionSample", TestName = "MultiValueOptionTakesOneValuePerOccurrence")]
 		[TestCase(new[] { Asm, "-ds", "RemoveDeadCode=true", "-ds", "RemoveDeadStores=true", "-t", sampleType }, "MemberOptionSample", TestName = "RepeatedDecompilerSettingOption")]
 		[TestCase(new[] { Asm, "-r", AsmDir, "-r", Temp, "-t", sampleType }, "MemberOptionSample", TestName = "RepeatedReferencePathOption")]
 		[TestCase(new[] { Asm, "--ignore-decompilation-errors", "--no-dead-code", "--no-dead-stores", "-t", sampleType }, "MemberOptionSample", TestName = "FlagsWithoutValuesCombine")]
@@ -217,12 +221,36 @@ namespace ICSharpCode.ILSpyCmd.Tests
 			Assert.That(result.Output, Does.Not.Contain("--generate-diagrammer-json-only"));
 		}
 
+		/// <summary>
+		/// The token after an option that takes a value is that value, whatever it looks like:
+		/// here "-usepdb" is the type name asked for, not the PDB switch.
+		/// </summary>
+		[Test]
+		public async Task OptionValueMayLookLikeAnOption()
+		{
+			var result = await RunAsync(testAssemblyPath, "-t", "-usepdb");
+
+			Assert.That(result.ExitCode, Is.EqualTo(ProgramExitCodes.EX_DATAERR), result.Error);
+			Assert.That(result.Error, Does.Contain("'-usepdb'"));
+		}
+
+		[Test]
+		public async Task HelpListsEveryLanguageVersion()
+		{
+			var result = await RunAsync("--help");
+
+			Assert.That(result.ExitCode, Is.EqualTo(0), result.Error);
+			foreach (string name in System.Enum.GetNames<ICSharpCode.Decompiler.CSharp.LanguageVersion>())
+				Assert.That(result.Output, Does.Contain(name), name);
+		}
+
 		[TestCase(new string[0], "Assembly file name", TestName = "NoArgumentsAtAll")]
 		[TestCase(new[] { "does-not-exist.dll" }, "does-not-exist.dll", TestName = "MissingInputFile")]
 		[TestCase(new[] { Asm, "-usepdb=missing.pdb", "-t", sampleType }, "missing.pdb", TestName = "MissingPdbFile")]
 		[TestCase(new[] { Asm, "-r", Temp + "/no-such-reference-dir", "-t", sampleType }, "no-such-reference-dir", TestName = "MissingReferenceDirectory")]
 		[TestCase(new[] { Asm, "--ilspy-settingsfile", "missing.xml", "-t", sampleType }, "missing.xml", TestName = "MissingSettingsFile")]
 		[TestCase(new[] { Asm, "-i" }, "-i", TestName = "ShortAliasesAreNotBundled")]
+		[TestCase(new[] { Asm, "-pd" }, "-pd", TestName = "SingleLetterOptionsDoNotCombine")]
 		public async Task UsageMistakeExitsWithUsageErrorNamingTheToken(string[] args, string token)
 		{
 			var result = await RunAsync(Expand(args));
