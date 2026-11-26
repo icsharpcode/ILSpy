@@ -144,6 +144,11 @@ namespace ICSharpCode.Decompiler.CSharp
 						{
 							HandleAttributes(param.GetAttributes());
 							CollectNamespacesForTypeReference(param.Type);
+							if (param.IsOptional)
+							{
+								// Lambdas below C# 12 may spell defaults as [Optional][DefaultParameterValue].
+								namespaces.Add("System.Runtime.InteropServices");
+							}
 						}
 						HandleTypeParameters(partMethod.TypeParameters);
 						HandleOverrides(part.GetMethodImplementations(module.metadata), module);
