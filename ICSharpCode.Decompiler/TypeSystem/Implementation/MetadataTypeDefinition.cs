@@ -113,7 +113,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			{
 				this.Kind = TypeKind.Interface;
 			}
-			else if (td.IsEnum(metadata, out var underlyingType))
+			else if (KnownTypeCode == KnownTypeCode.None && td.IsEnum(metadata, out var underlyingType))
 			{
 				this.Kind = TypeKind.Enum;
 				this.EnumUnderlyingType = module.Compilation.FindType(underlyingType.ToKnownTypeCode());
