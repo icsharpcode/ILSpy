@@ -16,6 +16,8 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -42,6 +44,48 @@ namespace ICSharpCode.ILSpy.Tests.Languages;
 [TestFixture]
 public class SolutionExportTests
 {
+	[Test]
+	public void WriteSolutionFile_Preserves_PercentEncoded_Project_Path()
+	{
+		var tempDir = Path.Combine(Path.GetTempPath(), "ILSpySlnPercent_" + Guid.NewGuid().ToString("N"));
+		var encodedProjectDir = Path.Combine(tempDir, "Bet%61");
+		Directory.CreateDirectory(encodedProjectDir);
+		var projectFile = Path.Combine(encodedProjectDir, "Alpha.csproj");
+		const string projectContents = "<Project Sdk=\"Microsoft.NET.Sdk\"><ItemGroup><Reference Include=\"Beta\" /></ItemGroup><PropertyGroup><Marker>original</Marker></PropertyGroup></Project>";
+		File.WriteAllText(projectFile, projectContents);
+		var referencedProjectFile = Path.Combine(tempDir, "Beta", "Beta.csproj");
+		Directory.CreateDirectory(Path.GetDirectoryName(referencedProjectFile)!);
+		File.WriteAllText(referencedProjectFile, "<Project Sdk=\"Microsoft.NET.Sdk\" />");
+		var projects = new List<ICSharpCode.Decompiler.Solution.ProjectItem> {
+			new(projectFile, "AnyCPU", Guid.NewGuid(), Guid.NewGuid()),
+			new(referencedProjectFile, "AnyCPU", Guid.NewGuid(), Guid.NewGuid())
+		};
+		try
+		{
+			var solutionPath = Path.Combine(tempDir, "Solution.sln");
+			ICSharpCode.Decompiler.Solution.SolutionCreator.WriteSolutionFile(solutionPath, projects);
+
+			File.ReadAllText(projectFile).Should().Contain("<Marker>original</Marker>");
+			File.ReadAllText(projectFile).Should().Contain("../Beta/Beta.csproj");
+			File.ReadAllText(solutionPath).Should().Contain("Bet%61/Alpha.csproj");
+		}
+		finally
+		{
+			try
+			{ Directory.Delete(tempDir, recursive: true); }
+			catch { /* best-effort cleanup */ }
+		}
+	}
+
+	[Test]
+	public void ProjectItem_Rejects_Unrepresentable_Solution_Fields()
+	{
+		Assert.Throws<ArgumentException>(() =>
+			new ICSharpCode.Decompiler.Solution.ProjectItem("Bad\"Name.csproj", "AnyCPU", Guid.NewGuid(), Guid.NewGuid()));
+		Assert.Throws<ArgumentException>(() =>
+			new ICSharpCode.Decompiler.Solution.ProjectItem("Bad\nName.csproj", "AnyCPU", Guid.NewGuid(), Guid.NewGuid()));
+	}
+
 	[AvaloniaTest]
 	public async Task CreateSolution_Writes_Sln_And_Per_Assembly_Projects()
 	{
@@ -79,6 +123,40 @@ public class SolutionExportTests
 
 			result.StatusText.Should().Contain("Created the Visual Studio Solution file",
 				"a successful run reports the solution-written breadcrumb");
+		}
+		finally
+		{
+			try
+			{ Directory.Delete(tempDir, recursive: true); }
+			catch { /* best-effort cleanup */ }
+		}
+	}
+
+	[AvaloniaTest]
+	public async Task CreateSolution_Sanitizes_Percent_In_Project_Directory()
+	{
+		var (_, vm) = await TestHarness.BootAsync();
+		var fixture = FixtureAssembly.Emit("FixtureA");
+		var percentName = Path.Combine(Path.GetDirectoryName(fixture)!, "Bet%61.dll");
+		File.Move(fixture, percentName);
+		var assembly = await vm.OpenAssemblyAsync(percentName);
+
+		var language = AppComposition.Current.GetExport<LanguageService>()
+			.Languages.OfType<CSharpLanguage>().First();
+
+		var tempDir = Path.Combine(Path.GetTempPath(), "ILSpySlnPercentExport_" + Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(tempDir);
+		try
+		{
+			var solutionPath = Path.Combine(tempDir, "Solution.sln");
+			var result = await ICSharpCode.ILSpy.SolutionWriter.CreateSolutionAsync(
+				solutionPath, language, new[] { assembly, await vm.OpenFixtureAsync("FixtureB") },
+				CancellationToken.None, new DecompilerSettings());
+
+			result.Success.Should().BeTrue("percent signs in assembly names must not alter solution paths");
+			Directory.Exists(Path.Combine(tempDir, "Bet-61")).Should().BeTrue();
+			File.ReadAllText(solutionPath).Should().Contain("Bet-61/FixtureA.csproj")
+				.And.NotContain("Bet%61");
 		}
 		finally
 		{
