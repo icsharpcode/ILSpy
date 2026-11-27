@@ -2763,7 +2763,13 @@ namespace ICSharpCode.Decompiler.CSharp
 					try
 					{
 						var initVal = fieldDefinition.GetInitialValue(module.MetadataFile, TypeSystem);
-						message = string.Format(" Not supported: data({0}) ", BitConverter.ToString(initVal.ReadBytes(initVal.RemainingBytes)).Replace('-', ' '));
+						// Multiple fields may map to the same data, so keep this comment bounded per field.
+						const int maxBytesShown = 256;
+						int length = initVal.RemainingBytes;
+						string data = BitConverter.ToString(initVal.ReadBytes(Math.Min(length, maxBytesShown))).Replace('-', ' ');
+						if (length > maxBytesShown)
+							data += $" ... {length} bytes in total";
+						message = string.Format(" Not supported: data({0}) ", data);
 					}
 					catch (BadImageFormatException ex)
 					{
