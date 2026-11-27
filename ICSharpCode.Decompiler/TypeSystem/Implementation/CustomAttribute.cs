@@ -34,6 +34,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 	{
 		readonly MetadataModule module;
 		readonly CustomAttributeHandle handle;
+		readonly IType attributeType;
 		public IMethod Constructor { get; }
 
 		// lazy-loaded:
@@ -49,10 +50,28 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			Debug.Assert(!handle.IsNil);
 			this.module = module;
 			this.Constructor = attrCtor;
+			this.attributeType = attrCtor.DeclaringType;
 			this.handle = handle;
 		}
 
-		public IType AttributeType => Constructor.DeclaringType;
+		/// <summary>
+		/// Creates an attribute placeholder when its constructor signature cannot be resolved.
+		/// </summary>
+		internal CustomAttribute(MetadataModule module, IType attributeType, CustomAttributeHandle handle)
+		{
+			Debug.Assert(module != null);
+			Debug.Assert(!handle.IsNil);
+			this.module = module;
+			this.attributeType = attributeType ?? SpecialType.UnknownType;
+			this.handle = handle;
+			this.value = new CustomAttributeValue<IType>(
+				ImmutableArray<CustomAttributeTypedArgument<IType>>.Empty,
+				ImmutableArray<CustomAttributeNamedArgument<IType>>.Empty);
+			this.valueDecoded = true;
+			this.hasDecodeErrors = true;
+		}
+
+		public IType AttributeType => attributeType;
 
 		public ImmutableArray<CustomAttributeTypedArgument<IType>> FixedArguments {
 			get {
