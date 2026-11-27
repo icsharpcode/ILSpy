@@ -37,9 +37,9 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		readonly IMethod getter;
 		readonly IMethod setter;
 		readonly string name;
-		readonly SymbolKind symbolKind;
 
 		// lazy-loaded:
+		volatile SymbolKind cachedSymbolKind = SymbolKind.None;
 		volatile Accessibility cachedAccessiblity = InvalidAccessibility;
 		IParameter[] parameters;
 		IType returnType;
@@ -57,24 +57,28 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			getter = module.GetDefinition(accessors.Getter);
 			setter = module.GetDefinition(accessors.Setter);
 			name = metadata.GetString(prop.Name);
-			// Maybe we should defer the calculation of symbolKind?
-			if (DetermineIsIndexer(name))
+		}
+
+		/// <summary>
+		/// Computes the property kind after construction so cyclic MethodImpl targets cannot recurse in the constructor.
+		/// </summary>
+		SymbolKind ComputeSymbolKind()
+		{
+			if (DetermineIsIndexer())
 			{
-				symbolKind = SymbolKind.Indexer;
+				return SymbolKind.Indexer;
 			}
 			else if (name.IndexOf('.') >= 0)
 			{
 				// explicit interface implementation
-				var interfaceProp = this.ExplicitlyImplementedInterfaceMembers.FirstOrDefault() as IProperty;
-				symbolKind = interfaceProp?.SymbolKind ?? SymbolKind.Property;
+				var interfaceProp = this.ExplicitlyImplementedInterfaceMembers.FirstOrDefault()?.MemberDefinition as MetadataProperty;
+				if (interfaceProp != null && interfaceProp.DetermineIsIndexer())
+					return SymbolKind.Indexer;
 			}
-			else
-			{
-				symbolKind = SymbolKind.Property;
-			}
+			return SymbolKind.Property;
 		}
 
-		bool DetermineIsIndexer(string name)
+		bool DetermineIsIndexer()
 		{
 			if (name != (DeclaringTypeDefinition as MetadataTypeDefinition)?.DefaultMemberName)
 				return false;
@@ -96,8 +100,16 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public IMethod Setter => setter;
 		IMethod AnyAccessor => getter ?? setter;
 
-		public bool IsIndexer => symbolKind == SymbolKind.Indexer;
-		public SymbolKind SymbolKind => symbolKind;
+		public bool IsIndexer => SymbolKind == SymbolKind.Indexer;
+
+		public SymbolKind SymbolKind {
+			get {
+				var kind = cachedSymbolKind;
+				if (kind == SymbolKind.None)
+					return cachedSymbolKind = ComputeSymbolKind();
+				return kind;
+			}
+		}
 
 		#region Signature (ReturnType + Parameters)
 		public IReadOnlyList<IParameter> Parameters {
@@ -213,7 +225,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				b.Add(KnownAttribute.SpecialName);
 			}
 
-			b.Add(propertyDef.GetCustomAttributes(), symbolKind);
+			b.Add(propertyDef.GetCustomAttributes(), SymbolKind);
 			return b.Build();
 		}
 
@@ -226,7 +238,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			var b = new AttributeListBuilder(module);
 			var metadata = module.metadata;
 			var def = metadata.GetPropertyDefinition(handle);
-			return b.HasAttribute(metadata, def.GetCustomAttributes(), attribute, symbolKind);
+			return b.HasAttribute(metadata, def.GetCustomAttributes(), attribute, SymbolKind);
 		}
 
 		public IAttribute GetAttribute(KnownAttribute attribute)
@@ -238,7 +250,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			var b = new AttributeListBuilder(module);
 			var metadata = module.metadata;
 			var def = metadata.GetPropertyDefinition(handle);
-			return b.GetAttribute(metadata, def.GetCustomAttributes(), attribute, symbolKind);
+			return b.GetAttribute(metadata, def.GetCustomAttributes(), attribute, SymbolKind);
 		}
 		#endregion
 
