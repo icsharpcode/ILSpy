@@ -29,6 +29,7 @@ using System.Reflection;
 using System.Threading.Tasks;
 
 using ICSharpCode.Decompiler;
+using ICSharpCode.Decompiler.CSharp.ProjectDecompiler;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.ILSpyX.Instrumentation;
 
@@ -138,6 +139,18 @@ namespace ICSharpCode.ILSpyX
 			{
 				view?.Dispose();
 			}
+		}
+
+		/// <summary>
+		/// Creates a filesystem name for an entry below the package file, removing path
+		/// segments that could navigate outside the package.
+		/// </summary>
+		public static string GetEntryFileName(string packageFileName, string entryName)
+		{
+			ArgumentNullException.ThrowIfNull(packageFileName);
+			ArgumentNullException.ThrowIfNull(entryName);
+
+			return Path.Combine(packageFileName, WholeProjectDecompiler.SanitizeFileName(entryName));
 		}
 
 		/// <summary>
@@ -399,7 +412,7 @@ namespace ICSharpCode.ILSpyX
 				// the copies of one assembly in a multi-target package tellable apart wherever the
 				// file name is surfaced. ShortName/Text stay the bare file name either way.
 				asm = new LoadedAssembly(
-					package.LoadedAssembly, entry.FullName,
+					package.LoadedAssembly, LoadedPackage.GetEntryFileName(package.LoadedAssembly.FileName, entry.FullName),
 					fileLoaders: package.LoadedAssembly.AssemblyList.LoaderRegistry,
 					assemblyResolver: this,
 					packageFolder: this,

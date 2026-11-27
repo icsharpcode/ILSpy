@@ -28,6 +28,7 @@ using Avalonia.Headless.NUnit;
 
 using AwesomeAssertions;
 
+using ICSharpCode.Decompiler.CSharp.ProjectDecompiler;
 using ICSharpCode.ILSpyX;
 
 using ICSharpCode.ILSpy.AppEnv;
@@ -87,6 +88,7 @@ public class AssemblyTreeModelTests
 		using var zip = ZipFile.Open(packagePath, ZipArchiveMode.Create);
 		zip.CreateEntryFromFile(FixtureAssembly.Emit("Nested"), "lib/net10.0/Nested.dll");
 		zip.CreateEntryFromFile(FixtureAssembly.Emit("Sibling"), "runtimes/win-x64/Sibling.dll");
+		zip.CreateEntryFromFile(FixtureAssembly.Emit("Traversal"), "../../outside/Traversal.dll");
 	}
 
 	[OneTimeTearDown]
@@ -112,9 +114,12 @@ public class AssemblyTreeModelTests
 		}
 
 		nested.Select(a => a.FileName).Should().BeEquivalentTo(
-			new[] { "lib/net10.0/Nested.dll", "runtimes/win-x64/Sibling.dll" },
-			"every .dll in the package is searchable, and the package-relative path is what "
-			+ "distinguishes copies of one assembly built for several targets.");
+			new[] {
+				LoadedPackage.GetEntryFileName(packagePath, "lib/net10.0/Nested.dll"),
+				LoadedPackage.GetEntryFileName(packagePath, "runtimes/win-x64/Sibling.dll"),
+				LoadedPackage.GetEntryFileName(packagePath, "../../outside/Traversal.dll")
+			},
+			"nested assemblies need a non-resolvable sanitized path below the package file.");
 	}
 
 	[AvaloniaTest]
@@ -155,7 +160,7 @@ public class AssemblyTreeModelTests
 		var package = await vm.OpenAssemblyAsync(packagePath);
 
 		var nested = (await vm.AssemblyTreeModel.AssemblyList!.GetAllAssemblies())
-			.Single(a => a.FileName == "lib/net10.0/Nested.dll");
+			.Single(a => a.FileName == LoadedPackage.GetEntryFileName(packagePath, "lib/net10.0/Nested.dll"));
 		var type = nested.GetTypeSystemOrNull()!.MainModule.TypeDefinitions
 			.Single(t => t.Name == FixtureAssembly.TypeName);
 
