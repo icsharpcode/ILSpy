@@ -1055,9 +1055,8 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 
 		/// <summary>
 		/// Cleans up a node name for use as a file system name. If <paramref name="separateAtDots"/> is active,
-		/// dots are seen as segment separators. Each segment is limited to maxSegmentLength characters.
-		/// If <paramref name="treatAsFileName"/> is active, we check for file a extension and try to preserve it,
-		/// if it's valid.
+		/// dots are treated as segment separators. Each segment is limited to maxSegmentLength characters.
+		/// If <paramref name="treatAsFileName"/> is active, a file extension is detected and preserved when valid.
 		/// </summary>
 		static string CleanUpName(string text, bool separateAtDots, bool treatAsFileName, bool treatAsPath)
 		{
