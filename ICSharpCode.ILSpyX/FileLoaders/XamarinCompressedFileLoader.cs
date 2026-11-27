@@ -95,6 +95,7 @@ namespace ICSharpCode.ILSpyX.FileLoaders
 				{
 					throw new InvalidDataException("Invalid Xamarin compressed module: truncated payload.", ex);
 				}
+				System.Array.Clear(dst, 0, uncompressedLength);
 				// Decompress; Decode returns the number of bytes written, or negative on failure.
 				// The header declares the exact decompressed size, so anything other than an exact
 				// match (a negative error code or a short, truncated decode) means the payload is

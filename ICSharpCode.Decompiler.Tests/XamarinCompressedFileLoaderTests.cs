@@ -146,5 +146,47 @@ namespace ICSharpCode.Decompiler.Tests
 			Assert.That(result!.IsSuccess, Is.True);
 			Assert.That(result.MetadataFile, Is.Not.Null);
 		}
+
+		[Test]
+		public void ZeroOffsetMatch_DoesNotExposeStalePoolMemory()
+		{
+			byte[] original = File.ReadAllBytes(typeof(XamarinCompressedFileLoader).Assembly.Location);
+			using var compressedStream = new MemoryStream();
+			compressedStream.WriteByte(0xF0);
+			compressedStream.WriteByte(0x01);
+			compressedStream.Write(original, 0, 16);
+			compressedStream.WriteByte(0);
+			compressedStream.WriteByte(0);
+
+			int remainingLength = original.Length - 20;
+			compressedStream.WriteByte(0xF0);
+			int literalLength = remainingLength - 15;
+			while (literalLength >= 255)
+			{
+				compressedStream.WriteByte(255);
+				literalLength -= 255;
+			}
+			compressedStream.WriteByte((byte)literalLength);
+			compressedStream.Write(original, 20, remainingLength);
+
+			byte[] compressed = compressedStream.ToArray();
+			byte[] firstStaleBuffer = System.Buffers.ArrayPool<byte>.Shared.Rent(original.Length);
+			byte[] secondStaleBuffer = System.Buffers.ArrayPool<byte>.Shared.Rent(original.Length);
+			System.Array.Fill(firstStaleBuffer, (byte)0xAA);
+			System.Array.Fill(secondStaleBuffer, (byte)0xAA);
+			System.Buffers.ArrayPool<byte>.Shared.Return(firstStaleBuffer);
+			System.Buffers.ArrayPool<byte>.Shared.Return(secondStaleBuffer);
+
+			using var blob = BuildBlob(CompressedDataMagic, (uint)original.Length, compressed);
+			var result = Load(blob).GetAwaiter().GetResult();
+
+			Assert.That(result, Is.Not.Null);
+			Assert.That(result!.IsSuccess, Is.True);
+			var image = ((ICSharpCode.Decompiler.Metadata.PEFile)result.MetadataFile!).Reader.GetEntireImage().GetContent();
+			Assert.That(image[16], Is.Zero);
+			Assert.That(image[17], Is.Zero);
+			Assert.That(image[18], Is.Zero);
+			Assert.That(image[19], Is.Zero);
+		}
 	}
 }
