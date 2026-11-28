@@ -283,19 +283,47 @@ namespace ICSharpCode.Decompiler.Tests.Output
 
 		[TestCase(CommentType.SingleLine, "//")]
 		[TestCase(CommentType.Documentation, "///")]
-		public void SingleLineCommentNewlinesCannotEscapeTheComment(CommentType commentType, string prefix)
+		public void SingleLineCommentTerminatorsAndEscapeCharactersAreEscaped(CommentType commentType, string prefix)
 		{
-			const string content = " warning\r\nSystem.Environment.Exit(1); //. Abort transformation.";
+			const string content = " warning\r\nSystem.Environment.Exit(1); //. Abort transformation.\u001b[2K";
 			var settings = new DecompilerSettings();
 			var output = WriteLeadingTrivia(settings, new Comment(content, commentType));
 
-			Assert.That(output.Text, Is.EqualTo(prefix + " warning\\r\\nSystem.Environment.Exit(1); //. Abort transformation." + Environment.NewLine));
+			Assert.That(output.Text, Is.EqualTo(prefix + " warning\\r\\nSystem.Environment.Exit(1); //. Abort transformation.\\u001b[2K" + Environment.NewLine));
 
 			using var textWriterOutput = new StringWriter();
 			var textWriter = new TextWriterTokenWriter(textWriterOutput) { IndentationString = "" };
 			textWriter.WriteComment(commentType, content);
 
 			Assert.That(textWriterOutput.ToString(), Is.EqualTo(output.Text));
+		}
+
+		[Test]
+		public void BlockCommentTerminatorsAndEscapeCharactersAreEscaped()
+		{
+			const CommentType commentType = CommentType.MultiLine;
+			const string content = " comment */ text \u001b[2K";
+			var settings = new DecompilerSettings();
+			var output = WriteLeadingTrivia(settings, new Comment(content, commentType));
+
+			Assert.That(output.Text, Is.EqualTo("/* comment *\\u002f text \\u001b[2K*/"));
+
+			using var textWriterOutput = new StringWriter();
+			var textWriter = new TextWriterTokenWriter(textWriterOutput) { IndentationString = "" };
+			textWriter.WriteComment(commentType, content);
+
+			Assert.That(textWriterOutput.ToString(), Is.EqualTo(output.Text));
+		}
+
+		[Test]
+		public void MultiLineDocumentationCommentTerminatorsAndEscapeCharactersAreEscaped()
+		{
+			const string content = " comment */ text \u001b[2K";
+			using var textWriterOutput = new StringWriter();
+			var textWriter = new TextWriterTokenWriter(textWriterOutput) { IndentationString = "" };
+			textWriter.WriteComment(CommentType.MultiLineDocumentation, content);
+
+			Assert.That(textWriterOutput.ToString(), Is.EqualTo("/** comment *\\u002f text \\u001b[2K*/"));
 		}
 
 		[Test]

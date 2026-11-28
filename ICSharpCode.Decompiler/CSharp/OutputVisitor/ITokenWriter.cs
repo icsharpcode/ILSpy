@@ -92,12 +92,12 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 
 	internal static class CommentUtilities
 	{
-		static readonly char[] lineTerminators = { '\r', '\n', '\u0085', '\u2028', '\u2029' };
+		static readonly char[] singleLineCharactersToEscape = { '\r', '\n', '\u0085', '\u2028', '\u2029', '\u001b' };
 
-		public static string EscapeLineTerminators(string content)
+		public static string EscapeSingleLineCommentContent(string content)
 		{
-			int firstLineTerminator = content.IndexOfAny(lineTerminators);
-			if (firstLineTerminator < 0)
+			int firstCharacterToEscape = content.IndexOfAny(singleLineCharactersToEscape);
+			if (firstCharacterToEscape < 0)
 				return content;
 
 			var escapedContent = new StringBuilder(content.Length);
@@ -120,9 +120,37 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 					case '\u2029':
 						escapedContent.Append("\\u2029");
 						break;
+					case '\u001b':
+						escapedContent.Append("\\u001b");
+						break;
 					default:
 						escapedContent.Append(content[i]);
 						break;
+				}
+			}
+			return escapedContent.ToString();
+		}
+
+		public static string EscapeBlockCommentContent(string content)
+		{
+			if (content.IndexOf('\u001b') < 0 && content.IndexOf("*/", StringComparison.Ordinal) < 0)
+				return content;
+
+			var escapedContent = new StringBuilder(content.Length);
+			for (int i = 0; i < content.Length; i++)
+			{
+				if (content[i] == '\u001b')
+				{
+					escapedContent.Append("\\u001b");
+				}
+				else if (content[i] == '*' && i + 1 < content.Length && content[i + 1] == '/')
+				{
+					escapedContent.Append("*\\u002f");
+					i++;
+				}
+				else
+				{
+					escapedContent.Append(content[i]);
 				}
 			}
 			return escapedContent.ToString();
