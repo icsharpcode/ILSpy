@@ -52,6 +52,12 @@ namespace ICSharpCode.ILSpy.NuGetFeeds
 		SourceRepository GetRepository(string feedUrl)
 			=> repositories.GetOrAdd(feedUrl, url => Repository.Factory.GetCoreV3(url));
 
+		static void ValidatePackageId(string packageId)
+		{
+			if (!PackageIdValidator.IsValidPackageId(packageId))
+				throw new InvalidOperationException($"'{packageId}' is not a valid package id.");
+		}
+
 		public async Task<IReadOnlyList<NuGetPackageInfo>> SearchAsync(
 			string feedUrl, string searchText, bool includePrerelease,
 			int skip, int take, CancellationToken cancellationToken)
@@ -79,6 +85,7 @@ namespace ICSharpCode.ILSpy.NuGetFeeds
 			string feedUrl, string packageId, bool includePrerelease,
 			int maxCount, CancellationToken cancellationToken)
 		{
+			ValidatePackageId(packageId);
 			var byId = await GetRepository(feedUrl)
 				.GetResourceAsync<FindPackageByIdResource>(cancellationToken).ConfigureAwait(false)
 				?? throw new InvalidOperationException($"The feed '{feedUrl}' does not support package lookup by id.");
@@ -96,6 +103,7 @@ namespace ICSharpCode.ILSpy.NuGetFeeds
 			string feedUrl, string packageId, string version,
 			CancellationToken cancellationToken)
 		{
+			ValidatePackageId(packageId);
 			var identity = new PackageIdentity(packageId, NuGetVersion.Parse(version));
 			var nugetSettings = Settings.LoadDefaultSettings(root: null);
 			string packagesFolder = SettingsUtility.GetGlobalPackagesFolder(nugetSettings);
