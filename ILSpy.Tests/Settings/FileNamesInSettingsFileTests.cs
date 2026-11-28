@@ -19,6 +19,7 @@
 using System;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Xml.Linq;
 
 using ICSharpCode.ILSpyX;
@@ -32,6 +33,16 @@ namespace ICSharpCode.ILSpy.Tests.Settings;
 [NonParallelizable]
 public class FileNamesInSettingsFileTests
 {
+	sealed class QueuedSynchronizationContext : SynchronizationContext
+	{
+		public int PendingCallbacks { get; private set; }
+
+		public override void Post(SendOrPostCallback callback, object? state)
+		{
+			PendingCallbacks++;
+		}
+	}
+
 	static readonly TestCaseData[] FileNames = {
 		new TestCaseData("Invoice\uFFFF.dll").SetArgDisplayNames("U+FFFF"),
 		new TestCaseData("Invoice\uFFFE.dll").SetArgDisplayNames("U+FFFE"),
@@ -124,5 +135,32 @@ public class FileNamesInSettingsFileTests
 		var element = XDocument.Load(configFile).Root!.Element("SessionSettings")!.Element("ActiveAutoLoadedAssembly")!;
 		Assert.That(element.HasAttributes, Is.False);
 		Assert.That(element.Value, Is.EqualTo(fileName));
+	}
+
+	[Test]
+	public void AssemblyListChangeIsPersistedBeforeTheChangeReturns()
+	{
+		var previousContext = SynchronizationContext.Current;
+		var queuedContext = new QueuedSynchronizationContext();
+		string assemblyPath = Path.Combine(tempDir, "Opened.dll");
+		try
+		{
+			SynchronizationContext.SetSynchronizationContext(queuedContext);
+			var manager = new AssemblyListManager(ILSpySettings.Load());
+			var list = manager.CreateList("My project");
+			manager.AddListIfNotExists(list);
+
+			list.OpenAssembly(assemblyPath);
+
+			var savedList = ILSpySettings.Load()["AssemblyLists"]
+				.Elements("List")
+				.Single(element => (string?)element.Attribute("name") == "My project");
+			Assert.That(savedList.Elements("Assembly").Select(FileNameXml.FromXml), Does.Contain(assemblyPath));
+			Assert.That(queuedContext.PendingCallbacks, Is.Zero);
+		}
+		finally
+		{
+			SynchronizationContext.SetSynchronizationContext(previousContext);
+		}
 	}
 }

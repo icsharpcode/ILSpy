@@ -45,7 +45,7 @@ namespace ICSharpCode.ILSpyX
 		readonly AssemblyListManager manager;
 		readonly string listName;
 
-		/// <summary>Dirty flag, used to mark modifications so that the list is saved later</summary>
+		/// <summary>Dirty flag, used to suppress nested and initialization saves.</summary>
 		bool dirty;
 		readonly object lockObj = new object();
 
@@ -94,6 +94,7 @@ namespace ICSharpCode.ILSpyX
 		internal AssemblyList(AssemblyListManager manager, XElement listElement)
 			: this(manager, (string?)listElement.Attribute("name") ?? AssemblyListManager.DefaultListName)
 		{
+			dirty = true;
 			foreach (var asm in listElement.Elements("Assembly"))
 			{
 				var loaded = OpenAssembly(FileNameXml.FromXml(asm));
@@ -248,20 +249,18 @@ namespace ICSharpCode.ILSpyX
 
 		public void RefreshSave()
 		{
-			// Whenever the assembly list is modified, mark it as dirty
-			// and enqueue a task that saves it once the UI has finished modifying the assembly list.
+			// Save each modification before returning so the last list state survives process termination.
 			if (!dirty)
 			{
 				dirty = true;
-				BeginInvoke(
-					delegate {
-						if (dirty)
-						{
-							dirty = false;
-							this.manager.SaveList(this);
-						}
-					}
-				);
+				try
+				{
+					this.manager.SaveList(this);
+				}
+				finally
+				{
+					dirty = false;
+				}
 			}
 		}
 
