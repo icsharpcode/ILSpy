@@ -19,6 +19,8 @@
 using System;
 using System.IO;
 using System.Linq;
+using System.Reflection;
+using System.Reflection.Emit;
 using System.Text.Json;
 using System.Threading.Tasks;
 
@@ -100,6 +102,49 @@ namespace ICSharpCode.ILSpyCmd.Tests
 			Assert.That(html, Does.Not.Contain("<img src=x onerror=alert(1)>"));
 			Assert.That(html, Does.Contain("Lib&lt;img src=x onerror=alert(1)&gt; {{Model}}"));
 			Assert.That(html.Split("\"TypesByNamespace\"").Length - 1, Is.EqualTo(1));
+		}
+
+		[Test]
+		public async Task MetadataNamesCannotInjectMermaidStatementsOrDirectives()
+		{
+			const string memberName = "x\n}\n%%{init:{}}%%";
+			var assembly = new PersistedAssemblyBuilder(new AssemblyName("HostileNames"), typeof(object).Assembly);
+			var module = assembly.DefineDynamicModule("HostileNames");
+			var engine = module.DefineType("Engine", TypeAttributes.Public).CreateType()!;
+			var car = module.DefineType("Car%%{init:{}}%%", TypeAttributes.Public | TypeAttributes.Abstract);
+			car.DefineField(memberName, typeof(int), FieldAttributes.Public);
+			car.DefineMethod(memberName, MethodAttributes.Public | MethodAttributes.Abstract | MethodAttributes.Virtual, typeof(void), [typeof(int)])
+				.DefineParameter(1, ParameterAttributes.None, memberName);
+			var getter = car.DefineMethod("get_" + memberName, MethodAttributes.Public | MethodAttributes.SpecialName | MethodAttributes.HideBySig | MethodAttributes.Abstract | MethodAttributes.Virtual, engine, Type.EmptyTypes);
+			car.DefineProperty(memberName, PropertyAttributes.None, engine, null).SetGetMethod(getter);
+			car.CreateType();
+			var colour = module.DefineEnum("Colour", TypeAttributes.Public, typeof(int));
+			colour.DefineLiteral(memberName, 0);
+			colour.CreateType();
+			module.DefineType("Twin%", TypeAttributes.Public).CreateType();
+			module.DefineType("Twin_", TypeAttributes.Public).CreateType();
+			Directory.CreateDirectory(outputDirectory);
+			string assemblyPath = Path.Combine(outputDirectory, "HostileNames.dll");
+			assembly.Save(assemblyPath);
+
+			var result = await RunAsync(assemblyPath, "--generate-diagrammer", "--generate-diagrammer-json-only", "-o", outputDirectory);
+
+			Assert.That(result.ExitCode, Is.EqualTo(0), result.Error);
+			using var bundle = JsonDocument.Parse(File.ReadAllText(Path.Combine(outputDirectory, "model.json")));
+			using var model = JsonDocument.Parse(bundle.RootElement.GetProperty("Model").GetString());
+			var types = model.RootElement.GetProperty("TypesByNamespace").GetProperty("");
+			var carEntry = types.EnumerateObject().Single(pair => pair.Name.StartsWith("Car", StringComparison.Ordinal));
+			var carModel = carEntry.Value;
+			Assert.That(carEntry.Name, Does.Match(@"^\w+$"));
+			Assert.That(carModel.GetProperty("Body").GetString(), Does.Not.Contain("%%{init"));
+			Assert.That(carModel.GetProperty("Body").GetString(), Does.Not.Contain("\nclick "));
+			Assert.That(carModel.GetProperty("HasOne").EnumerateObject().Select(pair => pair.Name),
+				Does.Contain("x#10;#125;#10;#37;#37;#123;init#58;#123;#125;#125;#37;#37;"));
+			Assert.That(carModel.GetProperty("Body").GetString(), Does.Contain("#10;#125;#10;#37;#37;#123;"));
+			Assert.That(types.GetProperty("Colour").GetProperty("Body").GetString(), Does.Contain("x#10;#125;#10;#37;#37;#123;"));
+			string[] twinIds = types.EnumerateObject().Select(pair => pair.Name).Where(name => name.StartsWith("Twin_", StringComparison.Ordinal)).ToArray();
+			Assert.That(twinIds, Has.Length.EqualTo(2));
+			Assert.That(twinIds.Distinct().Count(), Is.EqualTo(2));
 		}
 
 		static void CreateAssembly(string assemblyPath, string assemblyName)

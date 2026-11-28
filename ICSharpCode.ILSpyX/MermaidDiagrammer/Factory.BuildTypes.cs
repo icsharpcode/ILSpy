@@ -34,7 +34,7 @@ namespace ICSharpCode.ILSpyX.MermaidDiagrammer
 			Dictionary<string, string>? docs = xmlDocs?.GetXmlDocs(type, fields);
 			string name = GetName(type), typeId = GetId(type);
 
-			var body = fields.Select(f => f.Name).Prepend("<<Enumeration>>")
+			var body = fields.Select(f => Escape(f.Name)).Prepend("<<Enumeration>>")
 				.Join(CD.NewLine + "    ", pad: true).TrimEnd(' ');
 
 			return new CD.Type {

@@ -309,13 +309,14 @@
                     mayNeedLabelling = new Set(),
 
                     cleanUpDiagramMmd = mmd => mmd.replace(/(\r?\n){3,}/g, '\n\n'), // squash more than two consecutive line breaks down into two
+                    escapeLabel = label => label.replace(/#\d+;|[^\w ,.+?&]/gu, char => char.startsWith('#') ? char : `#${char.codePointAt(0)};`),
 
                     // renders base type and interfaces depending on settings and selected types
                     renderSuperType = (supertTypeId, link, typeId, name, displayAll) => {
                         /* display relation arrow if either the user chose to display this kind of super type
                             or the super type is selected to be rendered anyway and we might as well for completeness */
                         if (displayAll || isRendered(supertTypeId)) {
-                            const label = name ? ' : ' + name : '';
+                            const label = name ? ' : ' + escapeLabel(name) : '';
                             diagram += `${supertTypeId} <|${link} ${typeId}${label}\n`;
                             mayNeedLabelling.add(supertTypeId);
                         }
@@ -330,7 +331,7 @@
                                 const nullable = label.endsWith(' ?');
                                 const cardinality = many ? '"*" ' : nullable ? '"?" ' : '';
                                 if (nullable) label = label.substring(0, label.length - 2); // nullability is expressed via cardinality
-                                diagram += `${typeId} --> ${cardinality}${relatedId} : ${label}\n`;
+                                diagram += `${typeId} --> ${cardinality}${relatedId} : ${escapeLabel(label)}\n`;
                                 mayNeedLabelling.add(relatedId);
                             }
                     },
@@ -381,7 +382,7 @@
 
                 for (let typeId of mayNeedLabelling) {
                     const label = getTypeLabel(typeId);
-                    if (label !== typeId) diagram += `class ${typeId} ["${label}"]\n`;
+                    if (label !== typeId) diagram += `class ${typeId} ["${escapeLabel(label)}"]\n`;
                 }
 
                 diagram = cleanUpDiagramMmd(diagram);
