@@ -141,7 +141,7 @@ namespace ICSharpCode.Decompiler.Documentation
 		/// <exception cref="IOException">Error reading from XML file (or from redirected file)</exception>
 		/// <exception cref="XmlException">Invalid XML file</exception>
 		public XmlDocumentationProvider(string fileName)
-			: this(fileName, OpenFile)
+			: this(fileName, OpenFile, allowRedirection: false)
 		{
 		}
 
@@ -150,6 +150,16 @@ namespace ICSharpCode.Decompiler.Documentation
 		/// the provider needs to open the source, including lazy reads and reloads.
 		/// </summary>
 		public XmlDocumentationProvider(string fileName, Func<string, Stream> openFile)
+			: this(fileName, openFile, allowRedirection: false)
+		{
+		}
+
+		internal XmlDocumentationProvider(string fileName, bool allowRedirection)
+			: this(fileName, OpenFile, allowRedirection)
+		{
+		}
+
+		XmlDocumentationProvider(string fileName, Func<string, Stream> openFile, bool allowRedirection)
 		{
 			if (fileName == null)
 				throw new ArgumentNullException(nameof(fileName));
@@ -161,7 +171,11 @@ namespace ICSharpCode.Decompiler.Documentation
 				{
 					xmlReader.XmlResolver = null; // no DTD resolving
 					xmlReader.MoveToContent();
-					if (string.IsNullOrEmpty(xmlReader.GetAttribute("redirect")))
+					string redirect = xmlReader.GetAttribute("redirect");
+					string redirectionTarget = string.IsNullOrEmpty(redirect) || !allowRedirection
+						? null
+						: GetRedirectionTarget(fileName, redirect);
+					if (redirectionTarget == null)
 					{
 						this.fileName = fileName;
 						this.encoding = xmlReader.Encoding;
@@ -169,25 +183,17 @@ namespace ICSharpCode.Decompiler.Documentation
 					}
 					else
 					{
-						string redirectionTarget = GetRedirectionTarget(fileName, xmlReader.GetAttribute("redirect"));
-						if (redirectionTarget != null)
+						Debug.WriteLine("XmlDoc " + fileName + " is redirecting to " + redirectionTarget);
+						using (Stream redirectedFs = OpenRequiredStream(redirectionTarget))
 						{
-							Debug.WriteLine("XmlDoc " + fileName + " is redirecting to " + redirectionTarget);
-							using (Stream redirectedFs = OpenRequiredStream(redirectionTarget))
+							using (XmlTextReader redirectedXmlReader = new XmlTextReader(redirectedFs))
 							{
-								using (XmlTextReader redirectedXmlReader = new XmlTextReader(redirectedFs))
-								{
-									redirectedXmlReader.XmlResolver = null; // no DTD resolving
-									redirectedXmlReader.MoveToContent();
-									this.fileName = redirectionTarget;
-									this.encoding = redirectedXmlReader.Encoding;
-									ReadXmlDoc(redirectedXmlReader);
-								}
+								redirectedXmlReader.XmlResolver = null; // no DTD resolving
+								redirectedXmlReader.MoveToContent();
+								this.fileName = redirectionTarget;
+								this.encoding = redirectedXmlReader.Encoding;
+								ReadXmlDoc(redirectedXmlReader);
 							}
-						}
-						else
-						{
-							throw new XmlException("XmlDoc " + fileName + " is redirecting to " + xmlReader.GetAttribute("redirect") + ", but that file was not found.");
 						}
 					}
 				}
@@ -210,16 +216,77 @@ namespace ICSharpCode.Decompiler.Documentation
 		static string GetRedirectionTarget(string xmlFileName, string target)
 		{
 			string programFilesDir = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86);
-			programFilesDir = AppendDirectorySeparator(programFilesDir);
+			string referenceAssembliesDir = string.IsNullOrEmpty(programFilesDir)
+				? null
+				: Path.Combine(programFilesDir, "Reference Assemblies");
 
 			string corSysDir = System.Runtime.InteropServices.RuntimeEnvironment.GetRuntimeDirectory();
-			corSysDir = AppendDirectorySeparator(corSysDir);
+			string windowsDir = Environment.GetFolderPath(Environment.SpecialFolder.Windows);
+			string frameworkDir = string.IsNullOrEmpty(windowsDir)
+				? null
+				: Path.Combine(windowsDir, "Microsoft.NET", "Framework");
+			string framework64Dir = string.IsNullOrEmpty(windowsDir)
+				? null
+				: Path.Combine(windowsDir, "Microsoft.NET", "Framework64");
 
-			var fileName = target.Replace("%PROGRAMFILESDIR%", programFilesDir)
-				.Replace("%CORSYSDIR%", corSysDir);
-			if (!Path.IsPathRooted(fileName))
-				fileName = Path.Combine(Path.GetDirectoryName(xmlFileName), fileName);
+			string fullXmlFileName = GetFullPathOrNull(xmlFileName);
+			if (fullXmlFileName == null)
+				return null;
+
+			string programFilesDirWithSeparator = string.IsNullOrEmpty(programFilesDir)
+				? string.Empty
+				: AppendDirectorySeparator(programFilesDir);
+			string corSysDirWithSeparator = string.IsNullOrEmpty(corSysDir)
+				? string.Empty
+				: AppendDirectorySeparator(corSysDir);
+			string fileName = target.Replace("%PROGRAMFILESDIR%", programFilesDirWithSeparator)
+				.Replace("%CORSYSDIR%", corSysDirWithSeparator);
+			string xmlFileDir = Path.GetDirectoryName(fullXmlFileName);
+			try
+			{
+				fileName = Path.GetFullPath(Path.Combine(xmlFileDir, fileName));
+			}
+			catch (Exception ex) when (ex is ArgumentException || ex is NotSupportedException || ex is PathTooLongException)
+			{
+				return null;
+			}
+
+			if (!IsInDirectory(fileName, xmlFileDir)
+				&& !IsInDirectory(fileName, corSysDir)
+				&& !IsInDirectory(fileName, referenceAssembliesDir)
+				&& !IsInDirectory(fileName, frameworkDir)
+				&& !IsInDirectory(fileName, framework64Dir))
+			{
+				return null;
+			}
+
 			return XmlDocLoader.LookupLocalizedXmlDoc(fileName);
+		}
+
+		static string GetFullPathOrNull(string path)
+		{
+			try
+			{
+				return Path.GetFullPath(path);
+			}
+			catch (Exception ex) when (ex is ArgumentException || ex is NotSupportedException || ex is PathTooLongException)
+			{
+				return null;
+			}
+		}
+
+		static bool IsInDirectory(string fullFileName, string directory)
+		{
+			if (string.IsNullOrEmpty(directory))
+				return false;
+
+			string fullDirectory = GetFullPathOrNull(directory);
+			if (fullDirectory == null)
+				return false;
+			fullDirectory = AppendDirectorySeparator(fullDirectory);
+
+			return fullFileName.Length > fullDirectory.Length
+				&& Platform.FileNameComparer.Equals(fullFileName.Substring(0, fullDirectory.Length), fullDirectory);
 		}
 
 		static string AppendDirectorySeparator(string dir)

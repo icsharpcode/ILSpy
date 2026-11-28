@@ -41,7 +41,7 @@ namespace ICSharpCode.Decompiler.Documentation
 			string xmlDocFile = FindXmlDocumentation("mscorlib.dll", TargetRuntime.Net_4_0)
 				?? FindXmlDocumentation("mscorlib.dll", TargetRuntime.Net_2_0);
 			if (xmlDocFile != null)
-				return new XmlDocumentationProvider(xmlDocFile);
+				return new XmlDocumentationProvider(xmlDocFile, allowRedirection: true);
 			// On modern .NET there is no .NET Framework reference-assembly documentation;
 			// fall back to the ref pack parallel to the shared framework (the runtime lives in
 			// dotnet/shared/Microsoft.NETCore.App/<version>/, the docs in the matching
@@ -65,13 +65,15 @@ namespace ICSharpCode.Decompiler.Documentation
 				if (!cache.TryGetValue(module, out XmlDocumentationProvider xmlDoc))
 				{
 					string xmlDocFile = LookupLocalizedXmlDoc(module.FileName);
+					bool allowRedirection = false;
 					if (xmlDocFile == null)
 					{
 						xmlDocFile = FindXmlDocumentation(Path.GetFileName(module.FileName), module.GetRuntime());
+						allowRedirection = xmlDocFile != null;
 					}
 					if (xmlDocFile != null)
 					{
-						xmlDoc = new XmlDocumentationProvider(xmlDocFile);
+						xmlDoc = new XmlDocumentationProvider(xmlDocFile, allowRedirection);
 					}
 					else
 					{
