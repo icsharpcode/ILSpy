@@ -16,7 +16,11 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System;
 using System.IO;
+using System.Linq;
+using System.Reflection.PortableExecutable;
+using System.Threading.Tasks;
 
 using ICSharpCode.Decompiler.Metadata;
 
@@ -85,21 +89,140 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
-		public void ASecondScopeDoesNotStackWithTheFirst()
+		public void OverlappingScopesShareTheCacheUntilTheLastScopeEnds()
 		{
-			// Two decompilations can overlap on the resolver a LoadedAssembly owns. Whichever scope
-			// ends first takes the cache with it and the other reads the file system again, which
-			// costs that one its head start and nothing else.
-			var resolver = Resolver();
+			string decompilerFile = typeof(UniversalAssemblyResolver).Assembly.Location;
+			var resolver = new UniversalAssemblyResolver(decompilerFile, throwOnError: false, targetFramework: null,
+				streamOptions: PEStreamOptions.PrefetchMetadata);
+			var firstReference = AssemblyNameReference.Parse("ICSharpCode.Decompiler, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null");
+			var secondReference = AssemblyNameReference.Parse("ICSharpCode.Decompiler, Version=2.0.0.0, Culture=neutral, PublicKeyToken=null");
+
+			var firstScope = resolver.BeginSnapshot();
+			var secondScope = resolver.BeginSnapshot();
 			int scans = 0;
+			string firstVersion = resolver.GetOrAddVersionFolder("/shared/pack", _ => { scans++; return "9.0.0"; });
+			var first = resolver.Resolve(firstReference);
+			secondScope?.Dispose();
+			string secondVersion = resolver.GetOrAddVersionFolder("/shared/pack", _ => { scans++; return "10.0.0"; });
+			var second = resolver.Resolve(secondReference);
+			firstScope?.Dispose();
 
-			var outer = resolver.BeginSnapshot();
-			var inner = resolver.BeginSnapshot();
-			inner.Dispose();
-			resolver.GetOrAddVersionFolder("/shared/pack", _ => { scans++; return "9.0.0"; });
-			outer.Dispose();
+			Assert.That(firstVersion, Is.EqualTo("9.0.0"));
+			Assert.That(secondVersion, Is.EqualTo(firstVersion));
+			Assert.That(scans, Is.EqualTo(1));
+			using (first)
+			using (second)
+			{
+				Assert.That(first, Is.Not.Null);
+				Assert.That(second, Is.SameAs(first));
+			}
+		}
 
-			Assert.That(scans, Is.EqualTo(1), "the scan happens, it is simply not held any more");
+		static readonly string decompilerFile = typeof(UniversalAssemblyResolver).Assembly.Location;
+
+		static AssemblyNameReference DecompilerReference(string version)
+		{
+			return AssemblyNameReference.Parse($"ICSharpCode.Decompiler, Version={version}, Culture=neutral, PublicKeyToken=null");
+		}
+
+		[Test]
+		public void FileIsLoadedOnceWhileASnapshotIsOpen()
+		{
+			var resolver = new UniversalAssemblyResolver(decompilerFile, throwOnError: false, targetFramework: null,
+				streamOptions: PEStreamOptions.PrefetchMetadata);
+
+			using (resolver.BeginSnapshot())
+			{
+				using var file = resolver.Resolve(DecompilerReference("1.0.0.0"));
+
+				Assert.That(file, Is.Not.Null);
+				Assert.That(resolver.Resolve(DecompilerReference("2.0.0.0")), Is.SameAs(file));
+				Assert.That(resolver.ResolveModule(file, Path.GetFileName(decompilerFile)), Is.SameAs(file));
+			}
+		}
+
+		[Test]
+		public async Task ConcurrentReferencesToOneFileShareOneInstance()
+		{
+			var resolver = new UniversalAssemblyResolver(decompilerFile, throwOnError: false, targetFramework: null,
+				streamOptions: PEStreamOptions.PrefetchMetadata);
+
+			using (resolver.BeginSnapshot())
+			{
+				var resolutions = Enumerable.Range(1, 16)
+					.Select(version => resolver.ResolveAsync(DecompilerReference($"1.0.0.{version}")));
+				var files = await Task.WhenAll(resolutions);
+
+				Assert.That(files[0], Is.Not.Null);
+				Assert.That(files.All(file => ReferenceEquals(file, files[0])), Is.True);
+				files[0]?.Dispose();
+			}
+		}
+
+		[Test]
+		public void FileIsLoadedEveryTimeWithoutASnapshot()
+		{
+			var resolver = new UniversalAssemblyResolver(decompilerFile, throwOnError: false, targetFramework: null,
+				streamOptions: PEStreamOptions.PrefetchMetadata);
+
+			using var first = resolver.Resolve(DecompilerReference("1.0.0.0"));
+			using var second = resolver.Resolve(DecompilerReference("1.0.0.0"));
+
+			Assert.That(first, Is.Not.Null);
+			Assert.That(second, Is.Not.Null.And.Not.SameAs(first));
+		}
+
+		[Test]
+		public void WhatWasLoadedIsForgottenWhenTheSnapshotEnds()
+		{
+			var resolver = new UniversalAssemblyResolver(decompilerFile, throwOnError: false, targetFramework: null,
+				streamOptions: PEStreamOptions.PrefetchMetadata);
+			MetadataFile first, second;
+
+			using (resolver.BeginSnapshot())
+			{
+				first = resolver.Resolve(DecompilerReference("1.0.0.0"))!;
+			}
+			using (resolver.BeginSnapshot())
+			{
+				second = resolver.Resolve(DecompilerReference("1.0.0.0"))!;
+			}
+
+			using (first)
+			using (second)
+			{
+				Assert.That(first, Is.Not.Null);
+				Assert.That(second, Is.Not.Null.And.Not.SameAs(first));
+			}
+		}
+
+		[Test]
+		public void FailureToLoadIsReportedForEveryReferenceWhileASnapshotIsOpen()
+		{
+			string directory = Path.Combine(Path.GetTempPath(), "ILSpySnapshotTest_" + Path.GetRandomFileName());
+			Directory.CreateDirectory(directory);
+			try
+			{
+				File.WriteAllBytes(Path.Combine(directory, "SomeLibrary.dll"), Array.Empty<byte>());
+
+				var resolver = new UniversalAssemblyResolver(null, throwOnError: true, targetFramework: null,
+					streamOptions: PEStreamOptions.PrefetchMetadata);
+				resolver.AddSearchDirectory(directory);
+
+				using (resolver.BeginSnapshot())
+				{
+					foreach (string version in new[] { "1.0.0.0", "2.0.0.0" })
+					{
+						var reference = AssemblyNameReference.Parse($"SomeLibrary, Version={version}, Culture=neutral, PublicKeyToken=null");
+						var exception = Assert.Throws<ResolutionException>(() => resolver.Resolve(reference));
+						Assert.That(exception.Reference, Is.SameAs(reference));
+					}
+				}
+			}
+			finally
+			{
+				Directory.Delete(directory, recursive: true);
+			}
 		}
 
 		[Test]

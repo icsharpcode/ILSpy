@@ -29,6 +29,7 @@ using System.Reflection.PortableExecutable;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace ICSharpCode.Decompiler.Metadata
@@ -78,7 +79,8 @@ namespace ICSharpCode.Decompiler.Metadata
 		}
 
 		readonly Lazy<DotNetCorePathFinder> dotNetCorePathFinder;
-		ConcurrentDictionary<string, string>? versionFolders;
+		volatile SnapshotCache? snapshotCache;
+		readonly object snapshotLock = new object();
 		readonly bool throwOnError;
 		readonly PEStreamOptions streamOptions;
 		readonly MetadataReaderOptions metadataOptions;
@@ -91,34 +93,60 @@ namespace ICSharpCode.Decompiler.Metadata
 		/// <inheritdoc/>
 		public IDisposable? BeginSnapshot()
 		{
-			versionFolders = new ConcurrentDictionary<string, string>();
-			return new Snapshot(this);
+			lock (snapshotLock)
+			{
+				if (snapshotCache == null)
+					snapshotCache = new SnapshotCache();
+				snapshotCache.ScopeCount++;
+				return new Snapshot(this, snapshotCache);
+			}
 		}
 
 		/// <summary>
 		/// The version folder to use inside <paramref name="basePath"/>, determined by
-		/// <paramref name="valueFactory"/> once per open scope, and on every call outside one.
+		/// <paramref name="valueFactory"/> once while a snapshot is open, and on every call when none is open.
 		/// </summary>
 		internal string GetOrAddVersionFolder(string basePath, Func<string, string> valueFactory)
 		{
-			return versionFolders is { } cache ? cache.GetOrAdd(basePath, valueFactory) : valueFactory(basePath);
+			var cache = snapshotCache;
+			return cache != null ? cache.VersionFolders.GetOrAdd(basePath, valueFactory) : valueFactory(basePath);
+		}
+
+		sealed class SnapshotCache
+		{
+			public int ScopeCount;
+			public readonly ConcurrentDictionary<string, string> VersionFolders = new ConcurrentDictionary<string, string>();
+#if !VSADDIN
+			public readonly ConcurrentDictionary<string, Lazy<MetadataFile>> LoadedFiles =
+				new ConcurrentDictionary<string, Lazy<MetadataFile>>(Util.Platform.FileNameComparer);
+#endif
 		}
 
 		/// <summary>
-		/// Holds what the resolver read from the file system until it is disposed. Two of these on
-		/// one resolver do not stack: the first to end takes the cache with it, and the other reads
-		/// the file system again.
+		/// Holds what the resolver read from the file system until all overlapping snapshots are disposed.
 		/// </summary>
 		sealed class Snapshot : IDisposable
 		{
 			readonly UniversalAssemblyResolver resolver;
+			readonly SnapshotCache cache;
+			int disposed;
 
-			public Snapshot(UniversalAssemblyResolver resolver)
+			public Snapshot(UniversalAssemblyResolver resolver, SnapshotCache cache)
 			{
 				this.resolver = resolver;
+				this.cache = cache;
 			}
 
-			public void Dispose() => resolver.versionFolders = null;
+			public void Dispose()
+			{
+				if (Interlocked.Exchange(ref disposed, 1) != 0)
+					return;
+				lock (resolver.snapshotLock)
+				{
+					if (ReferenceEquals(resolver.snapshotCache, cache) && --cache.ScopeCount == 0)
+						resolver.snapshotCache = null;
+				}
+			}
 		}
 
 		public void AddSearchDirectory(string? directory)
@@ -274,8 +302,14 @@ namespace ICSharpCode.Decompiler.Metadata
 
 			try
 			{
-				FileStream stream = new FileStream(fileName, FileMode.Open, FileAccess.Read);
-				return new PEFile(fileName, stream, streamOptions, metadataOptions);
+				var cache = snapshotCache;
+				if (cache != null)
+				{
+					string fullPath = Path.GetFullPath(fileName);
+					return cache.LoadedFiles.GetOrAdd(fullPath,
+						_ => new Lazy<MetadataFile>(() => LoadFile(fileName))).Value;
+				}
+				return LoadFile(fileName);
 			}
 			catch (BadImageFormatException ex)
 			{
@@ -288,6 +322,12 @@ namespace ICSharpCode.Decompiler.Metadata
 					throw makeException(ex);
 			}
 			return null;
+		}
+
+		private MetadataFile LoadFile(string fileName)
+		{
+			FileStream stream = new FileStream(fileName, FileMode.Open, FileAccess.Read);
+			return new PEFile(fileName, stream, streamOptions, metadataOptions);
 		}
 
 		public Task<MetadataFile?> ResolveAsync(IAssemblyReference name)

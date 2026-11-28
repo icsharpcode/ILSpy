@@ -67,7 +67,8 @@ namespace ICSharpCode.Decompiler.Metadata
 
 		/// <summary>
 		/// Lets the resolver hold what it reads from the file system until the scope is disposed,
-		/// so that a whole reference closure asks the same directories once. Null to hold nothing.
+		/// so that a whole reference closure asks the same directories and loads the same files once.
+		/// Overlapping scopes share their snapshot until the last scope is disposed. Null to hold nothing.
 		/// </summary>
 		IDisposable? BeginSnapshot();
 #endif

@@ -474,6 +474,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			// Load referenced assemblies and type-forwarder references.
 			// This is necessary to make .NET Core/PCL binaries work better.
 			var referencedAssemblies = new List<MetadataFile>();
+			var referencedAssemblySet = new HashSet<MetadataFile>();
 			var referenceClosure = new List<MetadataFile>();
 			var assemblyReferenceQueue = new Queue<(bool IsAssembly, MetadataFile MainModule, object Reference, Task<MetadataFile> ResolveTask)>();
 			var comparer = KeyComparer.Create(((bool IsAssembly, MetadataFile MainModule, object Reference) reference) =>
@@ -491,7 +492,9 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			{
 				var asmRef = assemblyReferenceQueue.Dequeue();
 				var asm = await asmRef.ResolveTask.ConfigureAwait(false);
-				if (asm != null)
+				// Different reference versions can resolve to the same file and metadata instance.
+				// Walk that instance once so its references are not queued repeatedly.
+				if (asm != null && referencedAssemblySet.Add(asm))
 				{
 					referencedAssemblies.Add(asm);
 					var metadata = asm.Metadata;

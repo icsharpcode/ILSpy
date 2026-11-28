@@ -285,12 +285,14 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		public static TargetFramework DetectTargetFrameworkNET20(MetadataFile module, IAssemblyResolver assemblyResolver, TargetFramework targetFramework)
 		{
 			var resolvedAssemblies = new HashSet<string>();
+			var visitedFiles = new HashSet<MetadataFile> { module };
 			int version = 200;
-			GetFrameworkVersionNET20(module, assemblyResolver, resolvedAssemblies, ref version);
+			GetFrameworkVersionNET20(module, assemblyResolver, resolvedAssemblies, visitedFiles, ref version);
 			return new TargetFramework(targetFramework.Identifier, version, targetFramework.Profile);
 		}
 
-		static void GetFrameworkVersionNET20(MetadataFile module, IAssemblyResolver assemblyResolver, HashSet<string> resolvedAssemblies, ref int version)
+		static void GetFrameworkVersionNET20(MetadataFile module, IAssemblyResolver assemblyResolver,
+			HashSet<string> resolvedAssemblies, HashSet<MetadataFile> visitedFiles, ref int version)
 		{
 			foreach (var r in module.Metadata.AssemblyReferences)
 			{
@@ -318,10 +320,10 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 				{
 					resolvedReference = null;
 				}
-				if (resolvedReference == null)
+				if (resolvedReference == null || !visitedFiles.Add(resolvedReference))
 					continue;
 				resolvedAssemblies.Add(resolvedReference.FullName);
-				GetFrameworkVersionNET20(resolvedReference, assemblyResolver, resolvedAssemblies, ref version);
+				GetFrameworkVersionNET20(resolvedReference, assemblyResolver, resolvedAssemblies, visitedFiles, ref version);
 				if (version == 350)
 					return;
 			}
