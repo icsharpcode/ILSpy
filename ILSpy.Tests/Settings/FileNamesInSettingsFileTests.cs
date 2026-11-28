@@ -138,7 +138,7 @@ public class FileNamesInSettingsFileTests
 	}
 
 	[Test]
-	public void AssemblyListChangeIsPersistedBeforeTheChangeReturns()
+	public void AssemblyListSaveUsesBuildConfigurationPolicy()
 	{
 		var previousContext = SynchronizationContext.Current;
 		var queuedContext = new QueuedSynchronizationContext();
@@ -155,8 +155,13 @@ public class FileNamesInSettingsFileTests
 			var savedList = ILSpySettings.Load()["AssemblyLists"]
 				.Elements("List")
 				.Single(element => (string?)element.Attribute("name") == "My project");
+#if DEBUG
 			Assert.That(savedList.Elements("Assembly").Select(FileNameXml.FromXml), Does.Contain(assemblyPath));
 			Assert.That(queuedContext.PendingCallbacks, Is.Zero);
+#else
+			Assert.That(savedList.Elements("Assembly"), Is.Empty);
+			Assert.That(queuedContext.PendingCallbacks, Is.EqualTo(1));
+#endif
 		}
 		finally
 		{

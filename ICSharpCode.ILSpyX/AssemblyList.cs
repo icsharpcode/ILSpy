@@ -249,10 +249,11 @@ namespace ICSharpCode.ILSpyX
 
 		public void RefreshSave()
 		{
-			// Save each modification before returning so the last list state survives process termination.
+			// Debug builds save immediately so debugger termination does not lose recent changes.
 			if (!dirty)
 			{
 				dirty = true;
+#if DEBUG
 				try
 				{
 					this.manager.SaveList(this);
@@ -261,6 +262,17 @@ namespace ICSharpCode.ILSpyX
 				{
 					dirty = false;
 				}
+#else
+				BeginInvoke(
+					delegate {
+						if (dirty)
+						{
+							dirty = false;
+							this.manager.SaveList(this);
+						}
+					}
+				);
+#endif
 			}
 		}
 
