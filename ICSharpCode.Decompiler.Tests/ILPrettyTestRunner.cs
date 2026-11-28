@@ -154,6 +154,12 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
+		public async Task ExplicitPropertyImplementationCycle()
+		{
+			await Run();
+		}
+
+		[Test]
 		public async Task TruncatedAccessorBody()
 		{
 			await Run();
