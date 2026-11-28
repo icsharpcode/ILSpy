@@ -313,6 +313,18 @@ Examples:
 						DecompileAsProject(InputAssemblyNames[0], projectFileName);
 						return ExitCodeForDecompilationErrors();
 					}
+					var projectDirectories = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+					foreach (var file in InputAssemblyNames)
+					{
+						string projectName = Path.GetFileNameWithoutExtension(file);
+						string projectDirectory = WholeProjectDecompiler.CleanUpDirectoryName(projectName);
+						if (projectDirectories.TryGetValue(projectDirectory, out string previousFile))
+						{
+							app.Error.WriteLine($"Cannot create a solution because '{previousFile}' and '{file}' map to the same project directory '{projectDirectory}'.");
+							return ProgramExitCodes.EX_DATAERR;
+						}
+						projectDirectories.Add(projectDirectory, file);
+					}
 					var projects = new List<ProjectItem>();
 					foreach (var file in InputAssemblyNames)
 					{
@@ -390,7 +402,8 @@ Examples:
 					if (outputDirectory != null)
 					{
 						string outputName = Path.GetFileNameWithoutExtension(fileName);
-						output = File.CreateText(Path.Combine(outputDirectory, outputName) + ".list.txt");
+						using var listOutput = File.CreateText(Path.Combine(outputDirectory, outputName) + ".list.txt");
+						return ListContent(fileName, listOutput, kinds);
 					}
 
 					return ListContent(fileName, output, kinds);
@@ -400,8 +413,9 @@ Examples:
 					if (outputDirectory != null)
 					{
 						string outputName = Path.GetFileNameWithoutExtension(fileName);
-						output = File.CreateText(Path.Combine(outputDirectory,
+						using var ilOutput = File.CreateText(Path.Combine(outputDirectory,
 							(string.IsNullOrEmpty(TypeName) ? outputName : TypeName) + ".il"));
+						return ShowIL(fileName, ilOutput, app);
 					}
 
 					return ShowIL(fileName, output, app);
@@ -446,7 +460,8 @@ Examples:
 					if (outputDirectory != null)
 					{
 						string outputName = Path.GetFileNameWithoutExtension(fileName);
-						output = File.CreateText(Path.Combine(outputDirectory, outputName) + ".resources.txt");
+						using var resourcesOutput = File.CreateText(Path.Combine(outputDirectory, outputName) + ".resources.txt");
+						return ListResources(fileName, resourcesOutput);
 					}
 
 					return ListResources(fileName, output);
@@ -510,8 +525,11 @@ Examples:
 					if (outputDirectory != null)
 					{
 						string outputName = Path.GetFileNameWithoutExtension(fileName);
-						output = File.CreateText(Path.Combine(outputDirectory,
+						using var csharpOutput = File.CreateText(Path.Combine(outputDirectory,
 							(string.IsNullOrEmpty(TypeName) ? outputName : TypeName) + ".decompiled.cs"));
+						if (MemberIdString != null)
+							return DecompileMember(fileName, csharpOutput, MemberIdString);
+						return Decompile(fileName, csharpOutput, TypeName);
 					}
 
 					if (MemberIdString != null)
@@ -642,12 +660,14 @@ Examples:
 		int ListContent(string assemblyFileName, TextWriter output, ISet<TypeKind> kinds)
 		{
 			CSharpDecompiler decompiler = GetDecompiler(assemblyFileName);
+			bool escapeControlChars = ReferenceEquals(output, Console.Out) && !Console.IsOutputRedirected;
 
 			foreach (var type in decompiler.TypeSystem.MainModule.TypeDefinitions)
 			{
 				if (!kinds.Contains(type.Kind))
 					continue;
-				output.WriteLine($"{type.Kind} {type.FullTypeName.ReflectionName}");
+				string name = ConsoleEscaping.EscapeControlCharsIfNeeded(type.FullTypeName.ReflectionName, escapeControlChars);
+				output.WriteLine($"{type.Kind} {name}");
 			}
 			return 0;
 		}
@@ -655,9 +675,10 @@ Examples:
 		int ListResources(string assemblyFileName, TextWriter output)
 		{
 			var module = LoadInputModule(assemblyFileName);
+			bool escapeControlChars = ReferenceEquals(output, Console.Out) && !Console.IsOutputRedirected;
 			foreach (var path in ResourceExtensions.EnumerateResourcePaths(module))
 			{
-				output.WriteLine(path);
+				output.WriteLine(ConsoleEscaping.EscapeControlCharsIfNeeded(path, escapeControlChars));
 			}
 			return 0;
 		}
@@ -670,7 +691,7 @@ Examples:
 				app.Error.WriteLine($"Resource '{resourceName}' not found.");
 				app.Error.WriteLine("Available resources:");
 				foreach (var p in ResourceExtensions.EnumerateResourcePaths(module))
-					app.Error.WriteLine("  " + p);
+					app.Error.WriteLine("  " + ConsoleEscaping.EscapeControlCharsIfNeeded(p, !Console.IsErrorRedirected));
 				return ProgramExitCodes.EX_DATAERR;
 			}
 
@@ -1284,7 +1305,7 @@ Examples:
 			if (matches.Count > 1)
 			{
 				error = $"The type name '{typeName}' is ambiguous between:{Environment.NewLine}"
-					+ string.Join(Environment.NewLine, matches.Select(t => "    " + t.FullTypeName.ReflectionName))
+					+ string.Join(Environment.NewLine, matches.Select(t => "    " + ConsoleEscaping.EscapeControlCharsIfNeeded(t.FullTypeName.ReflectionName, !Console.IsErrorRedirected)))
 					+ $"{Environment.NewLine}Specify the full reflection name (including the `n generic-arity suffix).";
 			}
 			return false;
@@ -1312,7 +1333,7 @@ Examples:
 			if (suggestions.Count > 0)
 			{
 				message += $"{Environment.NewLine}Did you mean one of the following?{Environment.NewLine}"
-					+ string.Join(Environment.NewLine, suggestions.Select(n => "    " + n));
+					+ string.Join(Environment.NewLine, suggestions.Select(n => "    " + ConsoleEscaping.EscapeControlCharsIfNeeded(n, !Console.IsErrorRedirected)));
 			}
 			return message;
 		}
@@ -1376,13 +1397,16 @@ Examples:
 					}
 
 					var manifest = SingleFileBundle.ReadManifest(packageView, bundleHeaderOffset);
+					var writtenFiles = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+					var collisionSuffixes = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
 					foreach (var entry in manifest.Entries)
 					{
 						Stream contents;
 
 						if (entry.RelativePath.Replace('\\', '/').Contains("../", StringComparison.Ordinal) || Path.IsPathRooted(entry.RelativePath))
 						{
-							app.Error.WriteLine($"Skipping single-file entry '{entry.RelativePath}' because it might refer to a location outside of the bundle output directory.");
+							string entryName = ConsoleEscaping.EscapeControlCharsIfNeeded(entry.RelativePath, !Console.IsErrorRedirected);
+							app.Error.WriteLine($"Skipping single-file entry '{entryName}' because it might refer to a location outside of the bundle output directory.");
 							continue;
 						}
 
@@ -1401,7 +1425,8 @@ Examples:
 
 							if (decompressedStream.Length != entry.Size)
 							{
-								app.Error.WriteLine($"Corrupted single-file entry '{entry.RelativePath}'. Declared decompressed size '{entry.Size}' is not the same as actual decompressed size '{decompressedStream.Length}'.");
+								string entryName = ConsoleEscaping.EscapeControlCharsIfNeeded(entry.RelativePath, !Console.IsErrorRedirected);
+								app.Error.WriteLine($"Corrupted single-file entry '{entryName}'. Declared decompressed size '{entry.Size}' is not the same as actual decompressed size '{decompressedStream.Length}'.");
 								return ProgramExitCodes.EX_DATAERR;
 							}
 
@@ -1409,7 +1434,24 @@ Examples:
 							contents = decompressedStream;
 						}
 
-						string target = Path.Combine(outputDirectory, entry.RelativePath);
+						string originalTarget = Path.GetFullPath(Path.Combine(outputDirectory, entry.RelativePath));
+						string target = originalTarget;
+						if (!writtenFiles.Add(target))
+						{
+							string targetDirectory = Path.GetDirectoryName(originalTarget);
+							string fileName = Path.GetFileNameWithoutExtension(originalTarget);
+							string extension = Path.GetExtension(originalTarget);
+							if (!collisionSuffixes.TryGetValue(originalTarget, out int suffix))
+								suffix = 2;
+							do
+							{
+								target = Path.Combine(targetDirectory, $"{fileName}.{suffix++}{extension}");
+							} while (!writtenFiles.Add(target));
+							collisionSuffixes[originalTarget] = suffix;
+							string entryName = ConsoleEscaping.EscapeControlCharsIfNeeded(entry.RelativePath, !Console.IsErrorRedirected);
+							string outputName = ConsoleEscaping.EscapeControlCharsIfNeeded(target, !Console.IsErrorRedirected);
+							app.Error.WriteLine($"Single-file entry '{entryName}' maps to an existing output file; writing it to '{outputName}' instead.");
+						}
 						Directory.CreateDirectory(Path.GetDirectoryName(target));
 						using (var fileStream = File.Create(target))
 						{

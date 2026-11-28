@@ -239,7 +239,7 @@ namespace ICSharpCode.ILSpyCmd
 			text.AppendLine(" Managed entries:");
 			foreach (var entry in managedEntries)
 			{
-				text.Append("  ").Append(entry.Name);
+				text.Append("  ").Append(ConsoleEscaping.EscapeControlCharsIfNeeded(entry.Name, !Console.IsErrorRedirected));
 				if (entry.Name == entryPoint)
 					text.Append("  (entry point)");
 				text.AppendLine();
