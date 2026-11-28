@@ -478,6 +478,10 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public bool HasAttribute(KnownAttribute attribute)
 		{
+			if (attribute == KnownAttribute.ComImport)
+			{
+				return (attributes & TypeAttributes.Import) != 0;
+			}
 			if (!attribute.IsCustomAttribute())
 			{
 				return GetAttributes().Any(attr => attr.AttributeType.IsKnownType(attribute));
@@ -671,11 +675,11 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				return EmptyList<IMethod>.Instance;
 			if (ComHelper.IsComImport(this))
 			{
-				IType coClass = ComHelper.GetCoClass(this);
 				using (var busyLock = BusyManager.Enter(this))
 				{
 					if (busyLock.Success)
 					{
+						IType coClass = ComHelper.GetCoClass(this);
 						return coClass.GetConstructors(filter, options)
 							.Select(m => new SpecializedMethod(m, m.Substitution) { DeclaringType = this });
 					}
