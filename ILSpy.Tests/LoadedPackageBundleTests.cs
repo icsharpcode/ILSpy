@@ -24,6 +24,7 @@ using System.Linq;
 using System.Text;
 
 using ICSharpCode.Decompiler;
+using ICSharpCode.ILSpy.TreeNodes;
 using ICSharpCode.ILSpyX;
 
 using NUnit.Framework;
@@ -91,6 +92,43 @@ public class LoadedPackageBundleTests
 	}
 
 	[Test]
+	public void Entries_AtMaximumFolderDepth_RemainInFolderTree()
+	{
+		string folderPath = string.Join("/", Enumerable.Range(0, 100).Select(i => "folder" + i));
+		var package = new LoadedPackage(LoadedPackage.PackageKind.Zip, new[]
+		{
+			new TestPackageEntry(folderPath + "/first.txt"),
+			new TestPackageEntry(folderPath + "/second.txt")
+		});
+
+		var folder = package.RootFolder;
+		for (int i = 0; i < 100; i++)
+			folder = folder.Folders.Single();
+
+		Assert.That(folder.Entries.Select(entry => entry.Name), Is.EquivalentTo(new[] { "first.txt", "second.txt" }));
+	}
+
+	[Test]
+	public void EntryName_ExceedingMaximumFolderDepth_IsAddedAtRoot()
+	{
+		string entryName = string.Join("/", Enumerable.Repeat("folder", 101)) + "/file.dll";
+		var package = new LoadedPackage(LoadedPackage.PackageKind.Zip, new[]
+		{
+			new TestPackageEntry(entryName),
+			new TestPackageEntry("valid.dll")
+		});
+
+		Assert.That(package.Entries.Select(entry => entry.Name), Does.Contain(entryName));
+		Assert.That(package.RootFolder.Entries.Select(entry => entry.Name), Is.EquivalentTo(new[] { entryName, "valid.dll" }));
+		var overflowEntry = package.RootFolder.Entries.Single(entry => entry.FullName == entryName);
+		Assert.That(overflowEntry.DisplayName.Length, Is.LessThanOrEqualTo(120));
+		Assert.That(overflowEntry.DisplayName, Does.Contain("..."));
+		var treeNode = new ResourceTreeNode(overflowEntry);
+		Assert.That(treeNode.Text.ToString(), Does.Contain("..."));
+		Assert.That(treeNode.ToolTip, Is.EqualTo(entryName));
+	}
+
+	[Test]
 	public void CompressedEntry_DeclaredSizeBeyondInt32_IsRejectedAsInvalidData()
 	{
 		// A declared size that does not fit an int used to be truncated to a negative
@@ -123,6 +161,21 @@ public class LoadedPackageBundleTests
 	}
 
 	sealed record BundleFile(string RelativePath, byte[] StoredBytes, long DeclaredSize, bool Compressed = true);
+
+	sealed class TestPackageEntry : PackageEntry
+	{
+		public override string Name { get; }
+		public override string FullName => Name;
+		public override string PackageQualifiedFileName => Name;
+
+		public TestPackageEntry(string name)
+		{
+			Name = name;
+		}
+
+		public override Stream TryOpenStream() => Stream.Null;
+		public override long? TryGetLength() => 0;
+	}
 
 	static byte[] Deflate(byte[] content)
 	{
