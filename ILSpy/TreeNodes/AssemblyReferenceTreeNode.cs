@@ -38,9 +38,8 @@ using ICSharpCode.ILSpy.TextView;
 namespace ICSharpCode.ILSpy.TreeNodes
 {
 	/// <summary>
-	/// Single entry in the references folder. Minimal port: shows the reference name
-	/// using ILAmbience escaping plus a generic assembly icon. Children (the
-	/// per-reference type list and transitive references) are not yet implemented.
+	/// Single entry in the references folder. Shows the escaped reference name and expands to
+	/// list types used from the reference and, when it resolves, its transitive references.
 	/// </summary>
 	public sealed class AssemblyReferenceTreeNode : ILSpyTreeNode
 	{

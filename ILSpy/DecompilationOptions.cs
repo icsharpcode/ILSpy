@@ -37,8 +37,8 @@ namespace ICSharpCode.ILSpy
 		/// <summary>Decompile the whole module rather than just the selected member.</summary>
 		public bool FullDecompilation { get; set; }
 
-		/// <summary>Target directory for project export. Always null today since no save
-		/// dialog is wired up; kept on the signature for future use.</summary>
+		/// <summary>Target directory for project export. Set by the project exporter and ignored
+		/// for single-member decompiles.</summary>
 		public string? SaveAsProjectDirectory { get; set; }
 
 		/// <summary>Escape invalid C# identifiers so the output compiles.</summary>
