@@ -52,6 +52,7 @@ namespace ICSharpCode.ILSpyCmd.Tests
 		string tempDirectory;
 		string bundlePath;
 		string bundleWithoutRuntimeConfigPath;
+		string bundleWithCollidingEntriesPath;
 
 		[OneTimeSetUp]
 		public void CreateBundles()
@@ -60,8 +61,10 @@ namespace ICSharpCode.ILSpyCmd.Tests
 			Directory.CreateDirectory(tempDirectory);
 			bundlePath = Path.Combine(tempDirectory, "SampleApp.exe");
 			bundleWithoutRuntimeConfigPath = Path.Combine(tempDirectory, "SampleAppV1.exe");
+			bundleWithCollidingEntriesPath = Path.Combine(tempDirectory, "SampleAppWithCollidingEntries.exe");
 			WriteBundle(bundlePath, withRuntimeConfig: true);
 			WriteBundle(bundleWithoutRuntimeConfigPath, withRuntimeConfig: false);
+			WriteBundle(bundleWithCollidingEntriesPath, withRuntimeConfig: false, duplicateEntryName: "./Sample.dll");
 		}
 
 		[OneTimeTearDown]
@@ -72,10 +75,10 @@ namespace ICSharpCode.ILSpyCmd.Tests
 		}
 
 		/// <summary>
-		/// Writes a bundle containing two managed assemblies (both copies of this test assembly)
-		/// and, optionally, the runtime-config entry that identifies "Sample.dll" as the app.
+		/// Writes a bundle containing two managed assemblies (both copies of this test assembly),
+		/// an optional colliding entry, and optionally the runtime-config entry.
 		/// </summary>
-		static void WriteBundle(string path, bool withRuntimeConfig)
+		static void WriteBundle(string path, bool withRuntimeConfig, string duplicateEntryName = null)
 		{
 			byte[] assemblyBytes = File.ReadAllBytes(testAssemblyPath);
 			var entries = new List<(string Name, SingleFileBundle.FileType Type, long Offset, long Size)>();
@@ -96,6 +99,11 @@ namespace ICSharpCode.ILSpyCmd.Tests
 
 			WriteEntry("Sample.dll", SingleFileBundle.FileType.Assembly, assemblyBytes);
 			WriteEntry("Helper.dll", SingleFileBundle.FileType.Assembly, assemblyBytes);
+			if (duplicateEntryName != null)
+			{
+				WriteEntry("Sample.2.dll", SingleFileBundle.FileType.Assembly, assemblyBytes);
+				WriteEntry(duplicateEntryName, SingleFileBundle.FileType.Assembly, assemblyBytes);
+			}
 			if (withRuntimeConfig)
 			{
 				WriteEntry("Sample.runtimeconfig.json", SingleFileBundle.FileType.RuntimeConfigJson,
@@ -231,6 +239,22 @@ namespace ICSharpCode.ILSpyCmd.Tests
 			Assert.That(result.ExitCode, Is.EqualTo(0), result.Error);
 			Assert.That(File.Exists(Path.Combine(outputDir, "Sample.dll")), Is.True);
 			Assert.That(File.Exists(Path.Combine(outputDir, "Helper.dll")), Is.True);
+		}
+
+		[Test]
+		public async Task DumpPackageWritesCollidingEntryNamesToDistinctFiles()
+		{
+			string outputDirectory = Path.Combine(tempDirectory, "colliding-output");
+			var result = await RunAsync(bundleWithCollidingEntriesPath, "-d", "-o", outputDirectory);
+
+			Assert.That(result.ExitCode, Is.EqualTo(0), result.Error);
+			Assert.That(File.Exists(Path.Combine(outputDirectory, "Sample.dll")), Is.True);
+			Assert.That(File.Exists(Path.Combine(outputDirectory, "Sample.2.dll")), Is.True);
+			Assert.That(File.Exists(Path.Combine(outputDirectory, "Sample.3.dll")), Is.True);
+			Assert.That(File.ReadAllBytes(Path.Combine(outputDirectory, "Sample.dll")), Is.EqualTo(File.ReadAllBytes(testAssemblyPath)));
+			Assert.That(File.ReadAllBytes(Path.Combine(outputDirectory, "Sample.2.dll")), Is.EqualTo(File.ReadAllBytes(testAssemblyPath)));
+			Assert.That(File.ReadAllBytes(Path.Combine(outputDirectory, "Sample.3.dll")), Is.EqualTo(File.ReadAllBytes(testAssemblyPath)));
+			Assert.That(result.Error, Does.Contain("Sample.3.dll"));
 		}
 
 		[Test]
