@@ -54,6 +54,36 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 		}
 
 		[Test]
+		public void EnumNamedLikeEachPrimitiveUnderlyingType()
+		{
+			var enumTypes = new[]
+			{
+				("Boolean", PrimitiveTypeCode.Boolean),
+				("Char", PrimitiveTypeCode.Char),
+				("SByte", PrimitiveTypeCode.SByte),
+				("Byte", PrimitiveTypeCode.Byte),
+				("Int16", PrimitiveTypeCode.Int16),
+				("UInt16", PrimitiveTypeCode.UInt16),
+				("Int32", PrimitiveTypeCode.Int32),
+				("UInt32", PrimitiveTypeCode.UInt32),
+				("Int64", PrimitiveTypeCode.Int64),
+				("UInt64", PrimitiveTypeCode.UInt64),
+				("Single", PrimitiveTypeCode.Single),
+				("Double", PrimitiveTypeCode.Double)
+			};
+			var compilation = new SimpleCompilation(
+				BuildAssemblyWithEnums(enumTypes.Select(t => ("System", t.Item1, t.Item2)).ToArray()),
+				MinimalCorlib.Instance);
+
+			foreach (var (name, _) in enumTypes)
+			{
+				var typeDef = compilation.MainModule.TopLevelTypeDefinitions.Single(t => t.Name == name);
+				Assert.That(typeDef.Kind, Is.EqualTo(TypeKind.Struct), typeDef.FullName);
+				Assert.That(compilation.FindType(typeDef.KnownTypeCode), Is.SameAs(typeDef), typeDef.FullName);
+			}
+		}
+
+		[Test]
 		public void EnumsNamedLikeEachOthersUnderlyingType()
 		{
 			var compilation = new SimpleCompilation(
