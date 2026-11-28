@@ -123,8 +123,25 @@ namespace ICSharpCode.ILSpyX.Settings
 				}
 				doc.Root!.SetAttributeValue("version", DecompilerVersionInfo.Major + "." + DecompilerVersionInfo.Minor + "." + DecompilerVersionInfo.Build + "." + DecompilerVersionInfo.Revision);
 				action(doc.Root);
-				doc.Save(config, SaveOptions.None);
+				SaveReplacing(doc, config);
 				this.root = doc.Root;
+			}
+		}
+
+		/// <summary>
+		/// Writes the settings next to the existing file and replaces it after the write completes.
+		/// </summary>
+		static void SaveReplacing(XDocument doc, string config)
+		{
+			string temporary = config + ".tmp";
+			try
+			{
+				doc.Save(temporary, SaveOptions.None);
+				File.Move(temporary, config, overwrite: true);
+			}
+			finally
+			{
+				File.Delete(temporary);
 			}
 		}
 

@@ -31,6 +31,7 @@ using System.Xml.Linq;
 
 using ICSharpCode.ILSpyX.Extensions;
 using ICSharpCode.ILSpyX.FileLoaders;
+using ICSharpCode.ILSpyX.Settings;
 
 namespace ICSharpCode.ILSpyX
 {
@@ -95,7 +96,7 @@ namespace ICSharpCode.ILSpyX
 		{
 			foreach (var asm in listElement.Elements("Assembly"))
 			{
-				var loaded = OpenAssembly((string)asm);
+				var loaded = OpenAssembly(FileNameXml.FromXml(asm));
 				// Lazy detection has not run yet, so seeding the override here makes it effective
 				// for the first resolution without a reload. Absent attribute -> null (auto-detect).
 				loaded.TargetFrameworkIdOverride = (string?)asm.Attribute("TargetFramework");
@@ -187,7 +188,7 @@ namespace ICSharpCode.ILSpyX
 			return new XElement(
 				"List",
 				new XAttribute("name", this.ListName),
-				assemblies.Where(asm => !asm.IsAutoLoaded).Select(asm => new XElement("Assembly", asm.FileName,
+				assemblies.Where(asm => !asm.IsAutoLoaded).Select(asm => new XElement("Assembly", FileNameXml.ToXmlContent(asm.FileName),
 					asm.TargetFrameworkIdOverride != null
 						? new XAttribute("TargetFramework", asm.TargetFrameworkIdOverride)
 						: null))
