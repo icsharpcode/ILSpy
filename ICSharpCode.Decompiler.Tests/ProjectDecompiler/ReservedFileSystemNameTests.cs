@@ -122,6 +122,9 @@ public sealed class ReservedFileSystemNameTests
 		{
 			Assert.That(WholeProjectDecompiler.SanitizeFileName("config.txt"), Is.EqualTo("config.txt"));
 			Assert.That(WholeProjectDecompiler.SanitizeFileName("dir/file.png"), Is.EqualTo($"dir{Sep}file.png"));
+			Assert.That(WholeProjectDecompiler.SanitizeFileName("images/\u03B2eta.png"), Is.EqualTo($"images{Sep}\u03B2eta.png"));
+			Assert.That(WholeProjectDecompiler.SanitizeFileName("\u03B2eta/logo.json"), Is.EqualTo($"\u03B2eta{Sep}logo.json"));
+			Assert.That(WholeProjectDecompiler.SanitizeFileName("\u03B2eta.json"), Is.EqualTo("\u03B2eta.json"));
 			Assert.That(WholeProjectDecompiler.CleanUpPath("Foo.Bar"), Is.EqualTo($"Foo{Sep}Bar"));
 		}
 	}
@@ -130,8 +133,54 @@ public sealed class ReservedFileSystemNameTests
 	[TestCase("Directory.Build.props.")]
 	[TestCase("obj/project.assets.json")]
 	[TestCase("Project.csproj.user")]
+	[TestCase("Directory.Build.prop\u017F")]
+	[TestCase("Directory.Build.pro\u115Fps")]
+	[TestCase("o\u1160bj/project.assets.json")]
+	[TestCase("glo\u1160bal.json")]
+	[TestCase("nuget.conf\u0131g")]
+	[TestCase("omni\u017Fharp.json")]
+	[TestCase("global.j\u017Fon")]
+	[TestCase("om\u1160ni\u017Fharp.json")]
+	[TestCase("\u1160bj/project.assets.json")]
 	public void SanitizeFileNameMakesBuildFilesInert(string name)
 	{
 		Assert.That(WholeProjectDecompiler.SanitizeFileName(name), Does.EndWith(".bin"));
+	}
+
+	[Test]
+	public void SanitizedBuildFileAliasesDoNotRetainTrailingDots()
+	{
+		Assert.That(WholeProjectDecompiler.SanitizeFileName("Directory.Build.props."), Is.EqualTo("Directory.Build.props.bin"));
+	}
+
+	[TestCase("..")]
+	[TestCase("a/..")]
+	[TestCase("a/../..")]
+	public void SanitizedPathsDoNotContainParentDirectorySegments(string name)
+	{
+		string sanitizedName = WholeProjectDecompiler.SanitizeFileName(name);
+
+		Assert.That(sanitizedName.Split(Sep), Does.Not.Contain(".."));
+	}
+
+	[TestCase("name.")]
+	[TestCase("name ")]
+	[TestCase("name. ")]
+	[TestCase("name .")]
+	public void CleanedNamesDoNotEndInDotsOrWhitespace(string name)
+	{
+		string cleanedName = WholeProjectDecompiler.CleanUpDirectoryName(name);
+
+		Assert.That(cleanedName, Is.Not.Empty);
+		Assert.That(cleanedName[^1] == '.' || char.IsWhiteSpace(cleanedName[^1]), Is.False);
+	}
+
+	[TestCase("folder./file.txt", "folder/file.txt")]
+	[TestCase("a.b./file.cs", "a.b/file.cs")]
+	[TestCase("folder /file.txt", "folder-/file.txt")]
+	[TestCase("obj./project.assets.json", "obj/project.assets.json.bin")]
+	public void CleanedPathSegmentsDoNotEndInDotsOrWhitespace(string name, string expected)
+	{
+		Assert.That(WholeProjectDecompiler.SanitizeFileName(name), Is.EqualTo(expected.Replace('/', Sep)));
 	}
 }

@@ -717,17 +717,23 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 
 		static bool IsReadByBuildTools(string fileName)
 		{
-			string[] segments = fileName.Split(Path.DirectorySeparatorChar);
-			if (segments.Length > 1 && segments[0].TrimEnd('.').Equals("obj", StringComparison.OrdinalIgnoreCase))
+			int firstSeparator = fileName.IndexOf(Path.DirectorySeparatorChar);
+			// Build tools read generated intermediate files from the root obj directory, regardless of extension.
+			// A case-folding file system can ignore non-ASCII characters in names such as "o\u1160bj".
+			if (firstSeparator > 0 && MayMatchAsciiName(fileName, 0, firstSeparator, "OBJ"))
 				return true;
-			string name = segments[segments.Length - 1].TrimEnd('.');
-			if (name.Equals("global.json", StringComparison.OrdinalIgnoreCase)
-				|| name.Equals("nuget.config", StringComparison.OrdinalIgnoreCase)
-				|| name.Equals("omnisharp.json", StringComparison.OrdinalIgnoreCase))
+			int fileNameStart = fileName.LastIndexOf(Path.DirectorySeparatorChar) + 1;
+			int fileNameLength = fileName.Length - fileNameStart;
+			if (MayMatchAsciiName(fileName, fileNameStart, fileNameLength, "GLOBAL.JSON")
+				|| MayMatchAsciiName(fileName, fileNameStart, fileNameLength, "NUGET.CONFIG")
+				|| MayMatchAsciiName(fileName, fileNameStart, fileNameLength, "OMNISHARP.JSON"))
 			{
 				return true;
 			}
-			string extension = Path.GetExtension(name);
+			string extension = Path.GetExtension(fileName);
+			// Non-ASCII suffixes may fold to one of the ASCII extensions checked below.
+			if (extension.Any(static c => c > 0x7f))
+				return true;
 			return extension.Equals(".props", StringComparison.OrdinalIgnoreCase)
 				|| extension.Equals(".rsp", StringComparison.OrdinalIgnoreCase)
 				|| extension.Equals(".sln", StringComparison.OrdinalIgnoreCase)
@@ -736,6 +742,41 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 				|| extension.Equals(".targets", StringComparison.OrdinalIgnoreCase)
 				|| extension.Equals(".user", StringComparison.OrdinalIgnoreCase)
 				|| extension.EndsWith("proj", StringComparison.OrdinalIgnoreCase);
+		}
+
+		static bool MayMatchAsciiName(string value, int start, int length, string asciiName)
+		{
+			// Non-ASCII characters may be ignored or fold to ASCII on a case-folding file system.
+			// Treat each as a wildcard rather than relying on runtime globalization settings.
+			int end = start + length;
+			int index = start;
+			int nameIndex = 0;
+			int wildcardIndex = -1;
+			int wildcardNameIndex = 0;
+			while (index < end)
+			{
+				char c = value[index];
+				if (c > 0x7f)
+				{
+					wildcardIndex = index++;
+					wildcardNameIndex = nameIndex;
+				}
+				else if (nameIndex < asciiName.Length && char.ToUpperInvariant(c) == asciiName[nameIndex])
+				{
+					index++;
+					nameIndex++;
+				}
+				else if (wildcardIndex >= 0 && wildcardNameIndex < asciiName.Length)
+				{
+					index = wildcardIndex + 1;
+					nameIndex = ++wildcardNameIndex;
+				}
+				else
+				{
+					return false;
+				}
+			}
+			return nameIndex == asciiName.Length || wildcardIndex == end - 1;
 		}
 
 		static string AppendInertExtension(string fileName)
@@ -794,7 +835,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		{
 			// Clean up the name first and ensure the length does not exceed the maximum length
 			// supported by the OS.
-			fullName = SanitizeFileName(fullName);
+			fullName = CleanUpName(fullName, separateAtDots: false, treatAsFileName: true, treatAsPath: true);
 			// The purpose of the below algorithm is to "maximize" the directory name and "minimize" the file name.
 			// That is, a full name of the form "Namespace1.Namespace2{...}.NamespaceN.ResourceName" is split such that
 			// the directory part Namespace1\Namespace2\... reuses as many existing directories as
@@ -813,7 +854,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 					break;
 				}
 			}
-			return fileName;
+			return MakeInertIfReadByBuildTools(fileName);
 		}
 		#endregion
 
@@ -1016,7 +1057,10 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			else
 				text = $"{text}.{extension}";
 
-			return CleanUpName(text, separateAtDots: false, treatAsFileName: !string.IsNullOrEmpty(extension), treatAsPath: false);
+			string fileName = CleanUpName(text, separateAtDots: false, treatAsFileName: !string.IsNullOrEmpty(extension), treatAsPath: false);
+			if (fileName.Length == 0 || fileName[^1] == '.' || char.IsWhiteSpace(fileName[^1]))
+				throw new InvalidOperationException("Cleaned file name must not end in a dot or whitespace.");
+			return fileName;
 		}
 
 		/// <summary>
@@ -1050,18 +1094,24 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		public static string SanitizeFileName(string fileName)
 		{
 			fileName = CleanUpName(fileName, separateAtDots: false, treatAsFileName: true, treatAsPath: true);
+			return MakeInertIfReadByBuildTools(fileName);
+		}
+
+		static string MakeInertIfReadByBuildTools(string fileName)
+		{
 			return IsReadByBuildTools(fileName) ? AppendInertExtension(fileName) : fileName;
 		}
 
 		/// <summary>
 		/// Cleans up a node name for use as a file system name. If <paramref name="separateAtDots"/> is active,
-		/// dots are seen as segment separators. Each segment is limited to maxSegmentLength characters.
+		/// dots are seen as segment separators. Each segment is limited to maxSegmentLength characters and does not
+		/// end in dots or whitespace, which Windows ignores during path lookup.
 		/// If <paramref name="treatAsFileName"/> is active, we check for file a extension and try to preserve it,
 		/// if it's valid.
 		/// </summary>
 		static string CleanUpName(string text, bool separateAtDots, bool treatAsFileName, bool treatAsPath)
 		{
-			// Normalize compatibility characters before checking names that filesystems may treat as equivalent.
+			// Normalize compatibility characters before checking names. Build-tool checks also guard unnormalized Unicode aliases.
 			text = text.Normalize(NormalizationForm.FormKC);
 			string? extension = null;
 			int currentSegmentLength = 0;
@@ -1074,7 +1124,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 				// if that's the case we just give up and treat the extension no different
 				// from the file name.
 				int lastDot = text.LastIndexOf('.');
-				if (lastDot >= 0 && text.Length - lastDot < maxSegmentLength)
+				if (lastDot >= 0 && text.Length - lastDot > 1 && text.Length - lastDot < maxSegmentLength)
 				{
 					string originalText = text;
 					extension = text.Substring(lastDot);
@@ -1107,6 +1157,8 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			bool countBytes = !RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
 			int segmentStart = 0;
 			int baseNameEnd = -1;
+			// Track the output suffix to trim segments without rescanning the StringBuilder.
+			int trailingTrimLength = 0;
 			foreach (var c in text)
 			{
 				if (char.IsLetterOrDigit(c) || c == '-' || c == '_')
@@ -1118,9 +1170,12 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 					// if the current segment exceeds maxSegmentLength characters,
 					// skip until the end of the segment.
 					if (currentSegmentLength <= maxSegmentLength)
+					{
 						b.Append(c);
+						trailingTrimLength = 0;
+					}
 				}
-				else if (c == '.' && b.Length > 0 && b[^1] != '.')
+				else if (c == '.' && b.Length > 0 && trailingTrimLength == 0)
 				{
 					currentSegmentLength++;
 					if (separateAtDots)
@@ -1128,6 +1183,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 						// The dot ends the current segment.
 						EscapeReservedFileSystemName(b, segmentStart, baseNameEnd);
 						b.Append('.');
+						trailingTrimLength++;
 						segmentStart = b.Length;
 						baseNameEnd = -1;
 						// Reset length at end of segment.
@@ -1140,13 +1196,21 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 						if (baseNameEnd < 0)
 							baseNameEnd = b.Length;
 						b.Append('.'); // allow dot, but never two in a row
+						trailingTrimLength++;
 					}
 				}
 				else if (treatAsPath && (c is '/' or '\\') && currentSegmentLength > 0)
 				{
 					// if we treat this as a file name, we've started a new segment
+					TrimTrailingDotsAndWhitespace(b, segmentStart, ref trailingTrimLength);
+					if (b.Length == segmentStart)
+					{
+						b.Append('-');
+						trailingTrimLength = 0;
+					}
 					EscapeReservedFileSystemName(b, segmentStart, baseNameEnd);
 					b.Append(Path.DirectorySeparatorChar);
+					trailingTrimLength = 0;
 					segmentStart = b.Length;
 					baseNameEnd = -1;
 					currentSegmentLength = 0;
@@ -1163,11 +1227,32 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 					// if the current segment exceeds maxSegmentLength characters,
 					// skip until the end of the segment.
 					if (currentSegmentLength <= maxSegmentLength)
+					{
 						b.Append('-');
+						trailingTrimLength = 0;
+					}
 				}
 			}
 			if (b.Length == 0)
+			{
 				b.Append('-');
+				trailingTrimLength = 0;
+			}
+			if (separateAtDots && currentSegmentLength == 0 && trailingTrimLength > 0)
+			{
+				b.Length--;
+				trailingTrimLength--;
+				segmentStart = b.Length;
+			}
+			if (currentSegmentLength > 0)
+			{
+				TrimTrailingDotsAndWhitespace(b, segmentStart, ref trailingTrimLength);
+				if (b.Length == segmentStart)
+				{
+					b.Append('-');
+					trailingTrimLength = 0;
+				}
+			}
 			EscapeReservedFileSystemName(b, segmentStart, baseNameEnd);
 			string name = b.ToString();
 			if (extension != null)
@@ -1180,10 +1265,14 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 				name += extension;
 			}
 
-			if (name == ".")
-				return "_";
-			else
-				return name;
+			return name;
+		}
+
+		static void TrimTrailingDotsAndWhitespace(StringBuilder name, int segmentStart, ref int trailingTrimLength)
+		{
+			int trimLength = Math.Min(trailingTrimLength, name.Length - segmentStart);
+			name.Length -= trimLength;
+			trailingTrimLength -= trimLength;
 		}
 
 		/// <summary>

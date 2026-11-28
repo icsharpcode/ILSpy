@@ -218,8 +218,8 @@ public sealed class WholeProjectDecompilerTests
 	[TestCase("global.json")]
 	[TestCase("obj/Test.csproj.x.props")]
 	[TestCase("sub/Other.vbproj")]
-	[TestCase("Directory.Build.props.")]
-	[TestCase("obj./project.assets.json")]
+	[TestCase("Directory.Build.props.", "Directory.Build.props.bin")]
+	[TestCase("obj./project.assets.json", "obj/project.assets.json.bin")]
 	[TestCase("Settings.json", "Settings.json")]
 	[TestCase("objects/data.json", "objects/data.json")]
 	public void ResourcesDoNotGetNamesThatBuildToolsPickUp(string name, string? expected = null)
@@ -237,6 +237,62 @@ public sealed class WholeProjectDecompilerTests
 		{
 			Assert.That(item.FileName, Is.EqualTo((expected ?? name + ".bin").Replace('/', Path.DirectorySeparatorChar)));
 			Assert.That(item.AdditionalProperties?["LogicalName"], Is.EqualTo(name));
+		}
+	}
+
+	[TestCase("Directory.Build.props", "Directory.Build.props.bin")]
+	[TestCase("Directory.Build/props", "Directory.Build.props.bin")]
+	[TestCase("Directory.Build\\props", "Directory.Build.props.bin")]
+	[TestCase("images/logo.png", "images.logo.png")]
+	public void ManifestResourcesDoNotGetNamesThatBuildToolsPickUp(string name, string expected)
+	{
+		string targetDirectory = Path.Combine(Environment.CurrentDirectory, Path.GetRandomFileName());
+		Directory.CreateDirectory(targetDirectory);
+		try
+		{
+			TestFriendlyProjectDecompiler decompiler = new(new UniversalAssemblyResolver(null, false, null));
+			decompiler.CaptureResources = true;
+			using var assembly = CreateAssembly(new ResourceDescription(name,
+				() => new MemoryStream(new byte[] { 1, 2, 3 }), isPublic: true));
+
+			decompiler.DecompileProject(new PEFile("Test.dll", assembly), targetDirectory, new StringWriter());
+
+			var item = decompiler.ResourceItems.Single();
+			using (Assert.EnterMultipleScope())
+			{
+				Assert.That(item.FileName, Is.EqualTo(expected));
+				Assert.That(item.AdditionalProperties?["LogicalName"], Is.EqualTo(name));
+				Assert.That(File.Exists(Path.Combine(targetDirectory, expected)), Is.True);
+			}
+		}
+		finally
+		{
+			Directory.Delete(targetDirectory, recursive: true);
+		}
+	}
+
+	[TestCase("omni\u017Fharp.json")]
+	[TestCase("global.j\u017Fon")]
+	public void ManifestResourceUnicodeAliasesAreInert(string name)
+	{
+		string targetDirectory = Path.Combine(Environment.CurrentDirectory, Path.GetRandomFileName());
+		Directory.CreateDirectory(targetDirectory);
+		try
+		{
+			TestFriendlyProjectDecompiler decompiler = new(new UniversalAssemblyResolver(null, false, null));
+			decompiler.CaptureResources = true;
+			using var assembly = CreateAssembly(new ResourceDescription(name,
+				() => new MemoryStream(new byte[] { 1, 2, 3 }), isPublic: true));
+
+			decompiler.DecompileProject(new PEFile("Test.dll", assembly), targetDirectory, new StringWriter());
+
+			var item = decompiler.ResourceItems.Single();
+			Assert.That(item.FileName, Does.EndWith(".bin"));
+			Assert.That(item.AdditionalProperties?["LogicalName"], Is.EqualTo(name));
+		}
+		finally
+		{
+			Directory.Delete(targetDirectory, recursive: true);
 		}
 	}
 
@@ -304,6 +360,20 @@ public sealed class WholeProjectDecompilerTests
 			byte[] bytes = contents.ToArray();
 			return new ResourceDescription(container.Key, () => new MemoryStream(bytes), isPublic: true);
 		}).ToArray());
+		Assert.That(result.Success, Is.True, () => string.Join(Environment.NewLine, result.Diagnostics));
+		assembly.Position = 0;
+		return assembly;
+	}
+
+	static Stream CreateAssembly(params ResourceDescription[] manifestResources)
+	{
+		var compilation = CSharpCompilation.Create("Test",
+			new[] { CSharpSyntaxTree.ParseText("[assembly: System.Runtime.Versioning.TargetFramework(\".NETCoreApp,Version=v8.0\")] class C { }") },
+			new[] { MetadataReference.CreateFromFile(typeof(object).Assembly.Location) },
+			new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+
+		MemoryStream assembly = new();
+		var result = compilation.Emit(assembly, manifestResources: manifestResources);
 		Assert.That(result.Success, Is.True, () => string.Join(Environment.NewLine, result.Diagnostics));
 		assembly.Position = 0;
 		return assembly;
