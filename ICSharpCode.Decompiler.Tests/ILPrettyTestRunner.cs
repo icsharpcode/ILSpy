@@ -396,6 +396,12 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
+		public async Task EnumNamedLikeKnownType()
+		{
+			await Run();
+		}
+
+		[Test]
 		public async Task EnumArithmeticOutOfRange()
 		{
 			await Run();
