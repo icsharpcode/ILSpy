@@ -39,6 +39,9 @@ namespace ICSharpCode.ILSpyX
 	/// </summary>
 	public class LoadedPackage
 	{
+		const int MaxFolderDepth = 100;
+		const int MaxDisplayedEntryNameLength = 120;
+
 		public enum PackageKind
 		{
 			Zip,
@@ -71,6 +74,18 @@ namespace ICSharpCode.ILSpyX
 			folders.Add("", rootFolder);
 			foreach (var entry in this.Entries)
 			{
+				int folderDepth = 0;
+				foreach (char c in entry.Name)
+				{
+					if (c == '/' || c == '\\')
+						folderDepth++;
+				}
+				if (folderDepth > MaxFolderDepth)
+				{
+					rootFolder.Entries.Add(new FolderEntry(entry.Name, entry, GetDisplayName(entry.Name)));
+					continue;
+				}
+
 				var (dirname, filename) = SplitName(entry.Name);
 				if (!string.IsNullOrEmpty(filename))
 				{
@@ -86,6 +101,16 @@ namespace ICSharpCode.ILSpyX
 					return ("", filename); // file in root
 				else
 					return (filename.Substring(0, pos), filename.Substring(pos + 1));
+			}
+
+			static string GetDisplayName(string name)
+			{
+				if (name.Length <= MaxDisplayedEntryNameLength)
+					return name;
+				const string ellipsis = "...";
+				int prefixLength = (MaxDisplayedEntryNameLength - ellipsis.Length) / 2;
+				int suffixLength = MaxDisplayedEntryNameLength - ellipsis.Length - prefixLength;
+				return name.Substring(0, prefixLength) + ellipsis + name.Substring(name.Length - suffixLength);
 			}
 
 			PackageFolder GetFolder(string name)
@@ -146,13 +171,17 @@ namespace ICSharpCode.ILSpyX
 		sealed class FolderEntry : PackageEntry
 		{
 			readonly PackageEntry originalEntry;
+			readonly string? displayName;
 			public override string Name { get; }
 			public override string FullName => originalEntry.Name;
 
-			public FolderEntry(string name, PackageEntry originalEntry)
+			public override string DisplayName => displayName ?? Name;
+
+			public FolderEntry(string name, PackageEntry originalEntry, string? displayName = null)
 			{
 				this.Name = name;
 				this.originalEntry = originalEntry;
+				this.displayName = displayName;
 			}
 
 			public override ManifestResourceAttributes Attributes => originalEntry.Attributes;
@@ -281,6 +310,12 @@ namespace ICSharpCode.ILSpyX
 
 	public abstract class PackageEntry : Resource
 	{
+		/// <summary>
+		/// Gets the name used to display this entry in a tree. This may be shortened while
+		/// <see cref="Name"/> and <see cref="FullName"/> retain the package entry's identity.
+		/// </summary>
+		public virtual string DisplayName => Name;
+
 		/// <summary>
 		/// Gets the file name of the entry (may include path components, relative to the package root).
 		/// </summary>

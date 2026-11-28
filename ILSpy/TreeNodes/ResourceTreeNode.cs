@@ -27,6 +27,7 @@ using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Metadata;
 
 using ICSharpCode.ILSpy.Commands;
+using ICSharpCode.ILSpyX;
 using ICSharpCode.ILSpy.Languages;
 using ICSharpCode.ILSpy.TextView;
 
@@ -46,7 +47,11 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public Resource Resource { get; }
 
-		public override object Text => ILAmbience.EscapeName(Resource.Name);
+		public override object Text => ILAmbience.EscapeName(Resource is PackageEntry packageEntry ? packageEntry.DisplayName : Resource.Name);
+
+		public override object? ToolTip => Resource is PackageEntry packageEntry && packageEntry.DisplayName != packageEntry.Name
+			? packageEntry.FullName
+			: null;
 
 		public override object Icon => Images.Resource;
 
