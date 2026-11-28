@@ -144,7 +144,9 @@ namespace ICSharpCode.ILSpy
 			ActiveAssemblyList = (string?)section.Element("ActiveAssemblyList");
 			ActiveLanguageName = (string?)section.Element("ActiveLanguageName");
 			ActiveTreeViewPath = section.Element("ActiveTreeViewPath")?.Elements().Select(e => UnescapeNode((string)e)).ToArray();
-			ActiveAutoLoadedAssembly = (string?)section.Element("ActiveAutoLoadedAssembly");
+			ActiveAutoLoadedAssembly = section.Element("ActiveAutoLoadedAssembly") is { } autoLoaded
+				? FileNameXml.FromXml(autoLoaded)
+				: null;
 			SelectedSearchMode = (string?)section.Element("SelectedSearchMode");
 			WindowState = ParseEnum(section.Element("WindowState")?.Value, WindowState.Normal);
 			Theme = (string?)section.Element(nameof(Theme));
@@ -217,7 +219,7 @@ namespace ICSharpCode.ILSpy
 			if (ActiveTreeViewPath is { Length: > 0 } path)
 				section.Add(new XElement("ActiveTreeViewPath", path.Select(p => new XElement("Node", EscapeNode(p)))));
 			if (!string.IsNullOrEmpty(ActiveAutoLoadedAssembly))
-				section.Add(new XElement("ActiveAutoLoadedAssembly", ActiveAutoLoadedAssembly));
+				section.Add(new XElement("ActiveAutoLoadedAssembly", FileNameXml.ToXmlContent(ActiveAutoLoadedAssembly)));
 			if (!string.IsNullOrEmpty(SelectedSearchMode))
 				section.Add(new XElement("SelectedSearchMode", SelectedSearchMode));
 			section.Add(new XElement("WindowState", WindowState.ToString()));

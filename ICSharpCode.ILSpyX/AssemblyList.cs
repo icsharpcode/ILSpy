@@ -31,6 +31,7 @@ using System.Xml.Linq;
 
 using ICSharpCode.ILSpyX.Extensions;
 using ICSharpCode.ILSpyX.FileLoaders;
+using ICSharpCode.ILSpyX.Settings;
 
 namespace ICSharpCode.ILSpyX
 {
@@ -44,7 +45,7 @@ namespace ICSharpCode.ILSpyX
 		readonly AssemblyListManager manager;
 		readonly string listName;
 
-		/// <summary>Dirty flag, used to mark modifications so that the list is saved later</summary>
+		/// <summary>Dirty flag, used to suppress nested and initialization saves.</summary>
 		bool dirty;
 		readonly object lockObj = new object();
 
@@ -93,9 +94,10 @@ namespace ICSharpCode.ILSpyX
 		internal AssemblyList(AssemblyListManager manager, XElement listElement)
 			: this(manager, (string?)listElement.Attribute("name") ?? AssemblyListManager.DefaultListName)
 		{
+			dirty = true;
 			foreach (var asm in listElement.Elements("Assembly"))
 			{
-				var loaded = OpenAssembly((string)asm);
+				var loaded = OpenAssembly(FileNameXml.FromXml(asm));
 				// Lazy detection has not run yet, so seeding the override here makes it effective
 				// for the first resolution without a reload. Absent attribute -> null (auto-detect).
 				loaded.TargetFrameworkIdOverride = (string?)asm.Attribute("TargetFramework");
@@ -187,7 +189,7 @@ namespace ICSharpCode.ILSpyX
 			return new XElement(
 				"List",
 				new XAttribute("name", this.ListName),
-				assemblies.Where(asm => !asm.IsAutoLoaded).Select(asm => new XElement("Assembly", asm.FileName,
+				assemblies.Where(asm => !asm.IsAutoLoaded).Select(asm => new XElement("Assembly", FileNameXml.ToXmlContent(asm.FileName),
 					asm.TargetFrameworkIdOverride != null
 						? new XAttribute("TargetFramework", asm.TargetFrameworkIdOverride)
 						: null))
@@ -247,11 +249,20 @@ namespace ICSharpCode.ILSpyX
 
 		public void RefreshSave()
 		{
-			// Whenever the assembly list is modified, mark it as dirty
-			// and enqueue a task that saves it once the UI has finished modifying the assembly list.
+			// Debug builds save immediately so debugger termination does not lose recent changes.
 			if (!dirty)
 			{
 				dirty = true;
+#if DEBUG
+				try
+				{
+					this.manager.SaveList(this);
+				}
+				finally
+				{
+					dirty = false;
+				}
+#else
 				BeginInvoke(
 					delegate {
 						if (dirty)
@@ -261,6 +272,7 @@ namespace ICSharpCode.ILSpyX
 						}
 					}
 				);
+#endif
 			}
 		}
 
