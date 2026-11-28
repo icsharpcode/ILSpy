@@ -63,6 +63,23 @@ public class XmlDocRedirectTests
 	}
 
 	[Test]
+	public void DoesNotOpenUncRedirectFromAssemblySidecar()
+	{
+		const string sidecarPath = "Evil.xml";
+		const string uncTarget = @"\\attacker.invalid\share\docs.xml";
+		int openCount = 0;
+		var provider = new XmlDocumentationProvider(sidecarPath, path => {
+			Assert.That(path, Is.EqualTo(sidecarPath), "A redirect must not be opened.");
+			openCount++;
+			return new MemoryStream(System.Text.Encoding.UTF8.GetBytes(
+				$"<doc redirect=\"{uncTarget}\" />"));
+		});
+
+		Assert.That(provider.GetDocumentation("T:Example"), Is.Null);
+		Assert.That(openCount, Is.GreaterThanOrEqualTo(1));
+	}
+
+	[Test]
 	public void FollowsRedirectWithinTrustedDocumentationDirectory()
 	{
 		string tempDir = Path.Combine(Path.GetTempPath(), "XmlDocRedirect_" + Guid.NewGuid().ToString("N"));
