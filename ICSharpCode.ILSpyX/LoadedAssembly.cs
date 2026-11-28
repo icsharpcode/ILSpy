@@ -820,7 +820,7 @@ namespace ICSharpCode.ILSpyX
 					? MetadataReaderOptions.ApplyWindowsRuntimeProjections
 					: MetadataReaderOptions.None;
 
-				var rootedPath = Path.IsPathRooted(this.FileName) ? this.FileName : null;
+				var rootedPath = ParentBundle == null && Path.IsPathRooted(this.FileName) ? this.FileName : null;
 
 				return new UniversalAssemblyResolver(rootedPath, throwOnError: false, targetFramework,
 					runtimePack, PEStreamOptions.PrefetchEntireImage, readerOptions);

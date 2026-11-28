@@ -52,6 +52,9 @@ namespace ICSharpCode.ILSpyCmd.Tests
 		string tempDirectory;
 		string bundlePath;
 		string bundleWithoutRuntimeConfigPath;
+		string traversalBundlePath;
+		string traversalEntryName;
+		const string traversalConfigContent = "sensitive config content";
 
 		[OneTimeSetUp]
 		public void CreateBundles()
@@ -62,6 +65,11 @@ namespace ICSharpCode.ILSpyCmd.Tests
 			bundleWithoutRuntimeConfigPath = Path.Combine(tempDirectory, "SampleAppV1.exe");
 			WriteBundle(bundlePath, withRuntimeConfig: true);
 			WriteBundle(bundleWithoutRuntimeConfigPath, withRuntimeConfig: false);
+			traversalEntryName = Path.Combine(tempDirectory, "outside", "Victim.dll");
+			Directory.CreateDirectory(Path.GetDirectoryName(traversalEntryName));
+			File.WriteAllText(traversalEntryName + ".config", traversalConfigContent);
+			traversalBundlePath = Path.Combine(tempDirectory, "TraversalApp.exe");
+			WriteBundle(traversalBundlePath, withRuntimeConfig: true, sampleEntryName: traversalEntryName);
 		}
 
 		[OneTimeTearDown]
@@ -75,7 +83,7 @@ namespace ICSharpCode.ILSpyCmd.Tests
 		/// Writes a bundle containing two managed assemblies (both copies of this test assembly)
 		/// and, optionally, the runtime-config entry that identifies "Sample.dll" as the app.
 		/// </summary>
-		static void WriteBundle(string path, bool withRuntimeConfig)
+		static void WriteBundle(string path, bool withRuntimeConfig, string sampleEntryName = "Sample.dll")
 		{
 			byte[] assemblyBytes = File.ReadAllBytes(testAssemblyPath);
 			var entries = new List<(string Name, SingleFileBundle.FileType Type, long Offset, long Size)>();
@@ -94,7 +102,7 @@ namespace ICSharpCode.ILSpyCmd.Tests
 				entries.Add((name, type, offset, contents.Length));
 			}
 
-			WriteEntry("Sample.dll", SingleFileBundle.FileType.Assembly, assemblyBytes);
+			WriteEntry(sampleEntryName, SingleFileBundle.FileType.Assembly, assemblyBytes);
 			WriteEntry("Helper.dll", SingleFileBundle.FileType.Assembly, assemblyBytes);
 			if (withRuntimeConfig)
 			{
@@ -171,6 +179,20 @@ namespace ICSharpCode.ILSpyCmd.Tests
 
 			Assert.That(result.ExitCode, Is.EqualTo(0), result.Error);
 			Assert.That(result.Output, Does.Contain("int Add(int a, int b)"));
+		}
+
+		[Test]
+		public async Task ProjectExportDoesNotCopyConfigBesideRootedBundleEntry()
+		{
+			string outputDirectory = Path.Combine(tempDirectory, Path.GetRandomFileName());
+
+			var result = await RunAsync(traversalBundlePath, "--bundle-entry", traversalEntryName,
+				"-p", "-o", outputDirectory);
+
+			Assert.That(result.ExitCode, Is.EqualTo(0), result.Error);
+			string exportedConfig = Path.Combine(outputDirectory, "app.config");
+			Assert.That(File.Exists(exportedConfig), Is.False,
+				"a bundle entry name must not let project export read a local config file");
 		}
 
 		[Test]

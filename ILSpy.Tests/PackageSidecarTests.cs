@@ -21,6 +21,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 
+using ICSharpCode.Decompiler.CSharp.ProjectDecompiler;
 using ICSharpCode.Decompiler.Documentation;
 using ICSharpCode.ILSpyX;
 
@@ -31,6 +32,21 @@ namespace ICSharpCode.ILSpy.Tests;
 [TestFixture]
 public sealed class PackageSidecarTests
 {
+	[TestCase("../../outside/Traversal.dll")]
+	[TestCase("/tmp/outside/Traversal.dll")]
+	[TestCase(@"..\..\outside\Traversal.dll")]
+	public void GetEntryFileName_SanitizesRootedAndTraversingEntryNames(string entryName)
+	{
+		string packageFileName = Path.Combine(Path.GetTempPath(), "package.zip");
+
+		string fileName = LoadedPackage.GetEntryFileName(packageFileName, entryName);
+		string relativePath = Path.GetRelativePath(packageFileName, fileName);
+
+		Assert.That(Path.IsPathRooted(relativePath), Is.False);
+		Assert.That(relativePath.Split(Path.DirectorySeparatorChar), Does.Not.Contain(".."));
+		Assert.That(fileName, Is.EqualTo(Path.Combine(packageFileName, WholeProjectDecompiler.SanitizeFileName(entryName))));
+	}
+
 	[Test]
 	public void PackageFolder_FindsXmlAndPdbSidecarsInTheSameFolder()
 	{

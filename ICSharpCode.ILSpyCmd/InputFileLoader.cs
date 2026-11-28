@@ -83,7 +83,7 @@ namespace ICSharpCode.ILSpyCmd
 			var result = LoadFile(fileName, context);
 			if (result?.Package is { } package)
 			{
-				return LoadPackageEntry(package, entryName, context);
+				return LoadPackageEntry(package, fileName, entryName, context);
 			}
 			if (result?.MetadataFile is { } file)
 			{
@@ -104,7 +104,7 @@ namespace ICSharpCode.ILSpyCmd
 			var result = LoadFile(fileName, context);
 			if (result?.Package is { } package)
 			{
-				module = LoadPackageEntry(package, entryName, context);
+				module = LoadPackageEntry(package, fileName, entryName, context);
 				return true;
 			}
 			module = null;
@@ -136,7 +136,7 @@ namespace ICSharpCode.ILSpyCmd
 			return null;
 		}
 
-		static PEFile LoadPackageEntry(LoadedPackage package, string entryName, FileLoadContext context)
+		static PEFile LoadPackageEntry(LoadedPackage package, string packageFileName, string entryName, FileLoadContext context)
 		{
 			var managedEntries = GetManagedEntries(package);
 			string kind = package.Kind == LoadedPackage.PackageKind.Bundle ? "single-file bundle" : "package";
@@ -164,7 +164,7 @@ namespace ICSharpCode.ILSpyCmd
 					ProgramExitCodes.EX_DATAERR);
 			}
 			stream.Position = 0;
-			return new PEFile(entry.Name, stream,
+			return new PEFile(LoadedPackage.GetEntryFileName(packageFileName, entry.Name), stream,
 				PEStreamOptions.PrefetchEntireImage | PEStreamOptions.LeaveOpen,
 				MetadataOptions(context));
 		}
