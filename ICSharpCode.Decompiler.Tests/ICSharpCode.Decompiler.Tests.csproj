@@ -203,6 +203,9 @@
     <Compile Remove="TestCases\PdbGen\*.cs" />
     <Compile Remove="TestCases\Correctness\ComInterop.cs" />
     <None Include="TestCases\Correctness\ComInterop.cs" />
+    <!-- 5.9 MB field signature; must not end up in the test assembly -->
+    <Compile Remove="TestCases\IsolatedDecompilation\HugeGenericSignature.cs" />
+    <None Include="TestCases\IsolatedDecompilation\HugeGenericSignature.cs" />
     <Compile Remove="TestCases\ILPretty\CS1xSwitch_Debug.cs" />
     <None Include="TestCases\ILPretty\CS1xSwitch_Debug.cs" />
     <Compile Remove="TestCases\ILPretty\CS1xSwitch_Release.cs" />

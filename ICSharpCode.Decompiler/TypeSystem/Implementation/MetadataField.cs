@@ -227,6 +227,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			IType ty;
 			try
 			{
+				module.ThrowIfSignatureTooLarge(fieldDef.Signature);
 				ty = fieldDef.DecodeSignature(module.TypeProvider, new GenericContext(DeclaringType?.TypeParameters));
 				if (ty is ModifiedType mod && mod.Modifier.Name == "IsVolatile" && mod.Modifier.Namespace == "System.Runtime.CompilerServices")
 				{
