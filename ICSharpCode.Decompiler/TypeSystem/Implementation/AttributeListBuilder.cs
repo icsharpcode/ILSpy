@@ -191,13 +191,52 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			{
 				var attribute = metadata.GetCustomAttribute(handle);
 				// Attribute types shouldn't be open generic, so we don't need a generic context.
-				var ctor = module.ResolveMethod(attribute.Constructor, new GenericContext());
+				IMethod ctor;
+				try
+				{
+					ctor = module.ResolveMethod(attribute.Constructor, new GenericContext());
+				}
+				catch (BadImageFormatException)
+				{
+					var attributeType = GetAttributeType(attribute.Constructor);
+					if (!IgnoreAttribute(attributeType, target))
+						Add(new CustomAttribute(module, attributeType, handle));
+					continue;
+				}
 				var type = ctor.DeclaringType;
 				if (IgnoreAttribute(type, target))
 				{
 					continue;
 				}
 				Add(new CustomAttribute(module, ctor, handle));
+			}
+		}
+
+		/// <summary>
+		/// Resolves an attribute type without resolving its possibly malformed constructor signature.
+		/// </summary>
+		IType GetAttributeType(EntityHandle constructor)
+		{
+			var metadata = module.metadata;
+			EntityHandle attributeType;
+			switch (constructor.Kind)
+			{
+				case HandleKind.MemberReference:
+					attributeType = metadata.GetMemberReference((MemberReferenceHandle)constructor).Parent;
+					break;
+				case HandleKind.MethodDefinition:
+					attributeType = metadata.GetMethodDefinition((MethodDefinitionHandle)constructor).GetDeclaringType();
+					break;
+				default:
+					return SpecialType.UnknownType;
+			}
+			try
+			{
+				return module.ResolveType(attributeType, new GenericContext());
+			}
+			catch (BadImageFormatException)
+			{
+				return SpecialType.UnknownType;
 			}
 		}
 

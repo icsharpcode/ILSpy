@@ -37,6 +37,11 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	[DebuggerDisplay("<MetadataModule: {AssemblyName}>")]
 	public class MetadataModule : IModule
 	{
+		/// <summary>
+		/// Maximum generic arity allowed when materializing an unresolved method reference.
+		/// </summary>
+		internal const int MaxFakeMethodTypeParameterCount = 64;
+
 		public ICompilation Compilation { get; }
 		internal readonly MetadataReader metadata;
 		readonly TypeSystemOptions options;
@@ -666,6 +671,9 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// </summary>
 		IMethod CreateFakeMethod(IType declaringType, string name, MethodSignature<IType> signature)
 		{
+			if (signature.GenericParameterCount > MaxFakeMethodTypeParameterCount)
+				throw new BadImageFormatException($"Unresolved method signature exceeds the limit of {MaxFakeMethodTypeParameterCount} generic parameters.");
+
 			SymbolKind symbolKind = SymbolKind.Method;
 			if (name == ".ctor" || name == ".cctor")
 				symbolKind = SymbolKind.Constructor;
