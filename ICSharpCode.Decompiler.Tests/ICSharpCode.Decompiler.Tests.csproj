@@ -245,6 +245,9 @@
     <Compile Remove="TestCases\ILPretty\ParameterizedPropertySetterCall.cs" />
     <None Include="TestCases\ILPretty\ParameterizedPropertySetterCall.cs" />
     <None Include="TestCases\ILPretty\ParameterizedPropertySetterCall.il" />
+    <Compile Remove="TestCases\ILPretty\FunctionPointerCallConvEscaping.cs" />
+    <None Include="TestCases\ILPretty\FunctionPointerCallConvEscaping.cs" />
+    <None Include="TestCases\ILPretty\FunctionPointerCallConvEscaping.il" />
     <Compile Remove="TestCases\ILPretty\SpanConversionOperatorMismatch.cs" />
     <None Include="TestCases\ILPretty\SpanConversionOperatorMismatch.cs" />
     <Compile Remove="TestCases\ILPretty\FSharpLoops_Debug.cs" />

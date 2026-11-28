@@ -379,14 +379,14 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 						_ => fpt.CallingConvention.ToString()
 					};
 					astType.HasUnmanagedCallingConvention = true;
-					astType.CallingConventions.Add(new PrimitiveType(callconvName));
+					astType.CallingConventions.Add(Identifier.Create(callconvName));
 				}
 				foreach (var customCallConv in fpt.CustomCallingConventions)
 				{
-					AstType callConvSyntax;
+					AstNode callConvSyntax;
 					if (customCallConv.Namespace == "System.Runtime.CompilerServices" && customCallConv.Name.StartsWith("CallConv", StringComparison.Ordinal) && customCallConv.Name.Length > 8)
 					{
-						callConvSyntax = new PrimitiveType(customCallConv.Name.Substring(8));
+						callConvSyntax = Identifier.Create(customCallConv.Name.Substring(8));
 						if (AddResolveResultAnnotations)
 						{
 							callConvSyntax.AddAnnotation(new TypeResolveResult(customCallConv));

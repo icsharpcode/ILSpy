@@ -39,7 +39,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public bool HasUnmanagedCallingConvention { get; set; }
 
 		[Slot("CallingConvention")]
-		public partial AstNodeCollection<AstType> CallingConventions { get; }
+		public partial AstNodeCollection<AstNode> CallingConventions { get; }
 
 		[Slot("Parameter")]
 		public partial AstNodeCollection<ParameterDeclaration> Parameters { get; }
