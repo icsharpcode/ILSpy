@@ -140,7 +140,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			{
 				case CommentType.SingleLine:
 					textWriter.Write("//");
-					content = CommentUtilities.EscapeLineTerminators(content);
+					content = CommentUtilities.EscapeSingleLineCommentContent(content);
 					textWriter.WriteLine(content);
 					Length += 2 + content.Length + textWriter.NewLine.Length;
 					column = 1;
@@ -149,6 +149,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 					isAtStartOfLine = true;
 					break;
 				case CommentType.MultiLine:
+					content = CommentUtilities.EscapeBlockCommentContent(content);
 					textWriter.Write("/*");
 					textWriter.Write(content);
 					textWriter.Write("*/");
@@ -160,7 +161,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 					break;
 				case CommentType.Documentation:
 					textWriter.Write("///");
-					content = CommentUtilities.EscapeLineTerminators(content);
+					content = CommentUtilities.EscapeSingleLineCommentContent(content);
 					textWriter.WriteLine(content);
 					Length += 3 + content.Length + textWriter.NewLine.Length;
 					column = 1;
@@ -169,6 +170,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 					isAtStartOfLine = true;
 					break;
 				case CommentType.MultiLineDocumentation:
+					content = CommentUtilities.EscapeBlockCommentContent(content);
 					textWriter.Write("/**");
 					textWriter.Write(content);
 					textWriter.Write("*/");

@@ -508,6 +508,12 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
+		public async Task FunctionPointerCallConvEscaping()
+		{
+			await Run();
+		}
+
+		[Test]
 		public async Task LargeFieldData()
 		{
 			await Run();
