@@ -33,9 +33,8 @@ using ICSharpCode.ILSpy.TextView;
 namespace ICSharpCode.ILSpy.TreeNodes
 {
 	/// <summary>
-	/// Default resource entry node — used when no specialised handler (image, XAML, .resources
-	/// file, …) is registered for a given resource. The Avalonia port currently always falls
-	/// back to this plain node since the typed handlers are not yet ported.
+	/// Default resource entry node used when no specialised factory claims a resource, such as
+	/// an image, XAML file, or .resources file.
 	/// </summary>
 	public class ResourceTreeNode : ILSpyTreeNode
 	{

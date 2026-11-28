@@ -35,7 +35,8 @@ namespace ICSharpCode.ILSpyX.Analyzers
 		public required AssemblyList AssemblyList { get; init; }
 
 		/// <summary>
-		/// CancellationToken. Currently Analyzers do not support cancellation from the UI, but it should be checked nonetheless.
+		/// Cancellation token supplied by the analyzer host. Check it during long-running analysis
+		/// so UI-triggered cancellation, such as collapsing the analyzer node, can stop the work.
 		/// </summary>
 		public CancellationToken CancellationToken { get; init; }
 
