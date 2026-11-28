@@ -18,6 +18,7 @@
 
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Text.RegularExpressions;
 
 using ICSharpCode.Decompiler;
@@ -71,31 +72,46 @@ namespace ICSharpCode.ILSpyX.MermaidDiagrammer
 
 		private string FormatMethod(IMethod method)
 		{
-			string parameters = method.Parameters.Select(p => $"{GetName(p.Type)} {p.Name}").Join(", ");
+			string parameters = method.Parameters.Select(p => $"{GetEscapedName(p.Type)} {Escape(p.Name)}").Join(", ");
 			string? modifier = method.IsAbstract ? "*" : method.IsStatic ? "$" : default;
-			string name = method.Name;
+			string name = Escape(method.Name);
 
 			if (method.IsExplicitInterfaceImplementation)
 			{
 				IMember member = method.ExplicitlyImplementedInterfaceMembers.Single();
-				name = GetName(member.DeclaringType) + '.' + member.Name;
+				name = GetEscapedName(member.DeclaringType) + '.' + Escape(member.Name);
 			}
 
-			string? typeArguments = method.TypeArguments.Count == 0 ? null : $"❰{method.TypeArguments.Select(GetName).Join(", ")}❱";
-			return $"{GetAccessibility(method.Accessibility)}{name}{typeArguments}({parameters}){modifier} {GetName(method.ReturnType)}";
+			string? typeArguments = method.TypeArguments.Count == 0 ? null : $"❰{method.TypeArguments.Select(GetEscapedName).Join(", ")}❱";
+			return $"{GetAccessibility(method.Accessibility)}{name}{typeArguments}({parameters}){modifier} {GetEscapedName(method.ReturnType)}";
 		}
 
 		private string FormatFlatProperty(IProperty property)
 		{
 			char? visibility = GetAccessibility(property.Accessibility);
 			string? modifier = property.IsAbstract ? "*" : property.IsStatic ? "$" : default;
-			return $"{visibility}{GetName(property.ReturnType)} {property.Name}{modifier}";
+			return $"{visibility}{GetEscapedName(property.ReturnType)} {Escape(property.Name)}{modifier}";
 		}
 
 		private string FormatField(IField field)
 		{
 			string? modifier = field.IsAbstract ? "*" : field.IsStatic ? "$" : default;
-			return $"{GetAccessibility(field.Accessibility)}{GetName(field.ReturnType)} {field.Name}{modifier}";
+			return $"{GetAccessibility(field.Accessibility)}{GetEscapedName(field.ReturnType)} {Escape(field.Name)}{modifier}";
+		}
+
+		private string GetEscapedName(IType type) => Escape(GetName(type));
+
+		private static string Escape(string name)
+		{
+			StringBuilder escaped = new();
+			foreach (Rune rune in name.EnumerateRunes())
+			{
+				if (Rune.IsLetterOrDigit(rune) || (rune.IsBmp && " _.,+?&[]".Contains((char)rune.Value)))
+					escaped.Append(rune);
+				else
+					escaped.Append('#').Append(rune.Value).Append(';');
+			}
+			return escaped.ToString();
 		}
 
 		// see https://stackoverflow.com/a/16024302 for accessibility modifier flags

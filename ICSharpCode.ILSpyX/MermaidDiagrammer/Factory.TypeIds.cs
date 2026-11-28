@@ -18,6 +18,7 @@
 
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpyX.MermaidDiagrammer.Extensions;
@@ -33,11 +34,12 @@ namespace ICSharpCode.ILSpyX.MermaidDiagrammer
 		private static Dictionary<IType, string> GenerateUniqueIds(IEnumerable<ITypeDefinition> types)
 		{
 			Dictionary<IType, string> uniqueIds = [];
-			var groups = types.GroupBy(t => t.Name);
+			var groups = types.GroupBy(t => SanitizeTypeName(t.Name)).ToArray();
+			HashSet<string> usedIds = new(groups.Where(g => g.Count() == 1).Select(g => g.Key));
 
 			// simplified handling for the majority of unique types
 			foreach (var group in groups.Where(g => g.Count() == 1))
-				uniqueIds[group.First()] = SanitizeTypeName(group.Key);
+				uniqueIds[group.First()] = group.Key;
 
 			// number non-unique types
 			foreach (var group in groups.Where(g => g.Count() > 1))
@@ -45,7 +47,14 @@ namespace ICSharpCode.ILSpyX.MermaidDiagrammer
 				var counter = 0;
 
 				foreach (var type in group)
-					uniqueIds[type] = type.Name + ++counter;
+				{
+					string id;
+					do
+					{
+						id = group.Key + ++counter;
+					} while (!usedIds.Add(id));
+					uniqueIds[type] = id;
+				}
 			}
 
 			return uniqueIds;
@@ -79,6 +88,6 @@ namespace ICSharpCode.ILSpyX.MermaidDiagrammer
 		}
 
 		private static string SanitizeTypeName(string typeName)
-			=> typeName.Replace('<', '_').Replace('>', '_'); // for module of executable
+			=> Regex.Replace(typeName, @"\W", "_"); // for module of executable and metadata names outside Mermaid's safe identifier syntax
 	}
 }

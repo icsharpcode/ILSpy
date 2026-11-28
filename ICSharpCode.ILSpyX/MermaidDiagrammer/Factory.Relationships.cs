@@ -78,10 +78,10 @@ namespace ICSharpCode.ILSpyX.MermaidDiagrammer
 		private Dictionary<string, string>? MapHasOneRelations(Dictionary<IType, IProperty[]> hasOneRelationsByType, IType type)
 			=> hasOneRelationsByType.GetValue(type)?.Select(p => {
 				IType type = p.ReturnType;
-				string label = p.Name;
+				string label = Escape(p.Name);
 
 				if (p.IsIndexer)
-					label += $"[{p.Parameters.Single().Type.Name} {p.Parameters.Single().Name}]";
+					label += $"[{Escape(p.Parameters.Single().Type.Name)} {Escape(p.Parameters.Single().Name)}]";
 
 				if (type.TryGetNullableType(out var typeArg))
 				{
@@ -97,7 +97,7 @@ namespace ICSharpCode.ILSpyX.MermaidDiagrammer
 		private Dictionary<string, string>? MapHasManyRelations(Dictionary<IType, (IProperty property, IType elementType)[]> hasManyRelationsByType, IType type)
 			=> hasManyRelationsByType.GetValue(type)?.Select(relation => {
 				(IProperty property, IType elementType) = relation;
-				return BuildRelationship(elementType, property.Name);
+				return BuildRelationship(elementType, Escape(property.Name));
 			}).ToDictionary(r => r.label!, r => r.to);
 
 		/// <summary>Builds references to super types and (one/many) relations,
