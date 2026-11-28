@@ -280,7 +280,10 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 					File.Copy(StrongNameKeyFile, Path.Combine(targetDirectory, Path.GetFileName(StrongNameKeyFile)), overwrite: true);
 				}
 
-				projectWriter.Write(projectFileWriter, this, files, file);
+				using (AssemblyResolver.BeginSnapshot())
+				{
+					projectWriter.Write(projectFileWriter, this, files, file);
+				}
 
 				string platformName = module != null ? TargetServices.GetPlatformName(module) : "AnyCPU";
 				return new ProjectId(platformName, ProjectGuid, ProjectTypeGuids.CSharpWindows);

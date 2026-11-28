@@ -109,6 +109,8 @@ namespace ICSharpCode.BamlDecompiler
 				reference.IsAssembly ? "A:" + ((IAssemblyReference)reference.Reference).FullName :
 									   "M:" + reference.Reference);
 			var processedAssemblyReferences = new HashSet<(bool IsAssembly, MetadataFile Parent, object Reference)>(comparer);
+			var referencedAssemblySet = new HashSet<MetadataFile>();
+			using var snapshot = assemblyResolver.BeginSnapshot();
 			while (assemblyReferenceQueue.Count > 0)
 			{
 				var asmRef = assemblyReferenceQueue.Dequeue();
@@ -123,7 +125,8 @@ namespace ICSharpCode.BamlDecompiler
 				{
 					asm = assemblyResolver.ResolveModule(asmRef.MainModule, (string)asmRef.Reference);
 				}
-				if (asm != null)
+				// Multiple reference versions may resolve to the same file; walk its references once.
+				if (asm != null && referencedAssemblySet.Add(asm))
 				{
 					referencedAssemblies.Add(asm);
 					// Whether an element is a markup extension is decided by walking its base types,
