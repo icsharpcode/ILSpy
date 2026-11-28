@@ -259,10 +259,23 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			{
 				// Overrides may override only one of the accessors, hence calculating the accessibility from
 				// the declared accessors is not sufficient. We need to "copy" accessibility from the baseMember.
-				foreach (var baseMember in InheritanceHelper.GetBaseMembers(this, includeImplementedInterfaces: false))
+				// Only non-overrides can provide inherited accessibility. Filter overrides before reading
+				// their accessibility, which would start this same search recursively.
+				var declaringTypeDef = this.DeclaringTypeDefinition;
+				foreach (IType baseType in declaringTypeDef.GetNonInterfaceBaseTypes().Reverse())
 				{
-					if (!baseMember.IsOverride)
+					if (baseType.GetDefinition() is { } baseTypeDefinition
+						&& declaringTypeDef.Equals(baseTypeDefinition))
 					{
+						continue;
+					}
+					var baseProperties = baseType.GetProperties(
+						p => p.Name == name && !p.IsOverride && p.Accessibility > Accessibility.Private,
+						GetMemberOptions.IgnoreInheritedMembers);
+					foreach (IProperty baseMember in baseProperties)
+					{
+						if (!SignatureComparer.Ordinal.Equals(this, baseMember))
+							continue;
 						// See https://github.com/icsharpcode/ILSpy/issues/2653
 						// "protected internal" (ProtectedOrInternal) accessibility is "reduced"
 						// to "protected" accessibility across assembly boundaries.
