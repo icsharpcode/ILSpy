@@ -309,7 +309,8 @@ Examples:
 				{
 					if (InputAssemblyNames.Length == 1)
 					{
-						string projectFileName = Path.Combine(outputDirectory, Path.GetFileNameWithoutExtension(InputAssemblyNames[0]) + ".csproj");
+						string projectName = Path.GetFileNameWithoutExtension(InputAssemblyNames[0]);
+						string projectFileName = Path.Combine(outputDirectory, WholeProjectDecompiler.CleanUpFileName(projectName, ".csproj"));
 						DecompileAsProject(InputAssemblyNames[0], projectFileName);
 						return ExitCodeForDecompilationErrors();
 					}
@@ -317,7 +318,9 @@ Examples:
 					foreach (var file in InputAssemblyNames)
 					{
 						string projectName = Path.GetFileNameWithoutExtension(file);
-						string projectFileName = Path.Combine(outputDirectory, WholeProjectDecompiler.CleanUpDirectoryName(projectName), projectName + ".csproj");
+						string projectDirectoryName = WholeProjectDecompiler.CleanUpDirectoryName(projectName);
+						string projectFileName = Path.Combine(outputDirectory, projectDirectoryName,
+							WholeProjectDecompiler.CleanUpFileName(projectName, ".csproj"));
 						Directory.CreateDirectory(Path.GetDirectoryName(projectFileName));
 						ProjectId projectId = DecompileAsProject(file, projectFileName);
 						projects.Add(new ProjectItem(projectFileName, projectId.PlatformName, projectId.Guid, projectId.TypeGuid));

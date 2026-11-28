@@ -38,8 +38,20 @@ namespace ICSharpCode.Decompiler.Solution
 		public ProjectItem(string projectFile, string projectPlatform, Guid projectGuid, Guid typeGuid)
 			: base(projectPlatform, projectGuid, typeGuid)
 		{
+			if (string.IsNullOrEmpty(projectFile))
+				throw new ArgumentException("The project file cannot be null or empty.", nameof(projectFile));
+			ValidateSolutionField(projectPlatform, nameof(projectPlatform));
+			ValidateSolutionField(projectFile, nameof(projectFile));
+
 			ProjectName = Path.GetFileNameWithoutExtension(projectFile);
+			ValidateSolutionField(ProjectName, nameof(projectFile));
 			FilePath = projectFile;
+		}
+
+		static void ValidateSolutionField(string value, string paramName)
+		{
+			if (value.IndexOf('"') >= 0 || value.IndexOf('\r') >= 0 || value.IndexOf('\n') >= 0)
+				throw new ArgumentException("Solution fields cannot contain quotes or line breaks.", paramName);
 		}
 
 		/// <summary>

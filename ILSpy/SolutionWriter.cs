@@ -353,11 +353,10 @@ namespace ICSharpCode.ILSpy
 				}
 				if (projectInfo != null)
 				{
-					// SolutionCreator.FixAllProjectReferences parses each project file off disk, so the
-					// ProjectItem must point at the .csproj the decompiler actually produced (its name is
-					// derived from the module name, not necessarily the assembly short name).
-					var projectFileName = Directory.EnumerateFiles(targetDirectory, "*" + language.ProjectFileExtension).FirstOrDefault()
-						?? Path.Combine(targetDirectory, loadedAssembly.ShortName + language.ProjectFileExtension);
+					// Use the same cleaned module name that WholeProjectDecompiler uses for the .csproj.
+					var module = loadedAssembly.GetMetadataFileOrNull();
+					var projectFileName = Path.Combine(targetDirectory,
+						WholeProjectDecompiler.CleanUpFileName(module!.Name, language.ProjectFileExtension));
 					projects.Add(new ProjectItem(projectFileName, projectInfo.PlatformName, projectInfo.Guid, projectInfo.TypeGuid));
 				}
 			}

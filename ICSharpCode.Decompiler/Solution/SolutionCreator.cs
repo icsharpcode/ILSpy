@@ -163,7 +163,11 @@ namespace ICSharpCode.Decompiler.Solution
 
 			foreach (var project in projects)
 			{
-				XDocument projectDoc = XDocument.Load(project.FilePath);
+				XDocument projectDoc;
+				using (var projectStream = File.OpenRead(project.FilePath))
+				{
+					projectDoc = XDocument.Load(projectStream);
+				}
 
 				if (projectDoc.Root?.Name.LocalName != "Project")
 				{
@@ -232,23 +236,29 @@ namespace ICSharpCode.Decompiler.Solution
 
 		static string GetRelativePath(string fromFilePath, string toFilePath)
 		{
-			Uri fromUri = new Uri(fromFilePath);
-			Uri toUri = new Uri(toFilePath);
+			string fromDirectory = Path.GetDirectoryName(Path.GetFullPath(fromFilePath))!;
+			string fullTargetPath = Path.GetFullPath(toFilePath);
+			string fromRoot = Path.GetPathRoot(fromDirectory)!;
+			string toRoot = Path.GetPathRoot(fullTargetPath)!;
+			StringComparison comparison = Path.DirectorySeparatorChar == '\\'
+				? StringComparison.OrdinalIgnoreCase
+				: StringComparison.Ordinal;
+			if (!string.Equals(fromRoot, toRoot, comparison))
+				return fullTargetPath;
 
-			if (fromUri.Scheme != toUri.Scheme)
+			char[] separators = { Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar };
+			string[] fromParts = fromDirectory.Substring(fromRoot.Length).Split(separators, StringSplitOptions.RemoveEmptyEntries);
+			string[] toParts = fullTargetPath.Substring(toRoot.Length).Split(separators, StringSplitOptions.RemoveEmptyEntries);
+			int commonParts = 0;
+			while (commonParts < fromParts.Length && commonParts < toParts.Length
+				&& string.Equals(fromParts[commonParts], toParts[commonParts], comparison))
 			{
-				return toFilePath;
+				commonParts++;
 			}
 
-			Uri relativeUri = fromUri.MakeRelativeUri(toUri);
-			string relativePath = Uri.UnescapeDataString(relativeUri.ToString());
-
-			if (string.Equals(toUri.Scheme, Uri.UriSchemeFile, StringComparison.OrdinalIgnoreCase))
-			{
-				relativePath = relativePath.Replace(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar);
-			}
-
-			return relativePath;
+			var relativeParts = Enumerable.Repeat("..", fromParts.Length - commonParts)
+				.Concat(toParts.Skip(commonParts));
+			return string.Join("/", relativeParts);
 		}
 	}
 }
